@@ -26,20 +26,11 @@
 #define TORQUE_3 160
 
 
-#define LAUNCH_CONTROL_END_RPM 1000
-
-
 // set to true or false for debugging
 #define DEBUG true
 #define BMS_DEBUG_ENABLE false
 
 #define LINEAR 0
-
-// EXP
-// torque = ae^(bx) + x - a
-// see here: https://www.desmos.com/calculator/daidnwee5b
-// https://www.desmos.com/calculator/9xgerxnlyv
-#define B 0.065
 
 #define MAP_MODE LINEAR
 
@@ -58,10 +49,6 @@ BMS_status bms_status{};
 BMS_temperatures bms_temperatures{};
 BMS_voltages bms_voltages{};
 Dashboard_status dashboard_status{};
-MC_current_information mc_current_information{};
-MC_internal_states mc_internal_states{};
-MC_motor_position_information mc_motor_position_information{};
-MC_voltage_information mc_voltage_information{};
 
 //Timers
 #if DEBUG
@@ -117,8 +104,6 @@ float filtered_brake2_reading{};
 bool imd_faulting = false;
 bool inverter_restart = false; // True when restarting the inverter
 
-// uint16_t MAX_TORQUE = 600; // Torque in Nm * 10
-
 uint32_t total_charge_amount = 0;
 uint32_t total_discharge_amount = 0;
 
@@ -144,16 +129,11 @@ static CAN_message_t tx_msg;
 uint32_t total_discharge;
 unsigned long previous_data_time;
 
-uint8_t lc_torque_table[600];
-
 void setup() {
   // no torque can be provided on startup
   mcu_status.set_max_torque(0);
   mcu_status.set_torque_mode(0);
   mcu_status.set_software_is_ok(true);
-
-  generate_lc_torque_lookup_table();
-
 
   pinMode(BRAKE_LIGHT_CTRL, OUTPUT);
 
@@ -231,12 +211,6 @@ void loop() {
     tx_msg.len = sizeof(mcu_status);
     CAN.write(tx_msg);
 
-    /*// Send coulomb counting information
-      bms_coulomb_counts.set_total_charge(total_charge_amount);
-      bms_coulomb_counts.set_total_discharge(total_discharge_amount);
-      tx_msg.id = ID_BMS_COULOMB_COUNTS;
-      tx_msg.len = sizeof(bms_coulomb_counts);
-      CAN.write(tx_msg);*/
   }
 
   /* Send sensor data over CAN */
@@ -260,11 +234,7 @@ void loop() {
     //        mcu_wheel_speed.set_rpm_back_left(rpm_back_left*10);
     //        mcu_wheel_speed.set_rpm_back_right(rpm_back_right*10);
     //
-    //        // Send Main Control Unit pedal reading message
-    //        mcu_wheel_speed.write(tx_msg.buf);
-    //        tx_msg.id = ID_MCU_WHEEL_SPEED;
-    //        tx_msg.len = sizeof(mcu_wheel_speed);
-    //        CAN.write(tx_msg);
+
   }
 
   if (timer_coloumb_count_send.check()) {
@@ -302,29 +272,7 @@ void loop() {
 #endif
 }
 
-inline void generate_lc_torque_lookup_table() {
-  //  for (int i = 0; i < 600; i++) {
-  //    lc_torque_table[i] = (uint8_t)(0.00017057 * i * i) - (0.00019551 * i) + (130);
-  //  }
-  //  for (int i = 0; i < 99; i++) {
-  //    lc_torque_table[i] = (uint8_t)(-0.003 * i * i ) +0.75 * i + 90;
-  //  }
-  //  for (int i = 464; i < 600; i++) {
-  //    lc_torque_table[i] = 160;
-  //  }
 
-
-  for (int i = 0; i < 600; i++) {
-    //lc_torque_table[i] = (uint8_t)(0.00000857143 * i * i * i) - (0.00528571 * i * i) + (0.942857 * i) + 120;
-    lc_torque_table[i] = (uint8_t)(0.65*i + 110);
-  }
-  for (int i = /*60*/ 77; i < 600; i++) {
-    lc_torque_table[i] = 160;
-  }
-  lc_torque_table[0] = 60;
-  lc_torque_table[1] = 90;
-
-}
 inline void setup_total_discharge() {
   total_discharge = 0;
   previous_data_time = millis();
@@ -408,7 +356,6 @@ inline void state_machine() {
       check_TS_active();
       check_inverter_disabled();
 
-      //update_coulomb_count();
       if (timer_motor_controller_send.check()) {
         MC_command_message mc_command_message(0, 0, 0, 1, 0, 0);
 
@@ -480,7 +427,6 @@ inline void state_machine() {
           mcu_status.get_no_brake_implausability() &&
           mcu_status.get_no_accel_implausability() &&
           mcu_status.get_no_accel_brake_implausability() &&
-          //mcu_status.get_software_is_ok() && //why was software not ok?
           mcu_status.get_bms_ok_high() &&
           mcu_status.get_imd_ok_high()
         ) {
@@ -496,26 +442,6 @@ inline void state_machine() {
 
         }
         // Implausibility exists, command 0 torque
-
-#if DEBUG
-        if (timer_debug_torque.check()) {
-          /* Serial.print("MCU REQUESTED TORQUE: ");
-            Serial.println(calculated_torque);
-            Serial.print("MCU NO IMPLAUS ACCEL: ");
-            Serial.println(mcu_status.get_no_accel_implausability());
-            Serial.print("MCU NO IMPLAUS BRAKE: ");
-            Serial.println(mcu_status.get_no_brake_implausability());
-            Serial.print("MCU NO IMPLAUS ACCEL BRAKE: ");
-            Serial.println(mcu_status.get_no_accel_brake_implausability());*/
-          /* Serial.printf("ssok: %d\n", mcu_status.get_software_is_ok());
-            Serial.printf("bms: %d\n", mcu_status.get_bms_ok_high());
-            Serial.printf("imd: %d\n", mcu_status.get_imd_ok_high());*/
-        }
-#endif
-
-        // Serial.print("RPM: ");
-        // Serial.println(mc_motor_position_information.get_motor_speed());
-        // Serial.println(calculated_torque);
 
         mc_command_message.set_torque_command(calculated_torque);
 
@@ -565,32 +491,6 @@ inline void software_shutdown() {
 
   mcu_status.set_software_is_ok(true);
 
-  // conditionally check depending on current state
-  /*if (mcu_status.get_software_is_ok()){
-      // check that software high ok and shutdown e are high when software is OK
-      if (timer_software_enable_interval.check()){
-          // once 100 ms passes, check this every loop
-          timer_software_enable_interval.interval(0);
-          // if software ok based signals are low 100 ms after software ok has been turned on, fault software ok
-          if ((mcu_status.get_shutdown_inputs() & 0xC0) != 0xC0){
-              mcu_status.set_software_is_ok(false);
-          }
-      }
-    }
-    else {
-    /*
-      // if the software ok based signals are high, software ok is false
-      if ((mcu_status.get_shutdown_inputs() & 0xC0) != 0) { //need to do testing with this line
-          mcu_status.set_software_is_ok(false);
-      }
-      // assume software is ok because any subsequent check will fail it
-      // because all software ok based checks have been preforned
-      else {
-          mcu_status.set_software_is_ok(true);
-     // }
-    }*/
-
-
   // check inputs
   // BMS heartbeat has not arrived within time interval
   if (timer_bms_heartbeat.check()) {
@@ -600,18 +500,7 @@ inline void software_shutdown() {
 #endif
     mcu_status.set_software_is_ok(false);
   }
-  // if (timer_dashboard_heartbeat.check()){
-  //     timer_dashboard_heartbeat.interval(0);
-  //     #if DEBUG
-  //        Serial.println("no dashboard");
-  //     #endif
-  //     mcu_status.set_software_is_ok(false);
-  // }
-  // check if any shutdown circuit inputs are low except software shutdown ones
-  /*if ((mcu_status.get_shutdown_inputs() & 0x3F) != 0x3F){
-     // Serial.println("not 3F");
-      mcu_status.set_software_is_ok(false);
-    }*/
+
   // add BMS software checks
   // software ok/not ok action
   if (mcu_status.get_software_is_ok()) {
@@ -625,13 +514,7 @@ inline void software_shutdown() {
     watchdog_state = !watchdog_state;
     digitalWrite(WATCHDOG_INPUT, watchdog_state);
   }
-  // }
-  /*else {
-      digitalWrite(TEENSY_OK, LOW);
-      timer_software_enable_interval.interval(TIMER_SOFTWARE_ENABLE);
-      timer_software_enable_interval.reset();
-    }*/
-  //Serial.println(mcu_status.get_software_is_ok());
+
 }
 
 /* Parse incoming CAN messages */
@@ -657,9 +540,6 @@ void parse_can_message() {
         break;
       case ID_DASHBOARD_STATUS:
         dashboard_status.load(rx_msg.buf);
-
-        // timer_dashboard_heartbeat.reset();
-        // timer_dashboard_heartbeat.interval(DASH_HEARTBEAT_TIMEOUT);
         /* process dashboard buttons */
         if (dashboard_status.get_mode_btn()) {
           switch (mcu_status.get_torque_mode()) {
@@ -726,24 +606,6 @@ inline void reset_inverter() {
 #endif
 }
 
-//
-//float calculate_launch_control_torque_multiplier() {
-//  //float average_front_wheel_rpm = (rpm_front_right + rpm_front_left)/2.0;
-//  int16_t mc_rpm = abs(mc_motor_position_information.get_motor_speed());
-//  float slope = (LAUNCH_CONTROL_END_RPM - LAUNCH_CONTROL_START_RPM) / (1 - LAUNCH_CONTROL_START_MULTIPLIER);
-//  if (mc_rpm < LAUNCH_CONTROL_START_RPM) {
-//    return LAUNCH_CONTROL_START_MULTIPLIER;
-//  } else if (mc_rpm > LAUNCH_CONTROL_END_RPM) {
-//    return 1;
-//  } else {
-//    return (LAUNCH_CONTROL_START_MULTIPLIER + (mc_rpm - LAUNCH_CONTROL_START_RPM) * slope);
-//  }
-//
-//
-//  //1.7057e^-6 x^2 - 1.9551e^-5 x + 123.281
-//  //110 below 70 rpm
-//}
-
 
 /* Handle changes in state */
 void set_state(MCU_STATE new_state) {
@@ -776,24 +638,7 @@ void set_state(MCU_STATE new_state) {
     case MCU_STATE::TRACTIVE_SYSTEM_NOT_ACTIVE: break;
     case MCU_STATE::TRACTIVE_SYSTEM_ACTIVE: break;
     case MCU_STATE::ENABLING_INVERTER: {
-        MC_command_message mc_command_message(0, 0, 0, 1, 0, 0);
-        tx_msg.id = 0xC0;
-        tx_msg.len = 8;
-        mc_command_message.write(tx_msg.buf); // many enable commands
 
-        for (int i = 0; i < 10; i++) {
-          CAN.write(tx_msg);
-        }
-        // look this up in datasheet
-        mc_command_message.set_inverter_enable(false);
-        mc_command_message.write(tx_msg.buf); // disable command
-        CAN.write(tx_msg);
-
-        mc_command_message.set_inverter_enable(true);
-        mc_command_message.write(tx_msg.buf); // many more enable commands
-        for (int i = 0; i < 10; i++) {
-          CAN.write(tx_msg);
-        }
 
         Serial.println("MCU Sent enable command");
         timer_inverter_enable.reset();
@@ -822,16 +667,6 @@ int calculate_torque() {
   int16_t mc_rpm = abs(mc_motor_position_information.get_motor_speed());
   if (mcu_status.get_launch_ctrl_active()) {
 
-
-    int launch_control_torque_limit = (int)(lc_torque_table[mc_rpm / 10]) * 10;
-    int torque1 = map(round(filtered_accel1_reading), START_ACCELERATOR_PEDAL_1, END_ACCELERATOR_PEDAL_1, 0,  100);
-    int torque2 = map(round(filtered_accel2_reading), START_ACCELERATOR_PEDAL_2, END_ACCELERATOR_PEDAL_2, 0,  100);
-
-    if (torque1 > 80 && torque2 > 80) {
-      calculated_torque = launch_control_torque_limit;
-    } else {
-      calculated_torque = 0;
-    }
   } else {
     const int max_torque = mcu_status.get_max_torque() * 10;
     int torque1 = map(round(filtered_accel1_reading), START_ACCELERATOR_PEDAL_1, END_ACCELERATOR_PEDAL_1, 0, max_torque);
@@ -858,21 +693,10 @@ int calculate_torque() {
 
 
   //power limit to 80kW
-  int power_output = mc_rpm * 0.10472 * calculated_torque / 10;
-  if (power_output > 80000) {
-    calculated_torque = 80000 / (0.10472 * mc_rpm) * 10 ;
-  }
+  //add this plz
+
   return calculated_torque;
 }
-
-// inline void update_coulomb_count() {
-//     int new_current = mc_current_informtarion.get_dc_bus_current() * 10; // get current in Amps * 100
-//     if (new_current > 0) {
-//         total_discharge_amount += new_current;
-//     } else {
-//         total_charge_amount -= new_current;
-//     }
-// }
 
 /* Read pedal sensor values */
 inline void read_pedal_values() {
@@ -893,21 +717,6 @@ inline void read_pedal_values() {
   mcu_status.set_brake_pedal_active(filtered_brake1_reading >= BRAKE_ACTIVE);
   digitalWrite(BRAKE_LIGHT_CTRL, mcu_status.get_brake_pedal_active());
 
-  /* Print values for debugging */
-  /*#if DEBUG
-    if (timer_debug.check()) {
-      Serial.print("MCU PEDAL ACCEL 1: ");
-      Serial.println(mcu_pedal_readings.get_accelerator_pedal_1());
-      Serial.print("MCU PEDAL ACCEL 2: ");
-      Serial.println(mcu_pedal_readings.get_accelerator_pedal_2());
-      Serial.print("MCU PEDAL BRAKE: ");
-      Serial.println(mcu_pedal_readings.get_brake_transducer_1());
-      Serial.print("MCU BRAKE ACT: ");
-      Serial.println(mcu_status.get_brake_pedal_active());
-      Serial.print("MCU STATE: ");
-      Serial.println(mcu_status.get_state());
-    }
-    #endif*/
 }
 
 /* Read shutdown system values */
@@ -928,116 +737,12 @@ inline void read_status_values() {
 /* Read wheel speed values */
 // may need to move to interrupt based approach
 inline void read_wheel_speed() {
-  // front left
-  {
-    static uint8_t cur_state_front_left{};
-    static uint8_t prev_state_front_left{};
-    static int cur_time_front_left{};
-    static int prev_time_front_left{};
 
-    cur_state_front_left = digitalRead(FRONT_LEFT_WHEEL);
-
-    if (cur_state_front_left == 0 && prev_state_front_left == 1) {
-      cur_time_front_left = micros();
-      int micros_elapsed = cur_time_front_left - prev_time_front_left;
-      if (micros_elapsed > 500) {
-        rpm_front_left = (60000000.0 / NUM_TEETH) / micros_elapsed;
-        prev_time_front_left = cur_time_front_left;
-        total_ticks_front_left += 1;
-      }
-    }
-
-    if (micros() - prev_time_front_left > TIME_OUT && rpm_front_left) {
-      rpm_front_left = 0;
-    }
-
-    prev_state_front_left = cur_state_front_left;
-    update_distance_traveled();
-  }
-  // front right
-  {
-    static uint8_t cur_state_front_right{};
-    static uint8_t prev_state_front_right{};
-    static int cur_time_front_right{};
-    static int prev_time_front_right{};
-
-    cur_state_front_right = digitalRead(FRONT_RIGHT_WHEEL);
-
-    if (cur_state_front_right == 0 && prev_state_front_right == 1) {
-      cur_time_front_right = micros();
-      int micros_elapsed = cur_time_front_right - prev_time_front_right;
-      if (micros_elapsed > 500) {
-        rpm_front_right = (60000000.0 / NUM_TEETH) / micros_elapsed;
-        prev_time_front_right = cur_time_front_right;
-        total_ticks_front_right += 1;
-      }
-    }
-
-    if (micros() - prev_time_front_right > TIME_OUT && rpm_front_right) {
-      rpm_front_right = 0;
-    }
-
-    prev_state_front_right = cur_state_front_right;
-    update_distance_traveled();
-  }
-  // back left
-  {
-    static uint8_t cur_state_back_left{};
-    static uint8_t prev_state_back_left{};
-    static int cur_time_back_left{};
-    static int prev_time_back_left{};
-
-    cur_state_back_left = digitalRead(BACK_LEFT_WHEEL);
-
-    if (cur_state_back_left == 0 && prev_state_back_left == 1) {
-      cur_time_back_left = micros();
-      int micros_elapsed = cur_time_back_left - prev_time_back_left;
-      if (micros_elapsed > 500) {
-        rpm_back_left = (60000000.0 / NUM_TEETH) / micros_elapsed;
-        prev_time_back_left = cur_time_back_left;
-        total_ticks_back_left += 1;
-      }
-    }
-
-    if (micros() - prev_time_back_left > TIME_OUT && rpm_back_left) {
-      rpm_back_left = 0;
-    }
-
-    prev_state_back_left = cur_state_back_left;
-  }
-  // back right
-  {
-    static uint8_t cur_state_back_right{};
-    static uint8_t prev_state_back_right{};
-    static int cur_time_back_right{};
-    static int prev_time_back_right{};
-
-    cur_state_back_right = digitalRead(BACK_RIGHT_WHEEL);
-
-    if (cur_state_back_right == 0 && prev_state_back_right == 1) {
-      cur_time_back_right = micros();
-      int micros_elapsed = cur_time_back_right - prev_time_back_right;
-      if (micros_elapsed > 500) {
-        rpm_back_right = (60000000.0 / NUM_TEETH) / micros_elapsed;
-        prev_time_back_right = cur_time_back_right;
-        total_ticks_back_right += 1;
-      }
-    }
-
-    if (micros() - prev_time_back_right > TIME_OUT && rpm_back_right) {
-      rpm_back_right = 0;
-    }
-
-    prev_state_back_right = cur_state_back_right;
-  }
 }
 
 /* Track how far the car has driven */
 inline void update_distance_traveled() {
-  // total_revs = ((total_ticks_front_left + total_ticks_front_right) / (2.0 * NUM_TEETH));
-  // distance travelled = total_revs * wheel_circumference
-  // scaled by 100 for digitizing
-  mcu_status.set_distance_travelled(((total_ticks_front_left + total_ticks_front_right) / (2.0 * NUM_TEETH)) * WHEEL_CIRCUMFERENCE * 100);
+
 }
 
 #if BMS_DEBUG_ENABLE
