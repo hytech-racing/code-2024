@@ -18,7 +18,7 @@ public:
   inline int16_t get_torque_setpoint()   const { return torque_setpoint; }
 
   inline void set_torque_setpoint(const int16_t torque) {torque_setpoint = torque;}
-  
+
 private:
     int16_t torque_setpoint; //in 0.1% Mn
 
