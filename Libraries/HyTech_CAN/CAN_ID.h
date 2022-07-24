@@ -6,6 +6,10 @@
 #define ID_MC2_TEMPS												0xA5
 #define ID_MC3_TEMPS												0xA6
 #define ID_MC4_TEMPS												0xA7
+#define ID_MC1_ENERGY												0xA8
+#define ID_MC2_ENERGY												0xA9
+#define ID_MC3_ENERGY												0xA10
+#define ID_MC4_ENERGY												0xA11
 
 #define ID_MC1_SETPOINTS_COMMAND									0xB0
 #define ID_MC2_SETPOINTS_COMMAND									0xB1
