@@ -24,6 +24,6 @@ private: // all temps in 0.1C
     int16_t inverter_temp; //cold plate temp
     int16_t igbt_temp;
     int16_t diagnostic_number;
-}
+};
 
 #pragma pack(pop)

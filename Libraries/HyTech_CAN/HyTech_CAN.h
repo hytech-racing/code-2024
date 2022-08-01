@@ -28,7 +28,11 @@
 #include "MCU_wheel_speed.h"
 #include "MCU_analog_readings.h"
 
-
+#include "MC_energy.h"
+#include "MC_setpoints_command.h"
+#include "MC_status.h"
+#include "MC_temps.h"
+#include "MC_torque_command.h"
 
 #include "SAB_readings_front.h"
 #include "SAB_readings_rear.h"

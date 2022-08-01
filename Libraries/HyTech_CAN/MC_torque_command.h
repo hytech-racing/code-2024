@@ -22,6 +22,6 @@ public:
 private:
     int16_t torque_setpoint; //in 0.1% Mn
 
-}
+};
 
 #pragma pack(pop)

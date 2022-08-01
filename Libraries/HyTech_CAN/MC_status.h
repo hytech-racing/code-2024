@@ -34,6 +34,6 @@ private:
     int16_t speed; //speed in rpm
     int16_t torque; //torque in 0.1% mn
     int16_t torque_current; //torque current in 0.1A
-}
+};
 
 #pragma pack(pop)

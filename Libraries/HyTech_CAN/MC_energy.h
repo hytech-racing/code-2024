@@ -23,6 +23,6 @@ private:
   uint16_t dc_bus_voltage; //dc bus voltage in 1V
   int16_t torque_current; //see datasheet p81
   int16_t magnetizing_current;
-}
+};
 
 #pragma pack(pop)
