@@ -1,17 +1,16 @@
 /*
-   Teensy 3.2 Main Control Unit code
-   Written by Ethan Weinstock with assistance from Shaan Dhawan
+   Teensy 4.1 Main Control Unit code
+   Written by Liwei Sun which is why the code is so bad
 
-   Rev 10 - 6/16/2021
-   FSAE Nevada
+   Rev 11
 */
 
 #include <stdint.h>
+#include <FlexCAN_T4.h>
 #define _USE_MATH_DEFINES
 #include <cmath>
 
 #include "ADC_SPI.h"
-#include "HyTech_FlexCAN.h"
 #include "HyTech_CAN.h"
 #include "kinetis_flexcan.h"
 #include "Metro.h"
@@ -30,11 +29,7 @@
 #define DEBUG true
 #define BMS_DEBUG_ENABLE false
 
-#define LINEAR 0
-
-#define MAP_MODE LINEAR
-
-#include "MCU_rev10_dfs.h"
+#include "MCU_rev11_dfs.h"
 
 #include "driver_constants.h"
 
@@ -42,6 +37,12 @@
 MCU_pedal_readings mcu_pedal_readings{};
 MCU_status mcu_status{};
 MCU_wheel_speed mcu_wheel_speed{};
+
+MC_status mc_status[4];
+MC_temps mc_temps[4];
+MC_energy mc_energy[4];
+MC_setpoints_command mc_setpoints_command[4];
+MC_torque_command mc_torque_command[4];
 
 // Inbound CAN messages
 BMS_coulomb_counts bms_coulomb_counts{};
@@ -51,20 +52,15 @@ BMS_voltages bms_voltages{};
 Dashboard_status dashboard_status{};
 
 //Timers
-#if DEBUG
-Metro timer_bms_imd_print_fault = Metro(500);
-Metro timer_debug = Metro(200);
-Metro timer_debug_raw_torque = Metro(200);
-Metro timer_debug_torque = Metro(200);
-Metro timer_bms_print_fault = Metro(500);
-Metro timer_imd_print_fault = Metro(500);
-#endif
-Metro timer_inverter_enable = Metro(2000); // Timeout failed inverter enable
-Metro timer_motor_controller_send = Metro(50);
-Metro timer_coloumb_count_send = Metro(1000);
+Metro timer_CAN_inverter_status_read = Metro(50); 
+Metro timer_CAN_inverter_temps_read = Metro(400); 
+Metro timer_CAN_inverter_energy_read = Metro(500); 
+Metro timer_CAN_inverter_setpoints_send = Metro(200);
+Metro timer_CAN_inverter_torque_send = Metro(50); 
+Metro timer_CAN_coloumb_count_send = Metro(1000);
 Metro timer_ready_sound = Metro(2000); // Time to play RTD sound
-Metro timer_can_update = Metro(100);
-Metro timer_sensor_can_update = Metro(5);
+Metro timer_CAN_mcu_status_send = Metro(100);
+Metro timer_CAN_mcu_pedal_readings_send = Metro(5);
 Metro timer_restart_inverter = Metro(500, 1); // Allow the MCU to restart the inverter
 Metro timer_status_send = Metro(100);
 Metro timer_watchdog_timer = Metro(500);
@@ -74,25 +70,7 @@ Metro timer_watchdog_timer = Metro(500);
 // this allows me to set the interval as 0 once a fault has occurred, leading to continuous faulting
 // until a CAN message comes in which resets the timer and the interval
 Metro timer_bms_heartbeat = Metro(0, 1);
-// add dashboard heartbeat
-// Metro timer_dashboard_heartbeat = Metro(0, 1);
-// Metro timer_software_enable_interval = Metro(TIMER_SOFTWARE_ENABLE, 1);
 
-#if BMS_DEBUG_ENABLE
-#define TOTAL_IC 8                      // Number of ICs in the system
-#define CELLS_PER_IC 9                  // Number of cells per IC
-#define THERMISTORS_PER_IC 3            // Number of cell thermistors per IC
-#define PCB_THERM_PER_IC 2              // Number of PCB thermistors per IC
-
-BMS_detailed_voltages bms_detailed_voltages[8][3];
-BMS_detailed_temperatures bms_detailed_temperatures[8];
-BMS_onboard_detailed_temperatures bms_onboard_detailed_temperatures[TOTAL_IC];
-BMS_onboard_temperatures bms_onboard_temperatures;
-BMS_balancing_status bms_balancing_status[(TOTAL_IC + 3) / 4]; // Round up TOTAL_IC / 4 since data from 4 ICs can fit in a single message
-MCU_analog_readings mcu_analog_readings{};
-Metro timer_bms_print(1000);
-
-#endif
 /*
    Variables to store filtered values from ADC channels
 */
@@ -108,22 +86,10 @@ uint32_t total_charge_amount = 0;
 uint32_t total_discharge_amount = 0;
 
 ADC_SPI ADC(ADC_CS, ADC_SPI_SPEED);
-FlexCAN CAN(500000);
-
-/*
-   Wheel speed stuff
-*/
-int total_ticks_front_left{};
-int total_ticks_front_right{};
-float rpm_front_left{};
-float rpm_front_right{};
-
-int total_ticks_back_left{};
-int total_ticks_back_right{};
-float rpm_back_left{};
-float rpm_back_right{};
-
-static CAN_message_t tx_msg;
+FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> FRONT_INV_CAN;
+FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> REAR_INV_CAN;
+FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> TELEM_CAN;
+CAN_message_t msg;
 
 // coloumb counts
 uint32_t total_discharge;
@@ -138,14 +104,7 @@ void setup() {
   pinMode(BRAKE_LIGHT_CTRL, OUTPUT);
 
   // change to input if comparator is PUSH PULL
-  pinMode(FRONT_LEFT_WHEEL, INPUT_PULLUP);
-  pinMode(FRONT_RIGHT_WHEEL, INPUT_PULLUP);
-  pinMode(BACK_LEFT_WHEEL, INPUT_PULLUP);
-  pinMode(BACK_RIGHT_WHEEL, INPUT_PULLUP);
   pinMode(INVERTER_CTRL, OUTPUT);
-
-  // pinMode(FAN_1, OUTPUT);
-  // pinMode(FAN_2, OUTPUT);
 
   pinMode(WATCHDOG_INPUT, OUTPUT);
   // the initial state of the watchdog is high
@@ -158,15 +117,12 @@ void setup() {
 #if DEBUG
   Serial.begin(115200);
 #endif
-  CAN.begin();
-
-  /* Configure CAN rx interrupt */
-  interrupts();
-  NVIC_ENABLE_IRQ(IRQ_CAN_MESSAGE);
-  attachInterruptVector(IRQ_CAN_MESSAGE, parse_can_message);
-  FLEXCAN0_IMASK1 = FLEXCAN_IMASK1_BUF5M;
-  /* Configure CAN rx interrupt */
-
+  FRONT_INV_CAN.begin();
+  FRONT_INV_CAN.setBaudRate(1000000);
+  REAR_INV_CAN.begin();
+  REAR_INV_CAN.setBaudRate(1000000);
+  TELEM_CAN.begin();
+  TELEM_CAN.setBaudRate(1000000);
   delay(500);
 
 #if DEBUG
@@ -174,15 +130,13 @@ void setup() {
 #endif
 
 
-  analogWrite(FAN_1, FAN_1_DUTY_CYCLE);
-  analogWrite(FAN_2, FAN_2_DUTY_CYCLE);
   // these are false by default
   mcu_status.set_bms_ok_high(false);
   mcu_status.set_imd_ok_high(false);
 
   digitalWrite(INVERTER_CTRL, HIGH);
   mcu_status.set_inverter_powered(true);
-  inverter_heartbeat(0);
+  send_CAN_disable_all_inverters();
 
 
   // present action for 5s
@@ -193,56 +147,18 @@ void setup() {
   mcu_status.set_torque_mode(1);
 
   /* Set up total discharge readings */
-  setup_total_discharge();
+  //setup_total_discharge();
 
 }
 
 void loop() {
-  // Serial.println(analogRead(A4)*55 /12*3.3/1024);
   read_pedal_values();
-  read_wheel_speed();
   read_status_values();
 
-  /* Send state over CAN */
-  if (timer_can_update.check()) {
-    // Send Main Control Unit status message
-    mcu_status.write(tx_msg.buf);
-    tx_msg.id = ID_MCU_STATUS;
-    tx_msg.len = sizeof(mcu_status);
-    CAN.write(tx_msg);
+  send_CAN_mcu_status();
+  send_CAN_mcu_pedal_readings();
+  //send_CAN_bms_coulomb_counts();
 
-  }
-
-  /* Send sensor data over CAN */
-  if (timer_sensor_can_update.check()) {
-    // Update the pedal readings to send over CAN
-    mcu_pedal_readings.set_accelerator_pedal_1(filtered_accel1_reading);
-    mcu_pedal_readings.set_accelerator_pedal_2(filtered_accel2_reading);
-    mcu_pedal_readings.set_brake_transducer_1(filtered_brake1_reading);
-    mcu_pedal_readings.set_brake_transducer_2(filtered_brake2_reading);
-
-    // Send Main Control Unit pedal reading message
-    mcu_pedal_readings.write(tx_msg.buf);
-    tx_msg.id = ID_MCU_PEDAL_READINGS;
-    tx_msg.len = sizeof(mcu_pedal_readings);
-    CAN.write(tx_msg);
-
-    //        // write the rpm data
-    //        // scale factor for transmit
-    //        mcu_wheel_speed.set_rpm_front_left(rpm_front_left*10);
-    //        mcu_wheel_speed.set_rpm_front_right(rpm_front_left*10);
-    //        mcu_wheel_speed.set_rpm_back_left(rpm_back_left*10);
-    //        mcu_wheel_speed.set_rpm_back_right(rpm_back_right*10);
-    //
-
-  }
-
-  if (timer_coloumb_count_send.check()) {
-    bms_coulomb_counts.write(tx_msg.buf);
-    tx_msg.id = ID_BMS_COULOMB_COUNTS;
-    tx_msg.len = sizeof(bms_coulomb_counts);
-    CAN.write(tx_msg);
-  }
 
   /* Finish restarting the inverter when timer expires */
   if (timer_restart_inverter.check() && inverter_restart) {
@@ -254,86 +170,100 @@ void loop() {
   /* handle state functionality */
   state_machine();
   software_shutdown();
+}
 
-#if BMS_DEBUG_ENABLE
-  static bool bms_print = false;
-  if (Serial.available()) {
-    String a = Serial.readString();
-    if (a == "on" || a == "on\n") {
-      Serial.println("BMS print turned on");
-      bms_print = true;
-    }
-    else if (a == "off" || a == "off\n") {
-      Serial.println("BMS print turned off");
-      bms_print = false;
-    }
+inline void send_CAN_mcu_status() {
+  if (timer_CAN_mcu_status_send.check()) {
+    // Send Main Control Unit status message
+    mcu_status.write(msg.buf);
+    msg.id = ID_MCU_STATUS;
+    msg.len = sizeof(mcu_status);
+    TELEM_CAN.write(msg);
   }
-  if (bms_print && timer_bms_print.check()) print_bms();
-#endif
 }
 
+inline void send_CAN_mcu_pedal_readings() {
+  if (timer_CAN_mcu_pedal_readings_send.check()) {
+    // Update the pedal readings to send over CAN
+    mcu_pedal_readings.set_accelerator_pedal_1(filtered_accel1_reading);
+    mcu_pedal_readings.set_accelerator_pedal_2(filtered_accel2_reading);
+    mcu_pedal_readings.set_brake_transducer_1(filtered_brake1_reading);
+    mcu_pedal_readings.set_brake_transducer_2(filtered_brake2_reading);
 
-inline void setup_total_discharge() {
-  total_discharge = 0;
-  previous_data_time = millis();
-  bms_coulomb_counts.set_total_discharge(total_discharge);
+    // Send Main Control Unit pedal reading message
+    mcu_pedal_readings.write(msg.buf);
+    msg.id = ID_MCU_PEDAL_READINGS;
+    msg.len = sizeof(mcu_pedal_readings);
+    TELEM_CAN.write(msg);
+  }
 }
 
-inline void process_total_discharge() {
-  unsigned long current_time = millis();
-  double new_current = mc_current_information.get_dc_bus_current() / 10;
-  uint32_t added_Ah = new_current * ((current_time - previous_data_time) * 10000 / (1000 * 60 * 60 )); //scaled by 10000 for telemetry parsing
-  previous_data_time = current_time;
-  total_discharge += added_Ah;
-  bms_coulomb_counts.set_total_discharge(total_discharge);
+inline void send_CAN_bms_coulomb_counts() {
+  if (timer_CAN_bms_coloumb_count_send.check()) {
+    bms_coulomb_counts.write(msg.buf);
+    msg.id = ID_BMS_COULOMB_COUNTS;
+    msg.len = sizeof(bms_coulomb_counts);
+    TELEM_CAN.write(msg);
+  }
 }
+//inline void setup_total_discharge() {
+//  total_discharge = 0;
+//  previous_data_time = millis();
+//  bms_coulomb_counts.set_total_discharge(total_discharge);
+//}
+//
+//inline void process_total_discharge() {
+//  unsigned long current_time = millis();
+//  double new_current = mc_current_information.get_dc_bus_current() / 10;
+//  uint32_t added_Ah = new_current * ((current_time - previous_data_time) * 10000 / (1000 * 60 * 60 )); //scaled by 10000 for telemetry parsing
+//  previous_data_time = current_time;
+//  total_discharge += added_Ah;
+//  bms_coulomb_counts.set_total_discharge(total_discharge);
+//}
 
 inline void state_machine() {
   switch (mcu_status.get_state()) {
     case MCU_STATE::STARTUP: break;
+    
     case MCU_STATE::TRACTIVE_SYSTEM_NOT_ACTIVE:
       inverter_heartbeat(0);
-#if DEBUG
-      Serial.println("TS NOT ACTIVE");
-#endif
+      #if DEBUG
+        Serial.println("TS NOT ACTIVE");  
+      #endif
       // if TS is above HV threshold, move to Tractive System Active
       if (mc_voltage_information.get_dc_bus_voltage() >= MIN_HV_VOLTAGE) {
-#if DEBUG
-        Serial.println("Setting state to TS Active from TS Not Active");
-#endif
+        #if DEBUG
+          Serial.println("Setting state to TS Active from TS Not Active");
+        #endif
         set_state(MCU_STATE::TRACTIVE_SYSTEM_ACTIVE);
       }
       break;
-
+  
     case MCU_STATE::TRACTIVE_SYSTEM_ACTIVE:
       check_TS_active();
-      inverter_heartbeat(0);
-
-      // if start button has been pressed and brake pedal is held down, transition to the next state
+      send_CAN_disable_all_inverters();
       if (dashboard_status.get_start_btn() && mcu_status.get_brake_pedal_active()) {
-#if DEBUG
-        Serial.println("Setting state to Enabling Inverter");
-#endif
+        #if DEBUG
+          Serial.println("Setting state to Enabling Inverter");
+        #endif
         set_state(MCU_STATE::ENABLING_INVERTER);
       }
       break;
 
     case MCU_STATE::ENABLING_INVERTER:
       check_TS_active();
-      inverter_heartbeat(1);
-
       // inverter enabling timed out
       if (timer_inverter_enable.check()) {
-#if DEBUG
-        Serial.println("Setting state to TS Active from Enabling Inverter");
-#endif
+        #if DEBUG
+          Serial.println("Setting state to TS Active from Enabling Inverter");
+         #endif
         set_state(MCU_STATE::TRACTIVE_SYSTEM_ACTIVE);
       }
       // motor controller indicates that inverter has enabled within timeout period
-      if (mc_internal_states.get_inverter_enable_state()) {
-#if DEBUG
-        Serial.println("Setting state to Waiting Ready to Drive Sound");
-#endif
+      if () {
+        #if DEBUG
+          Serial.println("Setting state to Waiting Ready to Drive Sound");
+        #endif
         set_state(MCU_STATE::WAITING_READY_TO_DRIVE_SOUND);
       }
       break;
@@ -345,9 +275,9 @@ inline void state_machine() {
 
       // if the ready to drive sound has been playing for long enough, move to ready to drive mode
       if (timer_ready_sound.check()) {
-#if DEBUG
-        Serial.println("Setting state to Ready to Drive");
-#endif
+        #if DEBUG
+          Serial.println("Setting state to Ready to Drive");
+        #endif
         set_state(MCU_STATE::READY_TO_DRIVE);
       }
       break;
@@ -363,9 +293,9 @@ inline void state_machine() {
         // FSAE T.4.2.10
         if (filtered_accel1_reading < MIN_ACCELERATOR_PEDAL_1 || filtered_accel1_reading > MAX_ACCELERATOR_PEDAL_1) {
           mcu_status.set_no_accel_implausability(false);
-#if DEBUG
-          Serial.println("T.4.2.10 1");
-#endif
+          #if DEBUG
+            Serial.println("T.4.2.10 1");
+          #endif
         }
         else if (filtered_accel2_reading > MAX_ACCELERATOR_PEDAL_2 || filtered_accel2_reading < MIN_ACCELERATOR_PEDAL_2) {
           mcu_status.set_no_accel_implausability(false);
@@ -459,30 +389,17 @@ inline void state_machine() {
 // if TS is below HV threshold, return to Tractive System Not Active
 inline void check_TS_active() {
   if (mc_voltage_information.get_dc_bus_voltage() < MIN_HV_VOLTAGE) {
-#if DEBUG
-    Serial.println("Setting state to TS Not Active, because TS is below HV threshold");
-#endif
+    #if DEBUG
+      Serial.println("Setting state to TS Not Active, because TS is below HV threshold");
+    #endif
     set_state(MCU_STATE::TRACTIVE_SYSTEM_NOT_ACTIVE);
   }
 }
-// if the inverter becomes disabled, return to Tractive system active
-inline void check_inverter_disabled() {
-  if (!mc_internal_states.get_inverter_enable_state()) {
-#if DEBUG
-    Serial.println("Setting state to TS Active because inverter is disabled");
-#endif
-    set_state(MCU_STATE::TRACTIVE_SYSTEM_ACTIVE);
-  }
-}
-// Send a message to the Motor Controller over CAN when vehicle is not ready to drive
-inline void inverter_heartbeat(int enable) {
-  if (timer_motor_controller_send.check()) {
-    MC_command_message mc_command_message(0, 0, 0, enable, 0, 0);
 
-    mc_command_message.write(tx_msg.buf);
-    tx_msg.id = ID_MC_COMMAND_MESSAGE;
-    tx_msg.len = sizeof(mc_command_message);
-    CAN.write(tx_msg);
+
+// Send a message to the Motor Controller over CAN when vehicle is not ready to drive
+inline void send_CAN_disable_all_inverters(){
+  if (timer_motor_controller_send.check()) {
   }
 }
 
@@ -563,34 +480,6 @@ void parse_can_message() {
         // eliminate all action buttons to not process twice
         dashboard_status.set_button_flags(0);
         break;
-#if BMS_DEBUG_ENABLE
-      case ID_BMS_DETAILED_TEMPERATURES: {
-          BMS_detailed_temperatures temp_det_temp = BMS_detailed_temperatures(rx_msg.buf);
-          bms_detailed_temperatures[temp_det_temp.get_ic_id()].load(rx_msg.buf);
-          break;
-        }
-      case ID_BMS_DETAILED_VOLTAGES: {
-          BMS_detailed_voltages temp_det_volt = BMS_detailed_voltages(rx_msg.buf);
-          bms_detailed_voltages[temp_det_volt.get_ic_id()][temp_det_volt.get_group_id()].load(rx_msg.buf);
-          break;
-        }
-      case ID_BMS_ONBOARD_TEMPERATURES:
-        bms_onboard_temperatures.load(rx_msg.buf);
-        break;
-      case ID_BMS_ONBOARD_DETAILED_TEMPERATURES: {
-          BMS_onboard_detailed_temperatures temp_onboard_det_temp = BMS_onboard_detailed_temperatures(rx_msg.buf);
-          bms_onboard_detailed_temperatures[temp_onboard_det_temp.get_ic_id()].load(rx_msg.buf);
-          break;
-        } s
-      case ID_BMS_BALANCING_STATUS: {
-          BMS_balancing_status temp = BMS_balancing_status(rx_msg.buf);
-          bms_balancing_status[temp.get_group_id()].load(rx_msg.buf);
-          break;
-        }
-      case ID_MCU_ANALOG_READINGS:
-        mcu_analog_readings.load(rx_msg.buf);
-        break;
-#endif
     }
   }
 }
@@ -622,10 +511,10 @@ void set_state(MCU_STATE new_state) {
     case MCU_STATE::WAITING_READY_TO_DRIVE_SOUND:
       // make dashboard stop buzzer
       mcu_status.set_activate_buzzer(false);
-      mcu_status.write(tx_msg.buf);
-      tx_msg.id = ID_MCU_STATUS;
-      tx_msg.len = sizeof(mcu_status);
-      CAN.write(tx_msg);
+      mcu_status.write(msg.buf);
+      msg.id = ID_MCU_STATUS;
+      msg.len = sizeof(mcu_status);
+      TELEM_CAN.write(msg);
       break;
     case MCU_STATE::READY_TO_DRIVE: break;
   }
@@ -638,8 +527,6 @@ void set_state(MCU_STATE new_state) {
     case MCU_STATE::TRACTIVE_SYSTEM_NOT_ACTIVE: break;
     case MCU_STATE::TRACTIVE_SYSTEM_ACTIVE: break;
     case MCU_STATE::ENABLING_INVERTER: {
-
-
         Serial.println("MCU Sent enable command");
         timer_inverter_enable.reset();
         break;
@@ -647,10 +534,10 @@ void set_state(MCU_STATE new_state) {
     case MCU_STATE::WAITING_READY_TO_DRIVE_SOUND:
       // make dashboard sound buzzer
       mcu_status.set_activate_buzzer(true);
-      mcu_status.write(tx_msg.buf);
-      tx_msg.id = ID_MCU_STATUS;
-      tx_msg.len = sizeof(mcu_status);
-      CAN.write(tx_msg);
+      mcu_status.write(msg.buf);
+      msg.id = ID_MCU_STATUS;
+      msg.len = sizeof(mcu_status);
+      TELEM_CAN.write(msg);
 
       timer_ready_sound.reset();
       Serial.println("RTDS enabled");
@@ -744,98 +631,3 @@ inline void read_wheel_speed() {
 inline void update_distance_traveled() {
 
 }
-
-#if BMS_DEBUG_ENABLE
-inline void print_bms() {
-  print_cells();
-  print_temps();
-  Serial.print("BMS state: ");
-  Serial.println(bms_status.get_state());
-}
-
-void print_cells() {
-  Serial.println("------------------------------------------------------------------------------------------------------------------------------------------------------------");
-  Serial.println("\t\t\t\tRaw Cell Voltages\t\t\t\t\t\t\tCell Status (Ignoring or Balancing)");
-  Serial.println("\tC0\tC1\tC2\tC3\tC4\tC5\tC6\tC7\tC8\t\tC0\tC1\tC2\tC3\tC4\tC5\tC6\tC7\tC8");
-  for (int ic = 0; ic < TOTAL_IC; ic++) {
-    Serial.print("IC"); Serial.print(ic); Serial.print("\t");
-    for (int cell = 0; cell < CELLS_PER_IC; cell++) {
-      double voltage = bms_detailed_voltages[ic][cell / 3].get_voltage(cell % 3) * 0.0001;
-      Serial.print(voltage, 4); Serial.print("V\t");
-    }
-    Serial.print("\t");
-    for (int cell = 0; cell < CELLS_PER_IC; cell++) {
-      int balancing = bms_balancing_status[ic / 4].get_cell_balancing(ic % 4, cell);
-      if (balancing) {
-        Serial.print("BAL");
-      }
-      Serial.print("\t");
-    }
-    Serial.println();
-  }
-  Serial.println();
-  Serial.println("\t\t\t\tDelta from Min Cell");
-  Serial.println("\tC0\tC1\tC2\tC3\tC4\tC5\tC6\tC7\tC8");
-  for (int ic = 0; ic < TOTAL_IC; ic++) {
-    Serial.print("IC"); Serial.print(ic); Serial.print("\t");
-    for (int cell = 0; cell < CELLS_PER_IC; cell++) {
-      double voltage = (bms_detailed_voltages[ic][cell / 3].get_voltage(cell % 3) - bms_voltages.get_low()) * 0.0001;
-      Serial.print(voltage, 4);
-      Serial.print("V");
-      Serial.print("\t");
-    }
-    Serial.println();
-  }
-  Serial.println();
-  Serial.print("Cell voltage statistics\t\tTotal: "); Serial.print(bms_voltages.get_total() / (double) 1e2, 4); Serial.print("V\t\t");
-  Serial.print("Average: "); Serial.print(bms_voltages.get_average() / (double) 1e4, 4); Serial.print("V\t\t");
-  Serial.print("Min: "); Serial.print(bms_voltages.get_low() / (double) 1e4, 4); Serial.print("V\t\t");
-  Serial.print("Max: "); Serial.print(bms_voltages.get_high() / (double) 1e4, 4); Serial.println("V");
-}
-
-void print_temps() {
-  Serial.println("------------------------------------------------------------------------------------------------------------------------------------------------------------");
-  Serial.println("\t\tCell Temperatures\t\t\t\t\t\t\t\t\t   PCB Temperatures");
-  Serial.println("\tTHERM 0\t\tTHERM 1\t\tTHERM 2\t\t\t\t\t\t\t\tTHERM 0\t\tTHERM 1");
-  for (int ic = 0; ic < TOTAL_IC; ic++) {
-    Serial.print("IC"); Serial.print(ic); Serial.print("\t");
-    for (int therm = 0; therm < THERMISTORS_PER_IC; therm++) {
-      double temp = ((double) bms_detailed_temperatures[ic].get_temperature(therm)) / 100;
-      Serial.print(temp, 2);
-      Serial.print(" ºC");
-      Serial.print("\t");
-    }
-    Serial.print("\t\t\t\t\t\t");
-    for (int therm = 0; therm < PCB_THERM_PER_IC; therm++) {
-      double temp = ((double) bms_onboard_detailed_temperatures[ic].get_temperature(therm)) / 100;
-      Serial.print(temp, 2);
-      Serial.print(" ºC");
-      Serial.print("\t");
-    }
-    Serial.println();
-  }
-  Serial.print("\nCell temperature statistics\t\t Average: ");
-  Serial.print(bms_temperatures.get_average_temperature() / (double) 100, 2);
-  Serial.print(" ºC\t\t");
-  Serial.print("Min: ");
-  Serial.print(bms_temperatures.get_low_temperature() / (double) 100, 2);
-  Serial.print(" ºC\t\t");
-  Serial.print("Max: ");
-  Serial.print(bms_temperatures.get_high_temperature() / (double) 100, 2);
-  Serial.println(" ºC\n");
-  Serial.print("PCB temperature statistics\t\t Average: ");
-  Serial.print(bms_onboard_temperatures.get_average_temperature() / (double) 100, 2);
-  Serial.print(" ºC\t\t");
-  Serial.print("Min: ");
-  Serial.print(bms_onboard_temperatures.get_low_temperature() / (double) 100, 2);
-  Serial.print(" ºC\t\t");
-  Serial.print("Max: ");
-  Serial.print(bms_onboard_temperatures.get_high_temperature() / (double) 100, 2);
-  Serial.println(" ºC\n");
-  Serial.println();
-  Serial.print("GLV Battery voltage: ");
-  Serial.println(mcu_analog_readings.get_glv_battery_voltage());
-}
-
-
-#endif
