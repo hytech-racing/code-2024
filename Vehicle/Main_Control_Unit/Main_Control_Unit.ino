@@ -7,11 +7,11 @@
 
 #include <stdint.h>
 #include <FlexCAN_T4.h>
+#include <HyTech_CAN.h>
 #define _USE_MATH_DEFINES
 #include <cmath>
 
 #include "ADC_SPI.h"
-#include "HyTech_CAN.h"
 #include "kinetis_flexcan.h"
 #include "Metro.h"
 
@@ -34,7 +34,7 @@
 #include "driver_constants.h"
 
 // Outbound CAN messages
-MCU_pedal_readings mcu_pedal_readings{};
+MCU_pedal_readings mcu_pedal_readings;
 MCU_status mcu_status{};
 MCU_wheel_speed mcu_wheel_speed{};
 
@@ -199,7 +199,7 @@ inline void send_CAN_mcu_pedal_readings() {
 }
 
 inline void send_CAN_bms_coulomb_counts() {
-  if (timer_CAN_bms_coloumb_count_send.check()) {
+  if (timer_CAN_coloumb_count_send.check()) {
     bms_coulomb_counts.write(msg.buf);
     msg.id = ID_BMS_COULOMB_COUNTS;
     msg.len = sizeof(bms_coulomb_counts);
@@ -226,7 +226,7 @@ inline void state_machine() {
     case MCU_STATE::STARTUP: break;
     
     case MCU_STATE::TRACTIVE_SYSTEM_NOT_ACTIVE:
-      inverter_heartbeat(0);
+      send_CAN_disable_all_inverters();
       #if DEBUG
         Serial.println("TS NOT ACTIVE");  
       #endif
@@ -375,7 +375,7 @@ inline void state_machine() {
 
         mc_command_message.set_torque_command(calculated_torque);
 
-        mc_command_message.write(tx_msg.buf);
+        mc_command_message.write(msg.buf);
         tx_msg.id = ID_MC_COMMAND_MESSAGE;
         tx_msg.len = 8;
         CAN.write(tx_msg);
