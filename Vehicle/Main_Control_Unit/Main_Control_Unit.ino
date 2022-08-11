@@ -52,16 +52,17 @@ BMS_voltages bms_voltages{};
 Dashboard_status dashboard_status{};
 
 //Timers
-Metro timer_CAN_inverter_status_read = Metro(50); 
-Metro timer_CAN_inverter_temps_read = Metro(400); 
-Metro timer_CAN_inverter_energy_read = Metro(500); 
-Metro timer_CAN_inverter_setpoints_send = Metro(200);
-Metro timer_CAN_inverter_torque_send = Metro(50); 
+Metro timer_CAN_inverter_status_read = Metro(20);
+Metro timer_CAN_inverter_temps_read = Metro(200);
+Metro timer_CAN_inverter_energy_read = Metro(200);
+Metro timer_CAN_inverter_setpoints_send = Metro(20);
+Metro timer_CAN_inverter_torque_send = Metro(20);
 Metro timer_CAN_coloumb_count_send = Metro(1000);
 Metro timer_ready_sound = Metro(2000); // Time to play RTD sound
 Metro timer_CAN_mcu_status_send = Metro(100);
 Metro timer_CAN_mcu_pedal_readings_send = Metro(5);
 Metro timer_restart_inverter = Metro(500, 1); // Allow the MCU to restart the inverter
+Metro timer_inverter_enable = Metro(5000);
 Metro timer_status_send = Metro(100);
 Metro timer_watchdog_timer = Metro(500);
 
@@ -101,6 +102,18 @@ void setup() {
   mcu_status.set_torque_mode(0);
   mcu_status.set_software_is_ok(true);
 
+  for (uint8_t inv = 0; inv < 4; inv++) {
+    mc_setpoints_command[inv].set_inverter_enable(false);
+    mc_setpoints_command[inv].set_hv_enable(false);
+    mc_setpoints_command[inv].set_driver_enable(false);
+    mc_setpoints_command[inv].set_remove_error(false);
+    mc_setpoints_command[inv].set_speed_setpoint(0);
+    mc_setpoints_command[inv].set_pos_torque_limit(0);
+    mc_setpoints_command[inv].set_neg_torque_limit(0);
+    mc_torque_command[inv].set_torque_setpoint(0);
+  }
+
+
   pinMode(BRAKE_LIGHT_CTRL, OUTPUT);
 
   // change to input if comparator is PUSH PULL
@@ -123,6 +136,12 @@ void setup() {
   REAR_INV_CAN.setBaudRate(1000000);
   TELEM_CAN.begin();
   TELEM_CAN.setBaudRate(1000000);
+  FRONT_INV_CAN.enableMBInterrupts();
+  REAR_INV_CAN.enableMBInterrupts();
+  TELEM_CAN.enableMBInterrupts();
+  FRONT_INV_CAN.onReceive(parse_front_inv_can_message);
+  REAR_INV_CAN.onReceive(parse_rear_inv_can_message);
+  TELEM_CAN.onReceive(parse_telem_can_message);
   delay(500);
 
 #if DEBUG
@@ -136,7 +155,7 @@ void setup() {
 
   digitalWrite(INVERTER_CTRL, HIGH);
   mcu_status.set_inverter_powered(true);
-  send_CAN_disable_all_inverters();
+
 
 
   // present action for 5s
@@ -159,7 +178,8 @@ void loop() {
   send_CAN_mcu_pedal_readings();
   //send_CAN_bms_coulomb_counts();
 
-
+  send_CAN_inverter_setpoints();
+  send_CAN_inverter_torque();
   /* Finish restarting the inverter when timer expires */
   if (timer_restart_inverter.check() && inverter_restart) {
     inverter_restart = false;
@@ -170,6 +190,55 @@ void loop() {
   /* handle state functionality */
   state_machine();
   software_shutdown();
+}
+
+
+inline void send_CAN_inverter_setpoints() {
+  if (timer_CAN_inverter_setpoints_send.check()) {
+    mc_setpoints_command[0].write(msg.buf);
+    msg.id = ID_MC1_SETPOINTS_COMMAND;
+    msg.len = sizeof(mc_setpoints_command[0]);
+    FRONT_INV_CAN.write(msg);
+
+    mc_setpoints_command[1].write(msg.buf);
+    msg.id = ID_MC2_SETPOINTS_COMMAND;
+    msg.len = sizeof(mc_setpoints_command[1]);
+    FRONT_INV_CAN.write(msg);
+
+    mc_setpoints_command[2].write(msg.buf);
+    msg.id = ID_MC3_SETPOINTS_COMMAND;
+    msg.len = sizeof(mc_setpoints_command[2]);
+    REAR_INV_CAN.write(msg);
+
+    mc_setpoints_command[3].write(msg.buf);
+    msg.id = ID_MC4_SETPOINTS_COMMAND;
+    msg.len = sizeof(mc_setpoints_command[3]);
+    REAR_INV_CAN.write(msg);
+  }
+}
+
+inline void send_CAN_inverter_torque() {
+  if (timer_CAN_inverter_torque_send.check()) {
+    mc_torque_command[0].write(msg.buf);
+    msg.id = ID_MC1_TORQUE_COMMAND;
+    msg.len = sizeof(mc_torque_command[0]);
+    FRONT_INV_CAN.write(msg);
+
+    mc_torque_command[1].write(msg.buf);
+    msg.id = ID_MC2_TORQUE_COMMAND;
+    msg.len = sizeof(mc_torque_command[1]);
+    FRONT_INV_CAN.write(msg);
+
+    mc_torque_command[2].write(msg.buf);
+    msg.id = ID_MC3_TORQUE_COMMAND;
+    msg.len = sizeof(mc_torque_command[2]);
+    REAR_INV_CAN.write(msg);
+
+    mc_torque_command[3].write(msg.buf);
+    msg.id = ID_MC4_TORQUE_COMMAND;
+    msg.len = sizeof(mc_torque_command[3]);
+    REAR_INV_CAN.write(msg);
+  }
 }
 
 inline void send_CAN_mcu_status() {
@@ -224,28 +293,26 @@ inline void send_CAN_bms_coulomb_counts() {
 inline void state_machine() {
   switch (mcu_status.get_state()) {
     case MCU_STATE::STARTUP: break;
-    
+
     case MCU_STATE::TRACTIVE_SYSTEM_NOT_ACTIVE:
-      send_CAN_disable_all_inverters();
-      #if DEBUG
-        Serial.println("TS NOT ACTIVE");  
-      #endif
+#if DEBUG
+      Serial.println("TS NOT ACTIVE");
+#endif
       // if TS is above HV threshold, move to Tractive System Active
-      if (mc_voltage_information.get_dc_bus_voltage() >= MIN_HV_VOLTAGE) {
-        #if DEBUG
-          Serial.println("Setting state to TS Active from TS Not Active");
-        #endif
+      if (TS_over_HV_threshold()) {
+#if DEBUG
+        Serial.println("Setting state to TS Active from TS Not Active");
+#endif
         set_state(MCU_STATE::TRACTIVE_SYSTEM_ACTIVE);
       }
       break;
-  
+
     case MCU_STATE::TRACTIVE_SYSTEM_ACTIVE:
       check_TS_active();
-      send_CAN_disable_all_inverters();
       if (dashboard_status.get_start_btn() && mcu_status.get_brake_pedal_active()) {
-        #if DEBUG
-          Serial.println("Setting state to Enabling Inverter");
-        #endif
+#if DEBUG
+        Serial.println("Setting state to Enabling Inverter");
+#endif
         set_state(MCU_STATE::ENABLING_INVERTER);
       }
       break;
@@ -254,16 +321,16 @@ inline void state_machine() {
       check_TS_active();
       // inverter enabling timed out
       if (timer_inverter_enable.check()) {
-        #if DEBUG
-          Serial.println("Setting state to TS Active from Enabling Inverter");
-         #endif
+#if DEBUG
+        Serial.println("Setting state to TS Active from Enabling Inverter");
+#endif
         set_state(MCU_STATE::TRACTIVE_SYSTEM_ACTIVE);
       }
       // motor controller indicates that inverter has enabled within timeout period
       if () {
-        #if DEBUG
-          Serial.println("Setting state to Waiting Ready to Drive Sound");
-        #endif
+#if DEBUG
+        Serial.println("Setting state to Waiting Ready to Drive Sound");
+#endif
         set_state(MCU_STATE::WAITING_READY_TO_DRIVE_SOUND);
       }
       break;
@@ -275,27 +342,22 @@ inline void state_machine() {
 
       // if the ready to drive sound has been playing for long enough, move to ready to drive mode
       if (timer_ready_sound.check()) {
-        #if DEBUG
-          Serial.println("Setting state to Ready to Drive");
-        #endif
+#if DEBUG
+        Serial.println("Setting state to Ready to Drive");
+#endif
         set_state(MCU_STATE::READY_TO_DRIVE);
       }
       break;
 
     case MCU_STATE::READY_TO_DRIVE:
       check_TS_active();
-      check_inverter_disabled();
-
-      if (timer_motor_controller_send.check()) {
-        MC_command_message mc_command_message(0, 0, 0, 1, 0, 0);
-
         // FSAE EV.5.5
         // FSAE T.4.2.10
         if (filtered_accel1_reading < MIN_ACCELERATOR_PEDAL_1 || filtered_accel1_reading > MAX_ACCELERATOR_PEDAL_1) {
           mcu_status.set_no_accel_implausability(false);
-          #if DEBUG
-            Serial.println("T.4.2.10 1");
-          #endif
+#if DEBUG
+          Serial.println("T.4.2.10 1");
+#endif
         }
         else if (filtered_accel2_reading > MAX_ACCELERATOR_PEDAL_2 || filtered_accel2_reading < MIN_ACCELERATOR_PEDAL_2) {
           mcu_status.set_no_accel_implausability(false);
@@ -386,22 +448,25 @@ inline void state_machine() {
 
 /* Shared state functinality */
 
+bool TS_over_HV_threshold() {
+  for (uint8_t inv = 0; inv < 4; inv++) {
+    if (mc_energy[inv].get_dc_bus_voltage() < MIN_HV_VOLTAGE) {
+      return false;
+    }
+  }
+  return true;
+}
+
 // if TS is below HV threshold, return to Tractive System Not Active
 inline void check_TS_active() {
-  if (mc_voltage_information.get_dc_bus_voltage() < MIN_HV_VOLTAGE) {
-    #if DEBUG
-      Serial.println("Setting state to TS Not Active, because TS is below HV threshold");
-    #endif
+  if (!TS_over_HV_threshold()) {
+#if DEBUG
+    Serial.println("Setting state to TS Not Active, because TS is below HV threshold");
+#endif
     set_state(MCU_STATE::TRACTIVE_SYSTEM_NOT_ACTIVE);
   }
 }
 
-
-// Send a message to the Motor Controller over CAN when vehicle is not ready to drive
-inline void send_CAN_disable_all_inverters(){
-  if (timer_motor_controller_send.check()) {
-  }
-}
 
 /* Implementation of software shutdown */
 inline void software_shutdown() {
@@ -435,17 +500,10 @@ inline void software_shutdown() {
 }
 
 /* Parse incoming CAN messages */
-void parse_can_message() {
+void parse_telem_can_message() {
   static CAN_message_t rx_msg;
-  while (CAN.read(rx_msg)) {
+  while (TELEM_CAN.read(rx_msg)) {
     switch (rx_msg.id) {
-      case ID_MC_VOLTAGE_INFORMATION:        mc_voltage_information.load(rx_msg.buf);        break;
-      case ID_MC_INTERNAL_STATES:            mc_internal_states.load(rx_msg.buf);            break;
-      case ID_MC_CURRENT_INFORMATION:
-        mc_current_information.load(rx_msg.buf);
-        process_total_discharge();
-        break;
-      case ID_MC_MOTOR_POSITION_INFORMATION: mc_motor_position_information.load(rx_msg.buf); break;
       case ID_BMS_TEMPERATURES:              bms_temperatures.load(rx_msg.buf);              break;
       case ID_BMS_VOLTAGES:                  bms_voltages.load(rx_msg.buf);                  break;
       case ID_BMS_COULOMB_COUNTS:            bms_coulomb_counts.load(rx_msg.buf);            break;
@@ -484,6 +542,33 @@ void parse_can_message() {
   }
 }
 
+void parse_front_inv_can_message() {
+  static CAN_message_t rx_msg;
+  while (FRONT_INV_CAN.read(rx_msg)) {
+    switch (rx_msg.id) {
+      case ID_MC1_STATUS:       mc_status[0].load(rx_msg.buf);    break;
+      case ID_MC2_STATUS:       mc_status[1].load(rx_msg.buf);    break;
+      case ID_MC1_TEMPS:        mc_temps[0].load(rx_msg.buf);    break;
+      case ID_MC2_TEMPS:        mc_temps[1].load(rx_msg.buf);    break;
+      case ID_MC1_ENERGY:       mc_energy[0].load(rx_msg.buf);    break;
+      case ID_MC2_ENERGY:       mc_energy[1].load(rx_msg.buf);    break;
+    }
+  }
+}
+
+void parse_rear_inv_can_message() {
+  static CAN_message_t rx_msg;
+  while (REAR_INV_CAN.read(rx_msg)) {
+    switch (rx_msg.id) {
+      case ID_MC3_STATUS:       mc_status[2].load(rx_msg.buf);    break;
+      case ID_MC4_STATUS:       mc_status[3].load(rx_msg.buf);    break;
+      case ID_MC3_TEMPS:        mc_temps[2].load(rx_msg.buf);    break;
+      case ID_MC4_TEMPS:        mc_temps[3].load(rx_msg.buf);    break;
+      case ID_MC3_ENERGY:       mc_energy[2].load(rx_msg.buf);    break;
+      case ID_MC4_ENERGY:       mc_energy[3].load(rx_msg.buf);    break;
+    }
+  }
+}
 inline void reset_inverter() {
   inverter_restart = true;
   digitalWrite(INVERTER_CTRL, LOW);
@@ -507,7 +592,9 @@ void set_state(MCU_STATE new_state) {
     case MCU_STATE::STARTUP: break;
     case MCU_STATE::TRACTIVE_SYSTEM_NOT_ACTIVE: break;
     case MCU_STATE::TRACTIVE_SYSTEM_ACTIVE: break;
-    case MCU_STATE::ENABLING_INVERTER: break;
+    case MCU_STATE::ENABLING_INVERTER: 
+      timer_inverter_enable.begin();
+      break;
     case MCU_STATE::WAITING_READY_TO_DRIVE_SOUND:
       // make dashboard stop buzzer
       mcu_status.set_activate_buzzer(false);
@@ -619,12 +706,6 @@ inline void read_status_values() {
   mcu_status.set_shutdown_c_above_threshold(analogRead(SHUTDOWN_C_READ) > SHUTDOWN_HIGH);
   mcu_status.set_shutdown_d_above_threshold(analogRead(SHUTDOWN_D_READ) > SHUTDOWN_HIGH);
   mcu_status.set_shutdown_e_above_threshold(analogRead(SHUTDOWN_E_READ) > SHUTDOWN_HIGH);
-}
-
-/* Read wheel speed values */
-// may need to move to interrupt based approach
-inline void read_wheel_speed() {
-
 }
 
 /* Track how far the car has driven */

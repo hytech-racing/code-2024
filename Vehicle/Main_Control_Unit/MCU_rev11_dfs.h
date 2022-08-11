@@ -43,7 +43,7 @@
 /*
  * Other constants
  */
-#define MIN_HV_VOLTAGE 600               // Volts in V * 0.1 - Used to check if Accumulator is energized
+#define MIN_HV_VOLTAGE 60               // Volts in V * 1 - Used to check if Accumulator is energized
 
 
 #define BMS_HIGH_BATTERY_TEMPERATURE 50  // TODO: figure out correct value
@@ -52,6 +52,15 @@
 #define ALPHA 0.9772                     // parameter for the sowftware filter used on ADC pedal channels
 #define ADC_SPI_SPEED 1800000            // max SPI clokc frequency for MCP3208 is 2MHz in ideal conditions
 #define TORQUE_ADJUSTMENT_VOLTAGE 3.5242 
+
+#define LOAD_CELL1_OFFSET 0
+#define LOAD_CELL1_SLOPE 0
+#define LOAD_CELL2_OFFSET 0
+#define LOAD_CELL2_SLOPE 0
+#define LOAD_CELL3_OFFSET 0
+#define LOAD_CELL3_SLOPE 0
+#define LOAD_CELL4_OFFSET 0
+#define LOAD_CELL4_SLOPE 0
 
 #define BMS_HEARTBEAT_TIMEOUT 30000
 #define DASH_HEARTBEAT_TIMEOUT 1000
