@@ -19,11 +19,8 @@ enum class MCU_STATE
 enum class INVERTER_STARTUP_STATE
 {
   WAIT_SYSTEM_READY             = 0,
-  WAIT_DC_ON                    = 1,
-  WAIT_QUIT_DC_ON               = 2,
-  WAIT_DRIVER_ENABLE            = 3,
-  WAIT_INVERTER_ON              = 4,
-  WAIT_QUIT_INVERTER_ON         = 5
+  WAIT_QUIT_DC_ON               = 1,
+  WAIT_QUIT_INVERTER_ON         = 2
 };
 
 #pragma pack(push,1)

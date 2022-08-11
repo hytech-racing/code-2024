@@ -82,7 +82,7 @@ float filtered_brake2_reading{};
 
 bool imd_faulting = false;
 bool inverter_restart = false; // True when restarting the inverter
-uint8_t inverter_startup_state = 0;
+INVERTER_STARTUP_STATE inverter_startup_state = INVERTER_STARTUP_STATE::WAIT_SYSTEM_READY;
 
 uint32_t total_charge_amount = 0;
 uint32_t total_discharge_amount = 0;
@@ -175,7 +175,7 @@ void loop() {
   read_pedal_values();
   read_load_cell_values();
   read_status_values();
-  
+
   send_CAN_mcu_status();
   send_CAN_mcu_pedal_readings();
   //send_CAN_bms_coulomb_counts();
@@ -329,14 +329,34 @@ inline void state_machine() {
         set_state(MCU_STATE::TRACTIVE_SYSTEM_ACTIVE);
       }
 
-     
-      if (false) {
+      switch (inverter_startup_state) {
+        case INVERTER_STARTUP_STATE::WAIT_SYSTEM_READY:
+          if (check_all_inverters_system_ready()) {
+            set_all_inverters_dc_on(true);
+            inverter_startup_state = INVERTER_STARTUP_STATE::WAIT_QUIT_DC_ON;
+          }
+          break;
+
+        case INVERTER_STARTUP_STATE::WAIT_QUIT_DC_ON:
+          if (check_all_inverters_quit_dc_on()) {
+            set_all_inverters_no_torque();
+            set_all_inverters_driver_enable(true);
+            inverter_startup_state = INVERTER_STARTUP_STATE::WAIT_QUIT_INVERTER_ON;
+          }
+          break;
+
+        case INVERTER_STARTUP_STATE::WAIT_QUIT_INVERTER_ON:
+            if (check_all_inverters_quit_inverter_on()) {
 #if DEBUG
-        Serial.println("Setting state to Waiting Ready to Drive Sound");
+              Serial.println("Setting state to Waiting Ready to Drive Sound");
 #endif
-        set_state(MCU_STATE::WAITING_READY_TO_DRIVE_SOUND);
+              set_state(MCU_STATE::WAITING_READY_TO_DRIVE_SOUND);
+            }
+          break;
+
       }
       break;
+
 
     case MCU_STATE::WAITING_READY_TO_DRIVE_SOUND:
       check_TS_active();
@@ -352,89 +372,89 @@ inline void state_machine() {
 
     case MCU_STATE::READY_TO_DRIVE:
       check_TS_active();
-        // FSAE EV.5.5
-        // FSAE T.4.2.10
-        if (filtered_accel1_reading < MIN_ACCELERATOR_PEDAL_1 || filtered_accel1_reading > MAX_ACCELERATOR_PEDAL_1) {
-          mcu_status.set_no_accel_implausability(false);
+      // FSAE EV.5.5
+      // FSAE T.4.2.10
+      if (filtered_accel1_reading < MIN_ACCELERATOR_PEDAL_1 || filtered_accel1_reading > MAX_ACCELERATOR_PEDAL_1) {
+        mcu_status.set_no_accel_implausability(false);
 #if DEBUG
-          Serial.println("T.4.2.10 1");
+        Serial.println("T.4.2.10 1");
 #endif
-        }
-        else if (filtered_accel2_reading > MAX_ACCELERATOR_PEDAL_2 || filtered_accel2_reading < MIN_ACCELERATOR_PEDAL_2) {
-          mcu_status.set_no_accel_implausability(false);
+      }
+      else if (filtered_accel2_reading > MAX_ACCELERATOR_PEDAL_2 || filtered_accel2_reading < MIN_ACCELERATOR_PEDAL_2) {
+        mcu_status.set_no_accel_implausability(false);
 #if DEBUG
-          Serial.println("T.4.2.10 2");
+        Serial.println("T.4.2.10 2");
 #endif
-        }
-        // check that the pedals are reading within 10% of each other
-        // T.4.2.4
-        else if (fabs((filtered_accel1_reading - START_ACCELERATOR_PEDAL_1) / (END_ACCELERATOR_PEDAL_1 - START_ACCELERATOR_PEDAL_1) -
-                      (filtered_accel2_reading - START_ACCELERATOR_PEDAL_2) / (END_ACCELERATOR_PEDAL_2 - START_ACCELERATOR_PEDAL_2)) > 0.1) {
+      }
+      // check that the pedals are reading within 10% of each other
+      // T.4.2.4
+      else if (fabs((filtered_accel1_reading - START_ACCELERATOR_PEDAL_1) / (END_ACCELERATOR_PEDAL_1 - START_ACCELERATOR_PEDAL_1) -
+                    (filtered_accel2_reading - START_ACCELERATOR_PEDAL_2) / (END_ACCELERATOR_PEDAL_2 - START_ACCELERATOR_PEDAL_2)) > 0.1) {
 #if DEBUG
-          Serial.println("T.4.2.4");
-          Serial.printf("pedal 1 - %f\n", (filtered_accel1_reading - START_ACCELERATOR_PEDAL_1) / (END_ACCELERATOR_PEDAL_1 - START_ACCELERATOR_PEDAL_1));
-          Serial.printf("pedal 2 - %f\n", (filtered_accel2_reading - START_ACCELERATOR_PEDAL_2) / (END_ACCELERATOR_PEDAL_2 - START_ACCELERATOR_PEDAL_2));
+        Serial.println("T.4.2.4");
+        Serial.printf("pedal 1 - %f\n", (filtered_accel1_reading - START_ACCELERATOR_PEDAL_1) / (END_ACCELERATOR_PEDAL_1 - START_ACCELERATOR_PEDAL_1));
+        Serial.printf("pedal 2 - %f\n", (filtered_accel2_reading - START_ACCELERATOR_PEDAL_2) / (END_ACCELERATOR_PEDAL_2 - START_ACCELERATOR_PEDAL_2));
 #endif
-          mcu_status.set_no_accel_implausability(false);
-        }
-        else {
-          mcu_status.set_no_accel_implausability(true);
-        }
+        mcu_status.set_no_accel_implausability(false);
+      }
+      else {
+        mcu_status.set_no_accel_implausability(true);
+      }
 
-        // BSE check
-        // EV.5.6
-        // FSAE T.4.3.4
-        if (filtered_brake1_reading < 409 || filtered_brake1_reading > 3687) {
-          mcu_status.set_no_brake_implausability(false);
-        }
-        else {
-          mcu_status.set_no_brake_implausability(true);
-        }
+      // BSE check
+      // EV.5.6
+      // FSAE T.4.3.4
+      if (filtered_brake1_reading < 409 || filtered_brake1_reading > 3687) {
+        mcu_status.set_no_brake_implausability(false);
+      }
+      else {
+        mcu_status.set_no_brake_implausability(true);
+      }
 
-        // FSAE EV.5.7
-        // APPS/Brake Pedal Plausability Check
-        if  (
-          (
-            (filtered_accel1_reading > ((END_ACCELERATOR_PEDAL_1 - START_ACCELERATOR_PEDAL_1) / 4 + START_ACCELERATOR_PEDAL_1))
-            ||
-            (filtered_accel2_reading > ((END_ACCELERATOR_PEDAL_2 - START_ACCELERATOR_PEDAL_2) / 4 + START_ACCELERATOR_PEDAL_2))
-          )
-          && mcu_status.get_brake_pedal_active()
-        )
-        {
-          mcu_status.set_no_accel_brake_implausability(false);
-        }
-        else if
+      // FSAE EV.5.7
+      // APPS/Brake Pedal Plausability Check
+      if  (
         (
-          (filtered_accel1_reading < ((END_ACCELERATOR_PEDAL_1 - START_ACCELERATOR_PEDAL_1) / 20 + START_ACCELERATOR_PEDAL_1))
-          &&
-          (filtered_accel2_reading < ((END_ACCELERATOR_PEDAL_2 - START_ACCELERATOR_PEDAL_2) / 20 + START_ACCELERATOR_PEDAL_2))
+          (filtered_accel1_reading > ((END_ACCELERATOR_PEDAL_1 - START_ACCELERATOR_PEDAL_1) / 4 + START_ACCELERATOR_PEDAL_1))
+          ||
+          (filtered_accel2_reading > ((END_ACCELERATOR_PEDAL_2 - START_ACCELERATOR_PEDAL_2) / 4 + START_ACCELERATOR_PEDAL_2))
         )
-        {
-          mcu_status.set_no_accel_brake_implausability(true);
-        }
+        && mcu_status.get_brake_pedal_active()
+      )
+      {
+        mcu_status.set_no_accel_brake_implausability(false);
+      }
+      else if
+      (
+        (filtered_accel1_reading < ((END_ACCELERATOR_PEDAL_1 - START_ACCELERATOR_PEDAL_1) / 20 + START_ACCELERATOR_PEDAL_1))
+        &&
+        (filtered_accel2_reading < ((END_ACCELERATOR_PEDAL_2 - START_ACCELERATOR_PEDAL_2) / 20 + START_ACCELERATOR_PEDAL_2))
+      )
+      {
+        mcu_status.set_no_accel_brake_implausability(true);
+      }
 
-        int calculated_torque = 0;
+      int calculated_torque = 0;
 
-        if (
-          mcu_status.get_no_brake_implausability() &&
-          mcu_status.get_no_accel_implausability() &&
-          mcu_status.get_no_accel_brake_implausability() &&
-          mcu_status.get_bms_ok_high() &&
-          mcu_status.get_imd_ok_high()
-        ) {
-          calculated_torque = calculate_torque();
-        } else {
-          Serial.println("not calculating torque");
-          Serial.printf("no brake implausibility: %d\n", mcu_status.get_no_brake_implausability());
-          Serial.printf("no accel implausibility: %d\n", mcu_status.get_no_accel_implausability());
-          Serial.printf("no accel brake implausibility: %d\n", mcu_status.get_no_accel_brake_implausability());
-          Serial.printf("software is ok: %d\n", mcu_status.get_software_is_ok());
-          Serial.printf("get bms ok high: %d\n", mcu_status.get_bms_ok_high());
-          Serial.printf("get imd ok high: %d\n", mcu_status.get_imd_ok_high());
+      if (
+        mcu_status.get_no_brake_implausability() &&
+        mcu_status.get_no_accel_implausability() &&
+        mcu_status.get_no_accel_brake_implausability() &&
+        mcu_status.get_bms_ok_high() &&
+        mcu_status.get_imd_ok_high()
+      ) {
+        calculated_torque = calculate_torque();
+      } else {
+        Serial.println("not calculating torque");
+        Serial.printf("no brake implausibility: %d\n", mcu_status.get_no_brake_implausability());
+        Serial.printf("no accel implausibility: %d\n", mcu_status.get_no_accel_implausability());
+        Serial.printf("no accel brake implausibility: %d\n", mcu_status.get_no_accel_brake_implausability());
+        Serial.printf("software is ok: %d\n", mcu_status.get_software_is_ok());
+        Serial.printf("get bms ok high: %d\n", mcu_status.get_bms_ok_high());
+        Serial.printf("get imd ok high: %d\n", mcu_status.get_imd_ok_high());
 
-        }
-      
+      }
+
       break;
   }
 }
@@ -586,7 +606,7 @@ void set_state(MCU_STATE new_state) {
     case MCU_STATE::STARTUP: break;
     case MCU_STATE::TRACTIVE_SYSTEM_NOT_ACTIVE: break;
     case MCU_STATE::TRACTIVE_SYSTEM_ACTIVE: break;
-    case MCU_STATE::ENABLING_INVERTER: 
+    case MCU_STATE::ENABLING_INVERTER:
       timer_inverter_enable.reset();
       break;
     case MCU_STATE::WAITING_READY_TO_DRIVE_SOUND:
@@ -608,6 +628,7 @@ void set_state(MCU_STATE new_state) {
     case MCU_STATE::TRACTIVE_SYSTEM_NOT_ACTIVE: break;
     case MCU_STATE::TRACTIVE_SYSTEM_ACTIVE: break;
     case MCU_STATE::ENABLING_INVERTER: {
+        inverter_startup_state = INVERTER_STARTUP_STATE::WAIT_SYSTEM_READY;
         Serial.println("MCU Sent enable command");
         timer_inverter_enable.reset();
         break;
@@ -687,13 +708,62 @@ inline void read_pedal_values() {
 
 }
 
-inline void read_load_cell_values(){
-  
+inline void read_load_cell_values() {
+
 }
 
-inline void reset_inverter(){
-  
+inline void reset_inverter() {
+
 }
+
+bool check_all_inverters_system_ready() {
+  for (uint8_t inv = 0; inv < 4; inv++) {
+    if (! mc_status[inv].get_system_ready()) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool check_all_inverters_quit_dc_on() {
+  for (uint8_t inv = 0; inv < 4; inv++) {
+    if (! mc_status[inv].get_quit_dc_on()) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool check_all_inverters_quit_inverter_on() {
+  for (uint8_t inv = 0; inv < 4; inv++) {
+    if (! mc_status[inv].get_quit_inverter_on()) {
+      return false;
+    }
+  }
+  return true;
+}
+
+inline void set_all_inverters_no_torque() {
+  for (uint8_t inv = 0; inv < 4; inv++) {
+    mc_setpoints_command[inv].set_speed_setpoint(0);
+    mc_setpoints_command[inv].set_pos_torque_limit(0);
+    mc_setpoints_command[inv].set_neg_torque_limit(0);
+    mc_torque_command[inv].set_torque_setpoint(0);
+  }
+}
+
+inline void set_all_inverters_dc_on(bool input){
+  for (uint8_t inv = 0; inv < 4; inv++) {
+    mc_setpoints_command[inv].set_hv_enable(input);
+  }
+}
+
+inline void set_all_inverters_driver_enable(bool input){
+  for (uint8_t inv = 0; inv < 4; inv++) {
+    mc_setpoints_command[inv].set_driver_enable(input);
+  }
+}
+
 /* Read shutdown system values */
 inline void read_status_values() {
   /* Measure shutdown circuits' input */
