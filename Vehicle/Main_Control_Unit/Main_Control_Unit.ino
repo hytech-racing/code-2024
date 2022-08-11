@@ -62,7 +62,7 @@ Metro timer_CAN_mc_status_forward = Metro(100);
 Metro timer_CAN_mc_temps_forward = Metro(250);
 Metro timer_CAN_mc_energy_forward = Metro(250);
 Metro timer_CAN_mc_setpoints_command_forward = Metro(300);
-Metro timer_CAN_mc_torque_command_forwad = Metro(100);
+Metro timer_CAN_mc_torque_command_forward = Metro(100);
 Metro timer_ready_sound = Metro(2000); // Time to play RTD sound
 Metro timer_CAN_mcu_status_send = Metro(100);
 Metro timer_CAN_mcu_pedal_readings_send = Metro(5);
@@ -196,24 +196,124 @@ void loop() {
   software_shutdown();
 }
 
-inline void forward_CAN_mc_status(){
-  
+inline void forward_CAN_mc_status() {
+  if (timer_CAN_mc_status_forward.check()) {
+    mc_status[0].write(msg.buf);
+    msg.id = ID_MC1_STATUS;
+    msg.len = sizeof(mc_status[0]);
+    TELEM_CAN.write(msg);
+
+    mc_status[1].write(msg.buf);
+    msg.id = ID_MC2_STATUS;
+    msg.len = sizeof(mc_status[1]);
+    TELEM_CAN.write(msg);
+
+    mc_status[2].write(msg.buf);
+    msg.id = ID_MC3_STATUS;
+    msg.len = sizeof(mc_status[2]);
+    TELEM_CAN.write(msg);
+
+    mc_status[3].write(msg.buf);
+    msg.id = ID_MC4_STATUS;
+    msg.len = sizeof(mc_status[3]);
+    TELEM_CAN.write(msg);
+  }
 }
 
-inline void forward_CAN_mc_temps(){
-  
+inline void forward_CAN_mc_temps() {
+  if (timer_CAN_mc_temps_forward.check()) {
+    mc_temps[0].write(msg.buf);
+    msg.id = ID_MC1_TEMPS;
+    msg.len = sizeof(mc_temps[0]);
+    TELEM_CAN.write(msg);
+
+    mc_temps[1].write(msg.buf);
+    msg.id = ID_MC2_TEMPS;
+    msg.len = sizeof(mc_temps[1]);
+    TELEM_CAN.write(msg);
+
+    mc_temps[2].write(msg.buf);
+    msg.id = ID_MC3_TEMPS;
+    msg.len = sizeof(mc_temps[2]);
+    TELEM_CAN.write(msg);
+
+    mc_temps[3].write(msg.buf);
+    msg.id = ID_MC4_TEMPS;
+    msg.len = sizeof(mc_temps[3]);
+    TELEM_CAN.write(msg);
+  }
 }
 
-inline void forward_CAN_mc_energy(){
-  
+inline void forward_CAN_mc_energy() {
+  if (timer_CAN_mc_energy_forward.check()) {
+    mc_energy[0].write(msg.buf);
+    msg.id = ID_MC1_ENERGY;
+    msg.len = sizeof(mc_energy[0]);
+    TELEM_CAN.write(msg);
+
+    mc_energy[1].write(msg.buf);
+    msg.id = ID_MC2_ENERGY;
+    msg.len = sizeof(mc_energy[1]);
+    TELEM_CAN.write(msg);
+
+    mc_energy[2].write(msg.buf);
+    msg.id = ID_MC3_ENERGY;
+    msg.len = sizeof(mc_energy[2]);
+    TELEM_CAN.write(msg);
+
+    mc_energy[3].write(msg.buf);
+    msg.id = ID_MC4_ENERGY;
+    msg.len = sizeof(mc_energy[3]);
+    TELEM_CAN.write(msg);
+  }
 }
 
-inline void forward_CAN_mc_setpoints_command(){
-  
+inline void forward_CAN_mc_setpoints_command() {
+  if (timer_CAN_mc_setpoints_command_forward.check()) {
+    mc_setpoints_command[0].write(msg.buf);
+    msg.id = ID_MC1_SETPOINTS_COMMAND;
+    msg.len = sizeof(mc_setpoints_command[0]);
+    TELEM_CAN.write(msg);
+
+    mc_setpoints_command[1].write(msg.buf);
+    msg.id = ID_MC2_SETPOINTS_COMMAND;
+    msg.len = sizeof(mc_setpoints_command[1]);
+    TELEM_CAN.write(msg);
+
+    mc_setpoints_command[2].write(msg.buf);
+    msg.id = ID_MC3_SETPOINTS_COMMAND;
+    msg.len = sizeof(mc_setpoints_command[2]);
+    TELEM_CAN.write(msg);
+
+    mc_setpoints_command[3].write(msg.buf);
+    msg.id = ID_MC4_SETPOINTS_COMMAND;
+    msg.len = sizeof(mc_setpoints_command[3]);
+    TELEM_CAN.write(msg);
+  }
 }
 
-inline void forward_CAN_mc_torque_command(){
-  
+inline void forward_CAN_mc_torque_command() {
+  if (timer_CAN_mc_torque_command_forward.check()) {
+    mc_torque_command[0].write(msg.buf);
+    msg.id = ID_MC1_TORQUE_COMMAND;
+    msg.len = sizeof(mc_torque_command[0]);
+    TELEM_CAN.write(msg);
+
+    mc_torque_command[1].write(msg.buf);
+    msg.id = ID_MC2_TORQUE_COMMAND;
+    msg.len = sizeof(mc_torque_command[1]);
+    TELEM_CAN.write(msg);
+
+    mc_torque_command[2].write(msg.buf);
+    msg.id = ID_MC3_TORQUE_COMMAND;
+    msg.len = sizeof(mc_torque_command[2]);
+    TELEM_CAN.write(msg);
+
+    mc_torque_command[3].write(msg.buf);
+    msg.id = ID_MC4_TORQUE_COMMAND;
+    msg.len = sizeof(mc_torque_command[3]);
+    TELEM_CAN.write(msg);
+  }
 }
 
 inline void send_CAN_inverter_setpoints() {
@@ -367,12 +467,12 @@ inline void state_machine() {
           break;
 
         case INVERTER_STARTUP_STATE::WAIT_QUIT_INVERTER_ON:
-            if (check_all_inverters_quit_inverter_on()) {
+          if (check_all_inverters_quit_inverter_on()) {
 #if DEBUG
-              Serial.println("Setting state to Waiting Ready to Drive Sound");
+            Serial.println("Setting state to Waiting Ready to Drive Sound");
 #endif
-              set_state(MCU_STATE::WAITING_READY_TO_DRIVE_SOUND);
-            }
+            set_state(MCU_STATE::WAITING_READY_TO_DRIVE_SOUND);
+          }
           break;
 
       }
@@ -394,11 +494,11 @@ inline void state_machine() {
     case MCU_STATE::READY_TO_DRIVE:
       check_TS_active();
 
-      if(check_all_inverters_error()){
+      if (check_all_inverters_error()) {
         set_all_inverters_disabled();
         set_state(MCU_STATE::TRACTIVE_SYSTEM_ACTIVE);
       }
-      
+
       // FSAE EV.5.5
       // FSAE T.4.2.10
       if (filtered_accel1_reading < MIN_ACCELERATOR_PEDAL_1 || filtered_accel1_reading > MAX_ACCELERATOR_PEDAL_1) {
@@ -682,9 +782,9 @@ inline void set_inverter_torques() {
 
   } else {
     //currently in debug mode, no torque vectoring
-    
+
     const int max_torque_Nm = mcu_status.get_max_torque();
-    const float max_torque = max_torque_Nm/0.0098; // max possible value for torque multiplier, unit in 0.1% nominal torque
+    const float max_torque = max_torque_Nm / 0.0098; // max possible value for torque multiplier, unit in 0.1% nominal torque
     int torque1 = map(round(filtered_accel1_reading), START_ACCELERATOR_PEDAL_1, END_ACCELERATOR_PEDAL_1, 0, 2142);//inverter torque unit is in 0.1% of nominal torque (9.8Nm), max rated torque is 21Nm, so max possible output is 2142
     int torque2 = map(round(filtered_accel2_reading), START_ACCELERATOR_PEDAL_2, END_ACCELERATOR_PEDAL_2, 0, 2142);
 
@@ -704,10 +804,10 @@ inline void set_inverter_torques() {
   if (calculated_torque < 0) {
     calculated_torque = 0;
   }
-  for(uint8_t inv = 0; inv < 4; inv++){
+  for (uint8_t inv = 0; inv < 4; inv++) {
     mc_torque_command[inv].set_torque_setpoint(calculated_torque);
   }
-  
+
 
   //power limit to 80kW
   //add this plz
@@ -770,7 +870,7 @@ bool check_all_inverters_quit_inverter_on() {
   return true;
 }
 
-uint8_t check_all_inverters_error(){
+uint8_t check_all_inverters_error() {
   uint8_t error_list = 0; //last 4 bits correspond to error bit in status word of each inverter, inverter 1 is rightmost bit;
   for (uint8_t inv = 0; inv < 4; inv++) {
     if (mc_status[inv].get_error()) {
@@ -788,7 +888,7 @@ inline void set_all_inverters_no_torque() {
   }
 }
 
-inline void set_all_inverters_torque_enabled(){
+inline void set_all_inverters_torque_enabled() {
   for (uint8_t inv = 0; inv < 4; inv++) {
     mc_setpoints_command[inv].set_speed_setpoint(18000);
     mc_setpoints_command[inv].set_pos_torque_limit(2142);
@@ -796,7 +896,7 @@ inline void set_all_inverters_torque_enabled(){
   }
 }
 
-inline void set_all_inverters_disabled(){
+inline void set_all_inverters_disabled() {
   for (uint8_t inv = 0; inv < 4; inv++) {
     mc_setpoints_command[inv].set_inverter_enable(false);
     mc_setpoints_command[inv].set_hv_enable(false);
@@ -809,20 +909,20 @@ inline void set_all_inverters_disabled(){
   }
 }
 
-inline void set_all_inverters_dc_on(bool input){
+inline void set_all_inverters_dc_on(bool input) {
   for (uint8_t inv = 0; inv < 4; inv++) {
     mc_setpoints_command[inv].set_hv_enable(input);
   }
 }
 
-inline void set_all_inverters_driver_enable(bool input){
+inline void set_all_inverters_driver_enable(bool input) {
   for (uint8_t inv = 0; inv < 4; inv++) {
     mc_setpoints_command[inv].set_driver_enable(input);
   }
 }
 
-inline void reset_inverters(){
-  
+inline void reset_inverters() {
+
 }
 /* Read shutdown system values */
 inline void read_status_values() {
