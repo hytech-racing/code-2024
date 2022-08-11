@@ -20,9 +20,9 @@
 // constants to define for different operation
 
 #define DRIVER DAVID
-#define TORQUE_1 100
-#define TORQUE_2 130
-#define TORQUE_3 160
+#define TORQUE_1 15
+#define TORQUE_2 18
+#define TORQUE_3 21
 
 
 // set to true or false for debugging
@@ -58,6 +58,11 @@ Metro timer_CAN_inverter_energy_read = Metro(200);
 Metro timer_CAN_inverter_setpoints_send = Metro(20);
 Metro timer_CAN_inverter_torque_send = Metro(20);
 Metro timer_CAN_coloumb_count_send = Metro(1000);
+Metro timer_CAN_mc_status_forward = Metro(100);
+Metro timer_CAN_mc_temps_forward = Metro(250);
+Metro timer_CAN_mc_energy_forward = Metro(250);
+Metro timer_CAN_mc_setpoints_command_forward = Metro(300);
+Metro timer_CAN_mc_torque_command_forwad = Metro(100);
 Metro timer_ready_sound = Metro(2000); // Time to play RTD sound
 Metro timer_CAN_mcu_status_send = Metro(100);
 Metro timer_CAN_mcu_pedal_readings_send = Metro(5);
@@ -103,16 +108,7 @@ void setup() {
   mcu_status.set_torque_mode(0);
   mcu_status.set_software_is_ok(true);
 
-  for (uint8_t inv = 0; inv < 4; inv++) {
-    mc_setpoints_command[inv].set_inverter_enable(false);
-    mc_setpoints_command[inv].set_hv_enable(false);
-    mc_setpoints_command[inv].set_driver_enable(false);
-    mc_setpoints_command[inv].set_remove_error(false);
-    mc_setpoints_command[inv].set_speed_setpoint(0);
-    mc_setpoints_command[inv].set_pos_torque_limit(0);
-    mc_setpoints_command[inv].set_neg_torque_limit(0);
-    mc_torque_command[inv].set_torque_setpoint(0);
-  }
+  set_all_inverters_disabled();
 
 
   pinMode(BRAKE_LIGHT_CTRL, OUTPUT);
@@ -182,6 +178,12 @@ void loop() {
 
   send_CAN_inverter_setpoints();
   send_CAN_inverter_torque();
+
+  forward_CAN_mc_status();
+  forward_CAN_mc_temps();
+  forward_CAN_mc_energy();
+  forward_CAN_mc_setpoints_command();
+  forward_CAN_mc_torque_command();
   /* Finish restarting the inverter when timer expires */
   if (timer_restart_inverter.check() && inverter_restart) {
     inverter_restart = false;
@@ -194,6 +196,25 @@ void loop() {
   software_shutdown();
 }
 
+inline void forward_CAN_mc_status(){
+  
+}
+
+inline void forward_CAN_mc_temps(){
+  
+}
+
+inline void forward_CAN_mc_energy(){
+  
+}
+
+inline void forward_CAN_mc_setpoints_command(){
+  
+}
+
+inline void forward_CAN_mc_torque_command(){
+  
+}
 
 inline void send_CAN_inverter_setpoints() {
   if (timer_CAN_inverter_setpoints_send.check()) {
@@ -372,6 +393,12 @@ inline void state_machine() {
 
     case MCU_STATE::READY_TO_DRIVE:
       check_TS_active();
+
+      if(check_all_inverters_error()){
+        set_all_inverters_disabled();
+        set_state(MCU_STATE::TRACTIVE_SYSTEM_ACTIVE);
+      }
+      
       // FSAE EV.5.5
       // FSAE T.4.2.10
       if (filtered_accel1_reading < MIN_ACCELERATOR_PEDAL_1 || filtered_accel1_reading > MAX_ACCELERATOR_PEDAL_1) {
@@ -434,8 +461,6 @@ inline void state_machine() {
         mcu_status.set_no_accel_brake_implausability(true);
       }
 
-      int calculated_torque = 0;
-
       if (
         mcu_status.get_no_brake_implausability() &&
         mcu_status.get_no_accel_implausability() &&
@@ -443,7 +468,7 @@ inline void state_machine() {
         mcu_status.get_bms_ok_high() &&
         mcu_status.get_imd_ok_high()
       ) {
-        calculated_torque = calculate_torque();
+        set_inverter_torques();
       } else {
         Serial.println("not calculating torque");
         Serial.printf("no brake implausibility: %d\n", mcu_status.get_no_brake_implausability());
@@ -547,7 +572,7 @@ void parse_telem_can_message() {
           mcu_status.toggle_launch_ctrl_active();
         }
         if (dashboard_status.get_mc_cycle_btn()) {
-          reset_inverter();
+          reset_inverters();
         }
         // eliminate all action buttons to not process twice
         dashboard_status.set_button_flags(0);
@@ -651,15 +676,17 @@ void set_state(MCU_STATE new_state) {
 }
 
 
-int calculate_torque() {
-  int calculated_torque = 0;
-  int16_t mc_rpm = 0;//abs(mc_motor_position_information.get_motor_speed());
+inline void set_inverter_torques() {
+  int16_t calculated_torque = 0;
   if (mcu_status.get_launch_ctrl_active()) {
 
   } else {
-    const int max_torque = mcu_status.get_max_torque() * 10;
-    int torque1 = map(round(filtered_accel1_reading), START_ACCELERATOR_PEDAL_1, END_ACCELERATOR_PEDAL_1, 0, max_torque);
-    int torque2 = map(round(filtered_accel2_reading), START_ACCELERATOR_PEDAL_2, END_ACCELERATOR_PEDAL_2, 0, max_torque);
+    //currently in debug mode, no torque vectoring
+    
+    const int max_torque_Nm = mcu_status.get_max_torque();
+    const float max_torque = max_torque_Nm/0.0098; // max possible value for torque multiplier, unit in 0.1% nominal torque
+    int torque1 = map(round(filtered_accel1_reading), START_ACCELERATOR_PEDAL_1, END_ACCELERATOR_PEDAL_1, 0, 2142);//inverter torque unit is in 0.1% of nominal torque (9.8Nm), max rated torque is 21Nm, so max possible output is 2142
+    int torque2 = map(round(filtered_accel2_reading), START_ACCELERATOR_PEDAL_2, END_ACCELERATOR_PEDAL_2, 0, 2142);
 
     // torque values are greater than the max possible value, set them to max
     if (torque1 > max_torque) {
@@ -668,9 +695,7 @@ int calculate_torque() {
     if (torque2 > max_torque) {
       torque2 = max_torque;
     }
-    // compare torques to check for accelerator implausibility
     calculated_torque = (torque1 + torque2) / 2;
-
     if (calculated_torque > max_torque) {
       calculated_torque = max_torque;
     }
@@ -679,12 +704,14 @@ int calculate_torque() {
   if (calculated_torque < 0) {
     calculated_torque = 0;
   }
-
+  for(uint8_t inv = 0; inv < 4; inv++){
+    mc_torque_command[inv].set_torque_setpoint(calculated_torque);
+  }
+  
 
   //power limit to 80kW
   //add this plz
 
-  return calculated_torque;
 }
 
 /* Read pedal sensor values */
@@ -712,7 +739,7 @@ inline void read_load_cell_values() {
 
 }
 
-inline void reset_inverter() {
+inline void clear_all_inverters_error() {
 
 }
 
@@ -743,8 +770,38 @@ bool check_all_inverters_quit_inverter_on() {
   return true;
 }
 
+uint8_t check_all_inverters_error(){
+  uint8_t error_list = 0; //last 4 bits correspond to error bit in status word of each inverter, inverter 1 is rightmost bit;
+  for (uint8_t inv = 0; inv < 4; inv++) {
+    if (mc_status[inv].get_error()) {
+      error_list = error_list | (0x01 << inv);
+    }
+  }
+}
+
 inline void set_all_inverters_no_torque() {
   for (uint8_t inv = 0; inv < 4; inv++) {
+    mc_setpoints_command[inv].set_speed_setpoint(0);
+    mc_setpoints_command[inv].set_pos_torque_limit(0);
+    mc_setpoints_command[inv].set_neg_torque_limit(0);
+    mc_torque_command[inv].set_torque_setpoint(0);
+  }
+}
+
+inline void set_all_inverters_torque_enabled(){
+  for (uint8_t inv = 0; inv < 4; inv++) {
+    mc_setpoints_command[inv].set_speed_setpoint(18000);
+    mc_setpoints_command[inv].set_pos_torque_limit(2142);
+    mc_setpoints_command[inv].set_neg_torque_limit(0);
+  }
+}
+
+inline void set_all_inverters_disabled(){
+  for (uint8_t inv = 0; inv < 4; inv++) {
+    mc_setpoints_command[inv].set_inverter_enable(false);
+    mc_setpoints_command[inv].set_hv_enable(false);
+    mc_setpoints_command[inv].set_driver_enable(false);
+    mc_setpoints_command[inv].set_remove_error(false);
     mc_setpoints_command[inv].set_speed_setpoint(0);
     mc_setpoints_command[inv].set_pos_torque_limit(0);
     mc_setpoints_command[inv].set_neg_torque_limit(0);
@@ -764,6 +821,9 @@ inline void set_all_inverters_driver_enable(bool input){
   }
 }
 
+inline void reset_inverters(){
+  
+}
 /* Read shutdown system values */
 inline void read_status_values() {
   /* Measure shutdown circuits' input */
