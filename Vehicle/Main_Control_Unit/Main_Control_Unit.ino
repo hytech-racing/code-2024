@@ -82,6 +82,7 @@ float filtered_brake2_reading{};
 
 bool imd_faulting = false;
 bool inverter_restart = false; // True when restarting the inverter
+uint8_t inverter_startup_state = 0;
 
 uint32_t total_charge_amount = 0;
 uint32_t total_discharge_amount = 0;
@@ -172,8 +173,9 @@ void setup() {
 
 void loop() {
   read_pedal_values();
+  read_load_cell_values();
   read_status_values();
-
+  
   send_CAN_mcu_status();
   send_CAN_mcu_pedal_readings();
   //send_CAN_bms_coulomb_counts();
@@ -299,7 +301,7 @@ inline void state_machine() {
       Serial.println("TS NOT ACTIVE");
 #endif
       // if TS is above HV threshold, move to Tractive System Active
-      if (TS_over_HV_threshold()) {
+      if (check_TS_over_HV_threshold()) {
 #if DEBUG
         Serial.println("Setting state to TS Active from TS Not Active");
 #endif
@@ -326,8 +328,9 @@ inline void state_machine() {
 #endif
         set_state(MCU_STATE::TRACTIVE_SYSTEM_ACTIVE);
       }
-      // motor controller indicates that inverter has enabled within timeout period
-      if () {
+
+     
+      if (false) {
 #if DEBUG
         Serial.println("Setting state to Waiting Ready to Drive Sound");
 #endif
@@ -337,8 +340,6 @@ inline void state_machine() {
 
     case MCU_STATE::WAITING_READY_TO_DRIVE_SOUND:
       check_TS_active();
-      check_inverter_disabled();
-      inverter_heartbeat(1);
 
       // if the ready to drive sound has been playing for long enough, move to ready to drive mode
       if (timer_ready_sound.check()) {
@@ -433,22 +434,15 @@ inline void state_machine() {
           Serial.printf("get imd ok high: %d\n", mcu_status.get_imd_ok_high());
 
         }
-        // Implausibility exists, command 0 torque
-
-        mc_command_message.set_torque_command(calculated_torque);
-
-        mc_command_message.write(msg.buf);
-        tx_msg.id = ID_MC_COMMAND_MESSAGE;
-        tx_msg.len = 8;
-        CAN.write(tx_msg);
-      }
+      
       break;
   }
 }
 
 /* Shared state functinality */
 
-bool TS_over_HV_threshold() {
+
+bool check_TS_over_HV_threshold() {
   for (uint8_t inv = 0; inv < 4; inv++) {
     if (mc_energy[inv].get_dc_bus_voltage() < MIN_HV_VOLTAGE) {
       return false;
@@ -459,7 +453,7 @@ bool TS_over_HV_threshold() {
 
 // if TS is below HV threshold, return to Tractive System Not Active
 inline void check_TS_active() {
-  if (!TS_over_HV_threshold()) {
+  if (!check_TS_over_HV_threshold()) {
 #if DEBUG
     Serial.println("Setting state to TS Not Active, because TS is below HV threshold");
 #endif
@@ -569,7 +563,7 @@ void parse_rear_inv_can_message() {
     }
   }
 }
-inline void reset_inverter() {
+inline void power_off_inverter() {
   inverter_restart = true;
   digitalWrite(INVERTER_CTRL, LOW);
   timer_restart_inverter.reset();
@@ -593,7 +587,7 @@ void set_state(MCU_STATE new_state) {
     case MCU_STATE::TRACTIVE_SYSTEM_NOT_ACTIVE: break;
     case MCU_STATE::TRACTIVE_SYSTEM_ACTIVE: break;
     case MCU_STATE::ENABLING_INVERTER: 
-      timer_inverter_enable.begin();
+      timer_inverter_enable.reset();
       break;
     case MCU_STATE::WAITING_READY_TO_DRIVE_SOUND:
       // make dashboard stop buzzer
@@ -638,7 +632,7 @@ void set_state(MCU_STATE new_state) {
 
 int calculate_torque() {
   int calculated_torque = 0;
-  int16_t mc_rpm = abs(mc_motor_position_information.get_motor_speed());
+  int16_t mc_rpm = 0;//abs(mc_motor_position_information.get_motor_speed());
   if (mcu_status.get_launch_ctrl_active()) {
 
   } else {
@@ -693,6 +687,13 @@ inline void read_pedal_values() {
 
 }
 
+inline void read_load_cell_values(){
+  
+}
+
+inline void reset_inverter(){
+  
+}
 /* Read shutdown system values */
 inline void read_status_values() {
   /* Measure shutdown circuits' input */

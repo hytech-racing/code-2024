@@ -16,6 +16,16 @@ enum class MCU_STATE
     READY_TO_DRIVE               = 5
 };
 
+enum class INVERTER_STARTUP_STATE
+{
+  WAIT_SYSTEM_READY             = 0,
+  WAIT_DC_ON                    = 1,
+  WAIT_QUIT_DC_ON               = 2,
+  WAIT_DRIVER_ENABLE            = 3,
+  WAIT_INVERTER_ON              = 4,
+  WAIT_QUIT_INVERTER_ON         = 5
+};
+
 #pragma pack(push,1)
 
 // @Parseclass @Custom(parse_mcu_enums)
