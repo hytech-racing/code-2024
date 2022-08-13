@@ -89,9 +89,6 @@ bool imd_faulting = false;
 bool inverter_restart = false; // True when restarting the inverter
 INVERTER_STARTUP_STATE inverter_startup_state = INVERTER_STARTUP_STATE::WAIT_SYSTEM_READY;
 
-uint32_t total_charge_amount = 0;
-uint32_t total_discharge_amount = 0;
-
 ADC_SPI ADC(ADC_CS, ADC_SPI_SPEED);
 FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> FRONT_INV_CAN;
 FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> REAR_INV_CAN;
@@ -398,20 +395,6 @@ inline void send_CAN_bms_coulomb_counts() {
     TELEM_CAN.write(msg);
   }
 }
-//inline void setup_total_discharge() {
-//  total_discharge = 0;
-//  previous_data_time = millis();
-//  bms_coulomb_counts.set_total_discharge(total_discharge);
-//}
-//
-//inline void process_total_discharge() {
-//  unsigned long current_time = millis();
-//  double new_current = mc_current_information.get_dc_bus_current() / 10;
-//  uint32_t added_Ah = new_current * ((current_time - previous_data_time) * 10000 / (1000 * 60 * 60 )); //scaled by 10000 for telemetry parsing
-//  previous_data_time = current_time;
-//  total_discharge += added_Ah;
-//  bms_coulomb_counts.set_total_discharge(total_discharge);
-//}
 
 inline void state_machine() {
   switch (mcu_status.get_state()) {
@@ -937,9 +920,4 @@ inline void read_status_values() {
   mcu_status.set_shutdown_c_above_threshold(analogRead(SHUTDOWN_C_READ) > SHUTDOWN_HIGH);
   mcu_status.set_shutdown_d_above_threshold(analogRead(SHUTDOWN_D_READ) > SHUTDOWN_HIGH);
   mcu_status.set_shutdown_e_above_threshold(analogRead(SHUTDOWN_E_READ) > SHUTDOWN_HIGH);
-}
-
-/* Track how far the car has driven */
-inline void update_distance_traveled() {
-
 }

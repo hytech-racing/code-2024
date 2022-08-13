@@ -46,9 +46,6 @@
 #define MIN_HV_VOLTAGE 60               // Volts in V * 1 - Used to check if Accumulator is energized
 
 
-#define BMS_HIGH_BATTERY_TEMPERATURE 50  // TODO: figure out correct value
-#define GLV_VOLTAGE_MULTIPLIER 5.5963    // TODO: calibrate this constant
-
 #define ALPHA 0.9772                     // parameter for the sowftware filter used on ADC pedal channels
 #define ADC_SPI_SPEED 1800000            // max SPI clokc frequency for MCP3208 is 2MHz in ideal conditions
 #define TORQUE_ADJUSTMENT_VOLTAGE 3.5242 
@@ -65,11 +62,3 @@
 #define BMS_HEARTBEAT_TIMEOUT 30000
 #define DASH_HEARTBEAT_TIMEOUT 1000
 #define TIMER_SOFTWARE_ENABLE 100
-
-// this is just for reference
-#define MAX_POSSIBLE_TORQUE 1200         
-
-
-#define NUM_TEETH 24 //CHANGE THIS FOR #OF TEETH PER REVOLUTION
-#define WHEEL_CIRCUMFERENCE 1.300619 //CIRCUMFERENCE OF WHEEL IN METERS
-#define TIME_OUT 500000
