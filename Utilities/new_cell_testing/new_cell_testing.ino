@@ -91,7 +91,7 @@ double periodLast;
 double period;
 double periodSec;
 double elapsedtime = 0;
-double energyCount;
+double energyCount[2];
 //////////State Machine/////////////////////////////////////////////////////////////////////
 
 
@@ -136,11 +136,13 @@ void CellDataLog(int i) {
     cell_current[i][0] = -1 * i_read[i];
 
     //Print data to Serial with delimiters to form columns:
-    Serial.print(energyCount, 6);    Serial.print("\t");
+    Serial.print(energyCount[1], 6);    Serial.print("\t");
+    Serial.print(elapsedtime, 6);    Serial.print("\t");
 
     Serial.print(state[1]);               Serial.print(delimiter);
     Serial.print(cell_voltage[1][0], 4);   Serial.print(delimiter);
     Serial.print(cell_current[1][0]);     Serial.print(delimiter);
+    Serial.print(i_read[1]);     Serial.print(delimiter);
 
     Serial.print(state[0]);               Serial.print(delimiter);
     Serial.print(cell_voltage[0][0], 4);   Serial.print(delimiter);
@@ -149,6 +151,18 @@ void CellDataLog(int i) {
 
   }
 }
+//
+//char rx_byte = 0;
+//
+//void check_input() {
+//  if (Serial.available() > 0) {    // is a character available?
+//    rx_byte = Serial.read();       // get the character
+//  
+//    // check if a number was received
+//    if (rx_byte = 'd');
+//        state
+//  } // end: if (Serial.available() > 0)
+//}
 
 double getBatteryVoltage(int channel) {
   // Method to read the cell voltage in VOLTS
@@ -224,7 +238,7 @@ void loop() {
   periodSec = period/1000000;
   elapsedtime+= periodSec;
   for (int i = 0; i < 2; i++) {
-    energyCount += i_read[i]*periodSec*0.0002777777;
+    energyCount[i] += i_read[i]*periodSec*0.0002777777;
 
     contactor_voltage = analogRead(CONTACTOR_PWR_SENSE); // read contactor voltage
     v_read[i]     = getBatteryVoltage(1); // read cell's voltage
@@ -234,7 +248,7 @@ void loop() {
 //    }
     if (state[i] == CYCLE) {
       
-      if(energyCount >1.8){
+      if(energyCount[i] >1.8){
         state[i] = DONE;
       }
       digitalWrite(SWITCH[0], HIGH);
