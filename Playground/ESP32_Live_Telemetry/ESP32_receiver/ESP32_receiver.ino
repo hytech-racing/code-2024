@@ -5,6 +5,10 @@
  * @date: 03/31/2022
  */
 
+#include "CAN_ID.h"
+#include "Metro.h"
+#include "Hytech_CAN.h"
+
 // ESP-Now
 #include <esp_now.h>
 #include <WiFi.h>
@@ -15,6 +19,10 @@ typedef struct transmit_msg_t {
 } transmit_msg_t;
 
 static transmit_msg_t msg;
+
+MC_temperatures_1 temperatures_1;
+
+
 void data_receive(const uint8_t * mac, const uint8_t *incomingData, int len);
 
 void setup() {
@@ -48,4 +56,8 @@ void loop() {
 void data_receive(const uint8_t * mac, const uint8_t *incomingData, int len) {
   memcpy(&msg, incomingData, sizeof(msg));
   printf("%u,%u", msg.can_id, msg.raw_data);
+
+  switch(msg.can_id) {
+    case ID_MC_TEMPERATURES_1: memcpy(&temperatures_1, &(msg.raw_data), sizeof(temperatures_1));
+  }
 }
