@@ -25,6 +25,11 @@
 //********CONFIGURATION********************************************************************
 //*****************************************************************************************
 
+int mode = 1;
+//mode = 0 means you want to discharge to 0 SOC
+//mode = 1 means you want to charge in 0.1 SOC increments
+//mode = 2 means you want to cycle discharge and charge
+
 double       END_VOLTAGE   = 2.750;      // voltage threshold for end of test
 
 const int    timestep      = 20;         // datalog timestep (milliseconds)
@@ -151,16 +156,16 @@ void CellDataLog(int i) {
 
   }
 }
-//
+
 //char rx_byte = 0;
 //
 //void check_input() {
 //  if (Serial.available() > 0) {    // is a character available?
 //    rx_byte = Serial.read();       // get the character
-//  
+//
 //    // check if a number was received
 //    if (rx_byte = 'd');
-//        state
+//    state
 //  } // end: if (Serial.available() > 0)
 //}
 
@@ -176,7 +181,7 @@ double getBatteryCurrent(int channel) {
   // Arguments: channel (Note: in the code, channels are numbered 0-3, when on the board they are 4-7 which are designated as current sense)
   double voltage_reading = ((double) adc.read_adc(channel + 4)) * voltage_conversion_factor;
   double current_reading = (voltage_reading - (current_offset[channel] * voltage_conversion_factor)) * current_conversion_factor;
-  
+
   return current_reading;
 }
 
@@ -200,7 +205,7 @@ void setup() {
     digitalWrite(SWITCH[i], contactor_command[i]);
 
     // Set the default state for all cells as WAIT
-    state[i] = CYCLE;// NOCELL;
+    state[i] = NOCELL;
 
     // Used to find the 0 A offset for the current sensors
     for (int j = 0; j < calibration_reads; j++) {
@@ -235,49 +240,67 @@ void loop() {
   periodLast = periodStart;
   periodStart = micros();
   period = periodStart - periodLast;
-  periodSec = period/1000000;
-  elapsedtime+= periodSec;
+  periodSec = period / 1000000;
+  elapsedtime += periodSec;
   for (int i = 0; i < 2; i++) {
-    energyCount[i] += i_read[i]*periodSec*0.0002777777;
+    energyCount[i] += i_read[i] * periodSec * 0.0002777777;
 
     contactor_voltage = analogRead(CONTACTOR_PWR_SENSE); // read contactor voltage
     v_read[i]     = getBatteryVoltage(1); // read cell's voltage
     i_read[i]     = getBatteryCurrent(2); // read cell's current
-//    if (state[i] == NOCELL and getBatteryVoltage(i) > 3.5) {
-//      state[i] = CYCLE;
-//    }
-    if (state[i] == CYCLE) {
-      
-      if(energyCount[i] >1.8){
-        state[i] = DONE;
+    if (mode == 0 or mode == 2) {
+      if (state[i] == NOCELL and getBatteryVoltage(i) > 3.5) {
+        state[i] = CYCLE;
       }
-      digitalWrite(SWITCH[0], HIGH);
-      int v_sum = 0;
-      int v_avg = 0;
-      for (int k = 0; k < 100; k++) {
-        v_sum += cell_voltage[i][k];
+  
+    }
+    if (mode == 1){
+      if (state[i] == NOCELL and getBatteryVoltage(i) > 3.0) {
+        state[i] = RECHARGE;
+      }  
+    }
+    if (state[i] == CYCLE or state[i] == RECHARGE) {
+      if (mode == 1) {
+        if (energyCount[i] > 1.8) {
+          state[i] = DONE;
+        }
+        digitalWrite(SWITCH[0], HIGH);
+      }
+      if (mode == 0 or mode == 2){
+        int v_sum = 0;
+        int v_avg = 0;
+        for (int k = 0; k < 100; k++) {
+            v_sum += cell_voltage[i][k];
 
+        }
+        v_avg = v_sum / 100;
+        if (v_avg < END_VOLTAGE) {
+            state[i] = DONE;
+        }
       }
-      v_avg = v_sum / 100;
-//      if (v_avg < END_VOLTAGE) {
-//
-//        state[i] = DONE;
-//      }
-      //            if(startTime==millis()){
-      //                digitalWrite(SWITCH[0], HIGH);
-      //            }
-      //            if(millis()==startTime+1000){
-      //                digitalWrite(SWITCH[0], LOW);
-      //            }
-      //            if(millis()==startTime+1200){
-      //                digitalWrite(SWITCH[1], HIGH);
-      //            }
-      //            if(millis()==startTime+2200){
-      //                digitalWrite(SWITCH[1], LOW);
-      //            }
-      //            if(millis()==startTime+2400){
-      //                startTime = millis();
-      //            }
+      
+      if (mode == 2) {
+        if (startTime == millis()) {
+          digitalWrite(SWITCH[0], HIGH);
+        }
+        if (millis() == startTime + 1000) {
+          digitalWrite(SWITCH[0], LOW);
+        }
+        if (millis() == startTime + 1200) {
+          digitalWrite(SWITCH[1], HIGH);
+        }
+        if (millis() == startTime + 2200) {
+          digitalWrite(SWITCH[1], LOW);
+        }
+        if (millis() == startTime + 2400) {
+          startTime = millis();
+        }
+      }
+      if (mode==0){
+        digitalWrite(SWITCH[1], HIGH);
+      }
+
+
     }
     else if (state[i] == DONE) {
       digitalWrite(SWITCH[0], LOW);
