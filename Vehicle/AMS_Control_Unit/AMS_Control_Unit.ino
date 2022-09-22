@@ -62,6 +62,7 @@ Metro charging_timer = Metro(5000); // Timer to check if charger is still talkin
 Metro CAN_timer = Metro(2); // Timer that spaces apart writes for CAN messages so as to not saturate CAN bus
 Metro print_timer = Metro(500);
 Metro balance_timer(BALANCE_HOT);
+Metro timer_CAN_em_forward(100);
 elapsedMillis adc_timer; // timer that determines wait time for ADCs to finish their conversions
 uint8_t adc_state; // 0: wait to begin voltage conversions; 1: adcs converting voltage values; 2: wait to begin gpio conversions; 3: adcs converting GPIO values
 IntervalTimer pulse_timer;    //AMS ok pulse timer
@@ -90,8 +91,13 @@ bool pack_ov_fault_state = false; // enter fault state if 20 successive faults o
 // LTC6811_2 OBJECT DECLARATIONS
 LTC6811_2 ic[8];
 
+// OUTBOUND CAN MESSAGES
+EM_measurement em_measurement;
+EM_status em_status;
+
 // CAN OBJECT AND VARIABLE DECLARATIONS
-FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> CAN;
+FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> ENERGY_METER_CAN;
+FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> TELEM_CAN;
 CAN_message_t msg;
 
 // BMS CAN MESSAGE AND STATE MACHINE OBJECT DECLARATIONS
@@ -112,11 +118,15 @@ void setup() {
   pulse_timer.begin(ams_ok_pulse, 50000); //timer to pulse pin 5 every 50 milliseconds
   Serial.begin(115200);
   SPI.begin();
-  CAN.begin();
-  CAN.setBaudRate(500000);
+  TELEM_CAN.begin();
+  TELEM_CAN.setBaudRate(500000);
+  ENERGY_METER_CAN.begin();
+  ENERGY_METER_CAN.setBaudRate(500000);
+  ENERGY_METER_CAN.enableMBInterrupts();
+  ENERGY_METER_CAN.onReceive(parse_energy_meter_can_message);
 
   for (int i = 0; i < 64; i++) { // Fill all filter slots with Charger Control Unit message filter
-    CAN.setMBFilter(static_cast<FLEXCAN_MAILBOX>(i), ID_CCU_STATUS); // Set CAN mailbox filtering to only watch for charger controller status CAN messages
+    TELEM_CAN.setMBFilter(static_cast<FLEXCAN_MAILBOX>(i), ID_CCU_STATUS); // Set CAN mailbox filtering to only watch for charger controller status CAN messages
   }
   // initialize the PEC table
   LTC6811_2::init_PEC15_Table();
@@ -148,6 +158,22 @@ void loop() {
   }
   else {
     currently_balancing = false;
+  }
+
+  forward_CAN_em();
+}
+
+inline void forward_CAN_em() {
+  if (timer_CAN_em_forward.check()) {
+    em_measurement.write(msg.buf);
+    msg.id = ID_EM_MEASUREMENT;
+    msg.len = sizeof(em_measurement);
+    TELEM_CAN.write(msg);
+
+    em_status.write(msg.buf);
+    msg.id = ID_EM_STATUS;
+    msg.len = sizeof(em_status);
+    TELEM_CAN.write(msg);
   }
 }
 
@@ -401,13 +427,23 @@ void balance_cells() {
 
 // parse incoming CAN messages for CCU status message and changes the state of the BMS in software
 void parse_CAN_CCU_status() {
-  while (CAN.read(msg)) {
+  while (TELEM_CAN.read(msg)) {
     if (msg.id == ID_CCU_STATUS) {
       ccu_status.load(msg.buf);
       charging_timer.reset();
       if (bms_status.get_state() == BMS_STATE_DISCHARGING) {
         bms_status.set_state(BMS_STATE_CHARGING);
       }
+    }
+  }
+}
+
+void parse_energy_meter_can_message() {
+  static CAN_message_t rx_msg;
+  while (ENERGY_METER_CAN.read(rx_msg)) {
+    switch (rx_msg.id) {
+      case ID_EM_MEASUREMENT:   em_measurement.load(rx_msg.buf);    break;
+      case ID_EM_STATUS:        em_status.load(rx_msg.buf);         break;         
     }
   }
 }
@@ -433,7 +469,7 @@ void write_CAN_messages() {
     msg.id = ID_BMS_STATUS;
     msg.len = sizeof(bms_status);
     bms_status.write(msg.buf);
-    CAN.write(msg);
+    TELEM_CAN.write(msg);
     can_bms_status_timer = 0;
   }
   // Write BMS_voltages message
@@ -441,7 +477,7 @@ void write_CAN_messages() {
     msg.id = ID_BMS_VOLTAGES;
     msg.len = sizeof(bms_voltages);
     bms_voltages.write(msg.buf);
-    CAN.write(msg);
+    TELEM_CAN.write(msg);
     can_bms_voltages_timer = 0;
   }
   // Write BMS_temperatures message
@@ -449,7 +485,7 @@ void write_CAN_messages() {
     msg.id = ID_BMS_TEMPERATURES;
     msg.len = sizeof(bms_temperatures);
     bms_temperatures.write(msg.buf);
-    CAN.write(msg);
+    TELEM_CAN.write(msg);
     can_bms_temps_timer = 0;
   }
   // Write BMS_onboard_temperatures message
@@ -457,7 +493,7 @@ void write_CAN_messages() {
     msg.id = ID_BMS_ONBOARD_TEMPERATURES;
     msg.len = sizeof(bms_onboard_temperatures);
     bms_onboard_temperatures.write(msg.buf);
-    CAN.write(msg);
+    TELEM_CAN.write(msg);
     can_bms_onboard_temps_timer = 0;
   }
   // write detailed voltages for one IC group
@@ -490,7 +526,7 @@ void write_CAN_detailed_voltages() {
     msg.id = ID_BMS_DETAILED_VOLTAGES;
     msg.len = sizeof(bms_detailed_voltages);
     bms_detailed_voltages.write(msg.buf);
-    CAN.write(msg);
+    TELEM_CAN.write(msg);
   }
   can_voltage_group += 3;
 }
@@ -511,7 +547,7 @@ void write_CAN_detailed_temps() {
   msg.id = ID_BMS_DETAILED_TEMPERATURES;
   msg.len = sizeof(bms_detailed_temperatures);
   bms_detailed_temperatures.write(msg.buf);
-  CAN.write(msg);
+  TELEM_CAN.write(msg);
   can_gpio_group += 3;
 }
 
