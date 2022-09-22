@@ -438,13 +438,11 @@ void parse_CAN_CCU_status() {
   }
 }
 
-void parse_energy_meter_can_message() {
-  static CAN_message_t rx_msg;
-  while (ENERGY_METER_CAN.read(rx_msg)) {
-    switch (rx_msg.id) {
-      case ID_EM_MEASUREMENT:   em_measurement.load(rx_msg.buf);    break;
-      case ID_EM_STATUS:        em_status.load(rx_msg.buf);         break;         
-    }
+void parse_energy_meter_can_message(const CAN_message_t& rx_msg) {
+  uint8_t *buf = const_cast<u_int8_t*>(rx_msg.buf);
+  switch (rx_msg.id) {
+    case ID_EM_MEASUREMENT:   em_measurement.load(buf);    break;
+    case ID_EM_STATUS:        em_status.load(buf);         break;         
   }
 }
 
