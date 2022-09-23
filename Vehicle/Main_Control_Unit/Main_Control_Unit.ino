@@ -622,9 +622,9 @@ inline void software_shutdown() {
 }
 
 /* Parse incoming CAN messages */
-void parse_telem_can_message() {
-  static CAN_message_t rx_msg;
-  while (TELEM_CAN.read(rx_msg)) {
+void parse_telem_can_message(const CAN_message_t &RX_msg) {
+ static CAN_message_t rx_msg = RX_msg;
+ while (TELEM_CAN.read(rx_msg)) {
     switch (rx_msg.id) {
       case ID_BMS_TEMPERATURES:              bms_temperatures.load(rx_msg.buf);              break;
       case ID_BMS_VOLTAGES:                  bms_voltages.load(rx_msg.buf);                  break;
@@ -664,8 +664,8 @@ void parse_telem_can_message() {
   }
 }
 
-void parse_front_inv_can_message() {
-  static CAN_message_t rx_msg;
+void parse_front_inv_can_message(const CAN_message_t &RX_msg) {
+  static CAN_message_t rx_msg = RX_msg;
   while (FRONT_INV_CAN.read(rx_msg)) {
     switch (rx_msg.id) {
       case ID_MC1_STATUS:       mc_status[0].load(rx_msg.buf);    break;
@@ -678,8 +678,8 @@ void parse_front_inv_can_message() {
   }
 }
 
-void parse_rear_inv_can_message() {
-  static CAN_message_t rx_msg;
+void parse_rear_inv_can_message(const CAN_message_t &RX_msg) {
+  static CAN_message_t rx_msg = RX_msg;
   while (REAR_INV_CAN.read(rx_msg)) {
     switch (rx_msg.id) {
       case ID_MC3_STATUS:       mc_status[2].load(rx_msg.buf);    break;
