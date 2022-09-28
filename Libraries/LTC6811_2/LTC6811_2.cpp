@@ -389,6 +389,9 @@ void LTC6811_2::wakeup() {
 }
 
 
+uint8_t LTC6811_2::adc_state = 0;
+elapsedMillis LTC6811_2::adc_timer = 0;
+
 // Checks the timer and returns whether voltage/gpio is ready to be read
 uint8_t LTC6811_2::check() {
     if (adc_state % 2 == 1 && adc_timer <= 203) {
