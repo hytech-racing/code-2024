@@ -393,14 +393,13 @@ uint8_t LTC6811_2::adc_state = 0;
 elapsedMillis LTC6811_2::adc_timer = 0;
 
 // Checks the timer and returns whether voltage/gpio is ready to be read
-uint8_t LTC6811_2::check() {
-    if (adc_state % 2 == 1 && adc_timer <= 203) {
-        return -1; // Conversion not completed
+bool LTC6811_2::check(uint8_t state) {
+    if (adc_state == state) {
+        if (adc_state % 2 == 0 || adc_timer > 203) {
+            adc_state = (adc_state + 1) % 4;
+            adc_timer = 0;
+            return true;
+        }
     }
-    return adc_state;
-}
-// Update adc_state and reset the timer
-void LTC6811_2::next_state() {
-    adc_state = (adc_state + 1) % 4;
-    adc_timer = 0;
+    return false;
 }

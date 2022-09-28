@@ -105,8 +105,7 @@ public:
     void set_discharge_permit(DISCHARGE permit);
 
     // adc timer
-    static uint8_t check();
-    static void next_state();
+    static bool check(uint8_t state);
 
 private:
     uint8_t address;
