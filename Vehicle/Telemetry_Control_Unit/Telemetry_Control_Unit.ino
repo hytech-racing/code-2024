@@ -1,16 +1,16 @@
 
 /*
- * Teensy 3.5 Telemetry Control Unit code
+ * Teensy 4.1 Telemetry Control Unit code
  * Written by Soohyun Kim, with assistance by Ryan Gallaway and Nathan Cheek. 
  * 
  * Rev 2 - 4/23/2019
- * Last Modified: 2/8/2022
+ * Last Modified: 9/29/2022
  */
 #define GPS_EN false
+#define COULOUMB_COUNTING_EN false
+
 #include <SD.h>
-#include <Adafruit_Sensor.h>
-#include <Adafruit_ADXL345_U.h>
-#include <HyTech_FlexCAN.h>
+#include <FlexCAN_T4.h>
 #include <HyTech_CAN.h>
 #include <kinetis_flexcan.h>
 #include <Wire.h>
@@ -19,6 +19,7 @@
 #include <XBTools.h>
 #include <Adafruit_GPS.h>
 #include <ADC_SPI.h>
+
 #define XB Serial2
 #define XBEE_PKT_LEN 15
 #define TEMP_SENSE_CHANNEL 0
@@ -38,7 +39,7 @@ float filtered_cooling_current_reading{};
 /*
  * CAN Variables
  */
-FlexCAN CAN(500000);
+FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> CAN;
 static CAN_message_t msg_rx;
 static CAN_message_t msg_tx;
 static CAN_message_t xb_msg;
@@ -66,23 +67,21 @@ Metro timer_debug_bms_temperatures = Metro(3000);
 Metro timer_debug_bms_detailed_temperatures = Metro(3000);
 Metro timer_debug_bms_voltages = Metro(1000);
 Metro timer_debug_bms_detailed_voltages = Metro(3000);
-Metro timer_debug_bms_coulomb_counts = Metro(1000);
-Metro timer_debug_rms_command_message = Metro(200);
-Metro timer_debug_rms_current_information = Metro(100);
-Metro timer_debug_rms_fault_codes = Metro(2000);
-Metro timer_debug_rms_internal_states = Metro(2000);
-Metro timer_debug_rms_motor_position_information = Metro(100);
-Metro timer_debug_rms_temperatures_1 = Metro(3000);
-Metro timer_debug_rms_temperatures_3 = Metro(3000);
-Metro timer_debug_rms_torque_timer_information = Metro(200);
-Metro timer_debug_rms_voltage_information = Metro(100);
+Metro timer_energy = Metro(1000);
+Metro timer_setpoints_command = Metro(1000);
+Metro timer_status = Metro(1000);
+Metro timer_temps = Metro(1000);
+Metro timer_torque_command = Metro(1000);
 Metro timer_detailed_voltages = Metro(1000);
 Metro timer_status_send = Metro(100);
 Metro timer_status_send_xbee = Metro(2000);
 Metro timer_gps = Metro(100);
 Metro timer_debug_RTC = Metro(1000);
 Metro timer_flush = Metro(100);
+#if COULOUMB_COUNTING_EN
 Metro timer_total_discharge = Metro(1000);
+Metro timer_debug_bms_coulomb_counts = Metro(1000);
+#endif
 Metro timer_em_status = Metro(1000);
 Metro timer_em_measurement = Metro(1000);
 Metro timer_imu_accelerometer = Metro(200);
@@ -90,11 +89,34 @@ Metro timer_imu_gyroscope = Metro(200);
 Metro timer_sab_readings_front = Metro(200);
 Metro timer_sab_readings_rear = Metro(200);
 Metro timer_sab_readings_gps = Metro(200);
+
 MCU_status mcu_status;
 MCU_pedal_readings mcu_pedal_readings;
 MCU_analog_readings mcu_analog_readings;
 MCU_GPS_readings mcu_gps_readings;
 MCU_wheel_speed mcu_wheel_speed;
+
+MC_energy mc1_energy;
+MC_energy mc2_energy;
+MC_energy mc3_energy;
+MC_energy mc4_energy;
+MC_setpoints_command mc1_setpoints_command;
+MC_setpoints_command mc2_setpoints_command;
+MC_setpoints_command mc3_setpoints_command;
+MC_setpoints_command mc4_setpoints_command;
+MC_status mc1_status;
+MC_status mc2_status;
+MC_status mc3_status;
+MC_status mc4_status;
+MC_temps mc1_temps;
+MC_temps mc2_temps;
+MC_temps mc3_temps;
+MC_temps mc4_temps;
+MC_torque_command mc1_torque_command;
+MC_torque_command mc2_torque_command;
+MC_torque_command mc3_torque_command;
+MC_torque_command mc4_torque_command;
+
 BMS_voltages bms_voltages;
 BMS_detailed_voltages bms_detailed_voltages[4][8];
 BMS_temperatures bms_temperatures;
@@ -105,23 +127,7 @@ BMS_status bms_status;
 BMS_balancing_status bms_balancing_status[2];
 BMS_coulomb_counts bms_coulomb_counts;                                                
 CCU_status ccu_status;
-MC_temperatures_1 mc_temperatures_1;
-MC_temperatures_2 mc_temperatures_2;
-MC_temperatures_3 mc_temperatures_3;
 Dashboard_status dashboard_status;
-//MC_analog_input_voltages mc_analog_input_voltages;
-//MC_digital_input_status mc_digital_input_status;
-MC_motor_position_information mc_motor_position_information;
-MC_current_information mc_current_information;
-MC_voltage_information mc_voltage_information;
-MC_internal_states mc_internal_states;
-MC_fault_codes mc_fault_codes;
-MC_torque_timer_information mc_torque_timer_information;
-MC_flux_weakening_output mc_flux_weakening_output;
-MC_firmware_information mc_firmware_information;
-MC_command_message mc_command_message;
-MC_read_write_parameter_command mc_read_write_parameter_command;
-MC_read_write_parameter_response mc_read_write_parameter_response;
 uint32_t total_discharge;
 unsigned long previous_data_time;
 EM_status em_status;
@@ -164,7 +170,7 @@ void setup() {
     }
     last_sec_epoch = Teensy3Clock.get();
     
-    FLEXCAN0_MCR &= 0xFFFDFFFF; // Enables CAN message self-reception
+    //FLEXCAN0_MCR &= 0xFFFDFFFF; // Enables CAN message self-reception
     CAN.begin();
     
   #if GPS_EN
@@ -223,9 +229,12 @@ void loop() {
     if (timer_mcu_analog_readings.check()) {
         process_mcu_analog_readings();
     }
+    /* Couloumb counting */
+    #if COULOUMB_COUNTING_EN
     if (timer_total_discharge.check()) {
         write_total_discharge();
     }
+    #endif
   #if GPS_EN
     /* Process GPS readings */
     GPS.read();
@@ -242,12 +251,6 @@ void parse_can_message() {
     while (CAN.read(msg_rx)) {
         write_to_SD(&msg_rx); // Write to SD card buffer (if the buffer fills up, triggering a flush to disk, this will take 8ms)
         // Identify received CAN messages and load contents into corresponding structs
-        /*
-        if (msg_rx.id == ID_MC_ANALOG_INPUTS_VOLTAGES)
-            mc_analog_input_voltages.load(msg_rx.buf);
-        if (msg_rx.id == ID_MC_DIGITAL_INPUT_STATUS)
-            mc_digital_input_status.load(msg_rx.buf);
-        */
         if (msg_rx.id == ID_BMS_DETAILED_VOLTAGES) {
             BMS_detailed_voltages temp = BMS_detailed_voltages(msg_rx.buf);
             bms_detailed_voltages[temp.get_group_id()][temp.get_ic_id()].load(msg_rx.buf);
@@ -277,23 +280,26 @@ void parse_can_message() {
             case ID_BMS_STATUS:                         bms_status.load(msg_rx.buf);                        break;
             case ID_BMS_COULOMB_COUNTS:                 bms_coulomb_counts.load(msg_rx.buf);                break;
             case ID_CCU_STATUS:                         ccu_status.load(msg_rx.buf);                        break;
-            case ID_MC_TEMPERATURES_1:                  mc_temperatures_1.load(msg_rx.buf);                 break;
-            case ID_MC_TEMPERATURES_2:                  mc_temperatures_2.load(msg_rx.buf);                 break;
-            case ID_MC_TEMPERATURES_3:                  mc_temperatures_3.load(msg_rx.buf);                 break;
-            case ID_MC_MOTOR_POSITION_INFORMATION:      mc_motor_position_information.load(msg_rx.buf);     break;
-            case ID_MC_CURRENT_INFORMATION:             
-              mc_current_information.load(msg_rx.buf);
-              process_total_discharge();            
-              break;
-            case ID_MC_VOLTAGE_INFORMATION:             mc_voltage_information.load(msg_rx.buf);            break;
-            case ID_MC_INTERNAL_STATES:                 mc_internal_states.load(msg_rx.buf);                break;
-            case ID_MC_FAULT_CODES:                     mc_fault_codes.load(msg_rx.buf);                    break;
-            case ID_MC_TORQUE_TIMER_INFORMATION:        mc_torque_timer_information.load(msg_rx.buf);       break;
-            case ID_MC_FLUX_WEAKENING_OUTPUT:           mc_flux_weakening_output.load(msg_rx.buf);          break;
-            case ID_MC_FIRMWARE_INFORMATION:            mc_firmware_information.load(msg_rx.buf);           break;
-            case ID_MC_COMMAND_MESSAGE:                 mc_command_message.load(msg_rx.buf);                break;
-            case ID_MC_READ_WRITE_PARAMETER_COMMAND:    mc_read_write_parameter_command.load(msg_rx.buf);   break;
-            case ID_MC_READ_WRITE_PARAMETER_RESPONSE:   mc_read_write_parameter_response.load(msg_rx.buf);  break;
+            case ID_MC1_STATUS:                         mc1_status.load(msg_rx.buf);                        break;
+            case ID_MC2_STATUS:                         mc2_status.load(msg_rx.buf);                        break;
+            case ID_MC3_STATUS:                         mc3_status.load(msg_rx.buf);                        break;
+            case ID_MC4_STATUS:                         mc4_status.load(msg_rx.buf);                        break;
+            case ID_MC1_TEMPS:                          mc1_temps.load(msg_rx.buf);                         break;
+            case ID_MC2_TEMPS:                          mc2_temps.load(msg_rx.buf);                         break;
+            case ID_MC3_TEMPS:                          mc3_temps.load(msg_rx.buf);                         break;
+            case ID_MC4_TEMPS:                          mc4_temps.load(msg_rx.buf);                         break;
+            case ID_MC1_ENERGY:                         mc1_energy.load(msg_rx.buf);                        break;
+            case ID_MC2_ENERGY:                         mc2_energy.load(msg_rx.buf);                        break;
+            case ID_MC3_ENERGY:                         mc3_energy.load(msg_rx.buf);                        break;
+            case ID_MC4_ENERGY:                         mc4_energy.load(msg_rx.buf);                        break;
+            case ID_MC1_SETPOINTS_COMMAND:              mc1_setpoints_command.load(msg_rx.buf);             break;
+            case ID_MC2_SETPOINTS_COMMAND:              mc2_setpoints_command.load(msg_rx.buf);             break;
+            case ID_MC3_SETPOINTS_COMMAND:              mc3_setpoints_command.load(msg_rx.buf);             break;
+            case ID_MC4_SETPOINTS_COMMAND:              mc4_setpoints_command.load(msg_rx.buf);             break;
+            case ID_MC1_TORQUE_COMMAND:                 mc1_torque_command.load(msg_rx.buf);                break;
+            case ID_MC2_TORQUE_COMMAND:                 mc2_torque_command.load(msg_rx.buf);                break;
+            case ID_MC3_TORQUE_COMMAND:                 mc3_torque_command.load(msg_rx.buf);                break;
+            case ID_MC4_TORQUE_COMMAND:                 mc4_torque_command.load(msg_rx.buf);                break;
             case ID_MCU_WHEEL_SPEED:                    mcu_wheel_speed.load(msg_rx.buf);                   break;
             case ID_EM_STATUS:                          em_status.load(msg_rx.buf);                         break;
             case ID_EM_MEASUREMENT:                     em_measurement.load(msg_rx.buf);                    break;
@@ -368,6 +374,8 @@ void setup_total_discharge() {
   bms_coulomb_counts.set_total_discharge(total_discharge);
 }
 
+/* Coloumb counting */
+#if COULOUMB_COUNTING_EN
 void process_total_discharge() {
   double new_current = mc_current_information.get_dc_bus_current() / 10;
   unsigned long current_time = millis();
@@ -382,6 +390,8 @@ void write_total_discharge() {
   msg_tx.len = sizeof(bms_coulomb_counts);
   CAN.write(msg_tx);
 }
+#endif
+
 #if GPS_EN
 void process_gps() {
     mcu_gps_readings.set_latitude(GPS.latitude_fixed);
@@ -433,124 +443,6 @@ int write_xbee_data() {
     return written;
 }
 void send_xbee() {
-    if (timer_debug_rms_temperatures_1.check()) {
-        mc_temperatures_1.write(xb_msg.buf);
-        xb_msg.len = sizeof(MC_temperatures_1);
-        xb_msg.id = ID_MC_TEMPERATURES_1;
-        write_xbee_data();
-        /*XB.print("MODULE A TEMP: ");
-        XB.println(mc_temperatures_1.get_module_a_temperature() / (double) 10, 1);
-        XB.print("MODULE B TEMP: ");
-        XB.println(mc_temperatures_1.get_module_b_temperature() / (double) 10, 1);
-        XB.print("MODULE C TEMP: ");
-        XB.println(mc_temperatures_1.get_module_c_temperature() / (double) 10, 1);
-        XB.print("GATE DRIVER BOARD TEMP: ");
-        XB.println(mc_temperatures_1.get_gate_driver_board_temperature() / (double) 10, 1);*/
-    }
-    if (timer_debug_rms_temperatures_3.check()) {
-        mc_temperatures_3.write(xb_msg.buf);
-        xb_msg.len = sizeof(MC_temperatures_3);
-        xb_msg.id = ID_MC_TEMPERATURES_3;
-        write_xbee_data();
-        /*//XB.print("RTD 4 TEMP: "); // These aren't needed since we aren't using RTDs
-        //XB.println(mc_temperatures_3.get_rtd_4_temperature());
-        //XB.print("RTD 5 TEMP: ");
-        //XB.println(mc_temperatures_3.get_rtd_5_temperature());
-        XB.print("MOTOR TEMP: ");
-        XB.println(mc_temperatures_3.get_motor_temperature() / (double) 10, 1);
-        XB.print("TORQUE SHUDDER: ");
-        XB.println(mc_temperatures_3.get_torque_shudder() / (double) 10, 1);*/
-    }
-    if (timer_debug_rms_motor_position_information.check()) {
-        mc_motor_position_information.write(xb_msg.buf);
-        xb_msg.len = sizeof(MC_motor_position_information);
-        xb_msg.id = ID_MC_MOTOR_POSITION_INFORMATION;
-        write_xbee_data();
-        /*XB.print("MOTOR ANGLE: ");
-        XB.println(mc_motor_position_information.get_motor_angle());
-        XB.print("MOTOR SPEED: ");
-        XB.println(mc_motor_position_information.get_motor_speed());
-        XB.print("ELEC OUTPUT FREQ: ");
-        XB.println(mc_motor_position_information.get_electrical_output_frequency());
-        XB.print("DELTA RESOLVER FILT: ");
-        XB.println(mc_motor_position_information.get_delta_resolver_filtered());*/
-    }
-    if (timer_debug_rms_current_information.check()) {
-        mc_current_information.write(xb_msg.buf);
-        xb_msg.len = sizeof(MC_current_information);
-        xb_msg.id = ID_MC_CURRENT_INFORMATION;
-        write_xbee_data();
-        /*XB.print("PHASE A CURRENT: ");
-        XB.println(mc_current_information.get_phase_a_current() / (double) 10, 1);
-        XB.print("PHASE B CURRENT: ");
-        XB.println(mc_current_information.get_phase_b_current() / (double) 10, 1);
-        XB.print("PHASE C CURRENT: ");
-        XB.println(mc_current_information.get_phase_c_current() / (double) 10, 1);
-        XB.print("DC BUS CURRENT: ");
-        XB.println(mc_current_information.get_dc_bus_current() / (double) 10, 1);*/
-    }
-    if (timer_debug_rms_voltage_information.check()) {
-        mc_voltage_information.write(xb_msg.buf);
-        xb_msg.len = sizeof(MC_voltage_information);
-        xb_msg.id = ID_MC_VOLTAGE_INFORMATION;
-        write_xbee_data();
-        /*XB.print("DC BUS VOLTAGE: ");
-        XB.println(mc_voltage_information.get_dc_bus_voltage() / (double) 10, 1);
-        XB.print("OUTPUT VOLTAGE: ");
-        XB.println(mc_voltage_information.get_output_voltage() / (double) 10, 1);
-        XB.print("PHASE AB VOLTAGE: ");
-        XB.println(mc_voltage_information.get_phase_ab_voltage() / (double) 10, 1);
-        XB.print("PHASE BC VOLTAGE: ");
-        XB.println(mc_voltage_information.get_phase_bc_voltage() / (double) 10, 1);*/
-    }
-    if (timer_debug_rms_internal_states.check()) {
-        mc_internal_states.write(xb_msg.buf);
-        xb_msg.len = sizeof(MC_internal_states);
-        xb_msg.id = ID_MC_INTERNAL_STATES;
-        write_xbee_data();
-        /*XB.print("VSM STATE: ");
-        XB.println(mc_internal_states.get_vsm_state());
-        XB.print("INVERTER STATE: ");
-        XB.println(mc_internal_states.get_inverter_state());
-        XB.print("INVERTER RUN MODE: ");
-        XB.println(mc_internal_states.get_inverter_run_mode());
-        XB.print("INVERTER ACTIVE DISCHARGE STATE: ");
-        XB.println(mc_internal_states.get_inverter_active_discharge_state());
-        XB.print("INVERTER COMMAND MODE: ");
-        XB.println(mc_internal_states.get_inverter_command_mode());
-        XB.print("INVERTER ENABLE: ");
-        XB.println(mc_internal_states.get_inverter_enable_state());
-        XB.print("INVERTER LOCKOUT: ");
-        XB.println(mc_internal_states.get_inverter_enable_lockout());
-        XB.print("DIRECTION COMMAND: ");
-        XB.println(mc_internal_states.get_direction_command());*/
-    }
-    if (timer_debug_rms_fault_codes.check()) {
-        mc_fault_codes.write(xb_msg.buf);
-        xb_msg.len = sizeof(MC_fault_codes);
-        xb_msg.id = ID_MC_FAULT_CODES;
-        write_xbee_data();
-        /*XB.print("POST FAULT LO: 0x");
-        XB.println(mc_fault_codes.get_post_fault_lo(), HEX);
-        XB.print("POST FAULT HI: 0x");
-        XB.println(mc_fault_codes.get_post_fault_hi(), HEX);
-        XB.print("RUN FAULT LO: 0x");
-        XB.println(mc_fault_codes.get_run_fault_lo(), HEX);
-        XB.print("RUN FAULT HI: 0x");
-        XB.println(mc_fault_codes.get_run_fault_hi(), HEX);*/
-    }
-    if (timer_debug_rms_torque_timer_information.check()) {
-        mc_torque_timer_information.write(xb_msg.buf);
-        xb_msg.len = sizeof(MC_torque_timer_information);
-        xb_msg.id = ID_MC_TORQUE_TIMER_INFORMATION;
-        write_xbee_data();
-        /*XB.print("COMMANDED TORQUE: ");
-        XB.println(mc_torque_timer_information.get_commanded_torque() / (double) 10, 1);
-        XB.print("TORQUE FEEDBACK: ");
-        XB.println(mc_torque_timer_information.get_torque_feedback());
-        XB.print("RMS UPTIME: ");
-        XB.println(mc_torque_timer_information.get_power_on_timer() * .003, 0);*/
-    }
     if (timer_debug_bms_voltages.check()) {
         bms_voltages.write(xb_msg.buf);
         xb_msg.len = sizeof(BMS_voltages);
@@ -609,30 +501,14 @@ void send_xbee() {
         XB.print("BMS CURRENT: ");
         XB.println(bms_status.get_current() / (double) 100, 2);*/
     }
+    #if COULOUMB_COUNTING_EN
     if (timer_debug_bms_coulomb_counts.check()) {
         bms_coulomb_counts.write(xb_msg.buf);
         xb_msg.len = sizeof(BMS_coulomb_counts);
         xb_msg.id = ID_BMS_COULOMB_COUNTS;
         write_xbee_data();
     }
-    if (timer_debug_rms_command_message.check()) {
-        mc_command_message.write(xb_msg.buf);
-        xb_msg.len = sizeof(MC_command_message);
-        xb_msg.id = ID_MC_COMMAND_MESSAGE;
-        write_xbee_data();
-        /*XB.print("CMD_MSG TORQUE COMMAND: ");
-        XB.println(mc_command_message.get_torque_command() / (double) 10, 1);
-        XB.print("CMD_MSG ANGULAR VELOCITY: ");
-        XB.println(mc_command_message.get_angular_velocity());
-        XB.print("CMD_MSG DIRECTION: ");
-        XB.println(mc_command_message.get_direction());
-        XB.print("CMD_MSG INVERTER ENABLE: ");
-        XB.println(mc_command_message.get_inverter_enable());
-        XB.print("CMD_MSG DISCHARGE ENABLE: ");
-        XB.println(mc_command_message.get_discharge_enable());
-        XB.print("CMD_MSG COMMANDED TORQUE LIMIT: ");
-        XB.println(mc_command_message.get_commanded_torque_limit() / (double) 10, 1);*/
-    }
+    #endif
     if (timer_mcu_status.check()) {
         mcu_status.write(xb_msg.buf);
         xb_msg.len = sizeof(MCU_status);
@@ -691,6 +567,96 @@ void send_xbee() {
         xb_msg.id = ID_IMU_GYROSCOPE;
         write_xbee_data();
     }
+    if (timer_energy.check()) {
+        mc1_energy.write(xb_msg.buf);
+        xb_msg.len = sizeof(mc1_energy);
+        xb_msg.id = ID_MC1_ENERGY;
+        write_xbee_data();
+        mc2_energy.write(xb_msg.buf);
+        xb_msg.len = sizeof(mc2_energy);
+        xb_msg.id = ID_MC2_ENERGY;
+        write_xbee_data();
+        mc3_energy.write(xb_msg.buf);
+        xb_msg.len = sizeof(mc3_energy);
+        xb_msg.id = ID_MC3_ENERGY;
+        write_xbee_data();
+        mc4_energy.write(xb_msg.buf);
+        xb_msg.len = sizeof(mc4_energy);
+        xb_msg.id = ID_MC4_ENERGY;
+        write_xbee_data();
+    }
+    if (timer_setpoints_command.check()) {
+        mc1_setpoints_command.write(xb_msg.buf);
+        xb_msg.len = sizeof(mc1_setpoints_command);
+        xb_msg.id = ID_MC1_SETPOINTS_COMMAND;
+        write_xbee_data();
+        mc2_setpoints_command.write(xb_msg.buf);
+        xb_msg.len = sizeof(mc2_setpoints_command);
+        xb_msg.id = ID_MC2_SETPOINTS_COMMAND;
+        write_xbee_data();
+        mc3_setpoints_command.write(xb_msg.buf);
+        xb_msg.len = sizeof(mc3_setpoints_command);
+        xb_msg.id = ID_MC3_SETPOINTS_COMMAND;
+        write_xbee_data();
+        mc4_setpoints_command.write(xb_msg.buf);
+        xb_msg.len = sizeof(mc4_setpoints_command);
+        xb_msg.id = ID_MC4_SETPOINTS_COMMAND;
+        write_xbee_data();
+    }
+    if (timer_status.check()) {
+        mc1_status.write(xb_msg.buf);
+        xb_msg.len = sizeof(mc1_status);
+        xb_msg.id = ID_MC1_STATUS;
+        write_xbee_data();
+        mc2_status.write(xb_msg.buf);
+        xb_msg.len = sizeof(mc2_status);
+        xb_msg.id = ID_MC2_STATUS;
+        write_xbee_data();
+        mc3_status.write(xb_msg.buf);
+        xb_msg.len = sizeof(mc3_status);
+        xb_msg.id = ID_MC3_STATUS;
+        write_xbee_data();
+        mc4_status.write(xb_msg.buf);
+        xb_msg.len = sizeof(mc4_status);
+        xb_msg.id = ID_MC4_STATUS;
+        write_xbee_data();
+    }
+    if (timer_temps.check()) {
+        mc1_temps.write(xb_msg.buf);
+        xb_msg.len = sizeof(mc1_temps);
+        xb_msg.id = ID_MC1_TEMPS;
+        write_xbee_data();
+        mc2_temps.write(xb_msg.buf);
+        xb_msg.len = sizeof(mc2_temps);
+        xb_msg.id = ID_MC2_TEMPS;
+        write_xbee_data();
+        mc3_temps.write(xb_msg.buf);
+        xb_msg.len = sizeof(mc3_temps);
+        xb_msg.id = ID_MC3_TEMPS;
+        write_xbee_data();
+        mc4_temps.write(xb_msg.buf);
+        xb_msg.len = sizeof(mc4_temps);
+        xb_msg.id = ID_MC4_TEMPS;
+        write_xbee_data();
+    }
+    if (timer_torque_command.check()) {
+        mc1_torque_command.write(xb_msg.buf);
+        xb_msg.len = sizeof(mc1_torque_command);
+        xb_msg.id = ID_MC1_TORQUE_COMMAND;
+        write_xbee_data();
+        mc2_torque_command.write(xb_msg.buf);
+        xb_msg.len = sizeof(mc2_torque_command);
+        xb_msg.id = ID_MC2_TORQUE_COMMAND;
+        write_xbee_data();
+        mc3_torque_command.write(xb_msg.buf);
+        xb_msg.len = sizeof(mc3_torque_command);
+        xb_msg.id = ID_MC3_TORQUE_COMMAND;
+        write_xbee_data();
+        mc4_torque_command.write(xb_msg.buf);
+        xb_msg.len = sizeof(mc4_torque_command);
+        xb_msg.id = ID_MC4_TORQUE_COMMAND;
+        write_xbee_data();
+    }    
     if (timer_sab_readings_front.check()) {
         sab_readings_front.write(xb_msg.buf);
         xb_msg.len = sizeof(sab_readings_front);
