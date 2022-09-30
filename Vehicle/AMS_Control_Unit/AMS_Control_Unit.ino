@@ -15,7 +15,7 @@
 #include <Metro.h>
 
 // CONSTANT DEFINITIONS: define important values, such as IC count and cells per IC
-#define TOTAL_IC 8                 // Number of LTC6811-2 ICs that are used in the accumulator
+#define TOTAL_IC 12                 // Number of LTC6811-2 ICs that are used in the accumulator
 #define EVEN_IC_CELLS 12           // Number of cells monitored by ICs with even addresses
 #define ODD_IC_CELLS 9             // Number of cells monitored by ICS with odd addresses
 #define THERMISTORS_PER_IC 4       // Number of cell temperature monitoring thermistors connected to each IC 
@@ -88,7 +88,7 @@ bool ov_fault_state = false;      // enter fault state if 20 successive faults o
 bool pack_ov_fault_state = false; // enter fault state if 20 successive faults occur
 
 // LTC6811_2 OBJECT DECLARATIONS
-LTC6811_2 ic[8];
+LTC6811_2 ic[TOTAL_IC];
 
 // CAN OBJECT AND VARIABLE DECLARATIONS
 FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> CAN;
@@ -120,8 +120,8 @@ void setup() {
   }
   // initialize the PEC table
   LTC6811_2::init_PEC15_Table();
-  // add 8 instances of LTC6811_2 to the object array, each addressed appropriately
-  for (int i = 0; i < 8; i++) {
+  // add 12 (TOTAL_IC) instances of LTC6811_2 to the object array, each addressed appropriately
+  for (int i = 0; i < TOTAL_IC; i++) {
     ic[i] = LTC6811_2(i);
   }
   bms_status.set_state(BMS_STATE_DISCHARGING);
@@ -152,11 +152,11 @@ void loop() {
 }
 
 // READ functions to collect and read data from the LTC6811-2
-// Read cell voltages from all eight LTC6811-2; voltages are read in with units of 100μV
+// Read cell voltages from all twelve (TOTAL_IC) LTC6811-2; voltages are read in with units of 100μV
 void read_voltages() {
   if (adc_state == 0) {
     Reg_Group_Config configuration = Reg_Group_Config((uint8_t) 0x1F, false, false, vuv, vov, (uint16_t) 0x0, (uint8_t) 0x1); // base configuration for the configuration register group
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < TOTAL_IC; i++) {
       ic[i].wakeup();
       ic[i].wrcfga(configuration);
       ic[i].adcv(static_cast<CELL_SELECT>(0), false);
@@ -168,13 +168,13 @@ void read_voltages() {
     total_voltage = 0;
     max_voltage = 0;
     min_voltage = 65535;
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < TOTAL_IC; i++) {
       ic[i].wakeup();
       Reg_Group_Cell_A reg_group_a = ic[i].rdcva();
       Reg_Group_Cell_B reg_group_b = ic[i].rdcvb();
       Reg_Group_Cell_C reg_group_c = ic[i].rdcvc();
       Reg_Group_Cell_D reg_group_d = ic[i].rdcvd();
-      for (int j = 0; j < 12; j += 3) {
+      for (int j = 0; j < 12; j += 3) { //loops through ic buffers
         uint8_t *buf;
         if (j == 0) {
           buf = reg_group_a.buf();
@@ -260,7 +260,7 @@ void voltage_fault_check() {
 void read_gpio() {
   if (adc_state == 2) {
     Reg_Group_Config configuration = Reg_Group_Config((uint8_t) 0x1F, false, false, vuv, vov, (uint16_t) 0x0, (uint8_t) 0x1); // base configuration for the configuration register group
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < TOTAL_IC; i++) {
       ic[i].wakeup();
       ic[i].wrcfga(configuration);
       ic[i].adax(static_cast<GPIO_SELECT>(0), false);
@@ -276,7 +276,7 @@ void read_gpio() {
     min_board_temp_voltage = 65535;
     total_board_temps = 0;
     total_thermistor_temps = 0;
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < TOTAL_IC; i++) {
       ic[i].wakeup();
       Reg_Group_Aux_A reg_group_a = ic[i].rdauxa();
       Reg_Group_Aux_B reg_group_b = ic[i].rdauxb();
@@ -363,7 +363,7 @@ void balance_cells() {
       return;
     }
     Serial.print("Balancing voltage: "); Serial.println(min_voltage / 10000.0, 4);
-    for (uint16_t i = 0; i < 8; i++) {
+    for (uint16_t i = 0; i < TOTAL_IC; i++) {
       uint16_t cell_balance_setting = 0x0;
       // determine which cells of the IC need balancing
       uint8_t cell_count;
