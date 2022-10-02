@@ -63,18 +63,18 @@ public:
 
     // start -action- commands
     void stsctrl();
-    void adcv(CELL_SELECT cell_select, bool delay);
+    void adcv(CELL_SELECT cell_select);
     // void adow(ADC_MODE adc_mode, OPEN_WIRE_CURRENT_PUP pup, DISCHARGE discharge, CELL_SELECT cell_select)
     // void cvst(ADC_MODE adc_mode, SELF_TEST_MODE self_test);
     // void adol(ADC_MODE adc_mode, DISCHARGE discharge);
-    void adax(GPIO_SELECT gpio_select, bool delay);
+    void adax(GPIO_SELECT gpio_select);
     // void adaxd(ADC_MODE adc_mode, GPIO_SELECT gpio_select);
     // void axst(ADC_MODE adc_mode, SELF_TEST_MODE self_test);
     // void adstat(ADC_MODE adc_mode, STATUS_GROUP_SELECT status_group);
     // void adstatd(ADC_MODE adc_mode, STATUS_GROUP_SELECT status_group);
     // void statst(ADC_MODE adc_mode, SELF_TEST_MODE self_test);
-    void adcvax(bool delay);
-    void adcvsc(bool delay);
+    void adcvax();
+    void adcvsc();
 
 
     // clear commands
@@ -94,24 +94,24 @@ public:
     void spi_cmd(uint8_t *cmd, uint8_t* cmd_pec);
     void write_register_group(uint16_t cmd_code, const uint8_t *buffer);
     void read_register_group(uint16_t cmd_code, uint8_t *data);
-    void non_register_cmd(uint16_t cmd_code, bool delay_enable);
+    void non_register_cmd(uint16_t cmd_code);
     uint8_t get_cmd_address();
     static void init_PEC15_Table();
     void generate_pec(uint8_t *data, uint8_t *pec, int num_bytes);
     void set_pec_error(bool flag);
     bool get_pec_error();
     void set_adc_mode(ADC_MODE mode);
-    const void adc_delay();
+    const double get_adc_delay_ms();
     void set_discharge_permit(DISCHARGE permit);
 
     // adc timer
-    static bool check(uint8_t state);
+    bool check(uint8_t state);
 
 private:
     uint8_t address;
     bool pec_error;
     uint8_t  adc_mode;
     uint8_t discharge_permitted;
-    static uint8_t adc_state; // 0: wait to begin voltage conversions; 1: adcs converting voltage values; 2: wait to begin gpio conversions; 3: adcs converting GPIO values
-    static elapsedMillis adc_timer; // timer that determines wait time for ADCs to finish their conversions
+    uint8_t adc_state = 0; // 0: wait to begin voltage conversions; 1: adcs converting voltage values; 2: wait to begin gpio conversions; 3: adcs converting GPIO values
+    elapsedMillis adc_timer = 0; // timer that determines wait time for ADCs to finish their conversions
 };
