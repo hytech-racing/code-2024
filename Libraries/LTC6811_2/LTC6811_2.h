@@ -104,9 +104,14 @@ public:
     const void adc_delay();
     void set_discharge_permit(DISCHARGE permit);
 
+    // adc timer
+    static bool check(uint8_t state);
+
 private:
     uint8_t address;
     bool pec_error;
     uint8_t  adc_mode;
     uint8_t discharge_permitted;
+    static uint8_t adc_state; // 0: wait to begin voltage conversions; 1: adcs converting voltage values; 2: wait to begin gpio conversions; 3: adcs converting GPIO values
+    static elapsedMillis adc_timer; // timer that determines wait time for ADCs to finish their conversions
 };

@@ -387,3 +387,19 @@ void LTC6811_2::wakeup() {
     digitalWrite(SS, HIGH);
     delayMicroseconds(400); //t_wake is 400 microseconds; wait that long to ensure device has turned on.
 }
+
+
+uint8_t LTC6811_2::adc_state = 0;
+elapsedMillis LTC6811_2::adc_timer = 0;
+
+// Checks the timer and returns whether voltage/gpio is ready to be read
+bool LTC6811_2::check(uint8_t state) {
+    if (adc_state == state) {
+        if (adc_state % 2 == 0 || adc_timer > 203) {
+            adc_state = (adc_state + 1) % 4;
+            adc_timer = 0;
+            return true;
+        }
+    }
+    return false;
+}
