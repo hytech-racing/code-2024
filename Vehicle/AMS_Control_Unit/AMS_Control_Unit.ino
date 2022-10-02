@@ -542,20 +542,24 @@ void print_voltages() {
   Serial.print("Avg Voltage: "); Serial.print(total_voltage / 840000.0, 4); Serial.println("V \t");
   Serial.println("------------------------------------------------------------------------------------------------------------------------------------------------------------");
   Serial.println("Raw Cell Voltages\t\t\t\t\t\t\t\t\t\t\t\t\tBalancing Status");
-  Serial.print("\tC0\tC1\tC2\tC3\tC4\tC5\tC6\tC7\tC8\tC9\tC10\tC11\t\t");  if (currently_balancing){Serial.println("\tC0\tC1\tC2\tC3\tC4\tC5\tC6\tC7\tC8\tC9\tC10\tC11");}
-    for (int ic = 0; ic < TOTAL_IC; ic++) {
-      Serial.print("IC"); Serial.print(ic); Serial.print("\t");
-      for (int cell = 0; cell < EVEN_IC_CELLS; cell++) {
-        Serial.print(cell_voltages[ic][cell] / 10000.0, 4); Serial.print("V\t");
-      }
-      if (currently_balancing) {
-        Serial.print("\t\t");
-        for (int cell = 0; cell < EVEN_IC_CELLS; cell++) {
-          Serial.print(cell_balance_status[ic][cell]); Serial.print("\t");
-        }
-      }
-      Serial.println();
+  Serial.print("\tC0\tC1\tC2\tC3\tC4\tC5\tC6\tC7\tC8\tC9\tC10\tC11\t\t");  
+  if (currently_balancing) {
+    Serial.println("\tC0\tC1\tC2\tC3\tC4\tC5\tC6\tC7\tC8\tC9\tC10\tC11");
+  }
+  Serial.println();
+  for (int ic = 0; ic < TOTAL_IC; ic++) {
+    Serial.print("IC"); Serial.print(ic); Serial.print("\t");
+    for (int cell = 0; cell < EVEN_IC_CELLS; cell++) {
+      Serial.print(cell_voltages[ic][cell] / 10000.0, 4); Serial.print("V\t");
     }
+    if (currently_balancing) {
+      Serial.print("\t\t");
+      for (int cell = 0; cell < EVEN_IC_CELLS; cell++) {
+        Serial.print(cell_balance_status[ic][cell]); Serial.print("\t");
+      }
+    }
+    Serial.println();
+  }
 }
 
 // Print values of temperature and humidity sensors in GPIOs
