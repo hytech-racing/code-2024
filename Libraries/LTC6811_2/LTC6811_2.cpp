@@ -133,6 +133,7 @@ const double LTC6811_2::get_adc_delay_ms() {
         case 3:
             return 203;
     }
+    return 0;
 }
 // Set the discharge permission during cell measurement, see datasheet page 73
 void LTC6811_2::set_discharge_permit(DISCHARGE permit) {
