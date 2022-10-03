@@ -477,7 +477,7 @@ void write_CAN_detailed_voltages() {
     can_voltage_ic++;
     can_voltage_group = 0;
   }
-  if (can_voltage_ic > 7) {
+  if (can_voltage_ic > (TOTAL_IC-1)) {
     can_voltage_ic = 0;
     can_voltage_group = 0;
   }
@@ -500,7 +500,7 @@ void write_CAN_detailed_temps() {
     can_gpio_ic++;
     can_gpio_group = 0;
   }
-  if (can_gpio_ic > 7) {
+  if (can_gpio_ic > (TOTAL_IC-1)) {
     can_gpio_ic = 0;
   }
   bms_detailed_temperatures.set_ic_id(can_gpio_ic);
