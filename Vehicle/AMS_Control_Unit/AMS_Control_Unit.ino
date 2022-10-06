@@ -557,9 +557,8 @@ void print_voltages() {
   if (currently_balancing) {
     Serial.println("\tC0\tC1\tC2\tC3\tC4\tC5\tC6\tC7\tC8\tC9\tC10\tC11");
   } else {
-    Serial.println("");
+    Serial.println();
   }
-  Serial.println();
     for (int ic = 0; ic < TOTAL_IC; ic++) {
       Serial.print("IC"); Serial.print(ic); Serial.print("\t");
       for (int cell = 0; cell < EVEN_IC_CELLS; cell++) {
