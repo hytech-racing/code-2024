@@ -19,8 +19,8 @@
 #define TOTAL_IC 12                 // Number of LTC6811-2 ICs that are used in the accumulator
 #define EVEN_IC_CELLS 12           // Number of cells monitored by ICs with even addresses
 #define ODD_IC_CELLS 9             // Number of cells monitored by ICS with odd addresses
-#define THERMISTORS_PER_IC 4       // Number of cell temperature monitoring thermistors connected to each IC 
-#define MAX_SUCCESSIVE_FAULTS 20   // Number of successive faults permitted before AMS fault is broadcast over CAN 
+#define THERMISTORS_PER_IC 4       // Number of cell temperature monitoring thermistors connected to each IC
+#define MAX_SUCCESSIVE_FAULTS 20   // Number of successive faults permitted before AMS fault is broadcast over CAN
 #define MIN_VOLTAGE 30000          // Minimum allowable single cell voltage in units of 100μV
 #define MAX_VOLTAGE 42000          // Maxiumum allowable single cell voltage in units of 100μV
 #define MAX_TOTAL_VOLTAGE 3550000  // Maximum allowable pack total voltage in units of 100μV
@@ -63,8 +63,6 @@ Metro charging_timer = Metro(5000); // Timer to check if charger is still talkin
 Metro CAN_timer = Metro(2); // Timer that spaces apart writes for CAN messages so as to not saturate CAN bus
 Metro print_timer = Metro(500);
 Metro balance_timer(BALANCE_HOT);
-elapsedMillis adc_timer; // timer that determines wait time for ADCs to finish their conversions
-uint8_t adc_state; // 0: wait to begin voltage conversions; 1: adcs converting voltage values; 2: wait to begin gpio conversions; 3: adcs converting GPIO values
 IntervalTimer pulse_timer;    //AMS ok pulse timer
 bool next_pulse = true; //AMS ok pulse
 uint8_t can_voltage_ic = 0; //counter for the current IC data to send for detailed voltage CAN message
@@ -152,20 +150,28 @@ void loop() {
   }
 }
 
+// Check whether all LTC6811-2's are at the same state and ready to be read
+bool check_ics(int state) {
+  for (int i = 0; i < TOTAL_IC; i++) {
+    if (!ic[i].check(state)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 // READ functions to collect and read data from the LTC6811-2
 // Read cell voltages from all twelve (TOTAL_IC) LTC6811-2; voltages are read in with units of 100μV
 void read_voltages() {
-  if (adc_state == 0) {
+  if (check_ics(0)) {
     Reg_Group_Config configuration = Reg_Group_Config((uint8_t) 0x1F, false, false, vuv, vov, (uint16_t) 0x0, (uint8_t) 0x1); // base configuration for the configuration register group
     for (int i = 0; i < TOTAL_IC; i++) {
       ic[i].wakeup();
       ic[i].wrcfga(configuration);
-      ic[i].adcv(static_cast<CELL_SELECT>(0), false);
+      ic[i].adcv(static_cast<CELL_SELECT>(0));
     }
-    adc_state = 1;
-    adc_timer = 0;
   }
-  if (adc_state == 1 && adc_timer > 203) {
+  if (check_ics(1)) {
     total_voltage = 0;
     max_voltage = 0;
     min_voltage = 65535;
@@ -175,7 +181,7 @@ void read_voltages() {
       Reg_Group_Cell_B reg_group_b = ic[i].rdcvb();
       Reg_Group_Cell_C reg_group_c = ic[i].rdcvc();
       Reg_Group_Cell_D reg_group_d = ic[i].rdcvd();
-      for (int j = 0; j < 12; j += 3) { //loops through ic buffers
+      for (int j = 0; j < 12; j += 3) {
         uint8_t *buf;
         if (j == 0) {
           buf = reg_group_a.buf();
@@ -207,7 +213,6 @@ void read_voltages() {
       }
     }
     voltage_fault_check();
-    adc_state = 2;
   }
 }
 
@@ -259,17 +264,15 @@ void voltage_fault_check() {
 
 // Read GPIO registers from LTC6811-2; Process temperature and humidity data from relevant GPIO registers
 void read_gpio() {
-  if (adc_state == 2) {
+  if (check_ics(2)) {
     Reg_Group_Config configuration = Reg_Group_Config((uint8_t) 0x1F, false, false, vuv, vov, (uint16_t) 0x0, (uint8_t) 0x1); // base configuration for the configuration register group
     for (int i = 0; i < TOTAL_IC; i++) {
       ic[i].wakeup();
       ic[i].wrcfga(configuration);
-      ic[i].adax(static_cast<GPIO_SELECT>(0), false);
+      ic[i].adax(static_cast<GPIO_SELECT>(0));
     }
-    adc_state = 3;
-    adc_timer = 0;
   }
-  if (adc_state == 3 && adc_timer > 203) {
+  if (check_ics(3)) {
     max_humidity = 0;
     max_thermistor_voltage = 0;
     min_thermistor_voltage = 65535;
@@ -330,7 +333,6 @@ void read_gpio() {
       }
     }
     temp_fault_check();
-    adc_state = 0;
   }
 }
 
@@ -551,7 +553,13 @@ void print_voltages() {
   Serial.print("Avg Voltage: "); Serial.print(total_voltage / 840000.0, 4); Serial.println("V \t");
   Serial.println("------------------------------------------------------------------------------------------------------------------------------------------------------------");
   Serial.println("Raw Cell Voltages\t\t\t\t\t\t\t\t\t\t\t\t\tBalancing Status");
-  Serial.print("\tC0\tC1\tC2\tC3\tC4\tC5\tC6\tC7\tC8\tC9\tC10\tC11\t\t");  if (currently_balancing){Serial.println("\tC0\tC1\tC2\tC3\tC4\tC5\tC6\tC7\tC8\tC9\tC10\tC11");}
+  Serial.print("\tC0\tC1\tC2\tC3\tC4\tC5\tC6\tC7\tC8\tC9\tC10\tC11\t\t");
+  if (currently_balancing) {
+    Serial.println("\tC0\tC1\tC2\tC3\tC4\tC5\tC6\tC7\tC8\tC9\tC10\tC11");
+  } else {
+    Serial.println("");
+  }
+  Serial.println();
     for (int ic = 0; ic < TOTAL_IC; ic++) {
       Serial.print("IC"); Serial.print(ic); Serial.print("\t");
       for (int cell = 0; cell < EVEN_IC_CELLS; cell++) {
