@@ -149,9 +149,7 @@ void CellDataLog(int i) {
     Serial.print(cell_current[1][0]);     Serial.print(delimiter);
     Serial.print(i_read[1]);     Serial.print(delimiter);
 
-    Serial.print(state[0]);               Serial.print(delimiter);
-    Serial.print(cell_voltage[0][0], 4);   Serial.print(delimiter);
-    Serial.println(cell_current[0][0]);
+ 
 
 
   }
@@ -230,9 +228,6 @@ void setup() {
   Serial.print("Channel 1 Voltage");            Serial.print(delimiter);
   Serial.print("Channel 1 Current");            Serial.print(delimiter);
 
-  Serial.print("Channel 2 State");              Serial.print(delimiter);
-  Serial.print("Channel 2 Voltage");            Serial.print(delimiter);
-  Serial.println("Channel 2 Current");            Serial.print(delimiter);
   startTime = millis();
 }
 
