@@ -112,6 +112,9 @@ Metro timer[channels]  = Metro(timestep, 1); // return true based on timestep pe
 const int CONTACTOR_PWR_SENSE = 20;
 const int SWITCH[channels] = {A1, A2, A3, A4}; //{15, 16, 17, 18};
 const int CONTACTOR_VLT_THRESHOLD = 474; // 7 V
+const int temp1 = A7;
+const int temp2 = A8;
+
 
 //////////Conversion factors for calculating voltage and current
 double voltage_conversion_factor      = 5.033333333333333333 / 4095;   // determined by testing
@@ -140,7 +143,7 @@ void CellDataLog(int i) {
     cell_voltage[i][0] = v_read[i]; // update first value
     cell_current[i][0] = -1 * i_read[i];
 
-    //Print data to Serial with delimiters to form columns:
+//    Print data to Serial with delimiters to form columns:
     Serial.print(energyCount[1], 6);    Serial.print("\t");
     Serial.print(elapsedtime, 6);    Serial.print("\t");
 
@@ -181,6 +184,24 @@ double getBatteryCurrent(int channel) {
   double current_reading = (voltage_reading - (current_offset[channel] * voltage_conversion_factor)) * current_conversion_factor;
 
   return current_reading;
+}
+
+float B = 3971.0;
+float T1 = 298.15;
+float rawVoltage[2];
+float voltage[2];
+float Rtherm[2];
+float temp[2];
+void getTemp(float temp[2]){
+    rawVoltage[0] = analogRead(temp1);
+    rawVoltage[1] = analogRead(temp2);
+    voltage[0] = rawVoltage[0]/1024*3.3;
+    voltage[1] = rawVoltage[1]/1024*3.3;
+    Rtherm[0] = 12010*voltage[0]/(3.3-voltage[0]);
+    Rtherm[1] = 12010*voltage[1]/(3.3-voltage[1]);
+    temp[0] = -1*B*T1/(T1*log(8500.0/Rtherm[0])-B)-273.15;
+    temp[1] = -1*B*T1/(T1*log(10000.0/Rtherm[1])-B)-273.15;
+    
 }
 
 int startTime;
@@ -232,6 +253,7 @@ void setup() {
 }
 
 void loop() {
+  getTemp(temp); //this call updates the temp array temp[2]
   periodLast = periodStart;
   periodStart = micros();
   period = periodStart - periodLast;
