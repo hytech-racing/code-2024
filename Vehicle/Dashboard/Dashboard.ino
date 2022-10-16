@@ -1,9 +1,10 @@
 #include "Dashboard.h"
 #include "DebouncedButton.h"
+#include "FlexCAN_T4.h"
 #include "HyTech_CAN.h"
-#include "mcp_can.h"
 #include "MCP23S08.h"
 #include "Metro.h"
+#include "DialVectoring.h"
 #include "VariableLED.h"
 
 // only send if receiving mcu status messages
@@ -28,10 +29,18 @@ DebouncedButton btn_mode;
 DebouncedButton btn_mc_cycle;
 DebouncedButton btn_start;
 DebouncedButton btn_lc;
+DebouncedButton btn_torque_mode;
+DebouncedButton btn_led_dimmer;
+
+
+//init dial variable
+DialVectoring dial_torque_vectoring;
 
 // CAN Variables
 Metro timer_can_update = Metro(100);
-MCP_CAN CAN(CAN_CS);
+FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> CAN;
+CAN_message_t msg;
+
 
 // CAN Messages
 Dashboard_status dashboard_status{};
@@ -46,6 +55,7 @@ Metro timer_mcu_heartbeat(0, 1);
 inline void led_update();
 inline void read_can();
 inline void btn_update();
+inline void dial_update();
 inline void mcu_status_received();
 inline void mc_fault_codes_received();
 inline void inertia_status();
@@ -63,6 +73,13 @@ void setup() {
     btn_mc_cycle.begin(BTN_MC_CYCLE, 100);
     btn_start.begin(BTN_START, 100);
     btn_lc.begin(BTN_LC, 100);
+    btn_torque_mode.begin(BTN_TORQUE_MODE, 100);
+    btn_led_dimmer.begin(BTN_LED_DIMMER, 100);
+
+    int dial_pins[6] = {DIAL_MODE_ONE, DIAL_MODE_TWO, DIAL_ACCELERATION_LAUNCH_CONTROL, DIAL_SKIDPAD, DIAL_AUTOCROSS, DIAL_ENDURANCE};
+    dial_torque_vectoring.begin(dial_pins, 100);
+
+    
 
     pinMode(BUZZER,     OUTPUT);
     pinMode(LED_AMS,    OUTPUT);
@@ -77,10 +94,8 @@ void setup() {
     pinMode(SHUTDOWN_H_READ, INPUT);
 
     //Initializes CAN
-    while (CAN_OK != CAN.begin(CAN_500KBPS))              // init can bus : baudrate = 250K
-    {
-        delay(200);
-    }
+    CAN.begin();
+    CAN.setBaudRate(500000);
 
     mcu_status.set_imd_ok_high(true);
     mcu_status.set_bms_ok_high(true);
@@ -120,10 +135,11 @@ void loop() {
         (timer_can_update.check() || (temp_buttons) || (prev_start_state != dashboard_status.get_start_btn()))
       ){
         //create message to send
-        uint8_t msg[8] = {0};
+        msg.id = ID_DASHBOARD_STATUS;
         dashboard_status.set_button_flags(temp_buttons);
-        dashboard_status.write(msg);
-        CAN.sendMsgBuf(ID_DASHBOARD_STATUS, 0, sizeof(dashboard_status), msg);
+        msg.len = sizeof(dashboard_status);
+        dashboard_status.write(msg.buf);
+        CAN.write(msg);
         //rest update timer
         timer_can_update.reset();
     }
@@ -149,36 +165,35 @@ inline void led_update(){
     }
 }
 
+inline void dial_update(){
+  dashboard_status.set_dial_state(static_cast<uint8_t>(dial_torque_vectoring.readMode()));
+}
 inline void btn_update(){
     // this sets the button to be high: it is set low in send can
-    if (btn_mark.isPressed())     { dashboard_status.toggle_mark_btn();     }
-    if (btn_mode.isPressed())     { dashboard_status.toggle_mode_btn();     }
-    if (btn_mc_cycle.isPressed()) { dashboard_status.toggle_mc_cycle_btn(); }
-    if (btn_lc.isPressed())       { dashboard_status.toggle_launch_ctrl_btn();    }
+    if (btn_mark.isPressed())        { dashboard_status.toggle_mark_btn();        }
+    if (btn_mode.isPressed())        { dashboard_status.toggle_mode_btn();        }
+    if (btn_mc_cycle.isPressed())    { dashboard_status.toggle_mc_cycle_btn();    }
+    if (btn_lc.isPressed())          { dashboard_status.toggle_launch_ctrl_btn(); }
+    if (btn_torque_mode.isPressed()) { dashboard_status.toggle_torque_mode_btn(); }
+    if (btn_led_dimmer.isPressed())  { dashboard_status.toggle_led_dimmer_btn();  }
 
     dashboard_status.set_start_btn(btn_start.isPressed());
 }
 
 inline void read_can(){
-    //len is message length, buf is the actual data from the CAN message
-    static unsigned char len = 0;
-    static unsigned char buf[8] = {0};
 
-    while(CAN_MSGAVAIL == CAN.checkReceive()){
-        CAN.readMsgBuf(&len, buf);
-        static unsigned long canID = {};
-        canID = CAN.getCanId();
+    while(CAN.read(msg)){
 
-        switch(canID){
+        switch(msg.id){
             case ID_MCU_STATUS:
-                mcu_status.load(buf);
+                mcu_status.load(msg.buf);
                 timer_mcu_heartbeat.reset();
                 timer_mcu_heartbeat.interval(MCU_HEARTBEAT_TIMEOUT);
                 mcu_status_received();
                 break;
 
             case ID_MC_FAULT_CODES:
-                mc_fault_codes.load(buf);
+                mc_fault_codes.load(msg.buf);
                 mc_fault_codes_received();
             default:
                 break;

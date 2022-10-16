@@ -7,31 +7,19 @@
 #define BTN_LC A3
 #define BTN_MC_CYCLE 9
 
-//RANDOM FOR NOW
-#define BTN_TORQUE_MODE 22
-#define BTN_LED_DIMMER 23
-
-//Dial pin definition (RANDOM FOR NOW)
-
-#define DIAL_MODE_ONE 0
-#define DIAL_MODE_TWO 1
-#define DIAL_ACCELERATION_LAUNCH_CONTROL 2
-#define DIAL_SKIDPAD 3
-#define DIAL_AUTOCROSS 4 
-#define DIAL_ENDURANCE 5
-
-
-
 // LED and buzzer pin definition
 #define BUZZER A4
-#define LED_AMS 2
-#define LED_IMD 3
-#define LED_MODE 4
-#define LED_MC_ERR 5
-#define LED_START 6
+#define LED_AMS 0
+#define LED_IMD 1
+#define LED_MODE 2
+#define LED_MC_ERR 3
+#define LED_START 4
 #define LED_INERTIA A5
 
-// MCP IO Expander pin definition //
+// MCP CAN pin definition
+#define CAN_CS 10
+
+// MCP IO Expander pin definition
 #define IO_CS 8
 #define IO_ADDR 0
 
