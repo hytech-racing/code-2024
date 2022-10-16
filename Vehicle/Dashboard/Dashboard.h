@@ -24,11 +24,11 @@
 
 // LED and buzzer pin definition
 #define BUZZER A4
-#define LED_AMS 2
-#define LED_IMD 3
-#define LED_MODE 4
-#define LED_MC_ERR 5
-#define LED_START 6
+#define LED_AMS 0
+#define LED_IMD 1
+#define LED_MODE 2
+#define LED_MC_ERR 3
+#define LED_START 4
 #define LED_INERTIA A5
 
 // MCP IO Expander pin definition //
