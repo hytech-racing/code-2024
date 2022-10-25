@@ -42,17 +42,29 @@ public:
     inline bool get_mode_btn()        const { return (button_flags & 0x02); }
     inline bool get_mc_cycle_btn()    const { return (button_flags & 0x04); }
     inline bool get_launch_ctrl_btn() const { return (button_flags & 0x08); }
+    inline bool get_torque_mode_btn() const { return (button_flags & 0x10); }
+    inline bool get_led_dimmer_btn()  const { return (button_flags & 0x20); }
 
     inline void set_button_flags (uint8_t flags)           { button_flags = flags; }
     inline void set_mark_btn (bool mark_btn)               { button_flags = (button_flags & 0xFE) | (mark_btn); }
     inline void set_mode_btn (bool mode_btn)               { button_flags = (button_flags & 0xFD) | (mode_btn        << 1); }
     inline void set_mc_cycle_btn (bool mc_cycle_btn)       { button_flags = (button_flags & 0xFB) | (mc_cycle_btn    << 2); }
     inline void set_launch_ctrl_btn (bool launch_ctrl_btn) { button_flags = (button_flags & 0xF7) | (launch_ctrl_btn << 3); }
+    inline void set_torque_mode_btn(bool torque_mode_btn)  { button_flags = (button_flags & 0xEF) | (torque_mode_btn << 4); }
+    inline void set_led_dimmer_btn(bool led_dimmer_btn)    { button_flags = (button_flags & 0xDF) | (led_dimmer_btn  << 5); }
 
     inline void toggle_mark_btn()        { button_flags ^= 0x01; }
     inline void toggle_mode_btn()        { button_flags ^= 0x02; }
     inline void toggle_mc_cycle_btn()    { button_flags ^= 0x04; }
     inline void toggle_launch_ctrl_btn() { button_flags ^= 0x08; }
+    inline void toggle_torque_mode_btn() { button_flags ^= 0x10; }
+    inline void toggle_led_dimmer_btn()  { button_flags ^= 0x20; }
+    
+    /* Vectoring Dial*/
+
+    inline uint8_t get_dial_state()      const { return (dial_state); }
+
+    inline void set_dial_state(uint8_t dial_state)          { this->dial_state = dial_state; }
 
     /* Dashboard leds */
 
@@ -82,14 +94,28 @@ private:
         ) */
     uint8_t dashboard_states;
 
-    // (4 bits) unused
+    // (2 bits) unused
     /* @Parse @Flaglist(
          mark_btn,
          mode_btn,
          mc_cycle_btn,
          launch_ctrl_btn
+         toggle_mode_btn
+         led_dimmer_btn
         ) */
     uint8_t button_flags;
+
+
+    //(5 bits unused)
+    /* dial state
+        0 - MODE_ONE
+        1 - MODE_TWO
+        2 - ACCELERATION_LAUNCH_CONTROL
+        3 - SKIDPAD
+        4 - AUTOCROSS
+        5 - ENDURANCE
+    */
+    uint8_t dial_state;
 
     /*
      * ams (2 bit)

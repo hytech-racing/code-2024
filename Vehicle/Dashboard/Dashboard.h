@@ -24,12 +24,13 @@
 
 // LED and buzzer pin definition
 #define BUZZER A4
-#define LED_AMS 0
-#define LED_IMD 1
-#define LED_MODE 2
-#define LED_MC_ERR 3
-#define LED_START 4
-#define LED_INERTIA A5
+#define NEOPIXEL_PIN 6
+#define NEOPIXEL_COUNT 6
+
+enum class LED_COLORS { OFF = 0, ON = ((uint32_t)255 << 8) , BLUE = 255 , RED = ((uint32_t)255 << 16)};
+enum class LED_MODES { OFF = 0, ON = 1, BLUE = 2, RED = 3};
+enum class LED_TYPES { AMS = 0, IMD = 1, MC_ERR = 2, START = 3, MODE = 4, INERTIA = 5};
+uint8_t BRIGHTNESS = 255;
 
 // MCP IO Expander pin definition //
 #define IO_CS 8

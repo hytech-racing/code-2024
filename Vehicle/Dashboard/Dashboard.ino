@@ -5,19 +5,14 @@
 #include "MCP23S08.h"
 #include "Metro.h"
 #include "DialVectoring.h"
-#include "VariableLED.h"
+#include <Adafruit_NeoPixel.h>
 
 // only send if receiving mcu status messages
 
-// LED Variables
-VariableLED led_ams   (LED_AMS);
-VariableLED led_imd   (LED_IMD);
-VariableLED led_mc_err(LED_MC_ERR);
-VariableLED led_start (LED_START);
-VariableLED led_mode  (LED_MODE);
-VariableLED led_inertia (LED_INERTIA);
+// NEOPIXEL Variables
+Adafruit_NeoPixel dashboard_neopixels(NEOPIXEL_COUNT, NEOPIXEL_PIN, NEO_GRBW + NEO_KHZ800);
 
-Metro timer_led_ams   (LED_MIN_FAULT);
+Metro timer_led_ams   (LED_MIN_FAULT); //Do I need this?
 Metro timer_led_imd   (LED_MIN_FAULT);
 Metro timer_led_mc_err(LED_MIN_FAULT);
 
@@ -52,7 +47,7 @@ MCP23S08 expander(IO_ADDR, IO_CS);
 
 Metro timer_mcu_heartbeat(0, 1);
 
-inline void led_update();
+inline void neopixel_update();
 inline void read_can();
 inline void btn_update();
 inline void dial_update();
@@ -82,12 +77,6 @@ void setup() {
     
 
     pinMode(BUZZER,     OUTPUT);
-    pinMode(LED_AMS,    OUTPUT);
-    pinMode(LED_IMD,    OUTPUT);
-    pinMode(LED_MODE,   OUTPUT);
-    pinMode(LED_MC_ERR, OUTPUT);
-    pinMode(LED_START,  OUTPUT);
-    pinMode(LED_INERTIA, OUTPUT);
 
     pinMode(SSOK_READ, INPUT);
     pinMode(INERTIA_READ, INPUT);
@@ -100,13 +89,17 @@ void setup() {
     mcu_status.set_imd_ok_high(true);
     mcu_status.set_bms_ok_high(true);
 
+    dashboard_neopixels.begin();
+    dashboard_neopixels.show();
+    dashboard_neopixels.setBrightness(BRIGHTNESS);
+
     delay(7000);
 }
 
 void loop() {
     read_can();
     inertia_status();
-    led_update();
+    neopixel_update();
     btn_update();
 
     static bool should_send = false;
@@ -148,14 +141,14 @@ void loop() {
     prev_start_state = dashboard_status.get_start_btn();
 }
 
-inline void led_update(){
-    led_ams.update();
-    led_imd.update();
-    led_mc_err.update();
-    led_inertia.update();
-    led_start.update();
-    led_mode.update();
+inline void neopixel_update(){
+    uint8_t prevBrightness = BRIGHTNESS;
+    if (dashboard_status.get_led_dimmer_btn()) BRIGHTNESS = 255/2;
+    else BRIGHTNESS = 255;
+    if (BRIGHTNESS != prevBrightness) dashboard_neopixels.setBrightness(BRIGHTNESS);
+    dashboard_neopixels.show();
     // checks display list for first available flag
+    
     // if no flags set, display turns off (writes 10th entry; sets all IO exp pins high)
     for (int i = 0; i < 11; i++) {
         if (display_list[i] == 1) {
@@ -207,83 +200,90 @@ inline void mcu_status_received(){
 
     //BMS/AMS LED (bms and ams are the same thing)
     if (!mcu_status.get_bms_ok_high()){
-        led_ams.setMode(BLINK_MODES::ON);
-        dashboard_status.set_ams_led(static_cast<uint8_t>(BLINK_MODES::ON));
+        dashboard_neopixels.setPixelColor(static_cast<uint8_t>(LED_TYPES::AMS), static_cast<uint32_t>(LED_COLORS::ON));
+        dashboard_status.set_ams_led(static_cast<uint8_t>(LED_MODES::ON));
         display_list[4] = 1;
         timer_led_ams.reset();
     }
     // else if (init_ams){
-    //     led_ams.setMode(BLINK_MODES::OFF);
-    //     dashboard_status.set_ams_led(static_cast<uint8_t>(BLINK_MODES::OFF));
+    //     led_ams.setMode(LED_MODES::OFF);
+    //     dashboard_status.set_ams_led(static_cast<uint8_t>(LED_MODES::OFF));
     //     init_ams = false;
     // }
-    else if (led_ams.getMode() != BLINK_MODES::OFF && timer_led_ams.check()){
-        led_ams.setMode(BLINK_MODES::SLOW);
-        dashboard_status.set_ams_led(static_cast<uint8_t>(BLINK_MODES::SLOW));
+    else if (dashboard_neopixels.getPixelColor(static_cast<uint8_t>(LED_TYPES::AMS)) != static_cast<uint32_t>(LED_COLORS::OFF) && timer_led_ams.check()){
+  
+        dashboard_neopixels.setPixelColor(static_cast<uint8_t>(LED_TYPES::AMS), static_cast<uint32_t>(LED_COLORS::RED));
+        dashboard_status.set_ams_led(static_cast<uint8_t>(LED_MODES::RED));
         display_list[4] = 0;
     }
 
     //IMD LED
     if (!mcu_status.get_imd_ok_high()){
-        led_imd.setMode(BLINK_MODES::ON);
-        dashboard_status.set_imd_led(static_cast<uint8_t>(BLINK_MODES::ON));
+        dashboard_neopixels.setPixelColor(static_cast<uint8_t>(LED_TYPES::IMD), static_cast<uint32_t>(LED_COLORS::ON));
+        dashboard_status.set_imd_led(static_cast<uint8_t>(LED_MODES::ON));
         display_list[3] = 1;
         timer_led_imd.reset();
     }
     // else if (init_imd){
-    //     led_imd.setMode(BLINK_MODES::OFF);
-    //     dashboard_status.set_imd_led(static_cast<uint8_t>(BLINK_MODES::OFF));
+    //     led_imd.setMode(LED_MODES::OFF);
+    //     dashboard_status.set_imd_led(static_cast<uint8_t>(LED_MODES::OFF));
     //     init_imd = false;
     // }
-    else if (led_imd.getMode() != BLINK_MODES::OFF && timer_led_imd.check()){
-        led_imd.setMode(BLINK_MODES::SLOW);
-        dashboard_status.set_imd_led(static_cast<uint8_t>(BLINK_MODES::SLOW));
+    else if (dashboard_neopixels.getPixelColor(static_cast<uint8_t>(LED_TYPES::IMD)) != static_cast<uint32_t>(LED_COLORS::OFF) && timer_led_imd.check()){
+  
+        dashboard_neopixels.setPixelColor(static_cast<uint8_t>(LED_TYPES::IMD), static_cast<uint32_t>(LED_COLORS::RED));
+        dashboard_status.set_imd_led(static_cast<uint8_t>(LED_MODES::RED));
         display_list[3] = 0;
     }
 
     //Start LED
     switch(mcu_status.get_state()){
         case MCU_STATE::STARTUP:
-            led_start.setMode(BLINK_MODES::OFF);
-            dashboard_status.set_start_led(static_cast<uint8_t>(BLINK_MODES::OFF));
+            dashboard_neopixels.setPixelColor(static_cast<uint8_t>(LED_TYPES::START), static_cast<uint32_t>(LED_COLORS::OFF));
+            
+            dashboard_status.set_start_led(static_cast<uint8_t>(LED_MODES::OFF));
             break;
         case MCU_STATE::TRACTIVE_SYSTEM_NOT_ACTIVE:
-            led_start.setMode(BLINK_MODES::SLOW);
-            dashboard_status.set_start_led(static_cast<uint8_t>(BLINK_MODES::SLOW));
+            dashboard_neopixels.setPixelColor(static_cast<uint8_t>(LED_TYPES::START), static_cast<uint32_t>(LED_COLORS::RED));
+            dashboard_status.set_start_led(static_cast<uint8_t>(LED_MODES::RED));
             break;
         case MCU_STATE::TRACTIVE_SYSTEM_ACTIVE:
-            led_start.setMode(BLINK_MODES::FAST);
-            dashboard_status.set_start_led(static_cast<uint8_t>(BLINK_MODES::FAST));
+        
+            dashboard_neopixels.setPixelColor(static_cast<uint8_t>(LED_TYPES::START), static_cast<uint32_t>(LED_COLORS::BLUE));
+            dashboard_status.set_start_led(static_cast<uint8_t>(LED_MODES::BLUE));
             break;
         case MCU_STATE::ENABLING_INVERTER:
         case MCU_STATE::WAITING_READY_TO_DRIVE_SOUND:
         case MCU_STATE::READY_TO_DRIVE:
-            led_start.setMode(BLINK_MODES::ON);
-            dashboard_status.set_start_led(static_cast<uint8_t>(BLINK_MODES::ON));
+           
+            dashboard_neopixels.setPixelColor(static_cast<uint8_t>(LED_TYPES::START), static_cast<uint32_t>(LED_COLORS::ON));
+            dashboard_status.set_start_led(static_cast<uint8_t>(LED_MODES::ON));
             break;
         default:
-            led_start.setMode(BLINK_MODES::OFF);
-            dashboard_status.set_start_led(static_cast<uint8_t>(BLINK_MODES::OFF));
+            
+            dashboard_neopixels.setPixelColor(static_cast<uint8_t>(LED_TYPES::START), static_cast<uint32_t>(LED_COLORS::OFF));
+            dashboard_status.set_start_led(static_cast<uint8_t>(LED_MODES::OFF));
             break;
     }
 
     // Mode LED
     switch(mcu_status.get_torque_mode()){
         case 1:
-            led_mode.setMode(BLINK_MODES::OFF);
-            dashboard_status.set_mode_led(static_cast<uint8_t>(BLINK_MODES::OFF));
+            
+            dashboard_neopixels.setPixelColor(static_cast<uint8_t>(LED_TYPES::MODE), static_cast<uint32_t>(LED_COLORS::OFF));
+            dashboard_status.set_mode_led(static_cast<uint8_t>(LED_MODES::OFF));
             break;
         case 2:
-            led_mode.setMode(BLINK_MODES::FAST);
-            dashboard_status.set_mode_led(static_cast<uint8_t>(BLINK_MODES::FAST));
+            dashboard_neopixels.setPixelColor(static_cast<uint8_t>(LED_TYPES::MODE), static_cast<uint32_t>(LED_COLORS::BLUE));
+            dashboard_status.set_mode_led(static_cast<uint8_t>(LED_MODES::BLUE));
             break;
         case 3:
-            led_mode.setMode(BLINK_MODES::ON);
-            dashboard_status.set_mode_led(static_cast<uint8_t>(BLINK_MODES::ON));
+            dashboard_neopixels.setPixelColor(static_cast<uint8_t>(LED_TYPES::MODE), static_cast<uint32_t>(LED_COLORS::ON));
+            dashboard_status.set_mode_led(static_cast<uint8_t>(LED_MODES::ON));
             break;
         default:
-            //led_mode.setMode(BLINK_MODES::OFF);
-            //dashboard_status.set_mode_led(static_cast<uint8_t>(BLINK_MODES::OFF));
+            //led_mode.setMode(LED_MODES::OFF);
+            //dashboard_status.set_mode_led(static_cast<uint8_t>(LED_MODES::OFF));
             break;
     }
 }
@@ -301,36 +301,37 @@ inline void mc_fault_codes_received(){
     //MC Error LED
 
     if (is_mc_err){
-        led_mc_err.setMode(BLINK_MODES::ON);
-        dashboard_status.set_mc_error_led(static_cast<uint8_t>(BLINK_MODES::ON));
+        dashboard_neopixels.setPixelColor(static_cast<uint8_t>(LED_TYPES::MC_ERR), static_cast<uint32_t>(LED_COLORS::ON));
+        dashboard_status.set_mc_error_led(static_cast<uint8_t>(LED_MODES::ON));
         display_list[2] = 1;
         timer_led_mc_err.reset();   
     // display fault for 1 second and then it clears
-    } else if (led_mc_err.getMode() != BLINK_MODES::OFF && timer_led_mc_err.check()){
-        led_mc_err.setMode(BLINK_MODES::OFF);
-        dashboard_status.set_mc_error_led(static_cast<uint8_t>(BLINK_MODES::OFF));
+    } else if (dashboard_neopixels.getPixelColor(static_cast<uint8_t>(LED_TYPES::MC_ERR)) != static_cast<uint32_t>(LED_COLORS::OFF) && timer_led_mc_err.check()){
+        dashboard_neopixels.setPixelColor(static_cast<uint8_t>(LED_TYPES::MC_ERR), static_cast<uint32_t>(LED_COLORS::OFF));
+        dashboard_status.set_mc_error_led(static_cast<uint8_t>(LED_MODES::OFF));
         display_list[2] = 0;
     }
 
     /*if (is_mc_err){
-        led_mc_err.setMode(BLINK_MODES::ON);
-        dashboard_status.set_mc_error_led(static_cast<uint8_t>(BLINK_MODES::ON));
+        led_mc_err.setMode(LED_MODES::ON);
+        dashboard_status.set_mc_error_led(static_cast<uint8_t>(LED_MODES::ON));
         timer_led_mc_err.reset();
     }
-    else if (led_mc_err.getMode() != BLINK_MODES::OFF && timer_led_mc_err.check()){
-        led_mc_err.setMode(BLINK_MODES::SLOW);
-        dashboard_status.set_mc_error_led(static_cast<uint8_t>(BLINK_MODES::SLOW));
+    else if (led_mc_err.getMode() != LED_MODES::OFF && timer_led_mc_err.check()){
+        led_mc_err.setMode(LED_MODES::SLOW);
+        dashboard_status.set_mc_error_led(static_cast<uint8_t>(LED_MODES::SLOW));
     }*/
 }
 
 inline void inertia_status() {
     if (INERTIA_READ && !SHUTDOWN_H_READ) {
-        led_inertia.setMode(BLINK_MODES::ON);
-        dashboard_status.set_inertia_led(static_cast<uint8_t>(BLINK_MODES::ON));
+      
+        dashboard_neopixels.setPixelColor(static_cast<uint8_t>(LED_TYPES::INERTIA), static_cast<uint32_t>(LED_COLORS::ON));
+        dashboard_status.set_inertia_led(static_cast<uint8_t>(LED_MODES::ON));
         display_list[1] = 1;
     } else {
-        led_inertia.setMode(BLINK_MODES::OFF);
-        dashboard_status.set_inertia_led(static_cast<uint8_t>(BLINK_MODES::ON));
+        dashboard_neopixels.setPixelColor(static_cast<uint8_t>(LED_TYPES::INERTIA), static_cast<uint32_t>(LED_COLORS::OFF));
+        dashboard_status.set_inertia_led(static_cast<uint8_t>(LED_MODES::OFF));
         display_list[1] = 0;
     }
 }
