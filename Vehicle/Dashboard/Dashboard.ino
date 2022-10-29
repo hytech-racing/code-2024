@@ -295,6 +295,16 @@ inline void mcu_status_received(){
             //dashboard_status.set_mode_led(static_cast<uint8_t>(LED_MODES::OFF));
             break;
     }
+
+    //Mechanical Braking LED (will not compile until mcu status is modified.
+    switch(mcuStatus.get_mech_brake_active()) {
+      case 0:
+        dashboard_neopixels.setPixelColor(LED_MECH_BRAKE, LED_OFF);
+      case 1:
+        dashboard_neopixels.setPixelColor(LED_MECH_BRAKE, LED_ON_GREEN);
+        break;
+       
+    }
 }
 
 inline void mc_fault_codes_received(){

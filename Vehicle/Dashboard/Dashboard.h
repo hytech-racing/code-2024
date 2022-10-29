@@ -25,7 +25,8 @@
 // LED and buzzer pin definition
 #define BUZZER A4
 #define NEOPIXEL_PIN 6
-#define NEOPIXEL_COUNT 10
+#define NEOPIXEL_COUNT 11
+#define LED_MECH_BRAKE 10
 
 #define LED_OFF 0
 #define LED_ON_GREEN 0xFF00
