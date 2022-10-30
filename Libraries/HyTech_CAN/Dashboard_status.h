@@ -75,6 +75,7 @@ public:
     inline uint8_t get_mc_error_led()    const { return (led_flags & 0x00C0) >> 6;  }
     inline uint8_t get_start_led()       const { return (led_flags & 0x0300) >> 8;  }
     inline uint8_t get_inertia_led()     const { return (led_flags & 0x0C00) >> 10; }
+    inline uint8_t get_mech_brake_led()  const { return (led_flags & 0x1000) >> 12; }
 
     inline void set_led_flags(uint16_t flags)                { led_flags = flags; }
     inline void set_ams_led(uint8_t ams_led)                 { led_flags = (led_flags & 0xFFFC) | ((ams_led      & 0x3)     );  }
@@ -82,7 +83,8 @@ public:
     inline void set_mode_led(uint8_t mode_led)               { led_flags = (led_flags & 0xFFCF) | ((mode_led     & 0x3) << 4);  }
     inline void set_mc_error_led(uint8_t mc_error_led)       { led_flags = (led_flags & 0xFF3F) | ((mc_error_led & 0x3) << 6);  }
     inline void set_start_led(uint8_t start_led)             { led_flags = (led_flags & 0xFCFF) | ((start_led    & 0x3) << 8);  }
-    inline void set_inertia_led(uint8_t inertia_led)         { led_flags = (led_flags & 0xF3FF) | ((inertia_led    & 0x3) << 10); }
+    inline void set_inertia_led(uint8_t inertia_led)         { led_flags = (led_flags & 0xF3FF) | ((inertia_led  & 0x3) << 10); }
+    inline void set_mech_brake_led(uint8_t mech_brake_led)      { led_flags = (led_flags & 0xEFFF) | ((mech_brake_led    & 0x1) << 12); }
 
 private:
     // (4 bits) unused

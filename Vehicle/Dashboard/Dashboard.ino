@@ -300,8 +300,11 @@ inline void mcu_status_received(){
     switch(mcuStatus.get_mech_brake_active()) {
       case 0:
         dashboard_neopixels.setPixelColor(LED_MECH_BRAKE, LED_OFF);
+        dashboard_status.set_mech_brake_led(static_cast<uint8_t>(LED_MODES::OFF));
+        break;
       case 1:
         dashboard_neopixels.setPixelColor(LED_MECH_BRAKE, LED_ON_GREEN);
+        dashboard_status.set_mech_brake_led(static_cast<uint8_t>(LED_MODES::ON));
         break;
        
     }
