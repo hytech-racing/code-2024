@@ -69,16 +69,36 @@ void data_sent(const uint8_t *mac_addr, esp_now_send_status_t status);
  * 
  */
 inline void startDiscovery() {
-  // This method will switch on BLE and set it up to broadcast the WiFi Mac Address
+
 }
 inline void stopDiscovery() {
-  // This method will switch off BLE.
 }
 inline void flashBlueLED() {
   // This method will flash the Blue LED at an interval
 }
 inline void setRedLED(bool ledOn) {
   // This method will switch the Red LED on or Off
+}
+
+
+// We use an Enum to define the Mode of our Device
+enum DeviceMode {
+  Waiting,     // Not Discovering, not timed out
+  Discovering, // We're in Discovery mode
+  Discovered,  // Discovery Succeeded
+  Failed,      // Discovery Failed (Timed Out)
+};
+DeviceMode deviceMode = Waiting; // We are initially Waiting
+
+
+
+enum ButtonState {
+  ButtonDown, // The button is being pressed/held
+  ButtonUp    // The button has been released
+};
+ButtonState buttonState;
+inline ButtonState getButtonState() {
+  return digitalRead(PIN_BUTTON) == HIGH ? ButtonDown : ButtonUp;
 }
  /*
   * 
