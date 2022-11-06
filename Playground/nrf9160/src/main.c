@@ -33,6 +33,7 @@
 
 LOG_MODULE_REGISTER(mqtt_simple, CONFIG_MQTT_SIMPLE_LOG_LEVEL);
 
+
 /* Buffers for MQTT client. */
 static uint8_t rx_buffer[CONFIG_MQTT_MESSAGE_BUFFER_SIZE];
 static uint8_t tx_buffer[CONFIG_MQTT_MESSAGE_BUFFER_SIZE];
@@ -621,7 +622,44 @@ void print_uart(char *buf)
 	}
 }
 
-void main(void)
+void uart_thread(void) {
+	const struct uart_config cfg = {
+		.baudrate = 115200, 
+		.parity = UART_CFG_PARITY_NONE, 
+		.stop_bits = UART_CFG_STOP_BITS_1,
+		.data_bits = UART_CFG_DATA_BITS_8,
+		.flow_ctrl = UART_CFG_FLOW_CTRL_NONE
+		};
+	uart_configure(uart_dev, &cfg);
+	char tx_buf[MSG_SIZE];
+
+	if (!device_is_ready(uart_dev)) {
+		LOG_INF("UART device not found!");
+		return;
+	}
+
+	/* configure interrupt and callback to receive data */
+	uart_irq_callback_user_data_set(uart_dev, serial_cb, NULL);
+	uart_irq_rx_enable(uart_dev);
+
+	LOG_INF("UART device ready");
+
+	while (1) {
+		if (k_msgq_get(&uart_msgq, &tx_buf, K_FOREVER) == 0) {
+			print_uart("Echo: ");
+			print_uart(tx_buf);
+			print_uart("\r\n");
+
+			data_publish(&client,
+				   MQTT_QOS_1_AT_LEAST_ONCE,
+				   CONFIG_BUTTON_EVENT_PUBLISH_MSG,
+				   sizeof(CONFIG_BUTTON_EVENT_PUBLISH_MSG)-1);
+
+		}
+	}
+}
+
+void mqtt_thread(void)
 {
 	int err;
 	uint32_t connect_attempt = 0;
@@ -673,36 +711,10 @@ do_connect:
 		return;
 	}
 
-	const struct uart_config cfg = {
-		.baudrate = 115200, 
-		.parity = UART_CFG_PARITY_NONE, 
-		.stop_bits = UART_CFG_STOP_BITS_1,
-		.data_bits = UART_CFG_DATA_BITS_8,
-		.flow_ctrl = UART_CFG_FLOW_CTRL_NONE
-		};
-	uart_configure(uart_dev, &cfg);
-	char tx_buf[MSG_SIZE];
-
-	if (!device_is_ready(uart_dev)) {
-		LOG_INF("UART device not found!");
-		return;
-	}
-
-	/* configure interrupt and callback to receive data */
-	uart_irq_callback_user_data_set(uart_dev, serial_cb, NULL);
-	uart_irq_rx_enable(uart_dev);
-
-	LOG_INF("UART device ready");
-
 	while (1) {
-		if (k_msgq_get(&uart_msgq, &tx_buf, K_FOREVER) == 0) {
-			print_uart("Echo: ");
-			print_uart(tx_buf);
-			print_uart("\r\n");
-		}
 
 		err = poll(&fds, 1, mqtt_keepalive_time_left(&client));
-		print_uart("FDS: ");
+		print_uart("Activity detected/Need to keep alive");
 		print_uart("\r\n");
 		if (err < 0) {
 			LOG_ERR("poll: %d", errno);
@@ -744,3 +756,9 @@ do_connect:
 	}
 	goto do_connect;
 }
+
+#define STACKSIZE 16384
+#define PRIORITY 7
+
+K_THREAD_DEFINE(mqtt_threadid, STACKSIZE, mqtt_thread, NULL, NULL, NULL, PRIORITY, 0, 0);
+K_THREAD_DEFINE(uart_threadid, STACKSIZE, uart_thread, NULL, NULL, NULL, PRIORITY, 0, 0);
