@@ -1,0 +1,1 @@
+west build -b circuitdojo_feather_nrf9160ns  -- -DOVERLAY_CONFIG=overlay-hytech.conf
