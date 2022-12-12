@@ -1,4 +1,4 @@
-/*
+       /*
   Leonid Pozdneev
   Created January 2019
 
@@ -340,7 +340,7 @@ void loop() {
   if (mode == 2) {  //we want to cycle
     // this involves charge/discharge down to 0 SOC, then recharge slowly to 1 SOC and repeat
     // at any point of voltage or temp goes out of range, STOP
-    if (state == NOCELL && getBatteryVoltage(1) > 2.5) {  //verifying a cell is installed
+    if (state == NOCELL && getBatteryVoltage(1) > 3.4) {  //verifying a cell is installed
       state = CYCLE;
     }
     if (state == CYCLE) {
