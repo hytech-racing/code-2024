@@ -2,7 +2,7 @@
    Teensy 4.1 Main Control Unit code
    Written by Liwei Sun which is why the code is so bad
 
-   Rev 11
+   Rev 12
 */
 
 #include <stdint.h>
@@ -29,7 +29,7 @@
 #define DEBUG true
 #define BMS_DEBUG_ENABLE false
 
-#include "MCU_rev11_dfs.h"
+#include "MCU_rev12_dfs.h"
 
 #include "driver_constants.h"
 
@@ -89,7 +89,10 @@ bool imd_faulting = false;
 bool inverter_restart = false; // True when restarting the inverter
 INVERTER_STARTUP_STATE inverter_startup_state = INVERTER_STARTUP_STATE::WAIT_SYSTEM_READY;
 
-ADC_SPI ADC(ADC_CS, ADC_SPI_SPEED);
+ADC_SPI ADC1(ADC1_CS, ADC_SPI_SPEED);
+ADC_SPI ADC2(ADC2_CS, ADC_SPI_SPEED);
+ADC_SPI ADC3(ADC3_CS, ADC_SPI_SPEED);
+
 FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> FRONT_INV_CAN;
 FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> REAR_INV_CAN;
 FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> TELEM_CAN;
@@ -111,15 +114,16 @@ void setup() {
   pinMode(BRAKE_LIGHT_CTRL, OUTPUT);
 
   // change to input if comparator is PUSH PULL
-  pinMode(INVERTER_CTRL, OUTPUT);
+  pinMode(INVERTER_EN, OUTPUT);
+  pinMode(INVERTER_24V_EN, OUTPUT);
 
   pinMode(WATCHDOG_INPUT, OUTPUT);
   // the initial state of the watchdog is high
   // this is reflected in the static watchdog_state
   // starting high
   digitalWrite(WATCHDOG_INPUT, HIGH);
-  pinMode(TEENSY_OK, OUTPUT);
-  digitalWrite(TEENSY_OK, HIGH);
+  pinMode(SOFTWARE_OK, OUTPUT);
+  digitalWrite(SOFTWARE_OK, HIGH);
 
 #if DEBUG
   Serial.begin(115200);
@@ -147,7 +151,7 @@ void setup() {
   mcu_status.set_bms_ok_high(false);
   mcu_status.set_imd_ok_high(false);
 
-  digitalWrite(INVERTER_CTRL, HIGH);
+  digitalWrite(INVERTER_24V_EN, HIGH);
   mcu_status.set_inverter_powered(true);
 
 
@@ -167,6 +171,7 @@ void setup() {
 void loop() {
   read_pedal_values();
   read_load_cell_values();
+  //read steering
   read_status_values();
 
   send_CAN_mcu_status();
@@ -184,7 +189,7 @@ void loop() {
   /* Finish restarting the inverter when timer expires */
   if (timer_restart_inverter.check() && inverter_restart) {
     inverter_restart = false;
-    digitalWrite(INVERTER_CTRL, HIGH);
+    digitalWrite(INVERTER_24V_EN, HIGH);
     mcu_status.set_inverter_powered(true);
   }
 
@@ -608,9 +613,9 @@ inline void software_shutdown() {
   // add BMS software checks
   // software ok/not ok action
   if (mcu_status.get_software_is_ok()) {
-    digitalWrite(TEENSY_OK, HIGH); //eventually make this HIGH only if software is ok
+    digitalWrite(SOFTWARE_OK, HIGH); //eventually make this HIGH only if software is ok
   } else {
-    digitalWrite(TEENSY_OK, LOW);
+    digitalWrite(SOFTWARE_OK, LOW);
   }
   /* Watchdog timer */
   if (timer_watchdog_timer.check()) {
@@ -693,7 +698,7 @@ void parse_rear_inv_can_message(const CAN_message_t &RX_msg) {
 }
 inline void power_off_inverter() {
   inverter_restart = true;
-  digitalWrite(INVERTER_CTRL, LOW);
+  digitalWrite(INVERTER_24V_EN, LOW);
   timer_restart_inverter.reset();
   mcu_status.set_inverter_powered(false);
 
@@ -800,10 +805,10 @@ inline void set_inverter_torques() {
 /* Read pedal sensor values */
 inline void read_pedal_values() {
   /* Filter ADC readings */
-  filtered_accel1_reading = ALPHA * filtered_accel1_reading + (1 - ALPHA) * ADC.read_adc(ADC_ACCEL_1_CHANNEL);
-  filtered_accel2_reading = ALPHA * filtered_accel2_reading + (1 - ALPHA) * ADC.read_adc(ADC_ACCEL_2_CHANNEL);
-  filtered_brake1_reading = ALPHA * filtered_brake1_reading + (1 - ALPHA) * ADC.read_adc(ADC_BRAKE_1_CHANNEL);
-  filtered_brake2_reading = ALPHA * filtered_brake2_reading + (1 - ALPHA) * ADC.read_adc(ADC_BRAKE_2_CHANNEL);
+  filtered_accel1_reading = ALPHA * filtered_accel1_reading + (1 - ALPHA) * ADC2.read_adc(ADC_ACCEL_1_CHANNEL);
+  filtered_accel2_reading = ALPHA * filtered_accel2_reading + (1 - ALPHA) * ADC2.read_adc(ADC_ACCEL_2_CHANNEL);
+  filtered_brake1_reading = ALPHA * filtered_brake1_reading + (1 - ALPHA) * ADC2.read_adc(ADC_BRAKE_1_CHANNEL);
+  filtered_brake2_reading = ALPHA * filtered_brake2_reading + (1 - ALPHA) * ADC2.read_adc(ADC_BRAKE_2_CHANNEL);
 
 #if DEBUG
   // Serial.print("ACCEL 1: "); Serial.println(filtered_accel1_reading);
@@ -910,14 +915,14 @@ inline void reset_inverters() {
 /* Read shutdown system values */
 inline void read_status_values() {
   /* Measure shutdown circuits' input */
-  mcu_status.set_bms_ok_high(analogRead(BMS_OK_READ) > SHUTDOWN_HIGH);
-  mcu_status.set_imd_ok_high(analogRead(IMD_OK_READ) > SHUTDOWN_HIGH);
-  mcu_status.set_bspd_ok_high(analogRead(BSPD_OK_READ) > SHUTDOWN_HIGH);
-  mcu_status.set_software_ok_high(analogRead(SOFTWARE_OK_READ) > SHUTDOWN_HIGH);
+  mcu_status.set_bms_ok_high(digitalRead(BMS_OK_READ));
+  mcu_status.set_imd_ok_high(digitalRead(IMD_OK_READ));
+  mcu_status.set_bspd_ok_high(digitalRead(BSPD_OK_READ));
+  mcu_status.set_software_ok_high(digitalRead(SOFTWARE_OK_READ));
 
   /* Measure shutdown circuits' voltages */
-  mcu_status.set_shutdown_b_above_threshold(analogRead(SHUTDOWN_B_READ) > SHUTDOWN_HIGH);
-  mcu_status.set_shutdown_c_above_threshold(analogRead(SHUTDOWN_C_READ) > SHUTDOWN_HIGH);
-  mcu_status.set_shutdown_d_above_threshold(analogRead(SHUTDOWN_D_READ) > SHUTDOWN_HIGH);
-  mcu_status.set_shutdown_e_above_threshold(analogRead(SHUTDOWN_E_READ) > SHUTDOWN_HIGH);
+  mcu_status.set_shutdown_b_above_threshold(digitalRead(BOTS_OK_READ));
+  mcu_status.set_shutdown_c_above_threshold(digitalRead(IMD_OK_READ));
+  mcu_status.set_shutdown_d_above_threshold(digitalRead(BMS_OK_READ));
+  mcu_status.set_shutdown_e_above_threshold(digitalRead(BSPD_OK_READ));
 }
