@@ -1,0 +1,14 @@
+VERSION "DBC Example Temp"
+
+
+BO_ 160 MC_temperatures_1: 8 Vector__XXX
+  SG_ module_a_temperature        :  0|16@1-   (10,0)         [0|0]        "C"   Vector__XXX
+  SG_ module_b_temperature        :  16|16@1-   (10,0)         [0|0]        "C"   Vector__XXX
+  SG_ module_c_temperature        :  32|16@1-   (10,0)         [0|0]        "C"   Vector__XXX
+  SG_ gate_driver_board_temperature        :  48|16@1-   (10,0)         [0|0]        "C"   Vector__XXX
+
+BO_ 161 MC_temperatures_2: 8 Vector__XXX
+  SG_ control_board_temperature        :  0|16@1-   (10,0)         [0|0]        "C"   Vector__XXX
+  SG_ rtd_1_temperature        :  16|16@1-   (10,0)         [0|0]        "C"   Vector__XXX
+  SG_ rtd_2_temperature        :  32|16@1-   (10,0)         [0|0]        "C"   Vector__XXX
+  SG_ rtd_3_temperature        :  48|16@1-   (10,0)         [0|0]        "C"   Vector__XXX
