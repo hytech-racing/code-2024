@@ -10,7 +10,7 @@
 #include <kinetis_flexcan.h>
 #include <Metro.h>
 
-#define TOTAL_IC 8                      // Number of ICs in the system
+#define TOTAL_IC 12                      // Number of ICs in the system
 #define CELLS_PER_EVEN_IC 12                  // Number of cells per IC
 #define CELLS_PER_ODD_IC 9
 #define THERMISTORS_PER_IC 4            // Number of cell thermistors per IC
@@ -39,9 +39,9 @@ Charger_data charger_data;
 BMS_status bms_status;
 BMS_voltages bms_voltages;
 
-BMS_detailed_voltages bms_detailed_voltages[8][4];
+BMS_detailed_voltages bms_detailed_voltages[12][4];
 BMS_temperatures bms_temperatures;
-BMS_detailed_temperatures bms_detailed_temperatures[8][2];
+BMS_detailed_temperatures bms_detailed_temperatures[12][2];
 BMS_onboard_detailed_temperatures bms_onboard_detailed_temperatures[TOTAL_IC];
 BMS_onboard_temperatures bms_onboard_temperatures;
 BMS_balancing_status bms_balancing_status[(TOTAL_IC + 3) / 4]; // Round up TOTAL_IC / 4 since data from 4 ICs can fit in a single message
