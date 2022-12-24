@@ -1,3 +1,8 @@
+#include <circular_buffer.h>
+#include <FlexCAN_T4.h>
+#include <imxrt_flexcan.h>
+#include <kinetis_flexcan.h>
+
 /*
    HyTech 2022 Charger Control Unit
    Init 2019-05-16
@@ -5,9 +10,9 @@
    Controls OVARTECH charger and communicates with BMS over CAN to enable cell balancing
 */
 
-#include <HyTech_FlexCAN.h>
+
 #include <HyTech_CAN.h>
-#include <kinetis_flexcan.h>
+//#include <kinetis_flexcan.h>
 #include <Metro.h>
 
 #define TOTAL_IC 12                      // Number of ICs in the system
@@ -51,7 +56,8 @@ bool charge_enable = false;
 
 static CAN_message_t rx_msg;
 static CAN_message_t tx_msg;
-FlexCAN CAN(500000);
+//FlexCAN CAN(500000);
+FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> CAN;
 Metro update_ls = Metro(1000);
 Metro update_CAN = Metro(500);
 Metro update_watchdog = Metro(3);
@@ -83,6 +89,7 @@ void setup() {
 
   Serial.begin(115200);
   CAN.begin();
+  CAN.setBaudRate(500000);
 
   /* Configure CAN rx interrupt */
   interrupts();
@@ -104,14 +111,14 @@ void loop() {
     ccu_status.write(tx_msg.buf);
     tx_msg.id = ID_CCU_STATUS;
     tx_msg.len = sizeof(ccu_status);
-    CAN.write(tx_msg);
+    CAN.write(tx_msg); 
 
-    tx_msg.ext = 1;
+    //tx_msg.ext = 1; //FIXME
     charger_configure.write(tx_msg.buf);
     tx_msg.id = ID_CHARGER_CONTROL;
     tx_msg.len = sizeof(charger_configure);
     CAN.write(tx_msg);
-    tx_msg.ext = 0;
+    //tx_msg.ext = 0; //FIXME
   }
 
   if (update_watchdog.check()) {
@@ -175,11 +182,11 @@ void parse_can_message() {
       bms_balancing_status[temp.get_group_id()].load(rx_msg.buf);
     }
 
-    rx_msg.ext = 1;
+    //rx_msg.ext = 1; //FIXME
     if (rx_msg.id == ID_CHARGER_DATA) {
       charger_data.load(rx_msg.buf);
     }
-    rx_msg.ext = 0;
+    //rx_msg.ext = 0; //FIXME
   }
 }
 
@@ -192,8 +199,9 @@ void check_shutdown_signals() {
 }
 void configure_charging() {
   if (charge_enable) {
-    charger_configure.set_max_charging_voltage_high(35);
-    charger_configure.set_max_charging_voltage_low(0);
+    //maxChargingVoltage is 5290V, with .1V/Bit. Hex Value: 14AA
+    charger_configure.set_max_charging_voltage_high(20); //14 in dec
+    charger_configure.set_max_charging_voltage_low(170); //AA in dec
     charger_configure.set_max_charging_current_low(set_charge_current());
     charger_configure.set_control(0);
   } else {
@@ -205,17 +213,18 @@ void configure_charging() {
 }
 
 int set_charge_current() {
-  uint16_t output_voltage = charger_data.get_output_dc_voltage_high() << 8 | charger_data.get_output_dc_voltage_low();
+  uint16_t output_voltage = (charger_data.get_output_dc_voltage_high() << 8 | charger_data.get_output_dc_voltage_low())/10;
   uint16_t max_current;
-  if (output_voltage > 255) {
-    max_current = (120 * AC_CURRENT) * 100 / output_voltage;
+  
+  if (output_voltage > 255) {// FIXME (what is the new undervoltage threshold?)
+    max_current = (120 * AC_CURRENT) / output_voltage;
   } else {
     max_current = 10;
   }
   if (max_current > 100) {
     max_current = 10;
   }
-  return max_current;
+  return max_current*10;
 }
 void print_cells() {
   Serial.println("------------------------------------------------------------------------------------------------------------------------------------------------------------");
