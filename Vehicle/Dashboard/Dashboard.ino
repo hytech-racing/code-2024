@@ -10,7 +10,7 @@
 // only send if receiving mcu status messages
 
 // NEOPIXEL Variables
-Adafruit_NeoPixel dashboard_neopixels(NEOPIXEL_COUNT, NEOPIXEL_PIN, NEO_GRBW + NEO_KHZ800);
+Adafruit_NeoPixel dashboard_neopixels(NEOPIXEL_COUNT, NEOPIXEL_CTRL, NEO_GRBW + NEO_KHZ800);
 uint8_t brightness = 255;
 
 Metro timer_led_ams   (LED_MIN_FAULT); //Do I need this?
@@ -55,7 +55,7 @@ inline void dial_update();
 inline void mcu_status_received();
 inline void mc_fault_codes_received();
 inline void inertia_status();
-inline void display_error(uint8_t errCode);
+//inline void display_error(uint8_t errCode);
 
 void setup() {
     expander.begin();
@@ -78,7 +78,7 @@ void setup() {
 
     
 
-    pinMode(BUZZER,     OUTPUT);
+    pinMode(BUZZER_CTRL,OUTPUT);
 
     pinMode(SSOK_READ, INPUT);
     pinMode(INERTIA_READ, INPUT);
@@ -143,16 +143,18 @@ void loop() {
     prev_start_state = dashboard_status.get_start_btn();
 }
 
-inline void display_error(uint8_t errCode) {
-  byte startingIndex = 6;
-  for(byte i = 3; i >= 0; i--) {
-    if((errCode >> i) & 0x1) dashboard_neopixels.setPixelColor( startingIndex++, 0xFF0000);
-    else dashboard_neopixels.setPixelColor(startingIndex++, 0);
-  }
-}
+// Legacy Code for previous neopixel model
+
+//inline void display_error(uint8_t errCode) { 
+//  byte startingIndex = 6;
+//  for(byte i = 3; i >= 0; i--) {
+//    if((errCode >> i) & 0x1) dashboard_neopixels.setPixelColor( startingIndex++, 0xFF0000);
+//    else dashboard_neopixels.setPixelColor(startingIndex++, 0);
+//  }
+//}
 inline void neopixel_update(){
     uint8_t prevBrightness = brightness;
-    if (dashboard_status.get_led_dimmer_btn()) brightness = 255/2;
+    if (dashboard_status.get_led_dimmer_btn()) 255 >> 2;
     else brightness = 255;
     if (brightness != prevBrightness) dashboard_neopixels.setBrightness(brightness);
     dashboard_neopixels.show();
@@ -204,12 +206,12 @@ inline void read_can(){
 }
 
 inline void mcu_status_received(){
-    // control buzzer
-    digitalWrite(BUZZER, mcu_status.get_activate_buzzer());
+    // control BUZZER_CTRL
+    digitalWrite(BUZZER_CTRL, mcu_status.get_activate_buzzer);
 
     //BMS/AMS LED (bms and ams are the same thing)
     if (!mcu_status.get_bms_ok_high()){
-        dashboard_neopixels.setPixelColor(LED_TYPES::AMS, LED_ON_GREEN);
+        dashboard_neopixels.setPixelColor(LED_LIST::AMS, LED_ON_GREEN);
         dashboard_status.set_ams_led(static_cast<uint8_t>(LED_MODES::ON));
         display_list[4] = 1;
         timer_led_ams.reset();
@@ -219,16 +221,16 @@ inline void mcu_status_received(){
     //     dashboard_status.set_ams_led(static_cast<uint8_t>(LED_MODES::OFF));
     //     init_ams = false;
     // }
-    else if (dashboard_neopixels.getPixelColor(LED_TYPES::AMS) != LED_OFF && timer_led_ams.check()){
+    else if (dashboard_neopixels.getPixelColor(LED_LIST::AMS) != LED_OFF && timer_led_ams.check()){
   
-        dashboard_neopixels.setPixelColor(LED_TYPES::AMS, LED_RED);
+        dashboard_neopixels.setPixelColor(LED_LIST::AMS, LED_RED);
         dashboard_status.set_ams_led(static_cast<uint8_t>(LED_MODES::RED));
         display_list[4] = 0;
     }
 
     //IMD LED
     if (!mcu_status.get_imd_ok_high()){
-        dashboard_neopixels.setPixelColor(LED_TYPES::IMD, LED_ON_GREEN);
+        dashboard_neopixels.setPixelColor(LED_LIST::IMD, LED_ON_GREEN);
         dashboard_status.set_imd_led(static_cast<uint8_t>(LED_MODES::ON));
         display_list[3] = 1;
         timer_led_imd.reset();
@@ -238,9 +240,9 @@ inline void mcu_status_received(){
     //     dashboard_status.set_imd_led(static_cast<uint8_t>(LED_MODES::OFF));
     //     init_imd = false;
     // }
-    else if (dashboard_neopixels.getPixelColor(LED_TYPES::IMD) != LED_OFF && timer_led_imd.check()){
+    else if (dashboard_neopixels.getPixelColor(LED_LIST::IMD) != LED_OFF && timer_led_imd.check()){
   
-        dashboard_neopixels.setPixelColor(LED_TYPES::IMD, LED_RED);
+        dashboard_neopixels.setPixelColor(LED_LIST::IMD, LED_RED);
         dashboard_status.set_imd_led(static_cast<uint8_t>(LED_MODES::RED));
         display_list[3] = 0;
     }
@@ -248,29 +250,29 @@ inline void mcu_status_received(){
     //Start LED
     switch(mcu_status.get_state()){
         case MCU_STATE::STARTUP:
-            dashboard_neopixels.setPixelColor(LED_TYPES::START, LED_OFF);
+            dashboard_neopixels.setPixelColor(LED_LIST::START, LED_OFF);
             
             dashboard_status.set_start_led(static_cast<uint8_t>(LED_MODES::OFF));
             break;
         case MCU_STATE::TRACTIVE_SYSTEM_NOT_ACTIVE:
-            dashboard_neopixels.setPixelColor(LED_TYPES::START, LED_RED);
+            dashboard_neopixels.setPixelColor(LED_LIST::START, LED_RED);
             dashboard_status.set_start_led(static_cast<uint8_t>(LED_MODES::RED));
             break;
         case MCU_STATE::TRACTIVE_SYSTEM_ACTIVE:
         
-            dashboard_neopixels.setPixelColor(LED_TYPES::START, LED_BLUE);
+            dashboard_neopixels.setPixelColor(LED_LIST::START, LED_BLUE);
             dashboard_status.set_start_led(static_cast<uint8_t>(LED_MODES::BLUE));
             break;
         case MCU_STATE::ENABLING_INVERTER:
         case MCU_STATE::WAITING_READY_TO_DRIVE_SOUND:
         case MCU_STATE::READY_TO_DRIVE:
            
-            dashboard_neopixels.setPixelColor(LED_TYPES::START, LED_ON_GREEN);
+            dashboard_neopixels.setPixelColor(LED_LIST::START, LED_ON_GREEN);
             dashboard_status.set_start_led(static_cast<uint8_t>(LED_MODES::ON));
             break;
         default:
             
-            dashboard_neopixels.setPixelColor(LED_TYPES::START, LED_OFF);
+            dashboard_neopixels.setPixelColor(LED_LIST::START, LED_OFF);
             dashboard_status.set_start_led(static_cast<uint8_t>(LED_MODES::OFF));
             break;
     }
@@ -279,15 +281,15 @@ inline void mcu_status_received(){
     switch(mcu_status.get_torque_mode()){
         case 1:
             
-            dashboard_neopixels.setPixelColor(LED_TYPES::MODE, LED_OFF);
+            dashboard_neopixels.setPixelColor(LED_LIST::MODE, LED_OFF);
             dashboard_status.set_mode_led(static_cast<uint8_t>(LED_MODES::OFF));
             break;
         case 2:
-            dashboard_neopixels.setPixelColor(LED_TYPES::MODE, LED_BLUE);
+            dashboard_neopixels.setPixelColor(LED_LIST::MODE, LED_BLUE);
             dashboard_status.set_mode_led(static_cast<uint8_t>(LED_MODES::BLUE));
             break;
         case 3:
-            dashboard_neopixels.setPixelColor(LED_TYPES::MODE, LED_ON_GREEN);
+            dashboard_neopixels.setPixelColor(LED_LIST::MODE, LED_ON_GREEN);
             dashboard_status.set_mode_led(static_cast<uint8_t>(LED_MODES::ON));
             break;
         default:
@@ -308,6 +310,15 @@ inline void mcu_status_received(){
         break;
        
     }
+
+    switch(mcuStatus.get_launch_ctrl_active()) {
+      case 0:
+        dashboard_neopixels.setPixelColor(LED_MECH_BRAKE, LED_OFF);
+        dashboard_status.set_mech_brake_led(static_cast<uint8_t>(LED_MODES::OFF));
+      case 1:
+        dashboard_neopixels.setPixelColor(LED_MECH_BRAKE, LED_ON_GREEN);
+        dashboard_status.set_mech_brake_led(static_cast<uint8_t>(LED_MODES::ON));
+    }
 }
 
 inline void mc_fault_codes_received(){
@@ -323,13 +334,13 @@ inline void mc_fault_codes_received(){
     //MC Error LED
 
     if (is_mc_err){
-        dashboard_neopixels.setPixelColor(LED_TYPES::MC_ERR, LED_ON_GREEN);
+        dashboard_neopixels.setPixelColor(LED_LIST::MC_ERR, LED_ON_GREEN);
         dashboard_status.set_mc_error_led(static_cast<uint8_t>(LED_MODES::ON));
         display_list[2] = 1;
         timer_led_mc_err.reset();   
     // display fault for 1 second and then it clears
-    } else if (dashboard_neopixels.getPixelColor(LED_TYPES::MC_ERR) != LED_OFF && timer_led_mc_err.check()){
-        dashboard_neopixels.setPixelColor(LED_TYPES::MC_ERR, LED_OFF);
+    } else if (dashboard_neopixels.getPixelColor(LED_LIST::MC_ERR) != LED_OFF && timer_led_mc_err.check()){
+        dashboard_neopixels.setPixelColor(LED_LIST::MC_ERR, LED_OFF);
         dashboard_status.set_mc_error_led(static_cast<uint8_t>(LED_MODES::OFF));
         display_list[2] = 0;
     }
@@ -348,11 +359,11 @@ inline void mc_fault_codes_received(){
 inline void inertia_status() {
     if (INERTIA_READ && !SHUTDOWN_H_READ) {
       
-        dashboard_neopixels.setPixelColor(LED_TYPES::INERTIA, LED_ON_GREEN);
+        dashboard_neopixels.setPixelColor(LED_LIST::INERTIA, LED_ON_GREEN);
         dashboard_status.set_inertia_led(static_cast<uint8_t>(LED_MODES::ON));
         display_list[1] = 1;
     } else {
-        dashboard_neopixels.setPixelColor(LED_TYPES::INERTIA, LED_OFF);
+        dashboard_neopixels.setPixelColor(LED_LIST::INERTIA, LED_OFF);
         dashboard_status.set_inertia_led(static_cast<uint8_t>(LED_MODES::OFF));
         display_list[1] = 0;
     }
