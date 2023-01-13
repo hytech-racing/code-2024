@@ -54,6 +54,10 @@
 #define ADC_ACCEL_1_CHANNEL 2
 #define ADC_ACCEL_2_CHANNEL 3
 
+#define ADC_FL_LOAD_CELL_CHANNEL 4
+#define ADC_FR_LOAD_CELL_CHANNEL 5
+#define ADC_RL_LOAD_CELL_CHANNEL 7
+#define ADC_RR_LOAD_CELL_CHANNEL 3
 /*
  * Shutdown read thresholds
  */

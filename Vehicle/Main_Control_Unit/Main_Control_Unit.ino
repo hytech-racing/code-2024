@@ -37,6 +37,8 @@
 MCU_pedal_readings mcu_pedal_readings;
 MCU_status mcu_status{};
 MCU_wheel_speed mcu_wheel_speed{};
+MCU_load_cells mcu_load_cells{};
+
 
 MC_status mc_status[4];
 MC_temps mc_temps[4];
@@ -66,6 +68,8 @@ Metro timer_CAN_mc_torque_command_forward = Metro(100);
 Metro timer_ready_sound = Metro(2000); // Time to play RTD sound
 Metro timer_CAN_mcu_status_send = Metro(100);
 Metro timer_CAN_mcu_pedal_readings_send = Metro(5);
+Metro timer_CAN_mcu_load_cells_send = Metro(10);
+Metro timer_load_cells_read = Metro(5);
 Metro timer_restart_inverter = Metro(500, 1); // Allow the MCU to restart the inverter
 Metro timer_inverter_enable = Metro(5000);
 Metro timer_status_send = Metro(100);
@@ -388,6 +392,15 @@ inline void send_CAN_mcu_pedal_readings() {
     mcu_pedal_readings.write(msg.buf);
     msg.id = ID_MCU_PEDAL_READINGS;
     msg.len = sizeof(mcu_pedal_readings);
+    TELEM_CAN.write(msg);
+  }
+}
+
+inline void send_CAN_mcu_load_cells(){
+  if(timer_CAN_mcu_load_cells_send.check()){
+    mcu_load_cells.write(msg.buf);
+    msg.id = ID_MCU_LOAD_CELLS;
+    msg.len = sizeof(mcu_load_cells);
     TELEM_CAN.write(msg);
   }
 }
@@ -824,7 +837,14 @@ inline void read_pedal_values() {
 }
 
 inline void read_load_cell_values() {
-
+  if(timer_load_cells_read.check()){
+  //load cell is 2mV/V, 10V excitation, 1000lb max
+  //goes through 37.5x gain of INA823, 21x gain of OPA991, +0.314V offset, 0.1912x reduction on ECU and MAX7400 before reaching ADC
+  mcu_load_cells.set_FL_load_cell((uint16_t) (((ADC2.read_adc(ADC_FL_LOAD_CELL_CHANNEL)/0.1912) - 0.314) / 787.5 * 50));
+  mcu_load_cells.set_FR_load_cell((uint16_t) (((ADC2.read_adc(ADC_FR_LOAD_CELL_CHANNEL)/0.1912) - 0.314) / 787.5 * 50));
+  mcu_load_cells.set_RL_load_cell((uint16_t) (((ADC1.read_adc(ADC_RL_LOAD_CELL_CHANNEL)/0.1912) - 0.314) / 787.5 * 50));
+  mcu_load_cells.set_RR_load_cell((uint16_t) (((ADC2.read_adc(ADC_RR_LOAD_CELL_CHANNEL)/0.1912) - 0.314) / 787.5 * 50));
+  }
 }
 
 inline void clear_all_inverters_error() {

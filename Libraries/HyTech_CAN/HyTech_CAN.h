@@ -27,6 +27,7 @@
 #include "MCU_status.h"
 #include "MCU_wheel_speed.h"
 #include "MCU_analog_readings.h"
+#include "MCU_load_cells.h"
 
 #include "MC_energy.h"
 #include "MC_setpoints_command.h"

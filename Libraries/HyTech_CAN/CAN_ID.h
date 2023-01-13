@@ -24,7 +24,9 @@
 
 #define ID_MCU_STATUS												0xC3
 #define ID_MCU_PEDAL_READINGS										0xC4
+#define ID_MCU_LOAD_CELLS                           0xC5
 #define ID_MCU_ANALOG_READINGS										0xCC
+
 
 #define ID_BMS_ONBOARD_TEMPERATURES									0xD5
 #define ID_BMS_ONBOARD_DETAILED_TEMPERATURES						0xD6 // TODO rename to bms_detailed_onboard_temperatures when we're not in the middle of a development cycle
