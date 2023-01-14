@@ -57,6 +57,7 @@ public:
     inline bool get_bspd_current_high()             const { return pedal_states & 0x20; }
     inline bool get_bspd_brake_high()               const { return pedal_states & 0x40; }
     inline bool get_no_accel_brake_implausability() const { return pedal_states & 0x80; }
+    inline bool get_mech_brake_active()             const { return pedal_states & 0x00; }
 
     inline void set_pedal_states(const uint8_t states)                 { pedal_states = states; }
     inline void set_no_accel_implausability(const bool implausable)       { pedal_states = (pedal_states & 0xFB) | (implausable << 2); }
@@ -118,6 +119,7 @@ private:
      * Current high
      * brake high
      * accel/brake implausability
+     * mech brake active
      */
     /* @Parse @Flaglist(
         no_accel_implausability,

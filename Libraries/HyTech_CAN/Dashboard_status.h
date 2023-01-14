@@ -91,12 +91,12 @@ public:
     inline void set_start_led(uint8_t start_led)             { led_flags = (led_flags & 0xFFFFFCFF) | ((start_led    & 0x3) << 8);  }
     inline void set_inertia_led(uint8_t inertia_led)         { led_flags = (led_flags & 0xFFFFF3FF) | ((inertia_led  & 0x3) << 10); }
     inline void set_mech_brake_led(uint8_t mech_brake_led)      { led_flags = (led_flags & 0xFFFFCFFF) | ((mech_brake_led    & 0x1) << 12); }
-    inline void set_gen_purp_led(uint8_t gen_purp_led)          { led_flags = (led_flags & 0xFFFF3FFF) | ((mech_brake_led    & 0x1) << 14); }
-    inline void set_bots_led(uint8_t bots_led)                  { led_flags = (led_flags & 0xFFFCFFFF) | ((mech_brake_led    & 0x1) << 16); }
-    inline void set_cockpit_brb_led(uint8_t cockpit_brb_led)    { led_flags = (led_flags & 0xFFF3FFFF) | ((mech_brake_led    & 0x1) << 18); }
-    inline void set_crit_charge_led(uint8_t crit_charge_led)    { led_flags = (led_flags & 0xFFCFFFFF) | ((mech_brake_led    & 0x1) << 20); }
-    inline void set_glv_led(uint8_t glv_led)                    { led_flags = (led_flags & 0xFF3FFFFF) | ((mech_brake_led    & 0x1) << 22); }
-    inline void set_launch_control_led(uint8_t launch_control_led) { led_flags = (led_flags & 0xFCFFFFFF) | ((mech_brake_led    & 0x1) << 24); }
+    inline void set_gen_purp_led(uint8_t gen_purp_led)          { led_flags = (led_flags & 0xFFFF3FFF) | ((gen_purp_led   & 0x1) << 14); }
+    inline void set_bots_led(uint8_t bots_led)                  { led_flags = (led_flags & 0xFFFCFFFF) | ((bots_led    & 0x1) << 16); }
+    inline void set_cockpit_brb_led(uint8_t cockpit_brb_led)    { led_flags = (led_flags & 0xFFF3FFFF) | ((cockpit_brb_led    & 0x1) << 18); }
+    inline void set_crit_charge_led(uint8_t crit_charge_led)    { led_flags = (led_flags & 0xFFCFFFFF) | ((crit_charge_led    & 0x1) << 20); }
+    inline void set_glv_led(uint8_t glv_led)                    { led_flags = (led_flags & 0xFF3FFFFF) | ((glv_led    & 0x1) << 22); }
+    inline void set_launch_control_led(uint8_t launch_control_led) { led_flags = (led_flags & 0xFCFFFFFF) | ((launch_control_led    & 0x1) << 24); }
 
 private:
     // (4 bits) unused
@@ -118,7 +118,6 @@ private:
          led_dimmer_btn
         ) */
     uint8_t button_flags;
-
 
     //(5 bits unused)
     /* dial state
