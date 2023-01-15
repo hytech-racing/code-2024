@@ -34,6 +34,7 @@
 #define LED_RED 0xFF0000
 
 // enum class LED_COLORS { OFF = 0, ON = 0xFF00 , BLUE = 0xFF , RED = 0xFF0000};
+// OFF: OFF, ON: GREEN/OK, YELLOW : WARNING/MISC RED : CRITICAL
 enum class LED_MODES { OFF = 0, ON = 1, YELLOW = 2, RED = 3};
 enum LED_LIST { AMS = 0, IMD = 1, MC_ERR = 2, GEN_PURP = 3, INERTIA = 4, BOTS = 5, 
                 COCKPIT_BRB = 6, CRIT_CHARGE = 7, GLV = 8, BRAKE_ENGAGE = 9, LAUNCH_CTRL = 10, 

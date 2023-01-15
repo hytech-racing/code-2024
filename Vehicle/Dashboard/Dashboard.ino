@@ -186,8 +186,8 @@ inline void btn_update(){
     dashboard_status.set_start_btn(btn_start.isPressed());
 }
 inline void shutdown_signals_read() {
-  dashboard_neopixels.setPixelColor(LED_LIST::BOTS, (SSOK_READ) ? LED_RED : LED_OFF);
-  dashboard_neopixels.setPixelColor(LED_LIST::COCKPIT_BRB, (SHUTDOWN_H_READ) ? LED_RED : LED_OFF);
+  dashboard_neopixels.setPixelColor(LED_LIST::BOTS, (digitalRead(SSOK_READ)) ? LED_RED : LED_OFF);
+  dashboard_neopixels.setPixelColor(LED_LIST::COCKPIT_BRB, (digitalRead(SHUTDOWN_H_READ)) ? LED_RED : LED_OFF);
 }
 inline void read_can(){
 
@@ -400,7 +400,7 @@ inline void mc_fault_codes_received(){
 }
 
 inline void inertia_status() {
-    if (INERTIA_READ && !SHUTDOWN_H_READ) {
+    if (digitalRead(INERTIA_READ) && !digitalRead(SHUTDOWN_H_READ)) {
       
         dashboard_neopixels.setPixelColor(LED_LIST::INERTIA, LED_ON_GREEN);
         dashboard_status.set_inertia_led(static_cast<uint8_t>(LED_MODES::ON));
