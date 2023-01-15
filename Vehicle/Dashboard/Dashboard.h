@@ -1,10 +1,8 @@
 #pragma once
 
 // Button pin definition
-#define BTN_MARK 6
 #define BTN_MODE 21
 #define BTN_START 22
-#define BTN_LC A3
 #define BTN_MC_CYCLE 20
 
 //RANDOM FOR NOW
@@ -45,8 +43,8 @@ enum LED_LIST { AMS = 0, IMD = 1, MC_ERR = 2, GEN_PURP = 3, INERTIA = 4, BOTS = 
 #define IO_ADDR 0
 
 // Critical read pin definitions
-#define SSOK_READ 16
-#define SHUTDOWN_H_READ 17
+#define SSOK_READ 16 //BOTS
+#define SHUTDOWN_H_READ 17 //BRB
 #define INERTIA_READ 15
 
 //GLV threshold

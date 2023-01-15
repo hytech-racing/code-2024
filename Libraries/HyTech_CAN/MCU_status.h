@@ -61,13 +61,14 @@ public:
     
 
     inline void set_pedal_states(const uint8_t states)                 { pedal_states = states; }
+    inline void set_mech_brake_active(const bool active)                  { pedal_states = (pedal_states & 0xFE) | (active); }
     inline void set_no_accel_implausability(const bool implausable)       { pedal_states = (pedal_states & 0xFB) | (implausable << 2); }
     inline void set_no_brake_implausability(const bool implausable)       { pedal_states = (pedal_states & 0xF7) | (implausable << 3); }
     inline void set_brake_pedal_active(const bool pressed)                { pedal_states = (pedal_states & 0xEF) | (pressed     << 4); }
     inline void set_bspd_current_high(const bool high)                    { pedal_states = (pedal_states & 0xDF) | (high        << 5); }
     inline void set_bspd_brake_high(const bool high)                      { pedal_states = (pedal_states & 0xBF) | (high        << 6); }
     inline void set_no_accel_brake_implausability(const bool implausable) { pedal_states = (pedal_states & 0x7F) | (implausable << 7); }
-
+    
     /* ECU state */
 
     inline uint8_t get_ecu_states()        const { return (ecu_states); }

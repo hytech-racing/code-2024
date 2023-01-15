@@ -119,7 +119,7 @@ private:
         ) */
     uint8_t button_flags;
 
-    //(5 bits unused)
+    //(2 bits unused)
     /* dial state
         0 - MODE_ONE
         1 - MODE_TWO

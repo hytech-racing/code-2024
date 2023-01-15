@@ -20,11 +20,9 @@ Metro timer_led_mc_err(LED_MIN_FAULT);
 // bool init_ams = true, init_imd = true;
 
 // Button debouncing variables
-DebouncedButton btn_mark;
 DebouncedButton btn_mode;
 DebouncedButton btn_mc_cycle;
 DebouncedButton btn_start;
-DebouncedButton btn_lc;
 DebouncedButton btn_torque_mode;
 DebouncedButton btn_led_dimmer;
 
@@ -58,8 +56,6 @@ inline void mc_fault_codes_received();
 inline void inertia_status();
 inline void shutdown_signals_read();
 
-//inline void display_error(uint8_t errCode);
-
 void setup() {
     expander.begin();
 
@@ -68,11 +64,9 @@ void setup() {
       expander.digitalWrite(i, HIGH);
     }
   
-    btn_mark.begin(BTN_MARK, 100);
     btn_mode.begin(BTN_MODE, 100);
     btn_mc_cycle.begin(BTN_MC_CYCLE, 100);
     btn_start.begin(BTN_START, 100);
-    btn_lc.begin(BTN_LC, 100);
     btn_torque_mode.begin(BTN_TORQUE_MODE, 100);
     btn_led_dimmer.begin(BTN_LED_DIMMER, 100);
 
@@ -148,9 +142,11 @@ void loop() {
 
 inline void neopixel_update(){
     uint8_t prevBrightness = brightness;
-    if (dashboard_status.get_led_dimmer_btn()) 255 >> 2;
+    if (dashboard_status.get_led_dimmer_btn()) brightness = 128;
     else brightness = 255;
+    
     if (brightness != prevBrightness) dashboard_neopixels.setBrightness(brightness);
+    
     shutdown_signals_read();
     dashboard_neopixels.show();
     // checks display list for first available flag
@@ -166,7 +162,7 @@ inline void neopixel_update(){
 
 inline void dial_update(){
   dashboard_status.set_dial_state((dial_torque_vectoring.readMode()));
-  if(dashboard_status.get_dial_state() == 4){
+  if(dashboard_status.get_dial_state() == 2){
     dashboard_neopixels.setPixelColor(LED_LIST::LAUNCH_CTRL, LED_ON_GREEN);
     dashboard_status.set_launch_control_led(static_cast<uint8_t>(LED_MODES::ON));
   } else {
@@ -176,10 +172,8 @@ inline void dial_update(){
 }
 inline void btn_update(){
     // this sets the button to be high: it is set low in send can
-    if (btn_mark.isPressed())        { dashboard_status.toggle_mark_btn();        }
     if (btn_mode.isPressed())        { dashboard_status.toggle_mode_btn();        }
     if (btn_mc_cycle.isPressed())    { dashboard_status.toggle_mc_cycle_btn();    }
-    if (btn_lc.isPressed())          { dashboard_status.toggle_launch_ctrl_btn(); }
     if (btn_torque_mode.isPressed()) { dashboard_status.toggle_torque_mode_btn(); }
     if (btn_led_dimmer.isPressed())  { dashboard_status.toggle_led_dimmer_btn();  }
 
@@ -205,10 +199,12 @@ inline void read_can(){
                 timer_mcu_heartbeat.reset();
                 timer_mcu_heartbeat.interval(MCU_HEARTBEAT_TIMEOUT);
                 mcu_analog_readings_received();
+                break;
                 
             case ID_MC_FAULT_CODES:
                 mc_fault_codes.load(msg.buf);
                 mc_fault_codes_received();
+                break;
             default:
                 break;
         }
@@ -217,7 +213,7 @@ inline void read_can(){
 
 inline void mcu_analog_readings_received() {
  
-    if(mcu_analog_readings.get_glv_battery_voltage() > GLV_THRESHOLD) {
+    if(mcu_analog_readings.get_glv_battery_voltage() < GLV_THRESHOLD) {
       dashboard_neopixels.setPixelColor(LED_LIST::GLV, LED_RED); 
       dashboard_status.set_glv_led(static_cast<uint8_t>(LED_MODES::RED));
   } else {
@@ -273,7 +269,6 @@ inline void mcu_status_received(){
     switch(mcu_status.get_state()){
         case MCU_STATE::STARTUP:
             dashboard_neopixels.setPixelColor(LED_LIST::RDY_DRIVE, LED_OFF);
-            
             dashboard_status.set_start_led(static_cast<uint8_t>(LED_MODES::OFF));
             break;
         case MCU_STATE::TRACTIVE_SYSTEM_NOT_ACTIVE:
@@ -303,19 +298,19 @@ inline void mcu_status_received(){
 
     switch(mcu_status.get_pack_charge_critical()){
       case 1: // GREEN, OK
-        dashboard_neopixels.setPixelColor(LED_LIST::CRIT_CHARGE, LED_ON_GREEN); //change
+        dashboard_neopixels.setPixelColor(LED_LIST::CRIT_CHARGE, LED_ON_GREEN); 
         dashboard_status.set_mode_led(static_cast<uint8_t>(LED_MODES::ON));
         break;
       case 2: // YELLOW, WARNING
-        dashboard_neopixels.setPixelColor(LED_LIST::CRIT_CHARGE, LED_YELLOW); // change
+        dashboard_neopixels.setPixelColor(LED_LIST::CRIT_CHARGE, LED_YELLOW); 
         dashboard_status.set_mode_led(static_cast<uint8_t>(LED_MODES::YELLOW));
         break;
       case 3: // RED, CRITICAL
-        dashboard_neopixels.setPixelColor(LED_LIST::CRIT_CHARGE, LED_RED); //change
+        dashboard_neopixels.setPixelColor(LED_LIST::CRIT_CHARGE, LED_RED); 
         dashboard_status.set_mode_led(static_cast<uint8_t>(LED_MODES::RED));
         break;
       default: 
-        dashboard_neopixels.setPixelColor(LED_LIST::CRIT_CHARGE, LED_OFF); //change
+        dashboard_neopixels.setPixelColor(LED_LIST::CRIT_CHARGE, LED_OFF); 
         dashboard_status.set_mode_led(static_cast<uint8_t>(LED_MODES::OFF));
         break;
     }
@@ -341,7 +336,7 @@ inline void mcu_status_received(){
             break;
     }
 
-    //Mechanical Braking LED (will not compile until mcu status is modified.
+    //Mechanical Braking LED
     switch(mcu_status.get_mech_brake_active()) {
       case 0:
         dashboard_neopixels.setPixelColor(LED_LIST::BRAKE_ENGAGE, LED_OFF);
