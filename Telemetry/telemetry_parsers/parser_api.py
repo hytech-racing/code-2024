@@ -571,6 +571,19 @@ def parse_ID_MCU_PEDAL_READINGS(raw_message):
     units = ["%", "%", "psi", "psi"]
     return [message, labels, values, units]
 
+def parse_ID_MCU_LOAD_CELLS(raw_message):
+    message = "MCU_load_cell_readings"
+    labels = ["FL_load_cell", "FR_load_cell", "RL_load_cell", "RR_load_cell"]
+    values = [
+        hex_to_decimal(raw_message[0:4], 16, False), 
+        hex_to_decimal(raw_message[4:8], 16, False),
+        hex_to_decimal(raw_message[8:12], 16, False), 
+        hex_to_decimal(raw_message[12:16], 16, False)
+    ]
+    units = ["lbs", "lbs", "lbs", "lbs"]
+    return [message, labels, values, units]
+
+
 def parse_ID_MCU_ANALOG_READINGS(raw_message):
     message = "MCU_analog_readings"
     labels = ["ecu_current", "cooling_current", "temperature", "glv_battery_voltage"]
@@ -1011,6 +1024,7 @@ def parse_message(raw_id, raw_message):
     if raw_id == "C2": return parse_ID_MC_READ_WRITE_PARAMETER_RESPONSE(raw_message)
     if raw_id == "C3": return parse_ID_MCU_STATUS(raw_message)
     if raw_id == "C4": return parse_ID_MCU_PEDAL_READINGS(raw_message)
+    if raw_id == "C5": return parse_ID_MCU_LOAD_CELLS(raw_message)
     if raw_id == "CC": return parse_ID_MCU_ANALOG_READINGS(raw_message)
 
     if raw_id == "D5": return parse_ID_BMS_ONBOARD_TEMPERATURES(raw_message)
