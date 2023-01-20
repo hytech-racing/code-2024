@@ -2,6 +2,7 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/uart.h>
+#include <drivers/gpio.h>
 #include <zephyr/net/mqtt.h>
 #include "mqtt.h"
 #include <string.h>
@@ -12,7 +13,8 @@ LOG_MODULE_DECLARE(mqtt_simple, CONFIG_MQTT_SIMPLE_LOG_LEVEL);
  * Serial Stuff
  */
 /* change this to any other UART peripheral if desired */
-#define UART_DEVICE_NODE DT_CHOSEN(zephyr_shell_uart)
+//#define UART_DEVICE_NODE DT_CHOSEN(zephyr_shell_uart)
+#define UART_DEVICE_NODE DT_NODELABEL(uart1)
 
 #define MSG_SIZE 32
 
@@ -20,6 +22,7 @@ LOG_MODULE_DECLARE(mqtt_simple, CONFIG_MQTT_SIMPLE_LOG_LEVEL);
 K_MSGQ_DEFINE(uart_msgq, MSG_SIZE, 10, 4);
 
 static const struct device *uart_dev = DEVICE_DT_GET(UART_DEVICE_NODE);
+static const struct device *gpio = DEVICE_DT_GET(DT_NODELABEL(gpio0));
 
 /* receive buffer used in UART ISR callback */
 static char rx_buf[MSG_SIZE];
@@ -87,6 +90,12 @@ void uart_thread(void) {
 		LOG_INF("UART device not found!");
 		return;
 	}
+
+	if (!device_is_ready(gpio)) {
+		LOG_INF("GPIO device not found!");
+		return;
+	}
+
 
 	/* configure interrupt and callback to receive data */
 	uart_irq_callback_user_data_set(uart_dev, serial_cb, NULL);
