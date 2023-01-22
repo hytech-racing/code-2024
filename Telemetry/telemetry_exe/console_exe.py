@@ -315,12 +315,12 @@ def mqtt_connection_thread(window):
 @return: dictionary, an list of combined elements 
 '''
 def get_bms_detailed_messages():
-    ic_list = ['IC_' + str(x) for x in range(8)]
+    ic_list = ['IC_' + '{0:02d}'.format(x) for x in range(12)]
     cell_list_odd = ['CELL_' + str(x) for x in range(9)]
     cell_list_even = ['CELL_' + str(x) for x in range(12)]
     ic_cells = []
     
-    for i in range(8):
+    for i in range(12):
         # Even ICs have 12 cells
         if i % 2 == 0:
             ic_cells += [ic_list[i] + '_' + cell for cell in cell_list_even]
@@ -395,14 +395,14 @@ def main():
     for label, value in DICT["ENERGY_METER"].items():
         em.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(35,1), pad=(0,0), font=text_font, key=label)])
     for label, value in DICT["BATTERY_MANAGEMENT_SYSTEM_DETAILED_VOLTAGES"].items():
-        if row_count_voltages % 9 == 8 and int(label[3]) == 3 or int(label[3]) == 7:
+        # if row_count_voltages % 9 == 8 and int(label[3]) == 3 or int(label[3]) == 9:
             # No padding for ICs 3 and 7 last cells since text will take care of it in the next column over
-            bms_voltages.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(23,1), pad=(0,0), font=text_font, key=label)])
-            row_count_voltages = 0
-        elif row_count_voltages % 9 == 8 and int(label[3]) % 2 == 1:
+        #    bms_voltages.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(23,1), pad=(0,0), font=text_font, key=label)])
+        #    row_count_voltages = 0
+        if row_count_voltages % 9 == 8 and int(label[3:5]) % 2 == 1:
             bms_voltages.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(23,1), pad=((0,0),(0,10)), font=text_font, key=label)])
             row_count_voltages = 0
-        elif row_count_voltages % 12 == 11 and int(label[3]) % 2 == 0:
+        elif row_count_voltages % 12 == 11 and int(label[3:5]) % 2 == 0:
             bms_voltages.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(23,1), pad=((0,0),(0,10)), font=text_font, key=label)])
             row_count_voltages = 0
         else:            
@@ -419,9 +419,9 @@ def main():
 
     # We ran out of room so ICs 3 and 7 will be on column with BMS detailed temps
     left_voltages_first_column = bms_voltages[:34]
-    right_voltages_first_column = bms_voltages[43:76]
-    left_voltages_second_column = bms_voltages[34:43]
-    right_voltages_second_column = bms_voltages[76:]
+    right_voltages_first_column = bms_voltages[64:97]
+    left_voltages_second_column = bms_voltages[34:64]
+    right_voltages_second_column = bms_voltages[97:]
     
     first_half_therm = bms_temperatures[:17]
     second_half_therm = bms_temperatures[17:33]
