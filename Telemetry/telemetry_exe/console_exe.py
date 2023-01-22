@@ -158,6 +158,12 @@ DICT = {
         "RPM_FRONT_LEFT": " ",
         "RPM_FRONT_RIGHT": " "
     },
+    "LOAD_CELLS": {
+        "FL_LOAD_CELL": " ",
+        "FR_LOAD_CELL": " ",
+        "RL_LOAD_CELL": " ",
+        "RR_LOAD_CELL": " "
+    }
 }
 
 # Variables to keep track of inverter current and power for inverter power calculation
@@ -353,6 +359,7 @@ def main():
     bms = [[sg.Text("BMS OVERVIEW", pad=(0,2), font=title_font, text_color="light blue")]]
     main_ecu = [[sg.Text("MAIN ECU", pad=(0,2), font=title_font, text_color="light blue")]]
     wheel_speed_sensors = [[sg.Text("WHEEL SPEED SENSORS", pad=(0,2), font=title_font, text_color="light blue")]]
+    load_cells = [[sg.Text("LOAD CELLS", pad=(0,2), font=title_font, text_color="light blue")]]
     sab = [[sg.Text("SENSOR ACQUISITION BOARD", pad=(0,2), font=title_font, text_color="light blue")]]
     imu = [[sg.Text("RACEGRADE IMU", pad=(0,2), font=title_font, text_color="light blue")]]
     em = [[sg.Text("ENERGY METER", pad=(0,2), font=title_font, text_color="light blue")]]
@@ -379,6 +386,8 @@ def main():
         dashboard.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(35,1), pad=(0,0), font=text_font, key=label)])
     for label, value in DICT["WHEEL_SPEED_SENSORS"].items():
         wheel_speed_sensors.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(35,1), pad=(0,0), font=text_font, key=label)])
+    for label, value in DICT["LOAD_CELLS"].items():
+        load_cells.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(35,1), pad=(0,0), font=text_font, key=label)])
     for label, value in DICT["SENSOR_ACQUISITION_BOARD"].items():
         sab.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(35,1), pad=(0,0), font=text_font, key=label)])
     for label, value in DICT["RACEGRADE_IMU"].items():
@@ -438,7 +447,7 @@ def main():
 
     # Data colummns
     column1 = sg.Column(dashboard + [[sg.Text(" ", size=(35,1), pad=(0,0), font=text_font)]] + bms + [[sg.Text(" ", size=(35,1), pad=(0,0), font=text_font)]] + em + [[sg.Text(" ", size=(35,1), pad=(0,0), font=text_font)]] + imu, vertical_alignment='t')
-    column2 = sg.Column(main_ecu + [[sg.Text(" ", size=(35,1), pad=(0,0), font=text_font)]] + sab + [[sg.Text(" ", size=(35,1), pad=(0,0), font=text_font)]] + wheel_speed_sensors, vertical_alignment='t')
+    column2 = sg.Column(main_ecu + [[sg.Text(" ", size=(35,1), pad=(0,0), font=text_font)]] + sab + [[sg.Text(" ", size=(35,1), pad=(0,0), font=text_font)]] + wheel_speed_sensors + [[sg.Text(" ", size=(35,1), pad=(0,0), font=text_font)]] + load_cells, vertical_alignment='t')
     column3 = sg.Column(inverter, vertical_alignment='t')
     column4 = sg.Column(bms_detailed_voltages + voltages, vertical_alignment='t')
     column5 = sg.Column(voltages_second_column + [[sg.Text(" ", size=(35,1), pad=(0,0), font=text_font)]] + bms_detailed_temps + temperatures, vertical_alignment='t')
