@@ -332,11 +332,11 @@ def get_bms_detailed_messages():
     dictionary = {"BATTERY_MANAGEMENT_SYSTEM_DETAILED_VOLTAGES": result}
 
 
-    ic_list2 = ['IC_' + str(x) for x in range(8)]
+    ic_list2 = ['IC_' + '{0:02d}'.format(x) for x in range(12)]
     temperature_list = ['THERM_' + str(x) for x in range(4)]
     ic_temperature = [ic + '_' + therm for ic in ic_list2 for therm in temperature_list]
-    ic_temperature = ic_temperature + ["IC_0_HUMIDITY", "IC_2_HUMIDITY", "IC_4_HUMIDITY", "IC_6_HUMIDITY"]
-    ic_temperature = ic_temperature + ["IC_1_TEMPERATURE", "IC_3_TEMPERATURE", "IC_5_TEMPERATURE", "IC_7_TEMPERATURE"]
+    ic_temperature = ic_temperature + ["IC_0_HUMIDITY", "IC_2_HUMIDITY", "IC_4_HUMIDITY", "IC_6_HUMIDITY", "IC_8_HUMIDITY", "IC_10_HUMIDITY"]
+    ic_temperature = ic_temperature + ["IC_1_TEMPERATURE", "IC_3_TEMPERATURE", "IC_5_TEMPERATURE", "IC_7_TEMPERATURE", "IC_9_TEMPERATURE", "IC_11_TEMPERATURE"]
     result2 = dict.fromkeys(ic_temperature, ' ')
     dictionary2 = {"BATTERY_MANAGEMENT_SYSTEM_DETAILED_TEMPERATURES": result2}
     return dictionary, dictionary2
@@ -409,7 +409,7 @@ def main():
             bms_voltages.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(23,1), pad=(0,0), font=text_font, key=label)])
             row_count_voltages = row_count_voltages + 1
     for label, value in DICT["BATTERY_MANAGEMENT_SYSTEM_DETAILED_TEMPERATURES"].items():
-        if row_count_temperatures >= 36:
+        if row_count_temperatures >= 48:
             bms_temperatures.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(25,1), pad=(0,0), font=text_font, key=label)])
         elif row_count_temperatures % 4 == 3:
             bms_temperatures.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(23,1), pad=((0,0),(0,10)), font=text_font, key=label)])
@@ -423,10 +423,10 @@ def main():
     left_voltages_second_column = bms_voltages[34:64]
     right_voltages_second_column = bms_voltages[97:]
     
-    first_half_therm = bms_temperatures[:17]
-    second_half_therm = bms_temperatures[17:33]
-    therm_humidities = bms_temperatures[33:37]
-    therm_temperatures = bms_temperatures[37:]
+    first_half_therm = bms_temperatures[:25]
+    second_half_therm = bms_temperatures[25:49]
+    therm_humidities = bms_temperatures[49:55]
+    therm_temperatures = bms_temperatures[55:]
 
     voltages = [[sg.Column(left_voltages_first_column, pad=(0,0), vertical_alignment='t'), sg.Column(right_voltages_first_column, pad=(0,0), vertical_alignment='t')]]
     voltages_second_column = [[sg.Column(left_voltages_second_column, pad=(0,0), vertical_alignment='t'), sg.Column(right_voltages_second_column, pad=(0,0), vertical_alignment='t')]]
@@ -450,10 +450,11 @@ def main():
     column2 = sg.Column(main_ecu + [[sg.Text(" ", size=(35,1), pad=(0,0), font=text_font)]] + sab + [[sg.Text(" ", size=(35,1), pad=(0,0), font=text_font)]] + wheel_speed_sensors + [[sg.Text(" ", size=(35,1), pad=(0,0), font=text_font)]] + load_cells, vertical_alignment='t')
     column3 = sg.Column(inverter, vertical_alignment='t')
     column4 = sg.Column(bms_detailed_voltages + voltages, vertical_alignment='t')
-    column5 = sg.Column(voltages_second_column + [[sg.Text(" ", size=(35,1), pad=(0,0), font=text_font)]] + bms_detailed_temps + temperatures, vertical_alignment='t')
+    column5 = sg.Column(voltages_second_column + [[sg.Text(" ", size=(35,1), pad=(0,0), font=text_font)]], vertical_alignment='t')
+    column6 = sg.Column(bms_detailed_temps + temperatures, vertical_alignment='t')
 
     # Finalize layout
-    layout = [[status_header_column1, status_header_column2, status_header_column3, status_header_column4, status_header_column5], [column1, column2, column3, column4, column5]]
+    layout = [[status_header_column1, status_header_column2, status_header_column3, status_header_column4, status_header_column5], [column1, column2, column3, column4, column5, column6]]
 
     window = sg.Window("HyTech Racing Live Telemetry Console", resizable=True).Layout(layout).Finalize()
     window.Maximize()
