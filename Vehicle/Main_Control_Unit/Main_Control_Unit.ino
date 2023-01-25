@@ -15,6 +15,9 @@
 #include "kinetis_flexcan.h"
 #include "Metro.h"
 
+// IMU
+#include <ADIS16460.h>
+
 #include "drivers.h"
 
 // constants to define for different operation
@@ -33,12 +36,18 @@
 
 #include "driver_constants.h"
 
+// Call the ADIS16460 IMU class
+ADIS16460 IMU(IMU_CS, IMU_DATAREADY, IMU_RESET) // Chip Select, Data Ready, Reset Pin Assignments
+
 // Outbound CAN messages
 MCU_pedal_readings mcu_pedal_readings;
 MCU_status mcu_status{};
 MCU_wheel_speed mcu_wheel_speed{};
 MCU_load_cells mcu_load_cells{};
 
+// IMU
+IMU_accelerometer imu_accelerometer;
+IMU_gryoscope imu_gryoscope;
 
 MC_status mc_status[4];
 MC_temps mc_temps[4];
@@ -54,6 +63,8 @@ BMS_voltages bms_voltages{};
 Dashboard_status dashboard_status{};
 
 //Timers
+Metro timer_CAN_imu_accelerometer_send = Metro(50);
+Metro timer_CAN_imu_gyroscope_send = Metro(50);
 Metro timer_CAN_inverter_status_read = Metro(20);
 Metro timer_CAN_inverter_temps_read = Metro(200);
 Metro timer_CAN_inverter_energy_read = Metro(200);
@@ -114,6 +125,13 @@ void setup() {
 
   set_all_inverters_disabled();
 
+  // IMU stuff (Question: do i need the delays?)
+  IMU.regWrite(MSC_CTRL, 0xC1);  // Enable Data Ready, set polarity
+  delay(20); 
+  IMU.regWrite(FLTR_CTRL, 0x500); // Set digital filter
+  delay(20);
+  IMU.regWrite(DEC_RATE, 0), // Disable decimation
+  delay(20);
 
   pinMode(BRAKE_LIGHT_CTRL, OUTPUT);
 
@@ -837,7 +855,7 @@ inline void read_pedal_values() {
 }
 
 inline void read_load_cell_values() {
-  if(timer_load_cells_read.check()){
+  if (timer_load_cells_read.check()) {
   //load cell is 2mV/V, 10V excitation, 1000lb max
   //goes through 37.5x gain of INA823, 21x gain of OPA991, +0.314V offset, 0.1912x reduction on ECU and MAX7400 before reaching ADC
   mcu_load_cells.set_FL_load_cell((uint16_t) (((ADC2.read_adc(ADC_FL_LOAD_CELL_CHANNEL)/0.1912) - 0.314) / 787.5 * 50));
@@ -945,4 +963,33 @@ inline void read_status_values() {
   mcu_status.set_shutdown_c_above_threshold(digitalRead(IMD_OK_READ));
   mcu_status.set_shutdown_d_above_threshold(digitalRead(BMS_OK_READ));
   mcu_status.set_shutdown_e_above_threshold(digitalRead(BSPD_OK_READ));
+}
+
+// IMU functions
+inline void read_imu() {
+  imu_accelerometer.set_lat_accel(IMU.regRead(X_ACCEL_OUT)); // * 0.00245); // 0.00245 is the scale, Left is positive
+  imu_accelerometer.set_long_accel(IMU.regRead(Y_ACCEL_OUT)); // * 0.00245); // 0.00245 is the scale, Backwards is positive, need to fix?
+  imu_acceleromter.set_vert_accel(IMU.redRead(Z_ACCEL_OUT)); // * 0.00245); // 0.00245 is the scale, Up is positive
+  // question about yaw, pitch and roll rates?
+  imu_gyroscope.set_pitch(IMU.redRead(X_GYRO_OUT)); // * 0.005); // 0.005 is the scale, 
+  imu_gyroscope.set_yaw(IMU.redRead(Z_GRYO_OUT)); // * 0.005);  // 0.005 is the scale
+  imu_gyroscope.set_roll(IMU.redRead(Y_GRYO_OUT)); // * 0.005); // 0.005 is the scale
+}
+
+inline void send_CAN_IMU_accelerometer() {
+  if (timer_CAN_imu_accelerometer_send.check()) {
+    imu_accelerometer.write(msg.buf);
+    msg.id = ID_IMU_ACCELEROMETER;
+    msg.len = sizeof(imu_accelerometer);
+    TELEM_CAN.write(msg);
+  }
+}
+
+inline void send_CAN_IMU_gyroscope() {
+  if (timer_CAN_imu_gryoscope_send.check()) {
+    imu_gyroscope.write(msg.buf);
+    msg.id = ID_IMU_GYROSCOPE;
+    msg.len = sizeof(imu_gyroscope);
+    TELEM_CAN.write(msg);
+  }
 }
