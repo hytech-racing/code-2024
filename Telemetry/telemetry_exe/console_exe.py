@@ -363,7 +363,7 @@ def main():
     sab = [[sg.Text("SENSOR ACQUISITION BOARD", pad=(0,2), font=title_font, text_color="light blue")]]
     imu = [[sg.Text("IMU", pad=(0,2), font=title_font, text_color="light blue")]]
     em = [[sg.Text("ENERGY METER", pad=(0,2), font=title_font, text_color="light blue")]]
-    bms_detailed_voltages = [[sg.Text("BMS DETAILED VOLTAGES", size=(33,1), pad=(0,2), font=title_font, text_color="light blue")]]
+    bms_detailed_voltages = [[sg.Text("BMS DETAILED VOLTAGES", size=(33,1), pad=(0,2), font=title_font, text_color="gold")]]
     bms_detailed_temps = [[sg.Text("BMS DETAILED TEMPERATURES", pad=(0,2), font=title_font, text_color="light blue")]]
 
     bms_voltages = [[]]
@@ -417,20 +417,26 @@ def main():
             bms_temperatures.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(23,1), pad=(0, 0),font=text_font, key=label)])
         row_count_temperatures = row_count_temperatures + 1
 
-    # We ran out of room so ICs 3 and 7 will be on column with BMS detailed temps
-    left_voltages_first_column = bms_voltages[:34]
-    right_voltages_first_column = bms_voltages[64:97]
-    left_voltages_second_column = bms_voltages[34:64]
-    right_voltages_second_column = bms_voltages[97:]
-    
-    first_half_therm = bms_temperatures[:25]
-    second_half_therm = bms_temperatures[25:49]
-    therm_humidities = bms_temperatures[49:55]
-    therm_temperatures = bms_temperatures[55:]
+    # Splits the voltages values into six columns
+    voltages_first_column = bms_voltages[:22]
+    voltages_second_column = bms_voltages[22:43]
+    voltages_third_column = bms_voltages[43:64]
+    voltages_fourth_column = bms_voltages[64:85]
+    voltages_fifth_column = bms_voltages[85:106]
+    voltages_sixth_column = bms_voltages[106:]
+ 
+    therm_first_column = bms_temperatures[:9]
+    therm_second_column = bms_temperatures[9:17]
+    therm_third_column = bms_temperatures[17:25]
+    therm_fourth_column = bms_temperatures[25:33]
+    therm_fifth_column = bms_temperatures[33:41]
+    therm_sixth_column = bms_temperatures[41:49]
 
-    voltages = [[sg.Column(left_voltages_first_column, pad=(0,0), vertical_alignment='t'), sg.Column(right_voltages_first_column, pad=(0,0), vertical_alignment='t')]]
-    voltages_second_column = [[sg.Column(left_voltages_second_column, pad=(0,0), vertical_alignment='t'), sg.Column(right_voltages_second_column, pad=(0,0), vertical_alignment='t')]]
-    temperatures = [[sg.Column(first_half_therm + therm_humidities, pad=(0,0), vertical_alignment='t'), sg.Column(second_half_therm + therm_temperatures, pad=(0,0), vertical_alignment='t')]]
+    humidity_first_column = bms_temperatures[49:55]
+    humidity_second_column = bms_temperatures[55:]
+    #second_half_therm = bms_temperatures[25:49]
+    #therm_humidities = bms_temperatures[49:55]
+    #therm_temperatures = bms_temperatures[55:]
 
     # Header texts and columns
     connection_text = [[sg.Text("CONSOLE STATUS: NOT CONNECTED", justification="left", pad=((5,0),12), text_color='red', font=title_font, key="-Connection Text-")]]
@@ -446,15 +452,67 @@ def main():
     status_header_column5 = sg.Column(last_update_text, pad=(0,0), vertical_alignment='t')
 
     # Data colummns
-    column1 = sg.Column(dashboard + [[sg.Text(" ", size=(35,1), pad=(0,0), font=text_font)]] + bms + [[sg.Text(" ", size=(35,1), pad=(0,0), font=text_font)]] + em + [[sg.Text(" ", size=(35,1), pad=(0,0), font=text_font)]] + imu, vertical_alignment='t')
-    column2 = sg.Column(main_ecu + [[sg.Text(" ", size=(35,1), pad=(0,0), font=text_font)]] + sab + [[sg.Text(" ", size=(35,1), pad=(0,0), font=text_font)]] + wheel_speed_sensors + [[sg.Text(" ", size=(35,1), pad=(0,0), font=text_font)]] + load_cells, vertical_alignment='t')
-    column3 = sg.Column(inverter, vertical_alignment='t')
-    column4 = sg.Column(bms_detailed_voltages + voltages, vertical_alignment='t')
-    column5 = sg.Column(voltages_second_column + [[sg.Text(" ", size=(35,1), pad=(0,0), font=text_font)]], vertical_alignment='t')
-    column6 = sg.Column(bms_detailed_temps + temperatures, vertical_alignment='t')
+    #column1 = sg.Column(dashboard + [[sg.Text(" ", size=(35,1), pad=(0,0), font=text_font)]] + bms + [[sg.Text(" ", size=(35,1), pad=(0,0), font=text_font)]] + em + [[sg.Text(" ", size=(35,1), pad=(0,0), font=text_font)]] + imu, vertical_alignment='t')
+    #column2 = sg.Column(main_ecu + [[sg.Text(" ", size=(35,1), pad=(0,0), font=text_font)]] + sab + [[sg.Text(" ", size=(35,1), pad=(0,0), font=text_font)]] + wheel_speed_sensors + [[sg.Text(" ", size=(35,1), pad=(0,0), font=text_font)]] + load_cells, vertical_alignment='t')
+    #column3 = sg.Column(inverter, vertical_alignment='t')
+    #column4 = sg.Column(bms_detailed_voltages + voltages + voltages_second + voltages_third + voltages_fourth + voltages_fifth, horizontal)
+    #column5 = sg.Column(voltages_second, vertical_alignment='t')
+    #column6 = sg.Column(voltages_third, vertical_alignment='t')
+    #column7 = sg.Column(voltages_fourth, vertical_alignment='t')
+    #column8 = sg.Column(voltages_fifth, vertical_alignment='t')
+    #column5 = sg.Column(voltages_second_column + [[sg.Text(" ", size=(35,1), pad=(0,0), font=text_font)]], vertical_alignment='t')
+    #column6 = sg.Column(bms_detailed_temps + temperatures, vertical_alignment='t')
+
+    #Creates a voltage layout for the voltage frame using the six columns
+    voltageLayout = [
+        [sg.Column(voltages_first_column, pad=(0,0), vertical_alignment='t'),
+         sg.VSeparator(),
+         sg.Column(voltages_second_column, pad=(0,0), vertical_alignment='t'),
+         sg.VSeparator(),
+         sg.Column(voltages_third_column, pad=(0,0), vertical_alignment='t'),
+         sg.VSeparator(),
+         sg.Column(voltages_fourth_column, pad=(0,0), vertical_alignment='t'),
+         sg.VSeparator(),
+         sg.Column(voltages_fifth_column, pad=(0,0), vertical_alignment='t'),
+         sg.VSeparator(),
+         sg.Column(voltages_sixth_column, pad=(0,0), vertical_alignment='t')]
+    ]
+
+    #voltage frame
+    frame_voltages = sg.Frame("Voltages", voltageLayout, "gold")
+
+    #Creates a bms temp layout
+    bms_temperature_layout = [
+        [sg.Column(therm_first_column, pad=(0,0), vertical_alignment='t'),
+         sg.VSeparator(),
+         sg.Column(therm_second_column, pad=(0,0), vertical_alignment='t'),
+         sg.VSeparator(),
+         sg.Column(therm_third_column, pad=(0,0), vertical_alignment='t'),
+         sg.VSeparator(),
+         sg.Column(therm_fourth_column, pad=(0,0), vertical_alignment='t'),
+         sg.VSeparator(),
+         sg.Column(therm_fifth_column, pad=(0,0), vertical_alignment='t'),
+         sg.VSeparator(),
+         sg.Column(therm_sixth_column, pad=(0,0), vertical_alignment='t'),
+         sg.VSeparator(),
+         sg.Column(humidity_first_column, pad=(0,0), vertical_alignment='t'),
+         sg.VSeparator(),
+         sg.Column(humidity_second_column, pad=(0,0), vertical_alignment='t')]
+    ]
+
+    frame_bms_temperatures = sg.Frame("Temperatures", bms_temperature_layout, "gold")
+
+    #BMS layout
+    layout_BMS = [
+        [sg.Text("BATTERY")],
+        [frame_voltages],
+        [frame_bms_temperatures]
+    ]
+    
+    frame_bms = sg.Frame("BMS", layout_BMS, "gold")
 
     # Finalize layout
-    layout = [[status_header_column1, status_header_column2, status_header_column3, status_header_column4, status_header_column5], [column1, column2, column3, column4, column5, column6]]
+    layout = [[status_header_column1, status_header_column2, status_header_column3, status_header_column4, status_header_column5], [frame_bms]] #[column1, column2, column3, column4, column5, column6]]
 
     window = sg.Window("HyTech Racing Live Telemetry Console", resizable=True).Layout(layout).Finalize()
     window.Maximize()
