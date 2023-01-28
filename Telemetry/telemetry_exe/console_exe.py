@@ -81,7 +81,7 @@ DICT = {
         "VOLTAGE_GAIN": " ",
         "CURRENT_GAIN": " ",
     },
-    "RACEGRADE_IMU": {
+    "IMU": {
         "LAT_ACCEL": " ",
         "LONG_ACCEL": " ",
         "VERT_ACCEL": " ",
@@ -361,7 +361,7 @@ def main():
     wheel_speed_sensors = [[sg.Text("WHEEL SPEED SENSORS", pad=(0,2), font=title_font, text_color="light blue")]]
     load_cells = [[sg.Text("LOAD CELLS", pad=(0,2), font=title_font, text_color="light blue")]]
     sab = [[sg.Text("SENSOR ACQUISITION BOARD", pad=(0,2), font=title_font, text_color="light blue")]]
-    imu = [[sg.Text("RACEGRADE IMU", pad=(0,2), font=title_font, text_color="light blue")]]
+    imu = [[sg.Text("IMU", pad=(0,2), font=title_font, text_color="light blue")]]
     em = [[sg.Text("ENERGY METER", pad=(0,2), font=title_font, text_color="light blue")]]
     bms_detailed_voltages = [[sg.Text("BMS DETAILED VOLTAGES", size=(33,1), pad=(0,2), font=title_font, text_color="light blue")]]
     bms_detailed_temps = [[sg.Text("BMS DETAILED TEMPERATURES", pad=(0,2), font=title_font, text_color="light blue")]]
@@ -390,7 +390,7 @@ def main():
         load_cells.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(35,1), pad=(0,0), font=text_font, key=label)])
     for label, value in DICT["SENSOR_ACQUISITION_BOARD"].items():
         sab.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(35,1), pad=(0,0), font=text_font, key=label)])
-    for label, value in DICT["RACEGRADE_IMU"].items():
+    for label, value in DICT["IMU"].items():
         imu.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(35,1), pad=(0,0), font=text_font, key=label)])
     for label, value in DICT["ENERGY_METER"].items():
         em.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(35,1), pad=(0,0), font=text_font, key=label)])
