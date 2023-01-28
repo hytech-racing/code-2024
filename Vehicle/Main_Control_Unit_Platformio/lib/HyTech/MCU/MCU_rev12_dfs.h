@@ -8,7 +8,7 @@
 
 #define BRAKE_LIGHT_CTRL 6
 
-#define ECU_CLK 13 
+#define ECU_CLK 13
 #define ECU_SDI 12
 #define ECU_SDO 11
 
@@ -26,11 +26,11 @@
 #define CAN_ECU_RX3 30
 #define CAN_ECU_TX3 31
 
-#define ADC1_CS 41 
-#define ADC2_CS 40 
+#define ADC1_CS 41
+#define ADC2_CS 40
 #define ADC3_CS 39
 
-#define FR_INTERLOCK 24 
+#define FR_INTERLOCK 24
 #define FL_INTERLOCK 25
 #define RR_INTERLOCK 26
 #define RL_INTERLOCK 27
@@ -39,8 +39,8 @@
 #define SOFTWARE_OK_READ 29
 #define BOTS_SENSE_OK_READ 32
 #define BOTS_OK_READ 33
-#define IMD_OK_READ 34 
-#define BMS_OK_READ 35 
+#define IMD_OK_READ 34
+#define BMS_OK_READ 35
 #define BSPD_OK_READ 36
 #define SOFTWARE_OK 20
 // digital outputs
@@ -73,7 +73,7 @@
 
 #define ALPHA 0.9772                     // parameter for the sowftware filter used on ADC pedal channels
 #define ADC_SPI_SPEED 1800000            // max SPI clokc frequency for MCP3208 is 2MHz in ideal conditions
-#define TORQUE_ADJUSTMENT_VOLTAGE 3.5242 
+#define TORQUE_ADJUSTMENT_VOLTAGE 3.5242
 
 #define LOAD_CELL1_OFFSET 0
 #define LOAD_CELL1_SLOPE 0

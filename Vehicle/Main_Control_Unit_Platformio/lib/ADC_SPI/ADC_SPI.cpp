@@ -8,16 +8,8 @@
  */
 
 /*
- * Initialize ADC SPI using default CS pin
+ * Initialize ADC SPI
  */
-ADC_SPI::ADC_SPI() : ADC_SPI(DEFAULT_SPI_CS, DEFAULT_SPI_SPEED) {}
-
-/*
- * Initialize ADC SPI using custom CS pin
- * param CS Pin to use for Chip Select
- */
-ADC_SPI::ADC_SPI(uint8_t CS) : ADC_SPI(CS, DEFAULT_SPI_SPEED) {}
-
 ADC_SPI::ADC_SPI(uint8_t CS, uint32_t SPIspeed) : ADC_SPI_CS(CS), SPI_SPEED(SPIspeed) {
     pinMode(ADC_SPI_CS, OUTPUT);
     pinMode(ADC_SPI_CS, HIGH);

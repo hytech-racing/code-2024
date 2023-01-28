@@ -1,15 +1,12 @@
 #include <Arduino.h>
-#include <FlexCAN_T4.h>
-
-#include <ADC_SPI.h>
-#include <HyTech_CAN.h>
-
-#include "MCU_rev12_dfs.h"
+#include <HyTech.h>
 
 void setup() {
-// write your initialization code here
+    Serial.begin(115200);
 }
 
 void loop() {
-// write your code here
+    Serial.printf("%ud\n", mcu.pedal.data.accelerator_pedal_1);
+    taskContainer.run();
+    delay(1);
 }
