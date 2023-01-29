@@ -89,6 +89,7 @@ void setup() {
     mcu_status.set_bms_ok_high(true);
 
     dashboard_neopixels.begin();
+    dashboard_neopixels.setPixelColor(LED_LIST::AMS, LED_ON_GREEN);
     dashboard_neopixels.show();
     dashboard_neopixels.setBrightness(brightness);
 

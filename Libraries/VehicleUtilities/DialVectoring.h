@@ -1,4 +1,4 @@
-i#pragma once
+#pragma once
 #include "Arduino.h"
 #include <Metro.h>
 
@@ -20,16 +20,18 @@ class DialVectoring {
         DIAL_MODES mode;
         bool debouncing;
         bool dialed;
-        int *pins;
+        unsigned int size;
+        int pins[6];
         Metro metro;
 
     public:
         DialVectoring() : metro(0) {}
-
-        void begin(int *pins, unsigned long interval, int mode = INPUT_PULLUP) {
-            this->pins = pins;
-            for(unsigned int i = 0; i < sizeof(pins); i++){
-                this->pins[i] = *(pins + i);
+        void begin(int *pins, unsigned int size, unsigned long interval, int mode = INPUT_PULLUP) {
+            
+            this->size = size;
+            for(unsigned int i = 0; i < size; i++){
+                
+                this->pins[i] = pins[i];
                 pinMode(this->pins[i], mode);
                 dialed = false;
                 debouncing = false; 
@@ -40,9 +42,10 @@ class DialVectoring {
 
         DIAL_MODES readMode(){
             DIAL_MODES newState = DIAL_MODES::MODE_ONE; //set to default enum value
-            for(unsigned int i =0; i< sizeof(pins); i++){
+            for(unsigned int i =0; i< size; i++){
                 
                 int reading = digitalRead(pins[i]);
+                Serial.println("pin " + String(i) + " " + String(reading));
                 if(reading == dialed && !debouncing ){
                     debouncing  = true;
                     metro.reset();

@@ -10,7 +10,7 @@
 #define BTN_LED_DIMMER 18
 
 //Dial pin definition (RANDOM FOR NOW)
-
+#define DIAL_SIZE 6
 #define DIAL_MODE_ONE 8
 #define DIAL_MODE_TWO 9
 #define DIAL_ACCELERATION_LAUNCH_CONTROL 4
