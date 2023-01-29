@@ -544,19 +544,19 @@ def main():
     #column5 = sg.Column(voltages_second_column + [[sg.Text(" ", size=(35,1), pad=(0,0), font=text_font)]], vertical_alignment='t')
     #column6 = sg.Column(bms_detailed_temps + temperatures, vertical_alignment='t')
 
-    inverters_layout = [
+    inverters_detailed_layout = [
         [sg.Column(inverter_fl + inverter_rl, pad=(0,0), vertical_alignment='t'),
          sg.VSeparator(),
          sg.Column(inverter_fr + inverter_rr, pad=(0,0), vertical_alignment='t')
         ]
     ]
 
-    inverters_frame = sg.Frame("Inverters", inverters_layout, "gold")
+    inverters_detailed_frame = sg.Frame("Inverters", inverters_detailed_layout, "gold")
 
 
 
     #Creates a voltage layout for the voltage frame using the six columns
-    voltageLayout = [
+    voltage_detailed_layout = [
         [sg.Column(voltages_first_column, pad=(0,0), vertical_alignment='t'),
          sg.VSeparator(),
          sg.Column(voltages_second_column, pad=(0,0), vertical_alignment='t'),
@@ -571,10 +571,10 @@ def main():
     ]
 
     #voltage frame
-    frame_voltages = sg.Frame("Voltages", voltageLayout, "gold")
+    frame_voltages = sg.Frame("Voltages", voltage_detailed_layout, "gold")
 
     #Creates a bms temp layout
-    bms_temperature_layout = [
+    bms_temperature_detailed_layout = [
         [sg.Column(therm_first_column, pad=(0,0), vertical_alignment='t'),
          sg.VSeparator(),
          sg.Column(therm_second_column, pad=(0,0), vertical_alignment='t'),
@@ -593,7 +593,7 @@ def main():
     ]
 
     #bms temp frame
-    bms_temperatures_frame = sg.Frame("Temperatures", bms_temperature_layout, "gold")
+    bms_temperatures_frame = sg.Frame("Temperatures", bms_temperature_detailed_layout, "gold")
 
     #BMS layout
     layout_BMS = [
@@ -603,20 +603,20 @@ def main():
     ]
     
     #bms frame
-    bms_frame = sg.Frame("BMS", layout_BMS, "gold")
+    bms_detailed_frame = sg.Frame("BMS", layout_BMS, "gold")
 
     layout_Full = [
-        [inverters_frame,
+        [inverters_detailed_frame,
          sg.VerticalSeparator(),
-         bms_frame]
+         bms_detailed_frame]
     ]
 
-    full_frame = sg.Frame("HT-07", layout_Full, "gold")
+    full_frame = sg.Frame("HT-07 Detailed View", layout_Full, "gold")
 
     # Finalize layout
-    layout = [[status_header_column1, status_header_column2, status_header_column3, status_header_column4, status_header_column5], [full_frame]] #[column1, column2, column3, column4, column5, column6]]
+    full_layout = [[status_header_column1, status_header_column2, status_header_column3, status_header_column4, status_header_column5], [full_frame]] #[column1, column2, column3, column4, column5, column6]]
 
-    window = sg.Window("HyTech Racing Live Telemetry Console", resizable=True).Layout(layout).Finalize()
+    window = sg.Window("HyTech Racing Live Telemetry Console", resizable=True).Layout(full_layout).Finalize()
     window.Maximize()
 
     # Choose messaging thread based on connection type
