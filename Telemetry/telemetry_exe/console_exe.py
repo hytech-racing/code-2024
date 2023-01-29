@@ -89,23 +89,90 @@ DICT = {
         "PITCH": " ",
         "ROLL": " "
     },
-    "RMS_INVERTER" : {
+    "INVERTER_FL" : {
         "OUTPUT_POWER": " ",
         "RMS_UPTIME": " ",
         "INVERTER_ENABLE_STATE": " ",
-        "MOTOR_SPEED": " ",
-        "MOTOR_ANGLE": " ",
         "ELEC_OUTPUT_FREQ": " ",
-        "COMMANDED_TORQUE": " ",
         "TORQUE_FEEDBACK": " ",
         "DC_BUS_VOLTAGE": " ",
         "OUTPUT_VOLTAGE": " ",
-        "PHASE_AB_VOLTAGE": " ",
-        "PHASE_BC_VOLTAGE": " ",
         "DC_BUS_CURRENT": " ",
-        "PHASE_A_CURRENT": " ",
-        "PHASE_B_CURRENT": " ",
-        "PHASE_C_CURRENT": " ",
+        "MOTOR_TEMPERATURE": " ",
+        "GATE_DRIVER_BOARD_TEMPERATURE": " ",
+        "MODULE_A_TEMPERATURE": " ",
+        "MODULE_B_TEMPERATURE": " ",
+        "MODULE_C_TEMPERATURE": " ",
+        "TORQUE_SHUDDER": " ",
+        "INVERTER_STATE": " ",
+        "VSM_STATE": " ",
+        "INVERTER_ACTIVE_DISCHARGE_STATE": " ",
+        "INVERTER_COMMAND_MODE": " ",
+        "DIRECTION_COMMAND": " ",
+        "POST_FAULT_LO": " ",
+        "POST_FAULT_HI": " ",
+        "RUN_FAULT_LO": " ",
+        "RUN_FAULT_HI": " ",
+    },
+    "INVERTER_FR" : {
+        "OUTPUT_POWER": " ",
+        "RMS_UPTIME": " ",
+        "INVERTER_ENABLE_STATE": " ",
+        "ELEC_OUTPUT_FREQ": " ",
+        "TORQUE_FEEDBACK": " ",
+        "DC_BUS_VOLTAGE": " ",
+        "OUTPUT_VOLTAGE": " ",
+        "DC_BUS_CURRENT": " ",
+        "MOTOR_TEMPERATURE": " ",
+        "GATE_DRIVER_BOARD_TEMPERATURE": " ",
+        "MODULE_A_TEMPERATURE": " ",
+        "MODULE_B_TEMPERATURE": " ",
+        "MODULE_C_TEMPERATURE": " ",
+        "TORQUE_SHUDDER": " ",
+        "INVERTER_STATE": " ",
+        "VSM_STATE": " ",
+        "INVERTER_ACTIVE_DISCHARGE_STATE": " ",
+        "INVERTER_COMMAND_MODE": " ",
+        "DIRECTION_COMMAND": " ",
+        "POST_FAULT_LO": " ",
+        "POST_FAULT_HI": " ",
+        "RUN_FAULT_LO": " ",
+        "RUN_FAULT_HI": " ",
+    },
+    "INVERTER_RL" : {
+        "OUTPUT_POWER": " ",
+        "RMS_UPTIME": " ",
+        "INVERTER_ENABLE_STATE": " ",
+        "ELEC_OUTPUT_FREQ": " ",
+        "TORQUE_FEEDBACK": " ",
+        "DC_BUS_VOLTAGE": " ",
+        "OUTPUT_VOLTAGE": " ",
+        "DC_BUS_CURRENT": " ",
+        "MOTOR_TEMPERATURE": " ",
+        "GATE_DRIVER_BOARD_TEMPERATURE": " ",
+        "MODULE_A_TEMPERATURE": " ",
+        "MODULE_B_TEMPERATURE": " ",
+        "MODULE_C_TEMPERATURE": " ",
+        "TORQUE_SHUDDER": " ",
+        "INVERTER_STATE": " ",
+        "VSM_STATE": " ",
+        "INVERTER_ACTIVE_DISCHARGE_STATE": " ",
+        "INVERTER_COMMAND_MODE": " ",
+        "DIRECTION_COMMAND": " ",
+        "POST_FAULT_LO": " ",
+        "POST_FAULT_HI": " ",
+        "RUN_FAULT_LO": " ",
+        "RUN_FAULT_HI": " ",
+    },
+    "INVERTER_RR" : {
+        "OUTPUT_POWER": " ",
+        "RMS_UPTIME": " ",
+        "INVERTER_ENABLE_STATE": " ",
+        "ELEC_OUTPUT_FREQ": " ",
+        "TORQUE_FEEDBACK": " ",
+        "DC_BUS_VOLTAGE": " ",
+        "OUTPUT_VOLTAGE": " ",
+        "DC_BUS_CURRENT": " ",
         "MOTOR_TEMPERATURE": " ",
         "GATE_DRIVER_BOARD_TEMPERATURE": " ",
         "MODULE_A_TEMPERATURE": " ",
@@ -354,7 +421,13 @@ def main():
     
 
     # Subtitle text declarations
-    inverter = [[sg.Text("RMS INVERTER", pad=(0,2), font=title_font, text_color="light blue")]]
+    #inverter = [[sg.Text("RMS INVERTER", pad=(0,2), font=title_font, text_color="light blue")]]
+    inverter_fl = [[sg.Text("INVERTER_FL", pad=(0,2), font=title_font, text_color="gold")]]
+    inverter_fr = [[sg.Text("INVERTER_FR", pad=(0,2), font=title_font, text_color="gold")]]
+    inverter_rl = [[sg.Text("INVERTER_RL", pad=(0,2), font=title_font, text_color="gold")]]
+    inverter_rr = [[sg.Text("INVERTER_RR", pad=(0,2), font=title_font, text_color="gold")]]
+
+
     dashboard = [[sg.Text("DASHBOARD", pad=(0,2), font=title_font, text_color="light blue")]]
     bms = [[sg.Text("BMS OVERVIEW", pad=(0,2), font=title_font, text_color="light blue")]]
     main_ecu = [[sg.Text("MAIN ECU", pad=(0,2), font=title_font, text_color="light blue")]]
@@ -376,8 +449,16 @@ def main():
     row_count_voltages = 0
     
     # Data text arrangements and manipulations
-    for label, value in DICT["RMS_INVERTER"].items():
-        inverter.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(40,1), pad=(0,0), font=text_font, key=label)])
+    #for label, value in DICT["RMS_INVERTER"].items():
+    #    inverter.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(40,1), pad=(0,0), font=text_font, key=label)])
+    for label, value in DICT["INVERTER_FL"].items():
+        inverter_fl.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(40,1), pad=(0,0), font=text_font, key=label)])
+    for label, value in DICT["INVERTER_FR"].items():
+        inverter_fr.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(40,1), pad=(0,0), font=text_font, key=label)])
+    for label, value in DICT["INVERTER_RL"].items():
+        inverter_rl.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(40,1), pad=(0,0), font=text_font, key=label)])
+    for label, value in DICT["INVERTER_RR"].items():
+        inverter_rr.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(40,1), pad=(0,0), font=text_font, key=label)])
     for label, value in DICT["BATTERY_MANAGEMENT_SYSTEM"].items():
         bms.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(35,1), pad=(0,0), font=text_font, key=label)])
     for label, value in DICT["MAIN_ECU"].items():
@@ -463,6 +544,17 @@ def main():
     #column5 = sg.Column(voltages_second_column + [[sg.Text(" ", size=(35,1), pad=(0,0), font=text_font)]], vertical_alignment='t')
     #column6 = sg.Column(bms_detailed_temps + temperatures, vertical_alignment='t')
 
+    inverters_layout = [
+        [sg.Column(inverter_fl + inverter_rl, pad=(0,0), vertical_alignment='t'),
+         sg.VSeparator(),
+         sg.Column(inverter_fr + inverter_rr, pad=(0,0), vertical_alignment='t')
+        ]
+    ]
+
+    inverters_frame = sg.Frame("Inverters", inverters_layout, "gold")
+
+
+
     #Creates a voltage layout for the voltage frame using the six columns
     voltageLayout = [
         [sg.Column(voltages_first_column, pad=(0,0), vertical_alignment='t'),
@@ -511,8 +603,16 @@ def main():
     
     frame_bms = sg.Frame("BMS", layout_BMS, "gold")
 
+    layout_Full = [
+        [inverters_frame,
+         sg.VerticalSeparator(),
+         frame_bms]
+    ]
+
+    full_frame = sg.Frame("HT-07", layout_Full, "gold")
+
     # Finalize layout
-    layout = [[status_header_column1, status_header_column2, status_header_column3, status_header_column4, status_header_column5], [frame_bms]] #[column1, column2, column3, column4, column5, column6]]
+    layout = [[status_header_column1, status_header_column2, status_header_column3, status_header_column4, status_header_column5], [full_frame]] #[column1, column2, column3, column4, column5, column6]]
 
     window = sg.Window("HyTech Racing Live Telemetry Console", resizable=True).Layout(layout).Finalize()
     window.Maximize()
