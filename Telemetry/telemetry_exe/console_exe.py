@@ -592,21 +592,23 @@ def main():
          sg.Column(humidity_second_column, pad=(0,0), vertical_alignment='t')]
     ]
 
-    frame_bms_temperatures = sg.Frame("Temperatures", bms_temperature_layout, "gold")
+    #bms temp frame
+    bms_temperatures_frame = sg.Frame("Temperatures", bms_temperature_layout, "gold")
 
     #BMS layout
     layout_BMS = [
         [sg.Text("BATTERY")],
         [frame_voltages],
-        [frame_bms_temperatures]
+        [bms_temperatures_frame]
     ]
     
-    frame_bms = sg.Frame("BMS", layout_BMS, "gold")
+    #bms frame
+    bms_frame = sg.Frame("BMS", layout_BMS, "gold")
 
     layout_Full = [
         [inverters_frame,
          sg.VerticalSeparator(),
-         frame_bms]
+         bms_frame]
     ]
 
     full_frame = sg.Frame("HT-07", layout_Full, "gold")
