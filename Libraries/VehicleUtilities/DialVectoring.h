@@ -19,7 +19,6 @@ class DialVectoring {
     private:
         DIAL_MODES mode;
         bool debouncing;
-        bool dialed;
         unsigned int size;
         int pins[6];
         Metro metro;
@@ -33,24 +32,23 @@ class DialVectoring {
                 
                 this->pins[i] = pins[i];
                 pinMode(this->pins[i], mode);
-                dialed = false;
                 debouncing = false; 
                 metro = Metro(interval);
             }
-            readMode();
+            // readMode();
         }
 
         DIAL_MODES readMode(){
             DIAL_MODES newState = DIAL_MODES::MODE_ONE; //set to default enum value
             for(unsigned int i =0; i< size; i++){
                 
-                int reading = digitalRead(pins[i]);
+                bool reading = digitalRead(pins[i]);
                 Serial.println("pin " + String(i) + " " + String(reading));
-                if(reading == dialed && !debouncing ){
+                if(!reading  && !debouncing ){
                     debouncing  = true;
                     metro.reset();
                 }
-                if(debouncing && reading != dialed){
+                if(debouncing && reading){
                     debouncing = false;
                 }
 
@@ -59,11 +57,9 @@ class DialVectoring {
                     break;
                 }
             }
-            if(mode != newState){
-                mode = newState;
-                
+            mode = newState
             }
-            return mode;
+            return newState;
         }
 
         
