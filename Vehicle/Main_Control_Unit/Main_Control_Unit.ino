@@ -903,6 +903,7 @@ uint8_t check_all_inverters_error() {
       error_list = error_list | (0x01 << inv);
     }
   }
+  return error_list;
 }
 
 inline void set_all_inverters_no_torque() {
@@ -914,11 +915,29 @@ inline void set_all_inverters_no_torque() {
   }
 }
 
-inline void set_all_inverters_torque_enabled() {
+inline void set_all_inverters_torque_limit(int limit) {
+
+  //const float max_torque = max_torque_Nm / 0.0098; // max possible value for torque multiplier, unit in 0.1% nominal torque
+  //inverter torque unit is in 0.1% of nominal torque (9.8Nm), max rated torque is 21Nm, so max possible output is 2142
+  
+  if (limit >= 0) {
+    for (uint8_t inv = 0; inv < 4; inv++) {
+      mc_setpoints_command[inv].set_pos_torque_limit(limit);
+      mc_setpoints_command[inv].set_neg_torque_limit(0);
+    }
+  }
+  else {
+    for (uint8_t inv = 0; inv < 4; inv++) {
+      mc_setpoints_command[inv].set_pos_torque_limit(0);
+      mc_setpoints_command[inv].set_neg_torque_limit(abs(limit));
+    }
+  }
+
+}
+
+inline void set_all_inverters_speed_setpoint(int setpoint) {
   for (uint8_t inv = 0; inv < 4; inv++) {
-    mc_setpoints_command[inv].set_speed_setpoint(18000);
-    mc_setpoints_command[inv].set_pos_torque_limit(2142);
-    mc_setpoints_command[inv].set_neg_torque_limit(0);
+    mc_setpoints_command[inv].set_speed_setpoint(setpoint);
   }
 }
 

@@ -19,8 +19,8 @@ public:
 
     // New Setters
     inline void set_lat_accel(int16_t lat_accel) { this->lat_accel = lat_accel; }
-    inline void set_lat_accel(int16_t long_accel) { this->long_accel = long_accel; }
-    inline void set_lat_accel(int16_t vert_accel) { this->vert_accel = vert_accel; }
+    inline void set_long_accel(int16_t long_accel) { this->long_accel = long_accel; }
+    inline void set_vert_accel(int16_t vert_accel) { this->vert_accel = vert_accel; }
 
 private:
     // @Parse @Unit(m/s/s) @Scale(102)
