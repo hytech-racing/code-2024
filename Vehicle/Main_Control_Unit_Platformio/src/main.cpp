@@ -3,7 +3,7 @@
 #include <Task_Container.h>
 
 bool check_TS_over_HC_threshold() {
-    return std::all_of(mc.energy.data.iter().begin(), mc.energy.data.iter().end(), [](auto &i) { return i.get().dc_bus_voltage >= MIN_HV_VOLTAGE; });
+    return std::all_of(mc.energy.data.begin(), mc.energy.data.end(), [](auto &i) { return i.get().dc_bus_voltage >= MIN_HV_VOLTAGE; });
 }
 
 bool enable_inverters() {
