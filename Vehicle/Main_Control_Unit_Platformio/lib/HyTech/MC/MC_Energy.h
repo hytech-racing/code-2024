@@ -14,7 +14,7 @@ public:
         int16_t magnetizing_current;
     };
 
-    MC_Container<data_s> data;
+    MC_Container<data_s> data{};
 
     MC_Energy();
 

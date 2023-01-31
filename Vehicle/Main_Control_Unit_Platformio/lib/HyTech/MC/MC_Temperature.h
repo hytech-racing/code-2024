@@ -15,7 +15,7 @@ public:
         int16_t diagnostic_number;
     };
 
-    MC_Container<data_s> data;
+    MC_Container<data_s> data{};
 
     MC_Temperature();
 
