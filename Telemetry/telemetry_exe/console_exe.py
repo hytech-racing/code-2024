@@ -233,6 +233,51 @@ DICT = {
     }
 }
 
+DICT_SIMPLE = {
+    "DASHBOARD": {
+        "SSOK_ABOVE_THRESHOLD": " ",
+        "SHUTDOWN_H_ABOVE_THRESHOLD": " "
+    },
+    "BATTERY_MANAGEMENT_SYSTEM": {
+        "BMS_VOLTAGE_LOW": " ",
+        "BMS_VOLTAGE_HIGH": " ",
+        "BMS_AVERAGE_TEMPERATURE": " ",
+        "BMS_LOW_TEMPERATURE": " ",
+        "BMS_HIGH_TEMPERATURE": " ",
+        "BMS_CURRENT": " ",
+        "BMS_ERROR_FLAGS": " ",
+    },
+    "INVERTER_FL" : {
+        "OUTPUT_POWER": " ",
+        "MOTOR_TEMPERATURE": " ",
+        "GATE_DRIVER_BOARD_TEMPERATURE": " "
+    },
+    "INVERTER_FR" : {
+        "OUTPUT_POWER": " ",
+        "MOTOR_TEMPERATURE": " ",
+        "GATE_DRIVER_BOARD_TEMPERATURE": " "
+    },
+    "INVERTER_RL" : {
+        "OUTPUT_POWER": " ",
+        "MOTOR_TEMPERATURE": " ",
+        "GATE_DRIVER_BOARD_TEMPERATURE": " "
+    },
+    "INVERTER_RR" : {
+        "OUTPUT_POWER": " ",
+        "MOTOR_TEMPERATURE": " ",
+        "GATE_DRIVER_BOARD_TEMPERATURE": " "
+    },
+    "MAIN_ECU": {
+        "GLV_BATTERY_VOLTAGE": " ",
+        "TEMPERATURE": " ",
+        "IMD_OK_HIGH": " ",
+        "BMS_OK_HIGH": " ",
+        "BSPD_OK_HIGH": " ",
+        "SOFTWARE_OK_HIGH": " ",
+        "INVERTER_POWERED": " ",
+    }
+}
+
 # Variables to keep track of inverter current and power for inverter power calculation
 inverter_voltage = 0.0
 inverter_current = 0.0
@@ -407,7 +452,6 @@ def get_bms_detailed_messages():
     result2 = dict.fromkeys(ic_temperature, ' ')
     dictionary2 = {"BATTERY_MANAGEMENT_SYSTEM_DETAILED_TEMPERATURES": result2}
     return dictionary, dictionary2
-
 
 
 
