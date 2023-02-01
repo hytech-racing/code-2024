@@ -453,7 +453,7 @@ def get_bms_detailed_messages():
     dictionary2 = {"BATTERY_MANAGEMENT_SYSTEM_DETAILED_TEMPERATURES": result2}
     return dictionary, dictionary2
 
-def get_bms_condensed_messages():
+def get_bms_simplified_messages():
     voltage_list = ['IC_' + '{0:02d}'.format(x) for x in range(12)]
     result = dict.fromkeys(voltage_list, ' ')
     dictionary = {"BATTERY_MANAGEMENT_SYSTEM_SIMPLIFIED_VOLTAGES": result}
@@ -464,17 +464,13 @@ def get_bms_condensed_messages():
 
     return dictionary, dictionary2
 
-'''
-@brief: The main function to spawn the PySimpleGUI and handle events
-'''
-def main():
+def create_detailed_ui():
     sg.change_look_and_feel("Black")
     title_font = (args.font, int(args.title_size))
     text_font = (args.font, int(args.body_size))
     
 
     # Subtitle text declarations
-    #inverter = [[sg.Text("RMS INVERTER", pad=(0,2), font=title_font, text_color="light blue")]]
     inverter_fl = [[sg.Text("INVERTER_FL", pad=(0,2), font=title_font, text_color="gold")]]
     inverter_fr = [[sg.Text("INVERTER_FR", pad=(0,2), font=title_font, text_color="gold")]]
     inverter_rl = [[sg.Text("INVERTER_RL", pad=(0,2), font=title_font, text_color="gold")]]
@@ -668,8 +664,23 @@ def main():
 
     # Finalize layout
     full_layout = [[status_header_column1, status_header_column2, status_header_column3, status_header_column4, status_header_column5], [full_frame]] #[column1, column2, column3, column4, column5, column6]]
+    return full_layout
 
-    window = sg.Window("HyTech Racing Live Telemetry Console", resizable=True).Layout(full_layout).Finalize()
+def create_simplified_ui():
+    title_font = (args.font, int(args.title_size))
+
+    bms_simplified_voltages = [[sg.Text("BMS SIMPLIFIED VOLTAGES", size=(33,1), pad=(0,2), font=title_font, text_color="gold")]]
+    bms_simplified_temps = [[sg.Text("BMS SIMPLIFIED TEMPERATURES", size=(33,1), pad=(0,2), font=title_font, text_color="gold")]]
+
+'''
+@brief: The main function to spawn the PySimpleGUI and handle events
+'''
+def main():
+    detailed_layout = create_detailed_ui()
+    simplified_layout = create_simplified_ui()
+
+
+    window = sg.Window("HyTech Racing Live Telemetry Console", resizable=True).Layout(detailed_layout).Finalize()
     window.Maximize()
 
     # Choose messaging thread based on connection type
@@ -718,6 +729,7 @@ def main():
             window.refresh()
 
     window.close()
+
 
 ############################
 # Entry point to application
