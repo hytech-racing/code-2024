@@ -453,7 +453,16 @@ def get_bms_detailed_messages():
     dictionary2 = {"BATTERY_MANAGEMENT_SYSTEM_DETAILED_TEMPERATURES": result2}
     return dictionary, dictionary2
 
+def get_bms_condensed_messages():
+    voltage_list = ['IC_' + '{0:02d}'.format(x) for x in range(12)]
+    result = dict.fromkeys(voltage_list, ' ')
+    dictionary = {"BATTERY_MANAGEMENT_SYSTEM_SIMPLIFIED_VOLTAGES": result}
 
+    temperature_list = ['IC_' + '{0:02d}'.format(x) for x in range(12)]
+    result2 = dict.fromkeys(temperature_list, ' ')
+    dictionary2 = {"BATTERY_MANAGEMENT_SYSTEM_SIMPLIFIED_TEMPERATURES": result2}
+
+    return dictionary, dictionary2
 
 '''
 @brief: The main function to spawn the PySimpleGUI and handle events
