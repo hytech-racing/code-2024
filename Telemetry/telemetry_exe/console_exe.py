@@ -668,9 +668,146 @@ def create_detailed_ui():
 
 def create_simplified_ui():
     title_font = (args.font, int(args.title_size))
+    text_font = (args.font, int(args.body_size))
 
+    inverter_fl = [[sg.Text("INVERTER_FL", pad=(0,2), font=title_font, text_color="gold")]]
+    inverter_fr = [[sg.Text("INVERTER_FR", pad=(0,2), font=title_font, text_color="gold")]]
+    inverter_rl = [[sg.Text("INVERTER_RL", pad=(0,2), font=title_font, text_color="gold")]]
+    inverter_rr = [[sg.Text("INVERTER_RR", pad=(0,2), font=title_font, text_color="gold")]]
+    dashboard = [[sg.Text("DASHBOARD", pad=(0,2), font=title_font, text_color="light blue")]]
+    bms = [[sg.Text("BMS OVERVIEW", pad=(0,2), font=title_font, text_color="light blue")]]
+    main_ecu = [[sg.Text("MAIN ECU", pad=(0,2), font=title_font, text_color="light blue")]]
     bms_simplified_voltages = [[sg.Text("BMS SIMPLIFIED VOLTAGES", size=(33,1), pad=(0,2), font=title_font, text_color="gold")]]
     bms_simplified_temps = [[sg.Text("BMS SIMPLIFIED TEMPERATURES", size=(33,1), pad=(0,2), font=title_font, text_color="gold")]]
+
+    bms_voltages = [[]]
+    bms_temperatures = [[]]
+    
+    DICT1, DICT2 = get_bms_simplified_messages()
+    DICT_SIMPLE.update(DICT1)
+    DICT_SIMPLE.update(DICT2)
+    row_count_temperatures = 0
+    row_count_voltages = 0
+    
+    # Data text arrangements and manipulations
+    #for label, value in DICT["RMS_INVERTER"].items():
+    #    inverter.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(40,1), pad=(0,0), font=text_font, key=label)])
+    for label, value in DICT_SIMPLE["INVERTER_FL"].items():
+        inverter_fl.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(40,1), pad=(0,0), font=text_font, key=label)])
+    for label, value in DICT_SIMPLE["INVERTER_FR"].items():
+        inverter_fr.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(40,1), pad=(0,0), font=text_font, key=label)])
+    for label, value in DICT_SIMPLE["INVERTER_RL"].items():
+        inverter_rl.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(40,1), pad=(0,0), font=text_font, key=label)])
+    for label, value in DICT_SIMPLE["INVERTER_RR"].items():
+        inverter_rr.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(40,1), pad=(0,0), font=text_font, key=label)])
+    for label, value in DICT_SIMPLE["BATTERY_MANAGEMENT_SYSTEM"].items():
+        bms.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(35,1), pad=(0,0), font=text_font, key=label)])
+    for label, value in DICT_SIMPLE["MAIN_ECU"].items():
+        main_ecu.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(35,1), pad=(0,0), font=text_font, key=label)])
+    for label, value in DICT_SIMPLE["DASHBOARD"].items():
+        dashboard.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(35,1), pad=(0,0), font=text_font, key=label)])
+    # for label, value in DICT_SIMPLE["BATTERY_MANAGEMENT_SYSTEM_DETAILED_VOLTAGES"].items():
+    #     if row_count_voltages % 9 == 8 and int(label[3:5]) % 2 == 1:
+    #         bms_voltages.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(23,1), pad=((0,0),(0,10)), font=text_font, key=label)])
+    #         row_count_voltages = 0
+    #     elif row_count_voltages % 12 == 11 and int(label[3:5]) % 2 == 0:
+    #         bms_voltages.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(23,1), pad=((0,0),(0,10)), font=text_font, key=label)])
+    #         row_count_voltages = 0
+    #     else:            
+    #         bms_voltages.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(23,1), pad=(0,0), font=text_font, key=label)])
+    #         row_count_voltages = row_count_voltages + 1
+    # for label, value in DICT_SIMPLE["BATTERY_MANAGEMENT_SYSTEM_DETAILED_TEMPERATURES"].items():
+    #     if row_count_temperatures >= 48:
+    #         bms_temperatures.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(25,1), pad=(0,0), font=text_font, key=label)])
+    #     elif row_count_temperatures % 4 == 3:
+    #         bms_temperatures.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(23,1), pad=((0,0),(0,10)), font=text_font, key=label)])
+    #     else:
+    #         bms_temperatures.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(23,1), pad=(0, 0),font=text_font, key=label)])
+    #     row_count_temperatures = row_count_temperatures + 1
+
+    connection_text = [[sg.Text("CONSOLE STATUS: NOT CONNECTED", justification="left", pad=((5,0),12), text_color='red', font=title_font, key="-Connection Text-")]]
+    divider_text_1 = [[sg.Text(" | ", pad=(5,12), font=title_font)]]
+    vehicle_status_text = [[sg.Text("VEHICLE STATUS: NOT RECEIVED", justification="left", pad=((0,0),12), font=title_font, key="-Vehicle Status Text-")]]
+    divider_text_2 = [[sg.Text(" | ", pad=(5,12), font=title_font)]]
+    last_update_text = [[sg.Text("LAST UPDATE: NOT RECEIVED", justification="left", pad=((0,5),12), font=title_font, key="-Last Update Text-")]]
+
+    status_header_column1 = sg.Column(connection_text, pad=(0,0), vertical_alignment='t')
+    status_header_column2 = sg.Column(divider_text_1, pad=(0,0), vertical_alignment='t')
+    status_header_column3 = sg.Column(vehicle_status_text, pad=(0,0), vertical_alignment='t')
+    status_header_column4 = sg.Column(divider_text_2, pad=(0,0), vertical_alignment='t')
+    status_header_column5 = sg.Column(last_update_text, pad=(0,0), vertical_alignment='t')
+
+    inverters_simplified_layout = [
+        [sg.Column(inverter_fl + inverter_rl, pad=(0,0), vertical_alignment='t'),
+         sg.VSeparator(),
+         sg.Column(inverter_fr + inverter_rr, pad=(0,0), vertical_alignment='t')
+        ]
+    ]
+
+    inverters_simplified_frame = sg.Frame("Inverters", inverters_simplified_layout, "gold")
+
+
+
+    #Creates a voltage layout for the voltage frame using the six columns
+    # voltage_detailed_layout = [
+    #     [sg.Column(voltages_first_column, pad=(0,0), vertical_alignment='t'),
+    #      sg.VSeparator(),
+    #      sg.Column(voltages_second_column, pad=(0,0), vertical_alignment='t'),
+    #      sg.VSeparator(),
+    #      sg.Column(voltages_third_column, pad=(0,0), vertical_alignment='t'),
+    #      sg.VSeparator(),
+    #      sg.Column(voltages_fourth_column, pad=(0,0), vertical_alignment='t'),
+    #      sg.VSeparator(),
+    #      sg.Column(voltages_fifth_column, pad=(0,0), vertical_alignment='t'),
+    #      sg.VSeparator(),
+    #      sg.Column(voltages_sixth_column, pad=(0,0), vertical_alignment='t')]
+    # ]
+
+    #voltage frame
+    # frame_voltages = sg.Frame("Voltages", voltage_detailed_layout, "gold")
+
+    #Creates a bms temp layout
+    # bms_temperature_detailed_layout = [
+    #     [sg.Column(therm_first_column, pad=(0,0), vertical_alignment='t'),
+    #      sg.VSeparator(),
+    #      sg.Column(therm_second_column, pad=(0,0), vertical_alignment='t'),
+    #      sg.VSeparator(),
+    #      sg.Column(therm_third_column, pad=(0,0), vertical_alignment='t'),
+    #      sg.VSeparator(),
+    #      sg.Column(therm_fourth_column, pad=(0,0), vertical_alignment='t'),
+    #      sg.VSeparator(),
+    #      sg.Column(therm_fifth_column, pad=(0,0), vertical_alignment='t'),
+    #      sg.VSeparator(),
+    #      sg.Column(therm_sixth_column, pad=(0,0), vertical_alignment='t'),
+    #      sg.VSeparator(),
+    #      sg.Column(humidity_first_column, pad=(0,0), vertical_alignment='t'),
+    #      sg.VSeparator(),
+    #      sg.Column(humidity_second_column, pad=(0,0), vertical_alignment='t')]
+    # ]
+
+    # #bms temp frame
+    # bms_temperatures_frame = sg.Frame("Temperatures", bms_temperature_detailed_layout, "gold")
+
+    # #BMS layout
+    # layout_BMS = [
+    #     [sg.Text("BATTERY")],
+    #     [frame_voltages],
+    #     [bms_temperatures_frame]
+    # ]
+    
+    #bms frame
+    #bms_simplified_frame = sg.Frame("BMS", layout_BMS, "gold")
+
+    layout_Full = [
+        [inverters_simplified_frame,
+         sg.VerticalSeparator()]
+         #bms_simplified_frame]
+    ]
+
+    full_frame = sg.Frame("HT-07 Simplified View", layout_Full, "gold")
+
+    full_layout = [[status_header_column1, status_header_column2, status_header_column3, status_header_column4, status_header_column5], [full_frame]] #[column1, column2, column3, column4, column5, column6]]
+    return full_layout
 
 '''
 @brief: The main function to spawn the PySimpleGUI and handle events
@@ -680,7 +817,7 @@ def main():
     simplified_layout = create_simplified_ui()
 
 
-    window = sg.Window("HyTech Racing Live Telemetry Console", resizable=True).Layout(detailed_layout).Finalize()
+    window = sg.Window("HyTech Racing Live Telemetry Console", resizable=True).Layout(simplified_layout).Finalize()
     window.Maximize()
 
     # Choose messaging thread based on connection type
