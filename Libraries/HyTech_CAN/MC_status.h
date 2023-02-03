@@ -16,9 +16,9 @@ public:
   inline void write(uint8_t buf[])  const { memcpy(buf, this, sizeof(*this)); }
 
   inline uint16_t get_status_word()   const { return status_word; }
-  inline uint16_t get_speed()       const { return speed; }
-  inline uint16_t get_torque()       const { return torque; }
-  inline uint16_t get_torque_current()       const { return torque_current; }
+  inline int16_t get_speed()       const { return speed; }
+  inline int16_t get_torque()       const { return torque; }
+  inline int16_t get_torque_current()       const { return torque_current; }
 
   inline bool get_system_ready() const {return status_word & 0x100; }
   inline bool get_error() const {return status_word & 0x200; }
