@@ -1,6 +1,6 @@
 '''
-@Author: Sophia Smith, Bo Han Zhu
-@Date: 4/23/2022
+@Author: Pranav Kuppili
+@Date: 2/2/2023
 @Description: HyTech live telemetry console
 '''
 
@@ -454,15 +454,24 @@ def get_bms_detailed_messages():
     return dictionary, dictionary2
 
 def get_bms_simplified_messages():
-    voltage_list = ['IC_' + '{0:02d}'.format(x) for x in range(12)]
-    result = dict.fromkeys(voltage_list, ' ')
-    dictionary = {"BATTERY_MANAGEMENT_SYSTEM_SIMPLIFIED_VOLTAGES": result}
+    voltage_high_list = ['IC_' + '{0:02d}'.format(x) + '_HIGH' for x in range(12)]
+    voltage_low_list = ['IC_' + '{0:02d}'.format(x) + '_LOW' for x in range(12)]
 
-    temperature_list = ['IC_' + '{0:02d}'.format(x) for x in range(12)]
-    result2 = dict.fromkeys(temperature_list, ' ')
-    dictionary2 = {"BATTERY_MANAGEMENT_SYSTEM_SIMPLIFIED_TEMPERATURES": result2}
+    
+    result_high = dict.fromkeys(voltage_high_list, ' ')
+    result_low = dict.fromkeys(voltage_low_list, ' ')
+    dictionary_voltage_high = {"BATTERY_MANAGEMENT_SYSTEM_HIGH_VOLTAGES": result_high}
+    dictionary_voltage_low = {"BATTERY_MANAGEMENT_SYSTEM_LOW_VOLTAGES": result_low}
 
-    return dictionary, dictionary2
+    temperature_high_list = ['IC_' + '{0:02d}'.format(x) + '_HIGH' for x in range(12)]
+    temperature_low_list = ['IC_' + '{0:02d}'.format(x) + '_LOW' for x in range(12)]
+
+    result2_high = dict.fromkeys(temperature_high_list, ' ')
+    result2_low = dict.fromkeys(temperature_low_list)
+    dictionary_temp_high = {"BATTERY_MANAGEMENT_SYSTEM_HIGH_TEMPERATURES": result2_high}
+    dictionary_temp_low = {"BATTERY_MANAGEMENT_SYSTEM_LOW_TEMPERATURES": result2_low}
+
+    return dictionary_voltage_high, dictionary_voltage_low, dictionary_temp_high, dictionary_temp_low
 
 def create_detailed_ui():
     sg.change_look_and_feel("Black")
@@ -683,9 +692,12 @@ def create_simplified_ui():
     bms_voltages = [[]]
     bms_temperatures = [[]]
     
-    DICT1, DICT2 = get_bms_simplified_messages()
-    DICT_SIMPLE.update(DICT1)
-    DICT_SIMPLE.update(DICT2)
+    DICT_VOLT_HIGH, DICT_VOLT_LOW, DICT_TEMP_HIGH, DICT_TEMP_LOW = get_bms_simplified_messages()
+    DICT_SIMPLE.update(DICT_VOLT_HIGH)
+    DICT_SIMPLE.update(DICT_VOLT_LOW)
+    DICT_SIMPLE.update(DICT_TEMP_HIGH)
+    DICT_SIMPLE.update(DICT_TEMP_LOW)
+
     row_count_temperatures = 0
     row_count_voltages = 0
     
@@ -706,24 +718,46 @@ def create_simplified_ui():
         main_ecu.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(35,1), pad=(0,0), font=text_font, key=label)])
     for label, value in DICT_SIMPLE["DASHBOARD"].items():
         dashboard.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(35,1), pad=(0,0), font=text_font, key=label)])
-    # for label, value in DICT_SIMPLE["BATTERY_MANAGEMENT_SYSTEM_DETAILED_VOLTAGES"].items():
-    #     if row_count_voltages % 9 == 8 and int(label[3:5]) % 2 == 1:
-    #         bms_voltages.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(23,1), pad=((0,0),(0,10)), font=text_font, key=label)])
-    #         row_count_voltages = 0
-    #     elif row_count_voltages % 12 == 11 and int(label[3:5]) % 2 == 0:
-    #         bms_voltages.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(23,1), pad=((0,0),(0,10)), font=text_font, key=label)])
-    #         row_count_voltages = 0
-    #     else:            
-    #         bms_voltages.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(23,1), pad=(0,0), font=text_font, key=label)])
-    #         row_count_voltages = row_count_voltages + 1
-    # for label, value in DICT_SIMPLE["BATTERY_MANAGEMENT_SYSTEM_DETAILED_TEMPERATURES"].items():
-    #     if row_count_temperatures >= 48:
-    #         bms_temperatures.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(25,1), pad=(0,0), font=text_font, key=label)])
-    #     elif row_count_temperatures % 4 == 3:
-    #         bms_temperatures.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(23,1), pad=((0,0),(0,10)), font=text_font, key=label)])
-    #     else:
-    #         bms_temperatures.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(23,1), pad=(0, 0),font=text_font, key=label)])
-    #     row_count_temperatures = row_count_temperatures + 1
+    
+    
+    for label, value in DICT_SIMPLE["BATTERY_MANAGEMENT_SYSTEM_HIGH_VOLTAGES"].items():
+         if row_count_voltages % 9 == 8 and int(label[3:5]) % 2 == 1:
+             bms_voltages.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(23,1), pad=((0,0),(0,10)), font=text_font, key=label)])
+             row_count_voltages = 0
+         elif row_count_voltages % 12 == 11 and int(label[3:5]) % 2 == 0:
+             bms_voltages.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(23,1), pad=((0,0),(0,10)), font=text_font, key=label)])
+             row_count_voltages = 0
+         else:            
+             bms_voltages.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(23,1), pad=(0,0), font=text_font, key=label)])
+             row_count_voltages = row_count_voltages + 1
+    for label, value in DICT_SIMPLE["BATTERY_MANAGEMENT_SYSTEM_LOW_VOLTAGES"].items():
+         if row_count_voltages % 9 == 8 and int(label[3:5]) % 2 == 1:
+             bms_voltages.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(23,1), pad=((0,0),(0,10)), font=text_font, key=label)])
+             row_count_voltages = 0
+         elif row_count_voltages % 12 == 11 and int(label[3:5]) % 2 == 0:
+             bms_voltages.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(23,1), pad=((0,0),(0,10)), font=text_font, key=label)])
+             row_count_voltages = 0
+         else:            
+             bms_voltages.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(23,1), pad=(0,0), font=text_font, key=label)])
+             row_count_voltages = row_count_voltages + 1
+    
+    
+    for label, value in DICT_SIMPLE["BATTERY_MANAGEMENT_SYSTEM_HIGH_TEMPERATURES"].items():
+         if row_count_temperatures >= 48:
+             bms_temperatures.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(25,1), pad=(0,0), font=text_font, key=label)])
+         elif row_count_temperatures % 4 == 3:
+             bms_temperatures.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(23,1), pad=((0,0),(0,10)), font=text_font, key=label)])
+         else:
+             bms_temperatures.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(23,1), pad=(0, 0),font=text_font, key=label)])
+         row_count_temperatures = row_count_temperatures + 1
+    for label, value in DICT_SIMPLE["BATTERY_MANAGEMENT_SYSTEM_LOW_TEMPERATURES"].items():
+         if row_count_temperatures >= 48:
+             bms_temperatures.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(25,1), pad=(0,0), font=text_font, key=label)])
+         #elif row_count_temperatures % 4 == 3:
+         #    bms_temperatures.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(23,1), pad=((0,0),(0,10)), font=text_font, key=label)])
+         #else:
+         #    bms_temperatures.append([sg.Text(label.replace("_", " ") + ": " + value, justification="left", size=(23,1), pad=(0, 0),font=text_font, key=label)])
+         row_count_temperatures = row_count_temperatures + 1
 
     connection_text = [[sg.Text("CONSOLE STATUS: NOT CONNECTED", justification="left", pad=((5,0),12), text_color='red', font=title_font, key="-Connection Text-")]]
     divider_text_1 = [[sg.Text(" | ", pad=(5,12), font=title_font)]]
@@ -746,62 +780,74 @@ def create_simplified_ui():
 
     inverters_simplified_frame = sg.Frame("Inverters", inverters_simplified_layout, "gold")
 
+    voltages_first_column = bms_voltages[:22]
+    voltages_second_column = bms_voltages[22:43]
+    voltages_third_column = bms_voltages[43:64]
+    voltages_fourth_column = bms_voltages[64:85]
+    voltages_fifth_column = bms_voltages[85:106]
+    voltages_sixth_column = bms_voltages[106:]
 
+    therm_first_column = bms_temperatures[:9]
+    therm_second_column = bms_temperatures[9:17]
+    therm_third_column = bms_temperatures[17:25]
+    therm_fourth_column = bms_temperatures[25:33]
+    therm_fifth_column = bms_temperatures[33:41]
+    therm_sixth_column = bms_temperatures[41:49]
 
     #Creates a voltage layout for the voltage frame using the six columns
-    # voltage_detailed_layout = [
-    #     [sg.Column(voltages_first_column, pad=(0,0), vertical_alignment='t'),
-    #      sg.VSeparator(),
-    #      sg.Column(voltages_second_column, pad=(0,0), vertical_alignment='t'),
-    #      sg.VSeparator(),
-    #      sg.Column(voltages_third_column, pad=(0,0), vertical_alignment='t'),
-    #      sg.VSeparator(),
-    #      sg.Column(voltages_fourth_column, pad=(0,0), vertical_alignment='t'),
-    #      sg.VSeparator(),
-    #      sg.Column(voltages_fifth_column, pad=(0,0), vertical_alignment='t'),
-    #      sg.VSeparator(),
-    #      sg.Column(voltages_sixth_column, pad=(0,0), vertical_alignment='t')]
-    # ]
+    voltage_simplified_layout = [
+         [sg.Column(voltages_first_column, pad=(0,0), vertical_alignment='t'),
+          sg.VSeparator(),
+          sg.Column(voltages_second_column, pad=(0,0), vertical_alignment='t'),
+          sg.VSeparator(),
+          sg.Column(voltages_third_column, pad=(0,0), vertical_alignment='t'),
+          sg.VSeparator(),
+          sg.Column(voltages_fourth_column, pad=(0,0), vertical_alignment='t'),
+          sg.VSeparator(),
+          sg.Column(voltages_fifth_column, pad=(0,0), vertical_alignment='t'),
+          sg.VSeparator(),
+          sg.Column(voltages_sixth_column, pad=(0,0), vertical_alignment='t')]
+     ]
 
     #voltage frame
-    # frame_voltages = sg.Frame("Voltages", voltage_detailed_layout, "gold")
+    frame_voltages = sg.Frame("Voltages", voltage_simplified_layout, "gold")
 
     #Creates a bms temp layout
-    # bms_temperature_detailed_layout = [
-    #     [sg.Column(therm_first_column, pad=(0,0), vertical_alignment='t'),
-    #      sg.VSeparator(),
-    #      sg.Column(therm_second_column, pad=(0,0), vertical_alignment='t'),
-    #      sg.VSeparator(),
-    #      sg.Column(therm_third_column, pad=(0,0), vertical_alignment='t'),
-    #      sg.VSeparator(),
-    #      sg.Column(therm_fourth_column, pad=(0,0), vertical_alignment='t'),
-    #      sg.VSeparator(),
-    #      sg.Column(therm_fifth_column, pad=(0,0), vertical_alignment='t'),
-    #      sg.VSeparator(),
-    #      sg.Column(therm_sixth_column, pad=(0,0), vertical_alignment='t'),
-    #      sg.VSeparator(),
-    #      sg.Column(humidity_first_column, pad=(0,0), vertical_alignment='t'),
-    #      sg.VSeparator(),
-    #      sg.Column(humidity_second_column, pad=(0,0), vertical_alignment='t')]
-    # ]
+    bms_temperature_simplified_layout = [
+       [sg.Column(therm_first_column, pad=(0,0), vertical_alignment='t'),
+        sg.VSeparator(),
+        sg.Column(therm_second_column, pad=(0,0), vertical_alignment='t'),
+        sg.VSeparator(),
+        sg.Column(therm_third_column, pad=(0,0), vertical_alignment='t'),
+        sg.VSeparator(),
+        sg.Column(therm_fourth_column, pad=(0,0), vertical_alignment='t'),
+        sg.VSeparator(),
+        sg.Column(therm_fifth_column, pad=(0,0), vertical_alignment='t'),
+        sg.VSeparator(),
+        sg.Column(therm_sixth_column, pad=(0,0), vertical_alignment='t')]
+        #sg.VSeparator(),
+        #sg.Column(humidity_first_column, pad=(0,0), vertical_alignment='t'),
+        #sg.VSeparator(),
+        #sg.Column(humidity_second_column, pad=(0,0), vertical_alignment='t')]
+    ]
 
     # #bms temp frame
-    # bms_temperatures_frame = sg.Frame("Temperatures", bms_temperature_detailed_layout, "gold")
+    bms_temperatures_frame = sg.Frame("Temperatures", bms_temperature_simplified_layout, "gold")
 
     # #BMS layout
-    # layout_BMS = [
-    #     [sg.Text("BATTERY")],
-    #     [frame_voltages],
-    #     [bms_temperatures_frame]
-    # ]
+    layout_BMS = [
+        [sg.Text("BATTERY")],
+        [frame_voltages],
+        [bms_temperatures_frame]
+    ]
     
     #bms frame
-    #bms_simplified_frame = sg.Frame("BMS", layout_BMS, "gold")
+    bms_simplified_frame = sg.Frame("BMS", layout_BMS, "gold")
 
     layout_Full = [
         [inverters_simplified_frame,
-         sg.VerticalSeparator()]
-         #bms_simplified_frame]
+         sg.VerticalSeparator(),
+         bms_simplified_frame]
     ]
 
     full_frame = sg.Frame("HT-07 Simplified View", layout_Full, "gold")
