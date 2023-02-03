@@ -70,8 +70,8 @@ void setup() {
     btn_torque_mode.begin(BTN_TORQUE_MODE, 100);
     btn_led_dimmer.begin(BTN_LED_DIMMER, 100);
 
-    int dial_pins[6] = {DIAL_MODE_ONE, DIAL_MODE_TWO, DIAL_ACCELERATION_LAUNCH_CONTROL, DIAL_SKIDPAD, DIAL_AUTOCROSS, DIAL_ENDURANCE};
-    dial_torque_vectoring.begin(dial_pins, 100);
+    int dial_pins[DIAL_SIZE] = {DIAL_MODE_ONE, DIAL_MODE_TWO, DIAL_ACCELERATION_LAUNCH_CONTROL, DIAL_SKIDPAD, DIAL_AUTOCROSS, DIAL_ENDURANCE};
+    dial_torque_vectoring.begin(dial_pins, DIAL_SIZE, 100);
 
     
 
@@ -352,10 +352,10 @@ inline void mcu_status_received(){
 
     switch(mcu_status.get_launch_ctrl_active()) {
       case 0:
-        dashboard_neopixels.setPixelColor(LED_LIST::BRAKE_ENGAGE, LED_OFF);
+        dashboard_neopixels.setPixelColor(LED_LIST::LAUNCH_CTRL, LED_OFF);
         dashboard_status.set_mech_brake_led(static_cast<uint8_t>(LED_MODES::OFF));
       case 1:
-        dashboard_neopixels.setPixelColor(LED_LIST::BRAKE_ENGAGE, LED_ON_GREEN);
+        dashboard_neopixels.setPixelColor(LED_LIST::LAUNCH_CTRL, LED_ON_GREEN);
         dashboard_status.set_mech_brake_led(static_cast<uint8_t>(LED_MODES::ON));
     }
 }
@@ -373,7 +373,7 @@ inline void mc_fault_codes_received(){
     //MC Error LED
 
     if (is_mc_err){
-        dashboard_neopixels.setPixelColor(LED_LIST::MC_ERR, LED_ON_GREEN);
+        dashboard_neopixels.setPixelColor(LED_LIST::MC_ERR, LED_ON_RED);
         dashboard_status.set_mc_error_led(static_cast<uint8_t>(LED_MODES::ON));
         display_list[2] = 1;
         timer_led_mc_err.reset();   

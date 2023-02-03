@@ -17,7 +17,7 @@ enum DIAL_MODES { MODE_ONE = 0, MODE_TWO = 1, ACCELERATION_LAUNCH_CONTROL = 2, S
 class DialVectoring {
 
     private:
-        DIAL_MODES mode;
+        DIAL_MODES mode = MODE_ONE;
         bool debouncing;
         unsigned int size;
         int pins[6];
@@ -39,28 +39,29 @@ class DialVectoring {
         }
 
         DIAL_MODES readMode(){
-            DIAL_MODES newState = DIAL_MODES::MODE_ONE; //set to default enum value
+            DIAL_MODES newState = mode; //set to default enum value
             for(unsigned int i =0; i< size; i++){
                 
                 bool reading = digitalRead(pins[i]);
-                Serial.println("pin " + String(i) + " " + String(reading));
-                if(!reading  && !debouncing ){
-                    debouncing  = true;
+                
+                if(!reading){
                     metro.reset();
                 }
-                if(debouncing && reading){
-                    debouncing = false;
-                }
+                while(!metro.check()) {
 
-                if(debouncing && metro.check()){
+                }
+                if(!reading){
+                    
                     newState = DIAL_MODES(i);
                     break;
                 }
             }
-            mode = newState
+            mode = newState;
+
+            return mode;
             }
-            return newState;
-        }
+            
+    
 
         
     
