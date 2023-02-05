@@ -29,6 +29,8 @@ public:
   inline bool get_inverter_on() const {return status_word & 0x4000; }
   inline bool get_derating_on() const {return status_word & 0x8000; }
 
+  inline void set_status_word(const uint16_t word)   { status_word = word; }
+
 private:
     uint16_t status_word;
     int16_t speed; //speed in rpm
