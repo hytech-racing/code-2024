@@ -182,7 +182,9 @@ inline void btn_update(){
 }
 inline void shutdown_signals_read() {
   dashboard_neopixels.setPixelColor(LED_LIST::BOTS, (digitalRead(SSOK_READ)) ? LED_RED : LED_OFF);
+  dashboard_status.set_bots_led(digitalRead(SSOK_READ));
   dashboard_neopixels.setPixelColor(LED_LIST::COCKPIT_BRB, (digitalRead(SHUTDOWN_H_READ)) ? LED_RED : LED_OFF);
+  dashboard_status.set_cockpit_brb_led(digitalRead(SHUTDOWN_H_READ));
 }
 inline void read_can(){
 
@@ -229,10 +231,10 @@ inline void mcu_status_received(){
     digitalWrite(BUZZER_CTRL, mcu_status.get_activate_buzzer());
 
     //BMS/AMS LED (bms and ams are the same thing)
-    if (mcu_status.get_bms_ok_high()){
+    if (!mcu_status.get_bms_ok_high()){
         dashboard_neopixels.setPixelColor(LED_LIST::AMS, LED_ON_GREEN);
         dashboard_status.set_ams_led(static_cast<uint8_t>(LED_MODES::ON));
-        display_list[4] = 1;
+        display_list[4] = 0;
         timer_led_ams.reset();
     }
     // else if (init_ams){
@@ -244,14 +246,14 @@ inline void mcu_status_received(){
   
         dashboard_neopixels.setPixelColor(LED_LIST::AMS, LED_RED);
         dashboard_status.set_ams_led(static_cast<uint8_t>(LED_MODES::RED));
-        display_list[4] = 0;
+        display_list[4] = 1;
     }
 
     //IMD LED
-    if (mcu_status.get_imd_ok_high()){
+    if (!mcu_status.get_imd_ok_high()){
         dashboard_neopixels.setPixelColor(LED_LIST::IMD, LED_ON_GREEN);
         dashboard_status.set_imd_led(static_cast<uint8_t>(LED_MODES::ON));
-        display_list[3] = 1;
+        display_list[3] = 0;
         timer_led_imd.reset();
     }
     // else if (init_imd){
@@ -263,7 +265,7 @@ inline void mcu_status_received(){
   
         dashboard_neopixels.setPixelColor(LED_LIST::IMD, LED_RED);
         dashboard_status.set_imd_led(static_cast<uint8_t>(LED_MODES::RED));
-        display_list[3] = 0;
+        display_list[3] = 1;
     }
 
     //Start LED
@@ -300,19 +302,19 @@ inline void mcu_status_received(){
     switch(mcu_status.get_pack_charge_critical()){
       case 1: // GREEN, OK
         dashboard_neopixels.setPixelColor(LED_LIST::CRIT_CHARGE, LED_ON_GREEN); 
-        dashboard_status.set_mode_led(static_cast<uint8_t>(LED_MODES::ON));
+        dashboard_status.set_crit_charge_led(static_cast<uint8_t>(LED_MODES::ON));
         break;
       case 2: // YELLOW, WARNING
         dashboard_neopixels.setPixelColor(LED_LIST::CRIT_CHARGE, LED_YELLOW); 
-        dashboard_status.set_mode_led(static_cast<uint8_t>(LED_MODES::YELLOW));
+        dashboard_status.set_crit_charge_led(static_cast<uint8_t>(LED_MODES::YELLOW));
         break;
       case 3: // RED, CRITICAL
         dashboard_neopixels.setPixelColor(LED_LIST::CRIT_CHARGE, LED_RED); 
-        dashboard_status.set_mode_led(static_cast<uint8_t>(LED_MODES::RED));
+        dashboard_status.set_crit_charge_led(static_cast<uint8_t>(LED_MODES::RED));
         break;
       default: 
         dashboard_neopixels.setPixelColor(LED_LIST::CRIT_CHARGE, LED_OFF); 
-        dashboard_status.set_mode_led(static_cast<uint8_t>(LED_MODES::OFF));
+        dashboard_status.set_crit_charge_led(static_cast<uint8_t>(LED_MODES::OFF));
         break;
     }
 
@@ -338,25 +340,23 @@ inline void mcu_status_received(){
     }
 
     //Mechanical Braking LED
-    switch(mcu_status.get_mech_brake_active()) {
-      case 0:
+    if(mcu_status.get_mech_brake_active()) {
         dashboard_neopixels.setPixelColor(LED_LIST::BRAKE_ENGAGE, LED_OFF);
         dashboard_status.set_mech_brake_led(static_cast<uint8_t>(LED_MODES::OFF));
-        break;
-      case 1:
+        
+    } else {
         dashboard_neopixels.setPixelColor(LED_LIST::BRAKE_ENGAGE, LED_ON_GREEN);
         dashboard_status.set_mech_brake_led(static_cast<uint8_t>(LED_MODES::ON));
-        break;
+        
        
     }
 
-    switch(mcu_status.get_launch_ctrl_active()) {
-      case 0:
+    if(mcu_status.get_launch_ctrl_active()) {
         dashboard_neopixels.setPixelColor(LED_LIST::LAUNCH_CTRL, LED_OFF);
-        dashboard_status.set_mech_brake_led(static_cast<uint8_t>(LED_MODES::OFF));
-      case 1:
+        dashboard_status.set_launch_control_led(static_cast<uint8_t>(LED_MODES::OFF));
+    } else {
         dashboard_neopixels.setPixelColor(LED_LIST::LAUNCH_CTRL, LED_ON_GREEN);
-        dashboard_status.set_mech_brake_led(static_cast<uint8_t>(LED_MODES::ON));
+        dashboard_status.set_launch_control_led(static_cast<uint8_t>(LED_MODES::ON));
     }
 }
 
@@ -373,7 +373,7 @@ inline void mc_fault_codes_received(){
     //MC Error LED
 
     if (is_mc_err){
-        dashboard_neopixels.setPixelColor(LED_LIST::MC_ERR, LED_ON_RED);
+        dashboard_neopixels.setPixelColor(LED_LIST::MC_ERR, LED_RED);
         dashboard_status.set_mc_error_led(static_cast<uint8_t>(LED_MODES::ON));
         display_list[2] = 1;
         timer_led_mc_err.reset();   
