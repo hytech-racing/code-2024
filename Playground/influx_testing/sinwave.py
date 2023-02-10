@@ -2,9 +2,9 @@ from influxdb_client import InfluxDBClient
 import numpy as np
 import time
 
-org = "a"
+org = "Hytech"
 bucket = "c"
-token = "2g972yW0mjwdARKTCfq9eDQhUnXZ10GfGLCvnWJNHZFYnRsoixKo_BD1Mx7V4bOYzkT5-ACs33DlA7_s_MvVBw=="
+token = "9u7NtiJNSCE5ms6m2LiB4QAv3fk-q6U5hKxPle8w5mrMjepsOL6dT4AZ-tkLyu7t6duV55rw_GDKvML8lziK4g=="
 #query = 'from(bucket: "b")\
 #|> range(start: -10m)\
 #|> filter(fn: (r) => r._measurement == "h2o_level")\
@@ -12,12 +12,12 @@ token = "2g972yW0mjwdARKTCfq9eDQhUnXZ10GfGLCvnWJNHZFYnRsoixKo_BD1Mx7V4bOYzkT5-AC
 #|> filter(fn: (r) => r.location == "coyote_creek")'
 
 #establish a connection
-client = InfluxDBClient(url="http://atz:8086", token=token, org=org)
+client = InfluxDBClient(url="http://localhost:8086", token=token, org=org)
 
 #instantiate the WriteAPI and QueryAPI
 write_api = client.write_api()
 query_api = client.query_api()
-cnt = 0;
+cnt = 0
 print(1000)
 while (True):
     time.sleep(.1)
