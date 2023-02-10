@@ -111,6 +111,99 @@ def parse_ID_MC_TEMPERATURES3(raw_message):
     units = ["C", "C", "C", "Nm"]
     return [message, labels, values, units]
 
+
+
+def parse_ID_MC_ENERGY(raw_message, ID_MC_ENERGY):
+    message = "MC" + ID_MC_ENERGY + "_"
+    labels = ["dc_bus_voltage", "torque_current", "magnetizing_current"]
+    id110 = 1 // Converter peak current
+    values = [
+        hex_to_decimal(raw_message[0:4], 16, False),
+        hex_to_decimal(raw_message[4:8], 16, True) * id110 / 16384,
+        hex_to_decimal(raw_message[8:12], 16, True) * id110 / 16384
+    ]
+    units = ["V", "A", "A"]
+    return [message, labels, values, units]
+
+def parse_ID_MC_TEMPS(raw_message, ID_MC_TEMPS):
+    message = "MC" + ID_MC_TEMPS + "_"
+    labels = ["motor_temperature", "inverter_cold_plate_temp", "IGBT_temperature", "diagnostic_number"]
+    values = [
+        hex_to_decimal(raw_message[0:4], 16, True) / 10,
+        hex_to_decimal(raw_message[4:8], 16, True) / 10,
+        hex_to_decimal(raw_message[8:12], 16, True) / 10,
+        hex_to_decimal(raw_message[12:16], 16, False)
+    ]
+    units = ["C", "C", "C", ""]
+    return [message, labels, values, units]
+
+def parse_ID_MC_TORQUE_COMMAND(raw_message, ID_MC_TORQUE_COMMAND):
+    message = "MC" + ID_MC_TORQUE_COMMAND + "_"
+    labels = ["torque_setpoint"]
+    values = [
+        hex_to_decimal(raw_message[0:4], 16, True) / 1000
+    ]
+    units = ["Mn"]
+    return [message, labels, values, units]
+
+def helper_setpoints_command(raw_message):
+    n = int(raw_message[2:3], 16)
+    arr = []
+    while n > 0:
+        arr.append(n % 2)
+        n = n >> 1
+
+    values = [
+        arr[0],
+        arr[1],
+        arr[2],
+        arr[3],
+        hex_to_decimal(raw_message[4:8], 16, True),
+        hex_to_decimal(raw_message[8:12], 16, True) / 1000,
+        hex_to_decimal(raw_message[12:16], 16, False) / 1000
+    ]
+    return values
+
+def parse_ID_MC_SETPOINTS_COMMAND(raw_message, ID_MC_SETPOINTS_COMMAND):
+    message = "MC" + ID_MC_SETPOINTS_COMMAND + "_"
+    labels = ["AMK_bInverterOn", "AMK_bDcOn", "AMK_bEnable",
+    "AMK_bErrorReset", "speed_setpoint", "positive_torque",
+    "negative_torque"]
+    values = helper_setpoints_command(raw_message)
+    units = ["","","","","rpm","Mn","Mn"]
+    return [message, labels, values, units]
+
+def helper_status(raw_message):
+    n = int(raw_message[2:4], 16)
+    arr = []
+    while n > 0:
+        arr.append(n % 2)
+        n = n >> 1
+
+    values = [
+        arr[0],
+        arr[1],
+        arr[2],
+        arr[3],
+        arr[4],
+        arr[5],
+        arr[6],
+        arr[7],
+        hex_to_decimal(raw_message[4:8], 16, True),
+        hex_to_decimal(raw_message[8:12], 16, True) / 1000,
+        hex_to_decimal(raw_message[12:16], 16, False) / 10
+    ]
+    return values
+
+def parse_ID_MC_STATUS(raw_message, ID_MC_STATUS):
+    message = "MC" + ID_MC_STATUS + "_"
+    labels = ["AMK_bSystemReady","AMK_bError","AMK_bWarm",
+        "AMK_bQuitDcOn", "AMK_bDcOn", "AMK_bQuitInverterOn", "AMK_bInverterOn",
+        "AMK_bDerating", "speed", "torque", "torque_current"]
+    values = helper_status(raw_message)
+    units = ["","","","","","","","rpm","Mn","A"]
+    return [message, labels, values, units]
+
 def parse_ID_MC_ANALOG_INPUTS_VOLTAGES(raw_message):
     message = "MC_analog_input_voltages"
     labels = ["MC_analog_input_1", "MC_analog_input_2", "MC_analog_input_3", "MC_analog_input_4"]
@@ -1002,22 +1095,32 @@ def parse_message(raw_id, raw_message):
     @inputs: A string representing the raw CAN ID and an string of a hexadecimal raw message.
     @return: A four-element list [message, label[], value[], unit[]] if CAN ID is valid, otherwise system exit.
     '''
-    if raw_id == "A0": return parse_ID_MC_TEMPERATURES1(raw_message)
-    if raw_id == "A1": return parse_ID_MC_TEMPERATURES2(raw_message)
-    if raw_id == "A2": return parse_ID_MC_TEMPERATURES3(raw_message)
-    if raw_id == "A3": return parse_ID_MC_ANALOG_INPUTS_VOLTAGES(raw_message)
-    if raw_id == "A4": return parse_ID_MC_DIGITAL_INPUTS_STATUS(raw_message)
-    if raw_id == "A5": return parse_ID_MC_MOTOR_POSITION_INFORMATION(raw_message)
-    if raw_id == "A6": return parse_ID_MC_CURRENT_INFORMATION(raw_message)
-    if raw_id == "A7": return parse_ID_MC_VOLTAGE_INFORMATION(raw_message)
-    if raw_id == "A8": return parse_ID_MC_FLUX_INFORMATION(raw_message)
-    if raw_id == "A9": return parse_ID_MC_INTERNAL_VOLTAGES(raw_message)
-    if raw_id == "AA": return parse_ID_MC_INTERNAL_STATES(raw_message)
-    if raw_id == "AB": return parse_ID_MC_FAULT_CODES(raw_message)
+    if raw_id == "A0": return parse_ID_MC_STATUS(raw_message, "1_STATUS")
+    if raw_id == "A1": return parse_ID_MC_STATUS(raw_message, "2_STATUS")
+    if raw_id == "A2": return parse_ID_MC_STATUS(raw_message, "3_STATUS")
+    if raw_id == "A3": return parse_ID_MC_STATUS(raw_message, "4_STATUS")
+    if raw_id == "A4": return parse_ID_MC_TEMPS(raw_message, "1_TEMPS")
+    if raw_id == "A5": return parse_ID_MC_TEMPS(raw_message, "2_TEMPS")
+    if raw_id == "A6": return parse_ID_MC_TEMPS(raw_message, "3_TEMPS")
+    if raw_id == "A7": return parse_ID_MC_TEMPS(raw_message, "4_TEMPS")
+    if raw_id == "A8": return parse_ID_MC_ENERGY(raw_message, "1_ENERGY")
+    if raw_id == "A9": return parse_ID_MC_ENERGY(raw_message, "2_ENERGY")
+    if raw_id == "AA": return parse_ID_MC_ENERGY(raw_message, "3_ENERGY")
+    if raw_id == "AB": return parse_ID_MC_ENERGY(raw_message, "4_ENERGY")
+
     if raw_id == "AC": return parse_ID_MC_TORQUE_TIMER_INFORMATION(raw_message)
     if raw_id == "AD": return parse_ID_MC_FLUX_WEAKENING_OUTPUT(raw_message)
     if raw_id == "AE": return parse_ID_MC_FIRMWARE_INFORMATION(raw_message)
     if raw_id == "AF": return parse_ID_MC_DIAGNOSTIC_DATA(raw_message)
+
+    if raw_id == "B0": return parse_ID_MC_SETPOINTS_COMMAND(raw_message, "1_SETPOINTS_COMMAND")
+    if raw_id == "B1": return parse_ID_MC_SETPOINTS_COMMAND(raw_message, "2_SETPOINTS_COMMAND")
+    if raw_id == "B2": return parse_ID_MC_SETPOINTS_COMMAND(raw_message, "3_SETPOINTS_COMMAND")
+    if raw_id == "B3": return parse_ID_MC_SETPOINTS_COMMAND(raw_message, "4_SETPOINTS_COMMAND")
+    if raw_id == "B4": return parse_ID_MC_TORQUE_COMMAND(raw_message, "1_TORQUE_COMMAND")
+    if raw_id == "B5": return parse_ID_MC_TORQUE_COMMAND(raw_message, "2_TORQUE_COMMAND")
+    if raw_id == "B6": return parse_ID_MC_TORQUE_COMMAND(raw_message, "3_TORQUE_COMMAND")
+    if raw_id == "B7": return parse_ID_MC_TORQUE_COMMAND(raw_message, "4_TORQUE_COMMAND")
     
     if raw_id == "C0": return parse_ID_MC_COMMAND_MESSAGE(raw_message)
     if raw_id == "C1": return parse_ID_MC_READ_WRITE_PARAMETER_COMMAND(raw_message)
