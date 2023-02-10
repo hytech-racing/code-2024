@@ -3,21 +3,21 @@
 /*
  * Teensy Pin definitions
  */
-#define INVERTER_EN 8
-#define INVERTER_24V_EN 7
+#define INVERTER_EN 9
+#define INVERTER_24V_EN 8
 
-#define BRAKE_LIGHT_CTRL 6
+#define BRAKE_LIGHT_CTRL 7
 
 #define ECU_CLK 13 
 #define ECU_SDI 12
 #define ECU_SDO 11
 
-#define STEERING_2_CS 9
+#define STEERING_2_CS 10
 
-#define IMU_DATAREADY 5
-#define IMU_SYNC 4
-#define IMU_CS 3
-#define IMU_RESET 2
+#define IMU_DATAREADY 35
+#define IMU_SYNC 37
+#define IMU_CS 38
+#define IMU_RESET 36
 
 #define CAN_ECU_RX1 22
 #define CAN_ECU_TX1 23
@@ -26,25 +26,25 @@
 #define CAN_ECU_RX3 30
 #define CAN_ECU_TX3 31
 
-#define ADC1_CS 41 
-#define ADC2_CS 40 
-#define ADC3_CS 39
+#define ADC1_CS 33 
+#define ADC2_CS 29 
+#define ADC3_CS 34
 
-#define FR_INTERLOCK 24 
-#define FL_INTERLOCK 25
-#define RR_INTERLOCK 26
-#define RL_INTERLOCK 27
+#define FR_INTERLOCK 40 
+#define FL_INTERLOCK 39
+#define RR_INTERLOCK 16
+#define RL_INTERLOCK 14
 
-#define INTERTIA_SENSE 28
-#define SOFTWARE_OK_READ 29
-#define BOTS_SENSE_OK_READ 32
-#define BOTS_OK_READ 33
-#define IMD_OK_READ 34 
-#define BMS_OK_READ 35 
-#define BSPD_OK_READ 36
-#define SOFTWARE_OK 20
+#define INTERTIA_SENSE 20
+#define SOFTWARE_OK_READ 25 // SHDN_F_READ Watchdog Combined
+#define BOTS_SENSE_OK_READ 26 // SHDN_G_READ
+#define BOTS_OK_READ 3  // SHDN_B_READ
+#define IMD_OK_READ 4 // SHDN_C_READ
+#define BMS_OK_READ 5 // SHDN_D_READ
+#define BSPD_OK_READ 6 // SHDN_E_READ
+#define SOFTWARE_OK 28
 // digital outputs
-#define WATCHDOG_INPUT 21
+#define WATCHDOG_INPUT 32
 
 /*
  * ADC pin definitions

@@ -37,7 +37,7 @@
 #include "driver_constants.h"
 
 // Call the ADIS16460 IMU class
-ADIS16460 IMU(IMU_CS, IMU_DATAREADY, IMU_RESET) // Chip Select, Data Ready, Reset Pin Assignments
+ADIS16460 IMU(IMU_CS, IMU_DATAREADY, IMU_RESET); // Chip Select, Data Ready, Reset Pin Assignments
 
 // Outbound CAN messages
 MCU_pedal_readings mcu_pedal_readings;
@@ -47,7 +47,7 @@ MCU_load_cells mcu_load_cells{};
 
 // IMU
 IMU_accelerometer imu_accelerometer;
-IMU_gryoscope imu_gryoscope;
+IMU_gyroscope imu_gyroscope;
 
 MC_status mc_status[4];
 MC_temps mc_temps[4];
@@ -125,13 +125,10 @@ void setup() {
 
   set_all_inverters_disabled();
 
-  // IMU stuff (Question: do i need the delays?)
+  // IMU set up
   IMU.regWrite(MSC_CTRL, 0xC1);  // Enable Data Ready, set polarity
-  delay(20); 
   IMU.regWrite(FLTR_CTRL, 0x500); // Set digital filter
-  delay(20);
   IMU.regWrite(DEC_RATE, 0), // Disable decimation
-  delay(20);
 
   pinMode(BRAKE_LIGHT_CTRL, OUTPUT);
 
@@ -986,13 +983,13 @@ inline void read_status_values() {
 
 // IMU functions
 inline void read_imu() {
-  imu_accelerometer.set_lat_accel(IMU.regRead(X_ACCEL_OUT)); // * 0.00245); // 0.00245 is the scale, Left is positive
-  imu_accelerometer.set_long_accel(IMU.regRead(Y_ACCEL_OUT)); // * 0.00245); // 0.00245 is the scale, Backwards is positive, need to fix?
-  imu_acceleromter.set_vert_accel(IMU.redRead(Z_ACCEL_OUT)); // * 0.00245); // 0.00245 is the scale, Up is positive
+  imu_accelerometer.set_lat_accel(IMU.regRead(X_ACCL_OUT)); // * 0.00245); // 0.00245 is the scale, Left is positive
+  imu_accelerometer.set_long_accel(IMU.regRead(Y_ACCL_OUT)); // * 0.00245); // 0.00245 is the scale, Backwards is positive, need to fix?
+  imu_accelerometer.set_vert_accel(IMU.regRead(Z_ACCL_OUT)); // * 0.00245); // 0.00245 is the scale, Up is positive
   // question about yaw, pitch and roll rates?
-  imu_gyroscope.set_pitch(IMU.redRead(X_GYRO_OUT)); // * 0.005); // 0.005 is the scale, 
-  imu_gyroscope.set_yaw(IMU.redRead(Z_GRYO_OUT)); // * 0.005);  // 0.005 is the scale
-  imu_gyroscope.set_roll(IMU.redRead(Y_GRYO_OUT)); // * 0.005); // 0.005 is the scale
+  imu_gyroscope.set_pitch(IMU.regRead(X_GYRO_OUT)); // * 0.005); // 0.005 is the scale, 
+  imu_gyroscope.set_yaw(IMU.regRead(Z_GYRO_OUT)); // * 0.005);  // 0.005 is the scale
+  imu_gyroscope.set_roll(IMU.regRead(Y_GYRO_OUT)); // * 0.005); // 0.005 is the scale
 }
 
 inline void send_CAN_IMU_accelerometer() {
@@ -1005,7 +1002,7 @@ inline void send_CAN_IMU_accelerometer() {
 }
 
 inline void send_CAN_IMU_gyroscope() {
-  if (timer_CAN_imu_gryoscope_send.check()) {
+  if (timer_CAN_imu_gyroscope_send.check()) {
     imu_gyroscope.write(msg.buf);
     msg.id = ID_IMU_GYROSCOPE;
     msg.len = sizeof(imu_gyroscope);
