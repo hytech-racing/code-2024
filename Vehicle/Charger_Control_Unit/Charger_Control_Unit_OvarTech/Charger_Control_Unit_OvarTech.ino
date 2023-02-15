@@ -182,11 +182,10 @@ void parse_can_message() {
       bms_balancing_status[temp.get_group_id()].load(rx_msg.buf);
     }
 
-    //rx_msg.ext = 1; //FIXME
     if (rx_msg.id == ID_CHARGER_DATA) {
       charger_data.load(rx_msg.buf);
     }
-    //rx_msg.ext = 0; //FIXME
+    
   }
 }
 
@@ -213,18 +212,16 @@ void configure_charging() {
 }
 
 int set_charge_current() {
-  uint16_t output_voltage = (charger_data.get_output_dc_voltage_high() << 8 | charger_data.get_output_dc_voltage_low())/10;
+  uint16_t output_voltage = (charger_data.get_output_dc_voltage_high() << 8 | charger_data.get_output_dc_voltage_low());
   uint16_t max_current;
   
-  if (output_voltage > 255) {// FIXME (what is the new undervoltage threshold?)
-    max_current = (120 * AC_CURRENT) / output_voltage;
+  if (output_voltage > 378*10) {// undervoltage threshold
+    max_current = (120 * AC_CURRENT) * 100/ output_voltage;
   } else {
     max_current = 10;
   }
-  if (max_current > 100) {
-    max_current = 10;
-  }
-  return max_current*10;
+
+  return max_current;
 }
 void print_cells() {
   Serial.println("------------------------------------------------------------------------------------------------------------------------------------------------------------");
