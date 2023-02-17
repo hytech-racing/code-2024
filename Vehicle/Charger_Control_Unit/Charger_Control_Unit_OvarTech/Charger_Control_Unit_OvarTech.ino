@@ -12,9 +12,8 @@
 
 
 #include <HyTech_CAN.h>
-//#include <kinetis_flexcan.h>
 #include <Metro.h>
-
+#define TELEMETRYBOARD 0
 #define TOTAL_IC 12                      // Number of ICs in the system
 #define CELLS_PER_EVEN_IC 12                  // Number of cells per IC
 #define CELLS_PER_ODD_IC 9
@@ -60,19 +59,31 @@ static CAN_message_t tx_msg;
 FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> CAN;
 Metro update_ls = Metro(1000);
 Metro update_CAN = Metro(500);
-Metro update_watchdog = Metro(3);
+Metro update_watchdog = Metro(100);
 
 void print_cells();
 void print_temps();
 void parse_can_message();
 void check_shutdown_signals();
 void configure_charging();
-
 void print_cells();
 void print_temps();
 void print_charger_data();
 
 void setup() {
+  #if TELEMETRYBOARD == 1
+    Serial.begin(115200);
+    Serial.println("CAN system and Serial communication initialized");
+  #endif
+  CAN.begin();
+  CAN.setBaudRate(500000);
+
+  /* Configure CAN rx interrupt */
+  CAN.onReceive(parse_can_message);
+  
+  /* Configure CAN rx interrupt */
+  delay(2000);
+  
   pinMode(LED, OUTPUT);
   digitalWrite(LED, HIGH);
   pinMode(SHUTDOWN_A, INPUT);
@@ -81,26 +92,16 @@ void setup() {
   pinMode(SHUTDOWN_D, INPUT);
   pinMode(SHUTDOWN_E, INPUT);
   pinMode(SHUTDOWN_F, INPUT);
-  pinMode(WATCHDOG_OUT, OUTPUT);
-  pinMode(TEENSY_OK, OUTPUT);
-  digitalWrite(TEENSY_OK, HIGH);
+  //the other teensy should not be sending out a teensy_OK signal?
+  #if TELEMETRYBOARD == 0
+  
+    pinMode(WATCHDOG_OUT, OUTPUT);
+  
+    pinMode(TEENSY_OK, OUTPUT);
+    digitalWrite(TEENSY_OK, HIGH);
+  #endif
 
   //prev_time = millis();
-
-  Serial.begin(115200);
-  CAN.begin();
-  CAN.setBaudRate(500000);
-
-  /* Configure CAN rx interrupt */
-  interrupts();
-  NVIC_ENABLE_IRQ(IRQ_CAN_MESSAGE);
-  attachInterruptVector(IRQ_CAN_MESSAGE, parse_can_message);
-  FLEXCAN0_IMASK1 = FLEXCAN_IMASK1_BUF5M;
-  /* Configure CAN rx interrupt */
-
-  delay(1000);
-
-  Serial.println("CAN system and serial communication initialized");
 
   ccu_status.set_charger_enabled(false);
 
@@ -118,21 +119,25 @@ void loop() {
     tx_msg.id = ID_CHARGER_CONTROL;
     tx_msg.len = sizeof(charger_configure);
     CAN.write(tx_msg);
-    //tx_msg.ext = 0; //FIXME
-  }
 
+  }
+#if TELEMETRYBOARD == 0
   if (update_watchdog.check()) {
     watchdog_state = !watchdog_state;
     digitalWrite(WATCHDOG_OUT, watchdog_state);
   }
+#endif
 
   if (update_ls.check()) {
-    //print_cells();
-    //print_temps();
-    Serial.print("Charge enable: ");
-    Serial.println(ccu_status.get_charger_enabled());
-    Serial.print("BMS state: ");
-    Serial.println(bms_status.get_state());
+    #if TELEMETRYBOARD == 1
+      print_cells();
+      print_temps();
+      Serial.print("Charge enable: ");
+      Serial.println(ccu_status.get_charger_enabled());
+      Serial.print("BMS state: ");
+      Serial.println(bms_status.get_state());
+      
+    #endif
     print_charger_data();
     configure_charging();
   }
@@ -142,7 +147,8 @@ void loop() {
 
 }
 
-void parse_can_message() {
+void parse_can_message(const CAN_message_t &RX_msg) {
+  rx_msg = RX_msg;
   while (CAN.read(rx_msg)) {
     if (rx_msg.id == ID_BMS_DETAILED_TEMPERATURES) {
       BMS_detailed_temperatures temp = BMS_detailed_temperatures(rx_msg.buf);
@@ -199,8 +205,8 @@ void check_shutdown_signals() {
 void configure_charging() {
   if (charge_enable) {
     //maxChargingVoltage is 5290V, with .1V/Bit. Hex Value: 14AA
-    charger_configure.set_max_charging_voltage_high(20); //14 in dec
-    charger_configure.set_max_charging_voltage_low(170); //AA in dec
+    charger_configure.set_max_charging_voltage_high(0x14);
+    charger_configure.set_max_charging_voltage_low(0xAA);
     charger_configure.set_max_charging_current_low(set_charge_current());
     charger_configure.set_control(0);
   } else {
@@ -312,15 +318,16 @@ void print_charger_data() {
   uint8_t output_current_high = charger_data.get_output_current_high();
   uint8_t output_current_low = charger_data.get_output_current_low();
 
+  #if TELEMETRYBOARD == 1
 
-
-  Serial.println("------------------------------------------------------------------------------------------------------------------------------------------------------------");
-  Serial.print(ac_voltage_high * 16 * 16 + ac_voltage_low);
-  Serial.print(" V\t\t");
-  Serial.print(output_voltage_high * 16 * 16 + output_voltage_low);
-  Serial.print(" V\t\t");
-  Serial.print(output_current_high * 16 * 16 + output_current_low);
-  Serial.print(" A\t\t");
-  Serial.print(charger_data.get_flags());
-  Serial.println();
+    Serial.println("------------------------------------------------------------------------------------------------------------------------------------------------------------");
+    Serial.print(ac_voltage_high * 16 * 16 + ac_voltage_low);
+    Serial.print(" V\t\t");
+    Serial.print(output_voltage_high * 16 * 16 + output_voltage_low);
+    Serial.print(" V\t\t");
+    Serial.print(output_current_high * 16 * 16 + output_current_low);
+    Serial.print(" A\t\t");
+    Serial.print(charger_data.get_flags());
+    Serial.println();
+  #endif
 }
