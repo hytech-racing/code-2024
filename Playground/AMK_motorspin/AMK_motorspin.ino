@@ -9,15 +9,18 @@
 FlexCAN CAN(500000);
 CAN_message_t msg;
 Metro timer_can = Metro(20);
-Metro debug_print = Metro(2000);
+Metro debug_print = Metro(500);
 Metro timer_light = Metro(3);
+Metro error_toggle = Metro (50);
 
 MC_status mc_status;
 MC_setpoints_command mc_setpoints_command;
 
 bool system_ready = false;
 bool dc_done = false;
-bool ready = false;
+bool ready1 = false;
+bool error = false;
+bool toggle = false;
 
 int counter = 0;
 int counter2 = 0;
@@ -40,30 +43,66 @@ void setup() {
 }
 
 void loop() {
-
+  //  if(/*mc_status.get_error() &&*/ !toggle){
+  //    mc_setpoints_command.set_remove_error(true);
+  //  }
+  //  else{
+  //  mc_setpoints_command.set_remove_error(false);
+  //  }
 
   if (system_ready) {
     mc_setpoints_command.set_hv_enable(true);
   }
+  else {
+    mc_setpoints_command.set_hv_enable(false);
+    mc_setpoints_command.set_driver_enable(false);
+    mc_setpoints_command.set_inverter_enable(false);
+    mc_setpoints_command.set_speed_setpoint(0);
+    mc_setpoints_command.set_pos_torque_limit(0);
+    mc_setpoints_command.set_neg_torque_limit(0);
+  }
+
+
   if (dc_done) {
     mc_setpoints_command.set_driver_enable(true);
     mc_setpoints_command.set_inverter_enable(true);
   }
-  if (ready) {
-    mc_setpoints_command.set_speed_setpoint(60);
-    mc_setpoints_command.set_pos_torque_limit(100);
+  else {
+    mc_setpoints_command.set_driver_enable(false);
+    mc_setpoints_command.set_inverter_enable(false);
+  }
+
+  if (ready1) {
+    mc_setpoints_command.set_speed_setpoint(120);
+    mc_setpoints_command.set_pos_torque_limit(1000);
+    mc_setpoints_command.set_neg_torque_limit(0);
+  } else {
+    mc_setpoints_command.set_speed_setpoint(0);
+    mc_setpoints_command.set_pos_torque_limit(0);
     mc_setpoints_command.set_neg_torque_limit(0);
   }
 
   if (debug_print.check()) {
     Serial.print("System Ready: ");
     Serial.println(mc_status.get_system_ready());
-    Serial.print("Quit DC ON: ");
-    Serial.println(mc_status.get_quit_dc_on());
-    Serial.print("DC ON: ");
-    Serial.println(mc_status.get_dc_on());
-    Serial.print("Quit Inverter ON: ");
-    Serial.println(mc_status.get_quit_inverter_on());
+    //    Serial.print("Quit DC ON: ");
+    //    Serial.println(mc_status.get_quit_dc_on());
+    //    Serial.print("DC ON: ");
+    //    Serial.println(mc_status.get_dc_on());
+    //    Serial.print("Quit Inverter ON: ");
+    //    Serial.println(mc_status.get_quit_inverter_on());
+    //    Serial.print("Error: ");
+    //    Serial.println(mc_status.get_error());
+    //    Serial.print("toogle: ");
+    //    Serial.println(toggle);
+    Serial.print("error: ");
+    Serial.println(mc_status.get_error());
+    Serial.print("speed: ");
+    Serial.println(mc_status.get_speed());
+    Serial.print("torque: ");
+    Serial.println(mc_status.get_torque());
+    Serial.println();
+
   }
   if (mc_status.get_quit_dc_on()) {
     dc_done = true;
@@ -72,26 +111,34 @@ void loop() {
   }
   if (mc_status.get_system_ready()) {
     system_ready = true;
-  }else{
+  } else {
     system_ready = false;
   }
   if (mc_status.get_quit_inverter_on()) {
-    ready = true;
-  }else{
-    ready = false;
+    ready1 = true;
+  } else {
+    ready1 = false;
+  }
+  if (mc_status.get_error()) {
+    error = true;
+  } else {
+    error = false;
   }
 
 
   if (timer_can.check()) { // Send a message on CAN
 
 
-    msg.id = 0x184;
+    msg.id = 0x0B0;
     msg.len = sizeof(mc_setpoints_command);
     mc_setpoints_command.write(msg.buf);
     CAN.write(msg);
 
+
+
     counter++;
-    if (counter == 10) {
+    if (counter == 55) {
+      toggle = !toggle;
       Serial.print("Sent 0x");
       Serial.print(msg.id, HEX);
       Serial.print(": ");
@@ -108,23 +155,22 @@ void loop() {
   }
 
   while (CAN.read(msg)) { // Receive a message on CAN
-    if (msg.id == 0x283) {
-      mc_status.load(msg.buf);
-      counter2++;
-      if (counter2 == 90) {
-        Serial.print("Received 0x");
-        Serial.print(msg.id, HEX);
-        Serial.print(": ");
-        for (unsigned int i = 0; i < msg.len; i++) {
-          Serial.print(msg.buf[i], HEX);
-          Serial.print(" ");
-        }
-        Serial.println();
-        counter2 = 0;
+    counter2++;
+    if (counter2 == 501) {
+      Serial.print("Received 0x");
+      Serial.print(msg.id, HEX);
+      Serial.print(": ");
+      for (unsigned int i = 0; i < msg.len; i++) {
+        Serial.print(msg.buf[i], HEX);
+        Serial.print(" ");
       }
+      Serial.println();
+      counter2 = 0;
     }
 
-
+    if (msg.id == 0x0A0) {
+      mc_status.load(msg.buf);
+    }
 
     digitalWrite(13, HIGH);
     timer_light.reset();
