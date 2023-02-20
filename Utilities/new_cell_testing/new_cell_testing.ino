@@ -30,7 +30,9 @@ int mode = 2;
 //mode = 1 means you want to charge in 0.1 SOC increments
 //mode = 2 means you want to cycle discharge and charge
 
-double END_VOLTAGE = 2.750;  // voltage threshold for end of test
+double END_VOLTAGE = 3.000;  // voltage threshold for end of test
+int discharge_time = 2000;
+int charge_time    = 1000;
 
 const int timestep = 20;     // datalog timestep (milliseconds)
 bool pulsing_on = true;      // if pulsing should be used in middle of cycle
@@ -158,11 +160,20 @@ void CellDataLog() {
     v_avg = 0;
     i_avg = 0;
     for (int j = 0; j < rollingwin; j++) {
-      v_avg = v_avg + cell_voltage[j];
-      i_avg = i_avg + cell_current[j];
+      if(cell_voltage[j]<0.50){
+        v_avg += 3.5;
+      }
+      else{
+        v_avg += cell_voltage[j];
+      }
+      i_avg += i_avg + cell_current[j];
     }
     v_avg = v_avg / rollingwin;
     i_avg = i_avg / rollingwin;
+
+    if(v_avg == 0){
+      v_avg = 3.5;
+    }
 
     cell_dvdt = (cell_voltage[0] - cell_voltage[rollingwin - 1]) / (timestep * rollingwin / (double)1000);
     cell_didt = (cell_current[0] - cell_current[rollingwin - 1]) / (timestep * rollingwin / (double)1000);
@@ -171,12 +182,18 @@ void CellDataLog() {
 
 
     //    Print data to Serial with delimiters to form columns:
-    Serial.print(energyCount, 6);
-    Serial.print("\t");
+//    Serial.print(energyCount, 6);
+//    Serial.print("\t");
     Serial.print(elapsedtime, 6);
-    Serial.print("\t");
+    Serial.print(delimiter);
 
-    Serial.print(mode);
+//    Serial.print(temp[0]);
+//    Serial.print(delimiter);
+//    Serial.print(temp[1]);
+//    Serial.print(delimiter);
+
+//    Serial.print(mode);
+//    Serial.print(delimiter);
     Serial.print(state);
 //    Serial.print(delimiter);
 //    Serial.print(temp[0]);
@@ -186,8 +203,8 @@ void CellDataLog() {
     Serial.print(cell_voltage[0], 4);
     Serial.print(delimiter);
     Serial.print(cell_current[0]);
-    Serial.print(delimiter);
-    Serial.print(i_read);
+//    Serial.print(delimiter);
+//    Serial.print(i_read);
     Serial.println(delimiter);
   }
 }
@@ -246,6 +263,7 @@ void setup() {
 
   // Set the contactor pin as INPUT
   pinMode(CONTACTOR_PWR_SENSE, INPUT);
+  v_avg = 3.5;
 
   for (int i = 0; i < 3; i++) {
 
@@ -275,6 +293,8 @@ void setup() {
   }
 
   // Print Column Headers
+  Serial.print("Time");
+  Serial.print(delimiter);
   Serial.print("Channel 1 State");
   Serial.print(delimiter);
   Serial.print("Channel 1 Voltage");
@@ -297,12 +317,8 @@ void loop() {
   contactor_voltage = analogRead(CONTACTOR_PWR_SENSE);  // read contactor voltage
   v_read = getBatteryVoltage(1);                        // read cell's voltage
   i_read = getBatteryCurrent(2);                        // read cell's current
-  int v_sum = 0;
-  int v_avg = 0;
-  for (int k = 0; k < 100; k++) {
-    v_sum += cell_voltage[k];
-  }
-  v_avg = v_sum / 100;
+  
+  
   
   if (mode == 0) {                                        //we want to discharge to 0 SOC or about 3.3v
     if (state == NOCELL && getBatteryVoltage(1) > 3.7) {  //if the cell is not above 3.7 it will not register as being installed. this voltage level can be changed in cde if you need to discharge lower SOC cells
@@ -337,14 +353,17 @@ void loop() {
       digitalWrite(SWITCH[2], LOW);
     }
   }
+  
   if (mode == 2) {  //we want to cycle
     // this involves charge/discharge down to 0 SOC, then recharge slowly to 1 SOC and repeat
     // at any point of voltage or temp goes out of range, STOP
+    
     if (state == NOCELL && getBatteryVoltage(1) > 3.4) {  //verifying a cell is installed
       state = CYCLE;
     }
+    
     if (state == CYCLE) {
-      if (temp[0] > 60 || temp[1] > 60 || getBatteryVoltage(1) > 4.2) {  //overtemp, overvoltage protection
+      if (temp[0] > 60 || temp[1] > 60 || getBatteryVoltage(1) > 4.25) {  //overtemp, overvoltage protection
         state = STOP;
       }
       //calculate small period average of voltage to know when to stop cycle
@@ -357,29 +376,36 @@ void loop() {
       if (startTime == millis()) {
         digitalWrite(SWITCH[0], HIGH);
       }
-      if (millis() == startTime + 1000) {
+      if (millis() == startTime + discharge_time) {
         digitalWrite(SWITCH[0], LOW);
       }
-      if (millis() == startTime + 1200) {
+      if (millis() == startTime + discharge_time + 200) {
         digitalWrite(SWITCH[1], HIGH);
       }
-      if (millis() == startTime + 2200) {
+      if (millis() == startTime + discharge_time + 200 + charge_time) {
         digitalWrite(SWITCH[1], LOW);
       }
-      if (millis() == startTime + 2400) {
+      if (millis() == startTime + discharge_time + 200 + charge_time + 200) {
         startTime = millis();
       }
     }
+    
     if (state == RECHARGE) {
+      digitalWrite(SWITCH[0], LOW);
+      digitalWrite(SWITCH[1], LOW);
+      
       digitalWrite(SWITCH[2], HIGH);
+      
       if (temp[0] > 60 || temp[1] > 60) {
         state = STOP;
       }
-      if (getBatteryVoltage(1) > 4.14) {
+      if (getBatteryVoltage(1) > 4.00) {
         digitalWrite(SWITCH[2], LOW);
+        startTime = millis();
         state = CYCLE;
       }
     }
+    
     if (state == STOP) {
       digitalWrite(SWITCH[0], LOW);
       digitalWrite(SWITCH[1], LOW);
@@ -387,6 +413,7 @@ void loop() {
     }
   }
   if (millis() % 20 == 0) {
+    
     CellDataLog();
   }
 }
