@@ -5,25 +5,25 @@
  * Initialize STEERING SPI using default CS pin
  */
 STEERING_SPI::STEERING_SPI() {
-	init(DEFAULT_STEERING_CS, DEFAULT_SPI_SPEED);
+	init(DEFAULT_STEERING_CS, DEFAULT_STEERING_SPI_SPEED);
 }
 
 /*
  * Initialize STEERING SPI using custom CS pin
  * param CS Pin to use for Chip Select
  */
-STEERING_SPI::STEERING_SPI(int CS) {
-	init(CS, DEFAULT_SPI_SPEED);
+STEERING_SPI::STEERING_SPI(uint8_t CS) {
+	init(CS, DEFAULT_STEERING_SPI_SPEED);
 }
 
-STEERING_SPI::STEERING_SPI(int CS, unsigned int SPIspeed) {
+STEERING_SPI::STEERING_SPI(uint8_t CS, uint32_t SPIspeed) {
 	init(CS, SPIspeed);
 }
 
 /*
  * Initialization helper
  */
-void STEERING_SPI::init(int CS, unsigned int SPIspeed) {
+void STEERING_SPI::init(uint8_t CS, uint32_t SPIspeed) {
 	STEERING_SPI_CS = CS;
 	SPI_SPEED  = SPIspeed;
 
@@ -34,14 +34,16 @@ void STEERING_SPI::init(int CS, unsigned int SPIspeed) {
 	SPI.begin();
 }
 
+
+
 /*
  * Measure steering
  */
-uint16_t STEERING_SPI::read_steering(int channel) {
+uint16_t STEERING_SPI::read_steering() {
 	digitalWrite(STEERING_SPI_CS, LOW);
 	delayMicroseconds(50);
 	  
-	SPI.beginTransaction(SPISettings(DEFAULT_SPI_SPEED, MSBFIRST, SPI_MODE0));
+	SPI.beginTransaction(SPISettings(SPI_SPEED, MSBFIRST, SPI_MODE0));
 
 	char multi_turn_hi = SPI.transfer(0);
 	char multi_turn_lo = SPI.transfer(0);
@@ -57,5 +59,11 @@ uint16_t STEERING_SPI::read_steering(int channel) {
 	error = (status_lo & 2) >> 1;
 	warning = status_lo & 1;
 
-	return encoder_position;
+	if((encoder_position - zero_position) % (MAX_POSITION) <= (MAX_POSITION/2)){ // if steering wheel is to the right of center
+		steering_position = (encoder_position - zero_position) % (MAX_POSITION/2);
+	} else {
+		steering_position = ((encoder_position - zero_position) % (MAX_POSITION/2)) - (MAX_POSITION/2);
+	}
+
+	return steering_position;
 }

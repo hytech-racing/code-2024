@@ -4,8 +4,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#define DEFAULT_SPI_CS 10
-#define DEFAULT_SPI_SPEED 1000000
+#define DEFAULT_ADC_SPI_CS 10
+#define DEFAULT_ADC_SPI_SPEED 1000000
 
 class ADC_SPI {
 	public:

@@ -25,7 +25,6 @@
 #include "MCU_GPS_readings.h"
 #include "MCU_pedal_readings.h"
 #include "MCU_status.h"
-#include "MCU_wheel_speed.h"
 #include "MCU_analog_readings.h"
 #include "MCU_load_cells.h"
 
