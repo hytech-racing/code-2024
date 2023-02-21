@@ -43,7 +43,7 @@ int start_delay = 5 * 1000;  // time to log data before start milliseconds
 int end_delay = 60 * 1000;   // time to log data after end milliseconds
 
 int relays = 4;
-const int rollingwin = 100;  // rolling average window needs to be small compared to pulse time & battery time constant for IR calculations
+const int rollingwin = 25;  // rolling average window needs to be small compared to pulse time & battery time constant for IR calculations
 char* delimiter = ",";       // "," comma for (CSV), "\t" for tab delimited files
 
 //*****************************************************************************************
@@ -195,10 +195,10 @@ void CellDataLog() {
 //    Serial.print(mode);
 //    Serial.print(delimiter);
     Serial.print(state);
-//    Serial.print(delimiter);
-//    Serial.print(temp[0]);
-//    Serial.print(delimiter);
-//    Serial.print(temp[1]);
+    Serial.print(delimiter);
+    Serial.print(temp[0]);
+    Serial.print(delimiter);
+    Serial.print(temp[1]);
     Serial.print(delimiter);
     Serial.print(cell_voltage[0], 4);
     Serial.print(delimiter);
@@ -363,7 +363,7 @@ void loop() {
     }
     
     if (state == CYCLE) {
-      if (temp[0] > 60 || temp[1] > 60 || getBatteryVoltage(1) > 4.25) {  //overtemp, overvoltage protection
+      if (temp[0] > 60 || temp[1] > 60 || v_avg > 4.45) {  //overtemp, overvoltage protection
         state = STOP;
       }
       //calculate small period average of voltage to know when to stop cycle
@@ -399,7 +399,7 @@ void loop() {
       if (temp[0] > 60 || temp[1] > 60) {
         state = STOP;
       }
-      if (getBatteryVoltage(1) > 4.00) {
+      if (getBatteryVoltage(1) > 4.07) {
         digitalWrite(SWITCH[2], LOW);
         startTime = millis();
         state = CYCLE;
