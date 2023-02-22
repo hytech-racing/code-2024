@@ -63,5 +63,5 @@ uint16_t STEERING_SPI::read_steering() {
 		steering_position = MAX_POSITION + encoder_position - zero_position;
 	} // 0-8192     could work with -4096
     /*steering_position = ((MAX_POSITION + (encoder_position - zero_position)) % MAX_POSITION) - 4096;*/
-	return steering_position & 0x3FFF;
+	return (steering_position - 4096) & 0x3FFF;
 }
