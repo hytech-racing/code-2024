@@ -32,7 +32,6 @@
 #include "MC_setpoints_command.h"
 #include "MC_status.h"
 #include "MC_temps.h"
-#include "MC_torque_command.h"
 
 #include "SAB_readings_front.h"
 #include "SAB_readings_rear.h"

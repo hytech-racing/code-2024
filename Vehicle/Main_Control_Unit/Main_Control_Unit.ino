@@ -44,6 +44,7 @@ ADIS16460 IMU(IMU_CS, IMU_DATAREADY, IMU_RESET); // Chip Select, Data Ready, Res
 MCU_pedal_readings mcu_pedal_readings;
 MCU_status mcu_status{};
 MCU_load_cells mcu_load_cells{};
+MCU_analog_readings mcu_analog_readings{};
 
 // IMU
 IMU_accelerometer imu_accelerometer;
@@ -53,7 +54,6 @@ MC_status mc_status[4];
 MC_temps mc_temps[4];
 MC_energy mc_energy[4];
 MC_setpoints_command mc_setpoints_command[4];
-MC_torque_command mc_torque_command[4];
 
 // Inbound CAN messages
 BMS_coulomb_counts bms_coulomb_counts{};
@@ -205,13 +205,11 @@ void loop() {
   //send_CAN_bms_coulomb_counts();
 
   send_CAN_inverter_setpoints();
-  send_CAN_inverter_torque();
-
+  
   forward_CAN_mc_status();
   forward_CAN_mc_temps();
   forward_CAN_mc_energy();
   forward_CAN_mc_setpoints_command();
-  forward_CAN_mc_torque_command();
   /* Finish restarting the inverter when timer expires */
   if (timer_restart_inverter.check() && inverter_restart) {
     inverter_restart = false;
@@ -320,29 +318,6 @@ inline void forward_CAN_mc_setpoints_command() {
   }
 }
 
-inline void forward_CAN_mc_torque_command() {
-  if (timer_CAN_mc_torque_command_forward.check()) {
-    mc_torque_command[0].write(msg.buf);
-    msg.id = ID_MC1_TORQUE_COMMAND;
-    msg.len = sizeof(mc_torque_command[0]);
-    TELEM_CAN.write(msg);
-
-    mc_torque_command[1].write(msg.buf);
-    msg.id = ID_MC2_TORQUE_COMMAND;
-    msg.len = sizeof(mc_torque_command[1]);
-    TELEM_CAN.write(msg);
-
-    mc_torque_command[2].write(msg.buf);
-    msg.id = ID_MC3_TORQUE_COMMAND;
-    msg.len = sizeof(mc_torque_command[2]);
-    TELEM_CAN.write(msg);
-
-    mc_torque_command[3].write(msg.buf);
-    msg.id = ID_MC4_TORQUE_COMMAND;
-    msg.len = sizeof(mc_torque_command[3]);
-    TELEM_CAN.write(msg);
-  }
-}
 
 inline void send_CAN_inverter_setpoints() {
   if (timer_CAN_inverter_setpoints_send.check()) {
@@ -367,31 +342,6 @@ inline void send_CAN_inverter_setpoints() {
     REAR_INV_CAN.write(msg);
   }
 }
-
-inline void send_CAN_inverter_torque() {
-  if (timer_CAN_inverter_torque_send.check()) {
-    mc_torque_command[0].write(msg.buf);
-    msg.id = ID_MC1_TORQUE_COMMAND;
-    msg.len = sizeof(mc_torque_command[0]);
-    FRONT_INV_CAN.write(msg);
-
-    mc_torque_command[1].write(msg.buf);
-    msg.id = ID_MC2_TORQUE_COMMAND;
-    msg.len = sizeof(mc_torque_command[1]);
-    FRONT_INV_CAN.write(msg);
-
-    mc_torque_command[2].write(msg.buf);
-    msg.id = ID_MC3_TORQUE_COMMAND;
-    msg.len = sizeof(mc_torque_command[2]);
-    REAR_INV_CAN.write(msg);
-
-    mc_torque_command[3].write(msg.buf);
-    msg.id = ID_MC4_TORQUE_COMMAND;
-    msg.len = sizeof(mc_torque_command[3]);
-    REAR_INV_CAN.write(msg);
-  }
-}
-
 inline void send_CAN_mcu_status() {
   if (timer_CAN_mcu_status_send.check()) {
     // Send Main Control Unit status message
@@ -626,7 +576,7 @@ inline void check_TS_active() {
     Serial.println("Setting state to TS Not Active, because TS is below HV threshold");
 #endif
     set_state(MCU_STATE::TRACTIVE_SYSTEM_NOT_ACTIVE);
-    inverter_startup_state = INVERTER_STARTUP_STATE::WAIT_INVERTER_ENABLE;
+    inverter_startup_state = INVERTER_STARTUP_STATE::WAIT_SYSTEM_READY;
   }
 }
 
@@ -837,9 +787,7 @@ inline void set_inverter_torques() {
   if (calculated_torque < 0) {
     calculated_torque = 0;
   }
-  for (uint8_t inv = 0; inv < 4; inv++) {
-    mc_torque_command[inv].set_torque_setpoint(calculated_torque);
-  }
+  
 
 
   //power limit to 80kW
@@ -881,7 +829,7 @@ inline void read_load_cell_values() {
 
 inline void read_steering_values(){
   if(timer_steering_read.check()){
-    mcu_analog_readings.set_steering_1(steering.read_steering());
+    mcu_analog_readings.set_steering_1(STEERING.read_steering());
     mcu_analog_readings.set_steering_2(ADC1.read_adc(ADC_STEERING_CHANNEL));
   }
 }
@@ -932,7 +880,6 @@ inline void set_all_inverters_no_torque() {
     mc_setpoints_command[inv].set_speed_setpoint(0);
     mc_setpoints_command[inv].set_pos_torque_limit(0);
     mc_setpoints_command[inv].set_neg_torque_limit(0);
-    mc_torque_command[inv].set_torque_setpoint(0);
   }
 }
 
@@ -971,7 +918,6 @@ inline void set_all_inverters_disabled() {
     mc_setpoints_command[inv].set_speed_setpoint(0);
     mc_setpoints_command[inv].set_pos_torque_limit(0);
     mc_setpoints_command[inv].set_neg_torque_limit(0);
-    mc_torque_command[inv].set_torque_setpoint(0);
   }
 }
 
