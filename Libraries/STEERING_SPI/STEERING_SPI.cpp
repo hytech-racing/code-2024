@@ -57,11 +57,11 @@ uint16_t STEERING_SPI::read_steering() {
 	bool warning = encoder_pos_low_and_status & 1;
     //steering increases in value in CCW direction
     //
-	if((zero_position - encoder_position) % (MAX_POSITION)) <= (MAX_POSITION/2)){ // if steering wheel is to the right of center
+	if(((zero_position - encoder_position) % (MAX_POSITION)) <= (MAX_POSITION/2)){ // if steering wheel is to the right of center
 		steering_position = (zero_position - encoder_position) % (MAX_POSITION/2);
 	} else {
 		steering_position = ((zero_position - encoder_position ) % (MAX_POSITION/2)) - (MAX_POSITION/2);
 	}
 
-	return steering_position - 65536;
+	return steering_position & 0x3FFF;
 }
