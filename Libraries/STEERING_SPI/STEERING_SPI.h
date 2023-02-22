@@ -6,7 +6,7 @@
 
 #define DEFAULT_STEERING_CS 10
 #define DEFAULT_STEERING_SPI_SPEED 2000000
-#define MAX_POSITION 16384
+#define MAX_POSITION 8192
 
 class STEERING_SPI {
 	public:
@@ -19,8 +19,7 @@ class STEERING_SPI {
 		uint16_t get_encoder_position() const { return encoder_position; }
 	private:
 		uint8_t STEERING_SPI_CS;
-      uint8_t SPI_SPEED;
-      uint16_t multi_turn;
+      	uint8_t SPI_SPEED;
 		uint16_t encoder_position;
 		bool error;
 		bool warning;
