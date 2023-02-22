@@ -62,7 +62,6 @@ uint16_t STEERING_SPI::read_steering() {
 	} else {  //steering wheel is left of center
 		steering_position = MAX_POSITION + encoder_position - zero_position;
 	}
-    printf(zero_position);
 
-	return steering_position & 0x3FFF;
+	return zero_position/*steering_position & 0x3FFF*/;
 }
