@@ -12,6 +12,7 @@
 #include <cmath>
 
 #include "ADC_SPI.h"
+#include "STEERING_SPI.h"
 #include "kinetis_flexcan.h"
 #include "Metro.h"
 
@@ -42,7 +43,6 @@ ADIS16460 IMU(IMU_CS, IMU_DATAREADY, IMU_RESET); // Chip Select, Data Ready, Res
 // Outbound CAN messages
 MCU_pedal_readings mcu_pedal_readings;
 MCU_status mcu_status{};
-MCU_wheel_speed mcu_wheel_speed{};
 MCU_load_cells mcu_load_cells{};
 
 // IMU
@@ -71,19 +71,24 @@ Metro timer_CAN_inverter_energy_read = Metro(200);
 Metro timer_CAN_inverter_setpoints_send = Metro(20);
 Metro timer_CAN_inverter_torque_send = Metro(20);
 Metro timer_CAN_coloumb_count_send = Metro(1000);
+Metro timer_CAN_mcu_status_send = Metro(100);
+Metro timer_CAN_mcu_pedal_readings_send = Metro(5);
+Metro timer_CAN_mcu_load_cells_send = Metro(10);
+
 Metro timer_CAN_mc_status_forward = Metro(100);
 Metro timer_CAN_mc_temps_forward = Metro(250);
 Metro timer_CAN_mc_energy_forward = Metro(250);
 Metro timer_CAN_mc_setpoints_command_forward = Metro(300);
 Metro timer_CAN_mc_torque_command_forward = Metro(100);
+
 Metro timer_ready_sound = Metro(2000); // Time to play RTD sound
-Metro timer_CAN_mcu_status_send = Metro(100);
-Metro timer_CAN_mcu_pedal_readings_send = Metro(5);
-Metro timer_CAN_mcu_load_cells_send = Metro(10);
-Metro timer_load_cells_read = Metro(5);
+
+Metro timer_load_cells_read = Metro(10);
+Metro timer_steering_read = Metro(10);
+
 Metro timer_restart_inverter = Metro(500, 1); // Allow the MCU to restart the inverter
 Metro timer_inverter_enable = Metro(5000);
-Metro timer_status_send = Metro(100);
+
 Metro timer_watchdog_timer = Metro(500);
 
 // this abuses Metro timer functionality to stay faulting once a fault has occurred
@@ -107,6 +112,8 @@ INVERTER_STARTUP_STATE inverter_startup_state = INVERTER_STARTUP_STATE::WAIT_SYS
 ADC_SPI ADC1(ADC1_CS, ADC_SPI_SPEED);
 ADC_SPI ADC2(ADC2_CS, ADC_SPI_SPEED);
 ADC_SPI ADC3(ADC3_CS, ADC_SPI_SPEED);
+
+STEERING_SPI STEERING(STEERING_CS, STEERING_SPI_SPEED);
 
 FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> FRONT_INV_CAN;
 FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> REAR_INV_CAN;
@@ -400,8 +407,8 @@ inline void send_CAN_mcu_pedal_readings() {
     // Update the pedal readings to send over CAN
     mcu_pedal_readings.set_accelerator_pedal_1(filtered_accel1_reading);
     mcu_pedal_readings.set_accelerator_pedal_2(filtered_accel2_reading);
-    mcu_pedal_readings.set_brake_transducer_1(filtered_brake1_reading);
-    mcu_pedal_readings.set_brake_transducer_2(filtered_brake2_reading);
+    mcu_pedal_readings.set_brake_pedal_1(filtered_brake1_reading);
+    mcu_pedal_readings.set_brake_pedal_2(filtered_brake2_reading);
 
     // Send Main Control Unit pedal reading message
     mcu_pedal_readings.write(msg.buf);
@@ -619,6 +626,7 @@ inline void check_TS_active() {
     Serial.println("Setting state to TS Not Active, because TS is below HV threshold");
 #endif
     set_state(MCU_STATE::TRACTIVE_SYSTEM_NOT_ACTIVE);
+    inverter_startup_state = INVERTER_STARTUP_STATE::WAIT_INVERTER_ENABLE;
   }
 }
 
@@ -793,7 +801,16 @@ void set_state(MCU_STATE new_state) {
 
 
 inline void set_inverter_torques() {
-  int16_t calculated_torque = 0;
+  int16_t torque1 = 0;
+  int16_t torque2 = 0;
+  int16_t torque3 = 0;
+  int16_t torque4 = 0;
+  int16_t speed1 = 0;
+  int16_t speed2 = 0;
+  int16_t speed3 = 0;
+  int16_t speed4 = 0;
+
+  int calculated_torque = 0;
   if (mcu_status.get_launch_ctrl_active()) {
 
   } else {
@@ -862,6 +879,13 @@ inline void read_load_cell_values() {
   }
 }
 
+inline void read_steering_values(){
+  if(timer_steering_read.check()){
+    mcu_analog_readings.set_steering_1(steering.read_steering());
+    mcu_analog_readings.set_steering_2(ADC1.read_adc(ADC_STEERING_CHANNEL));
+  }
+}
+
 inline void clear_all_inverters_error() {
 
 }
@@ -926,7 +950,7 @@ inline void set_all_inverters_torque_limit(int limit) {
   else {
     for (uint8_t inv = 0; inv < 4; inv++) {
       mc_setpoints_command[inv].set_pos_torque_limit(0);
-      mc_setpoints_command[inv].set_neg_torque_limit(abs(limit));
+      mc_setpoints_command[inv].set_neg_torque_limit(limit);
     }
   }
 
