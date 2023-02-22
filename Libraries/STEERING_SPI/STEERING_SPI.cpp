@@ -45,19 +45,16 @@ uint16_t STEERING_SPI::read_steering() {
 	  
 	SPI.beginTransaction(SPISettings(SPI_SPEED, MSBFIRST, SPI_MODE0));
 
-	char multi_turn_hi = SPI.transfer(0);
-	char multi_turn_lo = SPI.transfer(0);
-	char status_hi = SPI.transfer(0);
-	char status_lo = SPI.transfer(0);
+	char encoder_pos_hi = SPI.transfer(0);
+	char encoder_pos_low_and_status = SPI.transfer(0);
 	char crc = SPI.transfer(0);
 
 	SPI.endTransaction();
 	digitalWrite(STEERING_SPI_CS, HIGH);
 
-	multi_turn = (multi_turn_hi << 8) + multi_turn_lo;
-	encoder_position = (status_lo >> 2) + (status_hi << 6);
-	error = (status_lo & 2) >> 1;
-	warning = status_lo & 1;
+	uint16_t encoder_position = (encoder_pos_hi << 6) + (encoder_pos_low_and_status >> 2);
+	bool error = (encoder_pos_low_and_status & 2) >> 1;
+	bool warning = encoder_pos_low_and_status & 1;
 
 	if((encoder_position - zero_position) % (MAX_POSITION) <= (MAX_POSITION/2)){ // if steering wheel is to the right of center
 		steering_position = (encoder_position - zero_position) % (MAX_POSITION/2);
