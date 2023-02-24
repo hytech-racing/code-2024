@@ -67,9 +67,9 @@ uint16_t STEERING_SPI::read_steering() {
 	return steering_position & 0x3FFF;*/
 
 
-     * Try this one next time, the idea is to bitmask first so we don't screw up the sign at the end, but when everyone
-     * is positive.
-     * steering_position = ((MAX_POSITION + ((encoder_position & 0x3FFF) - (zero_position & 0x3FFF))) % MAX_POSITION) - 4096;
-     * return steering position;
+     /*Try this one next time, the idea is to bitmask first so we don't screw up the sign at the end, but when everyone
+     is positive.*/
+     steering_position = ((MAX_POSITION + ((encoder_position & 0x3FFF) - (zero_position & 0x3FFF))) % MAX_POSITION) - 4096;
+     return steering position;
 
 }
