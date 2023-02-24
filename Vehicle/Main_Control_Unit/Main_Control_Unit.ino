@@ -137,7 +137,7 @@ void setup() {
   IMU.regWrite(FLTR_CTRL, 0x500); // Set digital filter
   IMU.regWrite(DEC_RATE, 0), // Disable decimation
 
-  pinMode(BRAKE_LIGHT_CTRL, OUTPUT);
+               pinMode(BRAKE_LIGHT_CTRL, OUTPUT);
 
   // change to input if comparator is PUSH PULL
   pinMode(INVERTER_EN, OUTPUT);
@@ -205,7 +205,7 @@ void loop() {
   //send_CAN_bms_coulomb_counts();
 
   send_CAN_inverter_setpoints();
-  
+
   forward_CAN_mc_status();
   forward_CAN_mc_temps();
   forward_CAN_mc_energy();
@@ -368,8 +368,8 @@ inline void send_CAN_mcu_pedal_readings() {
   }
 }
 
-inline void send_CAN_mcu_load_cells(){
-  if(timer_CAN_mcu_load_cells_send.check()){
+inline void send_CAN_mcu_load_cells() {
+  if (timer_CAN_mcu_load_cells_send.check()) {
     mcu_load_cells.write(msg.buf);
     msg.id = ID_MCU_LOAD_CELLS;
     msg.len = sizeof(mcu_load_cells);
@@ -614,8 +614,8 @@ inline void software_shutdown() {
 
 /* Parse incoming CAN messages */
 void parse_telem_can_message(const CAN_message_t &RX_msg) {
- static CAN_message_t rx_msg = RX_msg;
- while (TELEM_CAN.read(rx_msg)) {
+  static CAN_message_t rx_msg = RX_msg;
+  while (TELEM_CAN.read(rx_msg)) {
     switch (rx_msg.id) {
       case ID_BMS_TEMPERATURES:              bms_temperatures.load(rx_msg.buf);              break;
       case ID_BMS_VOLTAGES:                  bms_voltages.load(rx_msg.buf);                  break;
@@ -761,39 +761,45 @@ inline void set_inverter_torques() {
   int16_t speed4 = 0;
 
   int calculated_torque = 0;
+  const int max_torque_Nm = mcu_status.get_max_torque();
+  const float max_torque = max_torque_Nm / 0.0098; // max possible value for torque multiplier, unit in 0.1% nominal torque
+  int accel1 = map(round(filtered_accel1_reading), START_ACCELERATOR_PEDAL_1, END_ACCELERATOR_PEDAL_1, 0, 1000);//inverter torque unit is in 0.1% of nominal torque (9.8Nm), max rated torque is 21Nm, so max possible output is 2142
+  int accel2 = map(round(filtered_accel2_reading), START_ACCELERATOR_PEDAL_2, END_ACCELERATOR_PEDAL_2, 0, 1000);
+
+  int brake1 = map(round(filtered_brake1_reading), START_BRAKE_PEDAL_1, END_BRAKE_PEDAL_1, 0, 1000);
+  int brake2 = map(round(filtered_brake2_reading), START_BRAKE_PEDAL_2, END_BRAKE_PEDAL_2, 0, 1000);
+
+
+  // torque values are greater than the max possible value, set them to max
+  if (accel1 > max_torque) {
+    accel1 = max_torque;
+  }
+  if (accel2 > max_torque) {
+    accel2 = max_torque;
+  }
+  int avg_accel = (accel1 + accel2) / 2;
+  int avg_brake = (brake1 + brake2) / 2;
+  if (avg_accel > max_torque) {
+    avg_accel = max_torque;
+  }
+  if (avg_accel < 0) {
+    avg_accel = 0;
+  }
+
+  int torque_setpoint_array[4];
+
   if (mcu_status.get_launch_ctrl_active()) {
 
   } else {
     //currently in debug mode, no torque vectoring
 
-    const int max_torque_Nm = mcu_status.get_max_torque();
-    const float max_torque = max_torque_Nm / 0.0098; // max possible value for torque multiplier, unit in 0.1% nominal torque
-    int accel1 = map(round(filtered_accel1_reading), START_ACCELERATOR_PEDAL_1, END_ACCELERATOR_PEDAL_1, 0, 1000);//inverter torque unit is in 0.1% of nominal torque (9.8Nm), max rated torque is 21Nm, so max possible output is 2142
-    int accel2 = map(round(filtered_accel2_reading), START_ACCELERATOR_PEDAL_2, END_ACCELERATOR_PEDAL_2, 0, 1000);
-
-    int brake1 = map(round(filtered_brake1_reading), START_BRAKE_PEDAL_1, END_BRAKE_PEDAL_1, 0, 1000);
-    int brake2 = map(round(filtered_brake2_reading), START_BRAKE_PEDAL_2, END_BRAKE_PEDAL_2, 0, 1000);
+    torque_setpoint_array[0] = avg_accel -  avg_brake;
+    torque_setpoint_array[1] = avg_accel -  avg_brake;
+    torque_setpoint_array[2] = avg_accel -  avg_brake;
+    torque_setpoint_array[3] = avg_accel -  avg_brake;
 
 
-    // torque values are greater than the max possible value, set them to max
-    if (acell1 > max_torque) {
-      accel1 = max_torque;
-    }
-    if (accel2 > max_torque) {
-      accel2 = max_torque;
-    }
-    avg_accel = (accel1 + accel2) / 2;
-    acg_brake = (brake1 + brake2) / 2;
-    if (avg_accel > max_torque) {
-      avg_accel = max_torque;
-    }
   }
-
-  if (avg_accel < 0) {
-    avg_accel = 0;
-  }
-  
-  int[4] torque_setpoint_array = {avg_accel -  avg_brake, avg_accel -  avg_brake, avg_accel -  avg_brake, avg_accel -  avg_brake};
   for (int i = 0; i < sizeof(torque_setpoint_array); i++) {
     if (torque_setpoint_array[i] >= 0) {
       mc_setpoints_command[i].set_speed_setpoint(20000);
@@ -806,7 +812,9 @@ inline void set_inverter_torques() {
       mc_setpoints_command[i].set_neg_torque_limit(torque_setpoint_array[i]);
     }
   }
-  
+
+
+
   //power limit to 80kW
   //add this plz
 
@@ -835,17 +843,17 @@ inline void read_pedal_values() {
 
 inline void read_load_cell_values() {
   if (timer_load_cells_read.check()) {
-  //load cell is 2mV/V, 10V excitation, 1000lb max
-  //goes through 37.5x gain of INA823, 21x gain of OPA991, +0.314V offset, 0.1912x reduction on ECU and MAX7400 before reaching ADC
-  mcu_load_cells.set_FL_load_cell((uint16_t) (((ADC2.read_adc(ADC_FL_LOAD_CELL_CHANNEL)/0.1912) - 0.314) / 787.5 * 50));
-  mcu_load_cells.set_FR_load_cell((uint16_t) (((ADC2.read_adc(ADC_FR_LOAD_CELL_CHANNEL)/0.1912) - 0.314) / 787.5 * 50));
-  mcu_load_cells.set_RL_load_cell((uint16_t) (((ADC1.read_adc(ADC_RL_LOAD_CELL_CHANNEL)/0.1912) - 0.314) / 787.5 * 50));
-  mcu_load_cells.set_RR_load_cell((uint16_t) (((ADC2.read_adc(ADC_RR_LOAD_CELL_CHANNEL)/0.1912) - 0.314) / 787.5 * 50));
+    //load cell is 2mV/V, 10V excitation, 1000lb max
+    //goes through 37.5x gain of INA823, 21x gain of OPA991, +0.314V offset, 0.1912x reduction on ECU and MAX7400 before reaching ADC
+    mcu_load_cells.set_FL_load_cell((uint16_t) (((ADC2.read_adc(ADC_FL_LOAD_CELL_CHANNEL) / 0.1912) - 0.314) / 787.5 * 50));
+    mcu_load_cells.set_FR_load_cell((uint16_t) (((ADC2.read_adc(ADC_FR_LOAD_CELL_CHANNEL) / 0.1912) - 0.314) / 787.5 * 50));
+    mcu_load_cells.set_RL_load_cell((uint16_t) (((ADC1.read_adc(ADC_RL_LOAD_CELL_CHANNEL) / 0.1912) - 0.314) / 787.5 * 50));
+    mcu_load_cells.set_RR_load_cell((uint16_t) (((ADC2.read_adc(ADC_RR_LOAD_CELL_CHANNEL) / 0.1912) - 0.314) / 787.5 * 50));
   }
 }
 
-inline void read_steering_values(){
-  if(timer_steering_read.check()){
+inline void read_steering_values() {
+  if (timer_steering_read.check()) {
     mcu_analog_readings.set_steering_1(STEERING.read_steering());
     mcu_analog_readings.set_steering_2(ADC1.read_adc(ADC_STEERING_CHANNEL));
   }
@@ -904,7 +912,7 @@ inline void set_all_inverters_torque_limit(int limit) {
 
   //const float max_torque = max_torque_Nm / 0.0098; // max possible value for torque multiplier, unit in 0.1% nominal torque
   //inverter torque unit is in 0.1% of nominal torque (9.8Nm), max rated torque is 21Nm, so max possible output is 2142
-  
+
   if (limit >= 0) {
     for (uint8_t inv = 0; inv < 4; inv++) {
       mc_setpoints_command[inv].set_pos_torque_limit(limit);
@@ -974,7 +982,7 @@ inline void read_imu() {
   imu_accelerometer.set_long_accel(IMU.regRead(Y_ACCL_OUT)); // * 0.00245); // 0.00245 is the scale, Backwards is positive, need to fix?
   imu_accelerometer.set_vert_accel(IMU.regRead(Z_ACCL_OUT)); // * 0.00245); // 0.00245 is the scale, Up is positive
   // question about yaw, pitch and roll rates?
-  imu_gyroscope.set_pitch(IMU.regRead(X_GYRO_OUT)); // * 0.005); // 0.005 is the scale, 
+  imu_gyroscope.set_pitch(IMU.regRead(X_GYRO_OUT)); // * 0.005); // 0.005 is the scale,
   imu_gyroscope.set_yaw(IMU.regRead(Z_GYRO_OUT)); // * 0.005);  // 0.005 is the scale
   imu_gyroscope.set_roll(IMU.regRead(Y_GYRO_OUT)); // * 0.005); // 0.005 is the scale
 }
