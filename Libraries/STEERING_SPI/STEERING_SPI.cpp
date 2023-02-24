@@ -57,7 +57,7 @@ int16_t STEERING_SPI::read_steering() {
 	warning = encoder_pos_low_and_status & 1;
     //steering increases in value in CCW direction
      if ((MAX_POSITION + (encoder_position - zero_position)) % MAX_POSITION <= (MAX_POSITION / 2)) {
-         steering_position = -((encoder_position - zero_position) % MAX_POSITION);
+         steering_position = -((MAX_POSITION + (encoder_position - zero_position)) % MAX_POSITION);
      } else {
          steering_position = MAX_POSITION - ((MAX_POSITION + (encoder_position - zero_position)) % MAX_POSITION);
      }
