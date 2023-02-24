@@ -768,28 +768,45 @@ inline void set_inverter_torques() {
 
     const int max_torque_Nm = mcu_status.get_max_torque();
     const float max_torque = max_torque_Nm / 0.0098; // max possible value for torque multiplier, unit in 0.1% nominal torque
-    int torque1 = map(round(filtered_accel1_reading), START_ACCELERATOR_PEDAL_1, END_ACCELERATOR_PEDAL_1, 0, 2142);//inverter torque unit is in 0.1% of nominal torque (9.8Nm), max rated torque is 21Nm, so max possible output is 2142
-    int torque2 = map(round(filtered_accel2_reading), START_ACCELERATOR_PEDAL_2, END_ACCELERATOR_PEDAL_2, 0, 2142);
+    int accel1 = map(round(filtered_accel1_reading), START_ACCELERATOR_PEDAL_1, END_ACCELERATOR_PEDAL_1, 0, 1000);//inverter torque unit is in 0.1% of nominal torque (9.8Nm), max rated torque is 21Nm, so max possible output is 2142
+    int accel2 = map(round(filtered_accel2_reading), START_ACCELERATOR_PEDAL_2, END_ACCELERATOR_PEDAL_2, 0, 1000);
+
+    int brake1 = map(round(filtered_brake1_reading), START_BRAKE_PEDAL_1, END_BRAKE_PEDAL_1, 0, 1000);
+    int brake2 = map(round(filtered_brake2_reading), START_BRAKE_PEDAL_2, END_BRAKE_PEDAL_2, 0, 1000);
+
 
     // torque values are greater than the max possible value, set them to max
-    if (torque1 > max_torque) {
-      torque1 = max_torque;
+    if (acell1 > max_torque) {
+      accel1 = max_torque;
     }
-    if (torque2 > max_torque) {
-      torque2 = max_torque;
+    if (accel2 > max_torque) {
+      accel2 = max_torque;
     }
-    calculated_torque = (torque1 + torque2) / 2;
-    if (calculated_torque > max_torque) {
-      calculated_torque = max_torque;
+    avg_accel = (accel1 + accel2) / 2;
+    acg_brake = (brake1 + brake2) / 2;
+    if (avg_accel > max_torque) {
+      avg_accel = max_torque;
     }
   }
 
-  if (calculated_torque < 0) {
-    calculated_torque = 0;
+  if (avg_accel < 0) {
+    avg_accel = 0;
   }
   
-
-
+  int[4] torque_setpoint_array = {avg_accel -  avg_brake, avg_accel -  avg_brake, avg_accel -  avg_brake, avg_accel -  avg_brake};
+  for (int i = 0; i < sizeof(torque_setpoint_array); i++) {
+    if (torque_setpoint_array[i] >= 0) {
+      mc_setpoints_command[i].set_speed_setpoint(20000);
+      mc_setpoints_command[i].set_pos_torque_limit(torque_setpoint_array[i]);
+      mc_setpoints_command[i].set_neg_torque_limit(0);
+    }
+    else {
+      mc_setpoints_command[i].set_speed_setpoint(-20000);
+      mc_setpoints_command[i].set_pos_torque_limit(0);
+      mc_setpoints_command[i].set_neg_torque_limit(torque_setpoint_array[i]);
+    }
+  }
+  
   //power limit to 80kW
   //add this plz
 

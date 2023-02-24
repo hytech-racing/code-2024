@@ -15,6 +15,16 @@
         #define START_ACCELERATOR_PEDAL_2 650  // Position to start acceleration
         #define END_ACCELERATOR_PEDAL_2 960    // Position to max out acceleration
         #define MAX_ACCELERATOR_PEDAL_2 1060    // High accelerator implausibility threshold
+
+        #define MIN_BRAKE_PEDAL_1 1280    // Low accelerator implausibility threshold
+        #define START_BRAKE_PEDAL_1 1300  // Position to start acceleration
+        #define END_BRAKE_PEDAL_1 960    // Position to max out acceleration
+        #define MAX_BRAKE_PEDAL_1 1060
+
+        #define MIN_BRAKE_PEDAL_2 630    // Low accelerator implausibility threshold
+        #define START_BRAKE_PEDAL_2 650  // Position to start acceleration
+        #define END_BRAKE_PEDAL_2 960    // Position to max out acceleration
+        #define MAX_BRAKE_PEDAL_2 1060
     #else
         #error "Bad driver definition"
     #endif
