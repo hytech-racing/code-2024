@@ -88,7 +88,7 @@ Metro timer_steering_read = Metro(10);
 
 Metro timer_restart_inverter = Metro(500, 1); // Allow the MCU to restart the inverter
 Metro timer_inverter_enable = Metro(5000);
-
+Metro timer_reset_inverter = Metro(100);
 Metro timer_watchdog_timer = Metro(500);
 
 // this abuses Metro timer functionality to stay faulting once a fault has occurred
@@ -839,6 +839,8 @@ inline void read_pedal_values() {
   mcu_status.set_brake_pedal_active(filtered_brake1_reading >= BRAKE_ACTIVE);
   digitalWrite(BRAKE_LIGHT_CTRL, mcu_status.get_brake_pedal_active());
 
+  mcu_status.set_mech_brake_active(filtered_brake1_reading >= BRAKE_THRESHOLD) //define in driver_constraints.h (70%)
+
 }
 
 inline void read_load_cell_values() {
@@ -860,7 +862,7 @@ inline void read_steering_values() {
 }
 
 inline void clear_all_inverters_error() {
-
+  
 }
 
 bool check_all_inverters_system_ready() {
@@ -959,7 +961,14 @@ inline void set_all_inverters_driver_enable(bool input) {
 }
 
 inline void reset_inverters() {
-
+    for (uint8_t inv = 0; inv < 4; inv++) {
+    if (inverter_reset_timer.check()) {
+        //toggle status error flag
+        //.set(!getValue())
+        //mc_setpoints_command[inv].set
+    }
+  }
+  timer.reset();
 }
 /* Read shutdown system values */
 inline void read_status_values() {
