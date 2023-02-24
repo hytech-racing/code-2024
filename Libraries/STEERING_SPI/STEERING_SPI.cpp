@@ -52,9 +52,9 @@ uint16_t STEERING_SPI::read_steering() {
 	SPI.endTransaction();
 	digitalWrite(STEERING_SPI_CS, HIGH);
 
-	uint16_t encoder_position = (encoder_pos_hi << 6) + (encoder_pos_low_and_status >> 2);
-	bool error = (encoder_pos_low_and_status & 2) >> 1;
-	bool warning = encoder_pos_low_and_status & 1;
+	encoder_position = (encoder_pos_hi << 6) + (encoder_pos_low_and_status >> 2);
+	error = (encoder_pos_low_and_status & 2) >> 1;
+	warning = encoder_pos_low_and_status & 1;
     //steering increases in value in CCW direction
     //zero_position returns 0 all the time
 	/*if ((zero_position - encoder_position) <= (MAX_POSITION/2)) { // if steering wheel is to the left of center
@@ -69,7 +69,7 @@ uint16_t STEERING_SPI::read_steering() {
 
      /*Try this one next time, the idea is to bitmask first so we don't screw up the sign at the end, but when everyone
      is positive.*/
-     steering_position = ((MAX_POSITION + ((encoder_position & 0x3FFF) - (zero_position & 0x3FFF))) % MAX_POSITION) - 4096;
+     steering_position = ((MAX_POSITION + ((encoder_position & 0x3FFF) - (zero_position & 0x3FFF))) % MAX_POSITION) - (MAX_POSITION / 2);
      return steering_position;
 
 }

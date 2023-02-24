@@ -20,10 +20,10 @@ class STEERING_SPI {
 	private:
 		uint8_t STEERING_SPI_CS;
       	uint8_t SPI_SPEED;
-		uint16_t encoder_position;
+		int16_t encoder_position;
 		bool error;
 		bool warning;
-		uint16_t zero_position;
+		int16_t zero_position;
 		int16_t steering_position;
 };
 
