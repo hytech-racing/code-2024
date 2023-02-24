@@ -39,7 +39,7 @@ void STEERING_SPI::init(uint8_t CS, uint32_t SPIspeed) {
 /*
  * Measure steering
  */
-uint16_t STEERING_SPI::read_steering() {
+int16_t STEERING_SPI::read_steering() {
 	digitalWrite(STEERING_SPI_CS, LOW);
 	delayMicroseconds(50);
 	  
@@ -56,20 +56,11 @@ uint16_t STEERING_SPI::read_steering() {
 	error = (encoder_pos_low_and_status & 2) >> 1;
 	warning = encoder_pos_low_and_status & 1;
     //steering increases in value in CCW direction
-    //zero_position returns 0 all the time
-	/*if ((zero_position - encoder_position) <= (MAX_POSITION/2)) { // if steering wheel is to the left of center
-		steering_position = (encoder_position - zero_position);
-	} else {  //steering wheel is left of center
-		steering_position = MAX_POSITION + encoder_position - zero_position;
-	} */// 0-8192     could work with -4096
-    /*steering_position = ((MAX_POSITION + (encoder_position - zero_position)) % MAX_POSITION) - 4096;
-    //Pretty sure this is right, but negatives get screwed up cuz lmao (maybe the masking?)
-	return steering_position & 0x3FFF;*/
-
-
-     /*Try this one next time, the idea is to bitmask first so we don't screw up the sign at the end, but when everyone
-     is positive.*/
-     steering_position = ((MAX_POSITION + ((encoder_position & 0x3FFF) - (zero_position & 0x3FFF))) % MAX_POSITION) - (MAX_POSITION / 2);
+     if ((MAX_POSITION + (encoder_position - zero_position)) % MAX_POSITION <= (MAX_POSITION / 2)) {
+         steering_position = -((encoder_position - zero_position) % MAX_POSITION);
+     } else {
+         steering_position = MAX_POSITION - ((MAX_POSITION + (encoder_position - zero_position)) % MAX_POSITION);
+     }
      return steering_position;
 
 }
