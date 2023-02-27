@@ -85,6 +85,7 @@ Metro timer_ready_sound = Metro(2000); // Time to play RTD sound
 
 Metro timer_load_cells_read = Metro(10);
 Metro timer_steering_read = Metro(10);
+Metro timer_glv_read = Metro(10);
 
 Metro timer_restart_inverter = Metro(500, 1); // Allow the MCU to restart the inverter
 Metro timer_inverter_enable = Metro(5000);
@@ -211,15 +212,22 @@ void loop() {
   forward_CAN_mc_energy();
   forward_CAN_mc_setpoints_command();
   /* Finish restarting the inverter when timer expires */
-  if (timer_restart_inverter.check() && inverter_restart) {
-    inverter_restart = false;
-    digitalWrite(INVERTER_24V_EN, HIGH);
-    mcu_status.set_inverter_powered(true);
+  if (inverter_restart) {
+    uint8_t reset_bit = !mc_setpoints_command[0].get_remove_error();
+    if (timer_restart_inverter.check()) {
+      inverter_restart = false;
+      reset_bit = 0;
+    }
+      for (uint8_t inv = 0; inv < 4; inv++) {
+        mc_setpoints_command[inv].set_remove_error(reset_bit);
+      }
   }
 
   /* handle state functionality */
   state_machine();
   software_shutdown();
+
+ 
 }
 
 inline void forward_CAN_mc_status() {
@@ -618,7 +626,12 @@ void parse_telem_can_message(const CAN_message_t &RX_msg) {
   while (TELEM_CAN.read(rx_msg)) {
     switch (rx_msg.id) {
       case ID_BMS_TEMPERATURES:              bms_temperatures.load(rx_msg.buf);              break;
-      case ID_BMS_VOLTAGES:                  bms_voltages.load(rx_msg.buf);                  break;
+      case ID_BMS_VOLTAGES:                  
+        bms_voltages.load(rx_msg.buf);
+        if(bms_voltages.get_low() < PACK_CHARGE_CRIT_THRESHOLD || bms_voltages.get_total() < PACK_CHARGE_CRIT_THRESHOLD) {   //dummy threshold              
+          mcu_status.set_pack_charge_critical(true);
+        } else mcu_status.set_pack_charge_critical(false);
+        break;
       case ID_BMS_COULOMB_COUNTS:            bms_coulomb_counts.load(rx_msg.buf);            break;
       case ID_BMS_STATUS:
         bms_status.load(rx_msg.buf);
@@ -646,7 +659,8 @@ void parse_telem_can_message(const CAN_message_t &RX_msg) {
           mcu_status.toggle_launch_ctrl_active();
         }
         if (dashboard_status.get_mc_cycle_btn()) {
-          reset_inverters();
+          inverter_restart = true;
+          timer_restart_inverter.reset(); 
         }
         // eliminate all action buttons to not process twice
         dashboard_status.set_button_flags(0);
@@ -682,9 +696,9 @@ void parse_rear_inv_can_message(const CAN_message_t &RX_msg) {
     }
   }
 }
-inline void power_off_inverter() {
+//FIXME
+inline void power_off_inverter() { 
   inverter_restart = true;
-  digitalWrite(INVERTER_24V_EN, LOW);
   timer_restart_inverter.reset();
   mcu_status.set_inverter_powered(false);
 
@@ -819,9 +833,16 @@ inline void set_inverter_torques() {
   //add this plz
 
 }
+/* Read 24_Sense_ECU which checks GLV voltage */
+inline void read_glv_value() {
+  if(timer_glv_read.check()) {
+    mcu_analog_readings.set_glv_battery_voltage(ADC3.read_adc(ADC_GLV_READ_CHANNEL));
+  }
+  
+}
 
 /* Read pedal sensor values */
-inline void read_pedal_values() {
+inline void read_pedal_values() { //add timer
   /* Filter ADC readings */
   filtered_accel1_reading = ALPHA * filtered_accel1_reading + (1 - ALPHA) * ADC2.read_adc(ADC_ACCEL_1_CHANNEL);
   filtered_accel2_reading = ALPHA * filtered_accel2_reading + (1 - ALPHA) * ADC2.read_adc(ADC_ACCEL_2_CHANNEL);
@@ -839,7 +860,7 @@ inline void read_pedal_values() {
   mcu_status.set_brake_pedal_active(filtered_brake1_reading >= BRAKE_ACTIVE);
   digitalWrite(BRAKE_LIGHT_CTRL, mcu_status.get_brake_pedal_active());
 
-  mcu_status.set_mech_brake_active(filtered_brake1_reading >= BRAKE_THRESHOLD) //define in driver_constraints.h (70%)
+  mcu_status.set_mech_brake_active(filtered_brake1_reading >= BRAKE_THRESHOLD_MECH_BRAKE); //define in driver_constraints.h (70%)
 
 }
 
@@ -858,6 +879,7 @@ inline void read_steering_values() {
   if (timer_steering_read.check()) {
     mcu_analog_readings.set_steering_1(STEERING.read_steering());
     mcu_analog_readings.set_steering_2(ADC1.read_adc(ADC_STEERING_CHANNEL));
+    
   }
 }
 
@@ -960,16 +982,26 @@ inline void set_all_inverters_driver_enable(bool input) {
   }
 }
 
-inline void reset_inverters() {
-    for (uint8_t inv = 0; inv < 4; inv++) {
-    if (inverter_reset_timer.check()) {
-        //toggle status error flag
-        //.set(!getValue())
-        //mc_setpoints_command[inv].set
-    }
-  }
-  timer.reset();
-}
+//inline void reset_inverters() {
+//  //check if error bit is high
+//  if(mc_status.get_error() && 
+//  //check if mc cycle button is high
+//  //if yes toggle reset bit
+//  //if error bit is low
+//  //check reset bit high
+//  if( && mc_set
+//  //drive reset low
+//  
+//   
+//    for (uint8_t inv = 0; inv < 4; inv++) {
+//    if (inverter_reset_timer.check()) {
+//        //toggle status error flag
+//        //.set(!getValue())
+//        //mc_setpoints_command[inv].set
+//    }
+//  }
+//  timer.reset();
+//}
 /* Read shutdown system values */
 inline void read_status_values() {
   /* Measure shutdown circuits' input */

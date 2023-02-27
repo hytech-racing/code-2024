@@ -22,7 +22,6 @@ enum class INVERTER_STARTUP_STATE
   WAIT_QUIT_DC_ON               = 1,
   WAIT_QUIT_INVERTER_ON         = 2
 };
-
 #pragma pack(push,1)
 
 // @Parseclass @Custom(parse_mcu_enums)
@@ -58,39 +57,43 @@ public:
     /* Pedal system monitoring */
 
     inline uint8_t get_pedal_states()               const { return pedal_states; }
+    inline bool get_mech_brake_active()             const { return pedal_states & 0x01; }
     inline bool get_no_accel_implausability()       const { return pedal_states & 0x04; }
     inline bool get_no_brake_implausability()       const { return pedal_states & 0x08; }
     inline bool get_brake_pedal_active()            const { return pedal_states & 0x10; }
     inline bool get_bspd_current_high()             const { return pedal_states & 0x20; }
     inline bool get_bspd_brake_high()               const { return pedal_states & 0x40; }
     inline bool get_no_accel_brake_implausability() const { return pedal_states & 0x80; }
+    
 
     inline void set_pedal_states(const uint8_t states)                 { pedal_states = states; }
+    inline void set_mech_brake_active(const bool active)                  { pedal_states = (pedal_states & 0xFE) | (active); }
     inline void set_no_accel_implausability(const bool implausable)       { pedal_states = (pedal_states & 0xFB) | (implausable << 2); }
     inline void set_no_brake_implausability(const bool implausable)       { pedal_states = (pedal_states & 0xF7) | (implausable << 3); }
     inline void set_brake_pedal_active(const bool pressed)                { pedal_states = (pedal_states & 0xEF) | (pressed     << 4); }
     inline void set_bspd_current_high(const bool high)                    { pedal_states = (pedal_states & 0xDF) | (high        << 5); }
     inline void set_bspd_brake_high(const bool high)                      { pedal_states = (pedal_states & 0xBF) | (high        << 6); }
     inline void set_no_accel_brake_implausability(const bool implausable) { pedal_states = (pedal_states & 0x7F) | (implausable << 7); }
-
+    
     /* ECU state */
 
-    inline uint8_t get_ecu_states()        const { return (ecu_states); }
+    inline uint16_t get_ecu_states()        const { return (ecu_states); }
     inline MCU_STATE get_state()           const { return static_cast<MCU_STATE>((ecu_states & 0x07)); }
-    inline bool get_inverter_powered()     const { return (ecu_states & 0x08); }
-    inline bool get_energy_meter_present() const { return (ecu_states & 0x10); }
-    inline bool get_activate_buzzer()      const { return (ecu_states & 0x20); }
-    inline bool get_software_is_ok()       const { return (ecu_states & 0x40); }
-    inline bool get_launch_ctrl_active()   const { return (ecu_states & 0x80); }
+    inline bool get_inverter_powered()     const { return (ecu_states & 0x008); }
+    inline bool get_energy_meter_present() const { return (ecu_states & 0x010); }
+    inline bool get_activate_buzzer()      const { return (ecu_states & 0x020); }
+    inline bool get_software_is_ok()       const { return (ecu_states & 0x040); }
+    inline bool get_launch_ctrl_active()   const { return (ecu_states & 0x080); }
+    inline uint8_t get_pack_charge_critical() const {return  (ecu_states & 0x300) >> 8; }
 
-    inline void set_ecu_states(const uint8_t states)         { ecu_states = states; }
-    inline void set_state(const MCU_STATE state)             { ecu_states = (ecu_states & 0xF8) | (static_cast<uint8_t>(state)); }
-    inline void set_inverter_powered(const bool powered)     { ecu_states = (ecu_states & 0xF7) | (powered  << 3); }
-    inline void set_energy_meter_present(const bool present) { ecu_states = (ecu_states & 0xEF) | (present  << 4); }
-    inline void set_activate_buzzer(const bool activate)     { ecu_states = (ecu_states & 0xDF) | (activate << 5); }
-    inline void set_software_is_ok(const bool is_ok)         { ecu_states = (ecu_states & 0xBF) | (is_ok    << 6); }
-    inline void set_launch_ctrl_active(const bool active)    { ecu_states = (ecu_states & 0x7F) | (active   << 7); }
-
+    inline void set_ecu_states(const uint16_t states)         { ecu_states = states; }
+    inline void set_state(const MCU_STATE state)             { ecu_states = (ecu_states & 0xFFF8) | (static_cast<uint8_t>(state)); }
+    inline void set_inverter_powered(const bool powered)     { ecu_states = (ecu_states & 0xFFF7) | (powered  << 3); }
+    inline void set_energy_meter_present(const bool present) { ecu_states = (ecu_states & 0xFFEF) | (present  << 4); }
+    inline void set_activate_buzzer(const bool activate)     { ecu_states = (ecu_states & 0xFFDF) | (activate << 5); }
+    inline void set_software_is_ok(const bool is_ok)         { ecu_states = (ecu_states & 0xFFBF) | (is_ok    << 6); }
+    inline void set_launch_ctrl_active(const bool active)    { ecu_states = (ecu_states & 0xFF7F) | (active   << 7); }
+    inline void set_pack_charge_critical(const uint8_t pack_charge_crit) {ecu_states = (ecu_states & 0xFFFF) | (pack_charge_crit << 8);} 
     inline void toggle_launch_ctrl_active() { ecu_states ^= 0x80; }
 
     /* distance travelled */
@@ -125,6 +128,7 @@ private:
      * Current high
      * brake high
      * accel/brake implausability
+     * mech brake active
      */
     /* @Parse @Flaglist(
         no_accel_implausability,
@@ -143,6 +147,7 @@ private:
      * activate_buzzer
      * software_is_ok
      * launch_control_active
+     * pack charge critical
      */
     /* @Parse @Flaglist(
         inverter_powered,
@@ -151,7 +156,7 @@ private:
         software_is_ok,
         launch_ctrl_active
         )*/
-    uint8_t ecu_states;
+    uint16_t ecu_states;
 
     // @Parse @Unit(Nm)
     uint8_t max_torque;
@@ -164,3 +169,4 @@ private:
 };
 
 #pragma pack(pop)
+
