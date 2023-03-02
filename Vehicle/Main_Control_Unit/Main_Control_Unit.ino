@@ -87,9 +87,8 @@ Metro timer_load_cells_read = Metro(10);
 Metro timer_steering_read = Metro(10);
 Metro timer_glv_read = Metro(10);
 
-Metro timer_restart_inverter = Metro(500, 1); // Allow the MCU to restart the inverter
 Metro timer_inverter_enable = Metro(5000);
-Metro timer_reset_inverter = Metro(100);
+Metro timer_reset_inverter = Metro(200);
 Metro timer_watchdog_timer = Metro(500);
 
 // this abuses Metro timer functionality to stay faulting once a fault has occurred
@@ -198,7 +197,7 @@ void setup() {
 void loop() {
   read_pedal_values();
   read_load_cell_values();
-  //read steering
+  read_steering_values();
   read_status_values();
 
   send_CAN_mcu_status();
@@ -212,22 +211,13 @@ void loop() {
   forward_CAN_mc_energy();
   forward_CAN_mc_setpoints_command();
   /* Finish restarting the inverter when timer expires */
-  if (inverter_restart) {
-    uint8_t reset_bit = !mc_setpoints_command[0].get_remove_error();
-    if (timer_restart_inverter.check()) {
-      inverter_restart = false;
-      reset_bit = 0;
-    }
-      for (uint8_t inv = 0; inv < 4; inv++) {
-        mc_setpoints_command[inv].set_remove_error(reset_bit);
-      }
-  }
-
+  reset_inverters();
+  
   /* handle state functionality */
   state_machine();
   software_shutdown();
 
- 
+
 }
 
 inline void forward_CAN_mc_status() {
@@ -626,9 +616,9 @@ void parse_telem_can_message(const CAN_message_t &RX_msg) {
   while (TELEM_CAN.read(rx_msg)) {
     switch (rx_msg.id) {
       case ID_BMS_TEMPERATURES:              bms_temperatures.load(rx_msg.buf);              break;
-      case ID_BMS_VOLTAGES:                  
+      case ID_BMS_VOLTAGES:
         bms_voltages.load(rx_msg.buf);
-        if(bms_voltages.get_low() < PACK_CHARGE_CRIT_THRESHOLD || bms_voltages.get_total() < PACK_CHARGE_CRIT_THRESHOLD) {   //dummy threshold              
+        if (bms_voltages.get_low() < PACK_CHARGE_CRIT_THRESHOLD || bms_voltages.get_total() < PACK_CHARGE_CRIT_THRESHOLD) {  //dummy threshold
           mcu_status.set_pack_charge_critical(true);
         } else mcu_status.set_pack_charge_critical(false);
         break;
@@ -660,7 +650,7 @@ void parse_telem_can_message(const CAN_message_t &RX_msg) {
         }
         if (dashboard_status.get_mc_cycle_btn()) {
           inverter_restart = true;
-          timer_restart_inverter.reset(); 
+          timer_reset_inverter.reset();
         }
         // eliminate all action buttons to not process twice
         dashboard_status.set_button_flags(0);
@@ -697,13 +687,12 @@ void parse_rear_inv_can_message(const CAN_message_t &RX_msg) {
   }
 }
 //FIXME
-inline void power_off_inverter() { 
-  inverter_restart = true;
-  timer_restart_inverter.reset();
+inline void power_off_inverter() {
+    digitalWrite(INVERTER_24V_EN, LOW);
   mcu_status.set_inverter_powered(false);
 
 #if DEBUG
-  Serial.println("INVERTER RESET");
+  Serial.println("INVERTER POWER OFF");
 #endif
 }
 
@@ -765,19 +754,13 @@ void set_state(MCU_STATE new_state) {
 
 
 inline void set_inverter_torques() {
-  int16_t torque1 = 0;
-  int16_t torque2 = 0;
-  int16_t torque3 = 0;
-  int16_t torque4 = 0;
-  int16_t speed1 = 0;
-  int16_t speed2 = 0;
-  int16_t speed3 = 0;
-  int16_t speed4 = 0;
+  int16_t torque_setpoint_array[4];
+  int16_t speed_setpoint_array[4];
 
   int calculated_torque = 0;
   const int max_torque_Nm = mcu_status.get_max_torque();
   const float max_torque = max_torque_Nm / 0.0098; // max possible value for torque multiplier, unit in 0.1% nominal torque
-  int accel1 = map(round(filtered_accel1_reading), START_ACCELERATOR_PEDAL_1, END_ACCELERATOR_PEDAL_1, 0, 1000);//inverter torque unit is in 0.1% of nominal torque (9.8Nm), max rated torque is 21Nm, so max possible output is 2142
+  int accel1 = map(round(filtered_accel1_reading), START_ACCELERATOR_PEDAL_1, END_ACCELERATOR_PEDAL_1, 0, 1000);
   int accel2 = map(round(filtered_accel2_reading), START_ACCELERATOR_PEDAL_2, END_ACCELERATOR_PEDAL_2, 0, 1000);
 
   int brake1 = map(round(filtered_brake1_reading), START_BRAKE_PEDAL_1, END_BRAKE_PEDAL_1, 0, 1000);
@@ -800,28 +783,28 @@ inline void set_inverter_torques() {
     avg_accel = 0;
   }
 
-  int torque_setpoint_array[4];
+
 
   if (mcu_status.get_launch_ctrl_active()) {
 
   } else {
     //currently in debug mode, no torque vectoring
 
-    torque_setpoint_array[0] = avg_accel -  avg_brake;
-    torque_setpoint_array[1] = avg_accel -  avg_brake;
-    torque_setpoint_array[2] = avg_accel -  avg_brake;
-    torque_setpoint_array[3] = avg_accel -  avg_brake;
+    torque_setpoint_array[0] = avg_accel -  avg_brake * 2;
+    torque_setpoint_array[1] = avg_accel -  avg_brake * 2;
+    torque_setpoint_array[2] = avg_accel -  avg_brake * 2;
+    torque_setpoint_array[3] = avg_accel -  avg_brake * 2;
 
 
   }
   for (int i = 0; i < sizeof(torque_setpoint_array); i++) {
     if (torque_setpoint_array[i] >= 0) {
-      mc_setpoints_command[i].set_speed_setpoint(20000);
+      mc_setpoints_command[i].set_speed_setpoint(MC_MAX_SPEED);
       mc_setpoints_command[i].set_pos_torque_limit(torque_setpoint_array[i]);
       mc_setpoints_command[i].set_neg_torque_limit(0);
     }
     else {
-      mc_setpoints_command[i].set_speed_setpoint(-20000);
+      mc_setpoints_command[i].set_speed_setpoint(-MC_MAX_SPEED);
       mc_setpoints_command[i].set_pos_torque_limit(0);
       mc_setpoints_command[i].set_neg_torque_limit(torque_setpoint_array[i]);
     }
@@ -835,10 +818,10 @@ inline void set_inverter_torques() {
 }
 /* Read 24_Sense_ECU which checks GLV voltage */
 inline void read_glv_value() {
-  if(timer_glv_read.check()) {
+  if (timer_glv_read.check()) {
     mcu_analog_readings.set_glv_battery_voltage(ADC3.read_adc(ADC_GLV_READ_CHANNEL));
   }
-  
+
 }
 
 /* Read pedal sensor values */
@@ -879,12 +862,12 @@ inline void read_steering_values() {
   if (timer_steering_read.check()) {
     mcu_analog_readings.set_steering_1(STEERING.read_steering());
     mcu_analog_readings.set_steering_2(ADC1.read_adc(ADC_STEERING_CHANNEL));
-    
+
   }
 }
 
 inline void clear_all_inverters_error() {
-  
+
 }
 
 bool check_all_inverters_system_ready() {
@@ -982,26 +965,19 @@ inline void set_all_inverters_driver_enable(bool input) {
   }
 }
 
-//inline void reset_inverters() {
-//  //check if error bit is high
-//  if(mc_status.get_error() && 
-//  //check if mc cycle button is high
-//  //if yes toggle reset bit
-//  //if error bit is low
-//  //check reset bit high
-//  if( && mc_set
-//  //drive reset low
-//  
-//   
-//    for (uint8_t inv = 0; inv < 4; inv++) {
-//    if (inverter_reset_timer.check()) {
-//        //toggle status error flag
-//        //.set(!getValue())
-//        //mc_setpoints_command[inv].set
-//    }
-//  }
-//  timer.reset();
-//}
+inline void reset_inverters() {
+  if (inverter_restart) {
+    uint8_t reset_bit = !mc_setpoints_command[0].get_remove_error();
+    if (timer_reset_inverter.check()) {
+      inverter_restart = false;
+      reset_bit = 0;
+    }
+    for (uint8_t inv = 0; inv < 4; inv++) {
+      mc_setpoints_command[inv].set_remove_error(reset_bit);
+    }
+  }
+}
+
 /* Read shutdown system values */
 inline void read_status_values() {
   /* Measure shutdown circuits' input */

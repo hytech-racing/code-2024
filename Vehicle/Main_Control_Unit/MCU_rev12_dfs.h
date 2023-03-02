@@ -6,6 +6,8 @@
 #define INVERTER_EN 9
 #define INVERTER_24V_EN 8
 
+#define MC_MAX_SPEED 20000
+
 #define BRAKE_LIGHT_CTRL 7
 #define BRAKE_THRESHOLD_MECH_BRAKE 5
 
