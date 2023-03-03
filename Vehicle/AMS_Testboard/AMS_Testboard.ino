@@ -578,10 +578,10 @@ void print_gpios() {
   }
   Serial.print("Max Board Temp: "); Serial.print(gpio_temps[max_board_temp_location[0]][max_board_temp_location[1]], 3); Serial.print("C \t ");
   Serial.print("Min Board Temp: "); Serial.print(gpio_temps[min_board_temp_location[0]][min_board_temp_location[1]], 3); Serial.print("C \t\t");
-  Serial.print("Avg Board Temp: "); Serial.print(total_board_temps / 4, 3); Serial.println("C \t");
+  Serial.print("Avg Board Temp: "); Serial.print(total_board_temps, 3); Serial.println("C \t");
   Serial.print("Max Thermistor Temp: "); Serial.print(gpio_temps[max_thermistor_location[0]][max_thermistor_location[1]], 3); Serial.print("C \t ");
   Serial.print("Min Thermistor Temp: "); Serial.print(gpio_temps[min_thermistor_location[0]][min_thermistor_location[1]], 3); Serial.print("C \t");
-  Serial.print("Avg Thermistor Temp: "); Serial.print(total_thermistor_temps / 32, 3); Serial.println("C \t");
+  Serial.print("Avg Thermistor Temp: "); Serial.print(total_thermistor_temps / 8, 3); Serial.println("C \t");
   Serial.print("Max Humidity: "); Serial.print(gpio_temps[max_humidity_location[0]][max_humidity_location[1]], 3); Serial.println("% \t ");
   Serial.println("------------------------------------------------------------------------------------------------------------------------------------------------------------");
   Serial.println("Raw Segment Temperatures");
@@ -592,7 +592,7 @@ void print_gpios() {
       Serial.print(gpio_temps[ic][cell], 3); Serial.print("C\t");
     }
     if ((ic % 2)) {
-      Serial.print("PCB Temps: "); Serial.print(gpio_temps[ic][4], 3); Serial.print("C\t"); // ????? refer to screenshot
+      Serial.print("PCB Temps: "); Serial.print(gpio_temps[ic][4], 3); Serial.print("C\t"); // are there one temp sensor per IC? Why only print one?
     } else {
       Serial.print("PCB Humidity: "); Serial.print(gpio_temps[ic][4], 3); Serial.print("%\t");
     }
@@ -600,7 +600,7 @@ void print_gpios() {
     Serial.println();
   }
   Serial.println("------------------------------------------------------------------------------------------------------------------------------------------------------------");
-  for (int i = 0; i < 19; i++) { // WHITE SPACE
+  for (int i = 0; i < 18; i++) { // WHITE SPACE
     Serial.println();
   }
 }
