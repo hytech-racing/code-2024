@@ -36,8 +36,8 @@ int readADC(int CS, int chan) {
 void readADCTemp(int CS) {
   digitalWrite(CS, LOW);
   SPI.beginTransaction(SPISettings(ADC_SPI_SPEED, MSBFIRST, SPI_MODE0));
-  SPI.transfer( ADC_RR_LOAD_CELL_CHANNEL << 3);
-  int hi1 = SPI.transfer( 0 ) ;
+  
+  int hi1 = SPI.transfer( ADC_RR_LOAD_CELL_CHANNEL << 3);
   int lo1 = SPI.transfer( 0 );
   int hilo1 = (hi1 << 8) | lo1;
 //
@@ -45,10 +45,10 @@ void readADCTemp(int CS) {
 //  int lo2 = SPI.transfer( 0 );
 //  int hilo2 = (hi2 << 8) | lo2;
 ////
-  SPI.transfer( ADC_FR_LOAD_CELL_CHANNEL << 3);
-  int hi3 = SPI.transfer( 0 ) ;
-  int lo3 = SPI.transfer( 0 );
-  int hilo3 = (hi3 << 8) | lo3;
+  
+//  int hi3 = SPI.transfer( ADC_FR_LOAD_CELL_CHANNEL << 3);
+//  int lo3 = SPI.transfer( 0 );
+//  int hilo3 = (hi3 << 8) | lo3;
   
   
   digitalWrite(CS, HIGH);
@@ -64,7 +64,7 @@ void readADCTemp(int CS) {
 //      Serial.print("FR_LOAD_CELL: ");
 //      Serial.println(FR);
       Serial.print(" RR_LOAD_CELL: ");
-      Serial.println(RR);
+      Serial.print(RR);
  
 }
 
