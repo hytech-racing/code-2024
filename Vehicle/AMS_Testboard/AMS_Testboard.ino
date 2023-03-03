@@ -1,6 +1,5 @@
 /* AMS TESTBOARD CODE
    The AMS Testboard code is used to debug the AMS and its control and communication with Analog Devices LTC6811-2 battery stack monitors, per the HyTech Racing HT06 Accumulator Design.
-   It also handles the AMS's CAN communications with the mainECU and energy meter and drives a watchdog timer on the ACU.
    See LTC6811_2.cpp and LTC6811-2 Datasheet provided by Analog Devices for more details.
    Author: Zekun Li, Liwei Sun, Ethan Su (not really lol)
    Version: 1.05
@@ -24,7 +23,7 @@
 #define MAX_VOLTAGE 42000          // Maxiumum allowable single cell voltage in units of 100μV
 #define MAX_TOTAL_VOLTAGE 882000  // Maximum allowable pack total voltage in units of 100μV
 #define MAX_THERMISTOR_VOLTAGE 26225   // Maximum allowable pack temperature corresponding to 60C in units 100μV
-#define BALANCE_ON true
+#define BALANCE_ON false // ORIGINAL: true
 #define BALANCE_COOL 6000             // Sets balancing duty cycle as 33.3%
 #define BALANCE_STANDARD 4000         // Sets balancing duty cycle as 50%
 #define BALANCE_HOT 3000             // Sets balancing duty cycle as 66%
@@ -63,11 +62,11 @@ float total_thermistor_temps = 0;
 Metro print_timer = Metro(500);
 Metro balance_timer(BALANCE_HOT);
 // IntervalTimer pulse_timer;    //AMS ok pulse timer
-bool next_pulse = true; //AMS ok pulse
-uint8_t can_voltage_ic = 0; //counter for the current IC data to send for detailed voltage CAN message
-uint8_t can_voltage_group = 0; // counter for current group data to send for detailed voltage CAN message
-uint8_t can_gpio_ic = 0; //counter for the current IC data to send for detailed voltage CAN message
-uint8_t can_gpio_group = 0; // counter for current group data to send for detailed voltage CAN message
+// bool next_pulse = true; //AMS ok pulse
+// uint8_t can_voltage_ic = 0; //counter for the current IC data to send for detailed voltage CAN message
+// uint8_t can_voltage_group = 0; // counter for current group data to send for detailed voltage CAN message
+// uint8_t can_gpio_ic = 0; //counter for the current IC data to send for detailed voltage CAN message
+// uint8_t can_gpio_group = 0; // counter for current group data to send for detailed voltage CAN message
 elapsedMillis can_bms_status_timer = 0;
 elapsedMillis can_bms_detailed_voltages_timer = 2;
 elapsedMillis can_bms_detailed_temps_timer = 4;
@@ -86,67 +85,67 @@ bool ov_fault_state = false;      // enter fault state if 20 successive faults o
 bool pack_ov_fault_state = false; // enter fault state if 20 successive faults occur
 
 // LTC6811_2 OBJECT DECLARATIONS
-LTC6811_2 ic[TOTAL_IC]; // ORIGINAL: 8
+LTC6811_2 ic[TOTAL_IC];
 
 // CAN OBJECT AND VARIABLE DECLARATIONS
-FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> CAN;
-CAN_message_t msg;
+// FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> CAN;
+// CAN_message_t msg;
 
 // BMS CAN MESSAGE AND STATE MACHINE OBJECT DECLARATIONS
-BMS_status bms_status; //Message class that contains flags for AMS errors as well as a variable encoding the current state of the AMS (charging vs. discharging)
-BMS_voltages bms_voltages; //Message class containing general voltage information
-BMS_temperatures bms_temperatures; //Message class containing general temperature information
-BMS_onboard_temperatures bms_onboard_temperatures; //Message class containing general AMS temperature information
-BMS_detailed_voltages bms_detailed_voltages; //Message class containing detailed voltage information
-BMS_detailed_temperatures bms_detailed_temperatures; // message class containing detailed temperature information
+// BMS_status bms_status; //Message class that contains flags for AMS errors as well as a variable encoding the current state of the AMS (charging vs. discharging)
+// BMS_voltages bms_voltages; //Message class containing general voltage information
+// BMS_temperatures bms_temperatures; //Message class containing general temperature information
+// BMS_onboard_temperatures bms_onboard_temperatures; //Message class containing general AMS temperature information
+// BMS_detailed_voltages bms_detailed_voltages; //Message class containing detailed voltage information
+// BMS_detailed_temperatures bms_detailed_temperatures; // message class containing detailed temperature information
 
-CCU_status ccu_status;
+// CCU_status ccu_status;
 
 void setup() {
   // put your setup code here, to run once:
   pinMode(6, OUTPUT);
   pinMode(5, OUTPUT);
-  digitalWrite(6, HIGH); //write Teensy_OK pin high
-  pulse_timer.begin(ams_ok_pulse, 50000); //timer to pulse pin 5 every 50 milliseconds
+  digitalWrite(6, HIGH); // write Teensy_OK pin high
+  // pulse_timer.begin(ams_ok_pulse, 50000); // timer to pulse pin 5 every 50 milliseconds
   Serial.begin(115200);
   SPI.begin();
-  CAN.begin();
-  CAN.setBaudRate(500000);
+  // CAN.begin();
+  // CAN.setBaudRate(500000);
 
-  for (int i = 0; i < 64; i++) { // Fill all filter slots with Charger Control Unit message filter
-    CAN.setMBFilter(static_cast<FLEXCAN_MAILBOX>(i), ID_CCU_STATUS); // Set CAN mailbox filtering to only watch for charger controller status CAN messages
-  }
+  // for (int i = 0; i < 64; i++) { // Fill all filter slots with Charger Control Unit message filter
+  //   CAN.setMBFilter(static_cast<FLEXCAN_MAILBOX>(i), ID_CCU_STATUS); // Set CAN mailbox filtering to only watch for charger controller status CAN messages
+  // }
   // initialize the PEC table
   LTC6811_2::init_PEC15_Table();
   // add 2 instances of LTC6811_2 to the object array, each addressed appropriately
-  for (int i = 0; i < TOTAL_IC; i++) { // ORIGINAL: i < 8
+  for (int i = 0; i < TOTAL_IC; i++) {
     ic[i] = LTC6811_2(i);
   }
-  bms_status.set_state(BMS_STATE_DISCHARGING);
-  parse_CAN_CCU_status();
-
+  // bms_status.set_state(BMS_STATE_DISCHARGING);
+  // parse_CAN_CCU_status();
 }
+
 void loop() {
   // put your main code here, to run repeatedly:
-  parse_CAN_CCU_status();
-  if (charging_timer.check() && bms_status.get_state() == BMS_STATE_CHARGING) {
-    bms_status.set_state(BMS_STATE_DISCHARGING);
-  }
+  // parse_CAN_CCU_status();
+  // if (charging_timer.check() && bms_status.get_state() == BMS_STATE_CHARGING) {
+  //   bms_status.set_state(BMS_STATE_DISCHARGING);
+  // }
   read_voltages();
   read_gpio();
-  write_CAN_messages();
-  if (print_timer.check()) {
-    print_voltages();
-    print_gpios();
-    print_timer.reset();
-  }
-  if (bms_status.get_state() == BMS_STATE_CHARGING && BALANCE_ON && ccu_status.get_charger_enabled()  == true && gpio_temps[max_board_temp_location[0]][max_board_temp_location[1]] <= 80) {
+  // write_CAN_messages();
+  if (/* bms_status.get_state() == BMS_STATE_CHARGING && */ BALANCE_ON && /* ccu_status.get_charger_enabled() == true &&*/ gpio_temps[max_board_temp_location[0]][max_board_temp_location[1]] <= 80) {
     balance_cells();
     currently_balancing = true;
   }
   else {
     currently_balancing = false;
   }
+  if (print_timer.check()) {
+    print_voltages();
+    print_gpios();
+    print_timer.reset();
+  } 
 }
 
 // Check whether all LTC6811-2's are at the same state and ready to be read
@@ -164,7 +163,7 @@ bool check_ics(int state) {
 void read_voltages() {
   if (check_ics(0)) {
     Reg_Group_Config configuration = Reg_Group_Config((uint8_t) 0x1F, false, false, vuv, vov, (uint16_t) 0x0, (uint8_t) 0x1); // base configuration for the configuration register group
-    for (int i = 0; i < TOTAL_IC; i++) { // ORIGINAL: 8
+    for (int i = 0; i < TOTAL_IC; i++) {
       ic[i].wakeup();
       ic[i].wrcfga(configuration);
       ic[i].adcv(static_cast<CELL_SELECT>(0));
@@ -174,7 +173,7 @@ void read_voltages() {
     total_voltage = 0;
     max_voltage = 0;
     min_voltage = 65535;
-    for (int i = 0; i < TOTAL_IC; i++) { // ORIGINAL: 8
+    for (int i = 0; i < TOTAL_IC; i++) {
       ic[i].wakeup();
       Reg_Group_Cell_A reg_group_a = ic[i].rdcva();
       Reg_Group_Cell_B reg_group_b = ic[i].rdcvb();
@@ -225,12 +224,12 @@ void voltage_fault_check() {
   if (uv_fault_counter > MAX_SUCCESSIVE_FAULTS) {
     uv_fault_state = true;
   }
-  if (uv_fault_state) {
-    bms_status.set_undervoltage(true);
-  }
-  else {
-    bms_status.set_undervoltage(false);
-  }
+  //  if (uv_fault_state) {
+  //    bms_status.set_undervoltage(true);
+  //  }
+  //  else {
+  //    bms_status.set_undervoltage(false);
+  //  }
   // detect any ov fault conditions, set appropriate error flags, and print relevant message to console
   if (max_voltage > MAX_VOLTAGE) {
     ov_fault_counter++;
@@ -240,11 +239,11 @@ void voltage_fault_check() {
   if (ov_fault_counter > MAX_SUCCESSIVE_FAULTS) {
     ov_fault_state = true;
   }
-  if (ov_fault_state) {
-    bms_status.set_overvoltage(true);
-  } else {
-    bms_status.set_overvoltage(false);
-  }
+  //  if (ov_fault_state) {
+  //    bms_status.set_overvoltage(true);
+  //  } else {
+  //    bms_status.set_overvoltage(false);
+  //  }
   // detect any pack ov fault conditions, set appropriate error flags, and print relevant message to console
   if (total_voltage > MAX_TOTAL_VOLTAGE) {
     pack_ov_fault_counter++;
@@ -254,18 +253,18 @@ void voltage_fault_check() {
   if (pack_ov_fault_counter > MAX_SUCCESSIVE_FAULTS) {
     pack_ov_fault_state = true;
   }
-  if (pack_ov_fault_state) {
-    bms_status.set_total_voltage_high(true);
-  } else {
-    bms_status.set_total_voltage_high(false);
-  }
+  //  if (pack_ov_fault_state) {
+  //    bms_status.set_total_voltage_high(true);
+  //  } else {
+  //    bms_status.set_total_voltage_high(false);
+  //  }
 }
 
 // Read GPIO registers from LTC6811-2; Process temperature and humidity data from relevant GPIO registers
 void read_gpio() {
   if (check_ics(2)) {
     Reg_Group_Config configuration = Reg_Group_Config((uint8_t) 0x1F, false, false, vuv, vov, (uint16_t) 0x0, (uint8_t) 0x1); // base configuration for the configuration register group
-    for (int i = 0; i < TOTAL_IC; i++) { // ORIGINAL: 8
+    for (int i = 0; i < TOTAL_IC; i++) {
       ic[i].wakeup();
       ic[i].wrcfga(configuration);
       ic[i].adax(static_cast<GPIO_SELECT>(0));
@@ -279,7 +278,7 @@ void read_gpio() {
     min_board_temp_voltage = 65535;
     total_board_temps = 0;
     total_thermistor_temps = 0;
-    for (int i = 0; i < TOTAL_IC; i++) { // ORIGINAL 8:
+    for (int i = 0; i < TOTAL_IC; i++) {
       ic[i].wakeup();
       Reg_Group_Aux_A reg_group_a = ic[i].rdauxa();
       Reg_Group_Aux_B reg_group_b = ic[i].rdauxb();
@@ -335,7 +334,6 @@ void read_gpio() {
   }
 }
 
-
 void temp_fault_check() {
   if (max_thermistor_voltage > MAX_THERMISTOR_VOLTAGE) {
     overtemp_fault_counter++;
@@ -345,11 +343,11 @@ void temp_fault_check() {
   if (overtemp_fault_counter > MAX_SUCCESSIVE_FAULTS) {
     overtemp_fault_state = true;
   }
-  if (overtemp_fault_state) {
-    bms_status.set_discharge_overtemp(true);
-  } else {
-    bms_status.set_discharge_overtemp(false);
-  }
+  //  if (overtemp_fault_state) {
+  //    bms_status.set_discharge_overtemp(true);
+  //  } else {
+  //    bms_status.set_discharge_overtemp(false);
+  //  }
 }
 
 // Cell Balancing function. NOTE: Must call read_voltages() in order to obtain balancing voltage;
@@ -365,7 +363,7 @@ void balance_cells() {
       return;
     }
     Serial.print("Balancing voltage: "); Serial.println(min_voltage / 10000.0, 4);
-    for (uint16_t i = 0; i < TOTAL_IC; i++) { // ORIGINAL: 8
+    for (uint16_t i = 0; i < TOTAL_IC; i++) {
       uint16_t cell_balance_setting = 0x0;
       // determine which cells of the IC need balancing
       uint8_t cell_count;
@@ -402,128 +400,128 @@ void balance_cells() {
 }
 
 // parse incoming CAN messages for CCU status message and changes the state of the BMS in software
-void parse_CAN_CCU_status() {
-  while (CAN.read(msg)) {
-    if (msg.id == ID_CCU_STATUS) {
-      ccu_status.load(msg.buf);
-      charging_timer.reset();
-      if (bms_status.get_state() == BMS_STATE_DISCHARGING) {
-        bms_status.set_state(BMS_STATE_CHARGING);
-      }
-    }
-  }
-}
-
+// void parse_CAN_CCU_status() {
+//   while (CAN.read(msg)) {
+//     if (msg.id == ID_CCU_STATUS) {
+//       ccu_status.load(msg.buf);
+//       charging_timer.reset();
+//       if (bms_status.get_state() == BMS_STATE_DISCHARGING) {
+//         bms_status.set_state(BMS_STATE_CHARGING);
+//       }
+//     }
+//   }
+// }
+  
 //CAN message write handler
-void write_CAN_messages() {
-  // set voltage message values
-  bms_voltages.set_low(min_voltage);
-  bms_voltages.set_high(max_voltage);
-  bms_voltages.set_average(total_voltage / 84);
-  bms_voltages.set_total(total_voltage / 100);
-  // set temperature message values
-  bms_temperatures.set_low_temperature(gpio_temps[min_thermistor_location[0]][min_thermistor_location[1]] * 100);
-  bms_temperatures.set_high_temperature(gpio_temps[max_thermistor_location[0]][max_thermistor_location[1]] * 100);
-  bms_temperatures.set_average_temperature(total_thermistor_temps * 100 / 32);
-  // set onboard temperature message values
-  bms_onboard_temperatures.set_low_temperature(gpio_temps[min_board_temp_location[0]][min_board_temp_location[1]] * 100);
-  bms_onboard_temperatures.set_high_temperature(gpio_temps[max_board_temp_location[0]][max_board_temp_location[1]] * 100);
-  bms_onboard_temperatures.set_average_temperature(total_board_temps * 100 / 4); // ???? / 4
+//void write_CAN_messages() {
+//  // set voltage message values
+//  bms_voltages.set_low(min_voltage);
+//  bms_voltages.set_high(max_voltage);
+//  bms_voltages.set_average(total_voltage / 84);
+//  bms_voltages.set_total(total_voltage / 100);
+//  // set temperature message values
+//  bms_temperatures.set_low_temperature(gpio_temps[min_thermistor_location[0]][min_thermistor_location[1]] * 100);
+//  bms_temperatures.set_high_temperature(gpio_temps[max_thermistor_location[0]][max_thermistor_location[1]] * 100);
+//  bms_temperatures.set_average_temperature(total_thermistor_temps * 100 / 32);
+//  // set onboard temperature message values
+//  bms_onboard_temperatures.set_low_temperature(gpio_temps[min_board_temp_location[0]][min_board_temp_location[1]] * 100);
+//  bms_onboard_temperatures.set_high_temperature(gpio_temps[max_board_temp_location[0]][max_board_temp_location[1]] * 100);
+//  bms_onboard_temperatures.set_average_temperature(total_board_temps * 100 / 4); // ???? / 4
 
-  //Write BMS_status message
-  if (can_bms_status_timer > 100) {
-    msg.id = ID_BMS_STATUS;
-    msg.len = sizeof(bms_status);
-    bms_status.write(msg.buf);
-    CAN.write(msg);
-    can_bms_status_timer = 0;
-  }
-  // Write BMS_voltages message
-  if (can_bms_voltages_timer > 5) {
-    msg.id = ID_BMS_VOLTAGES;
-    msg.len = sizeof(bms_voltages);
-    bms_voltages.write(msg.buf);
-    CAN.write(msg);
-    can_bms_voltages_timer = 0;
-  }
-  // Write BMS_temperatures message
-  if (can_bms_temps_timer > 25) {
-    msg.id = ID_BMS_TEMPERATURES;
-    msg.len = sizeof(bms_temperatures);
-    bms_temperatures.write(msg.buf);
-    CAN.write(msg);
-    can_bms_temps_timer = 0;
-  }
-  // Write BMS_onboard_temperatures message
-  if (can_bms_onboard_temps_timer > 50) {
-    msg.id = ID_BMS_ONBOARD_TEMPERATURES;
-    msg.len = sizeof(bms_onboard_temperatures);
-    bms_onboard_temperatures.write(msg.buf);
-    CAN.write(msg);
-    can_bms_onboard_temps_timer = 0;
-  }
-  // write detailed voltages for one IC group
-  if (can_bms_detailed_voltages_timer > 10) {
-    write_CAN_detailed_voltages();
-    can_bms_detailed_voltages_timer = 0;
-  }
-  if (can_bms_detailed_temps_timer > 40) {
-    write_CAN_detailed_temps();
-    can_bms_detailed_temps_timer = 0;
-  }
-}
+    //Write BMS_status message
+//  if (can_bms_status_timer > 100) {
+//    msg.id = ID_BMS_STATUS;
+//    msg.len = sizeof(bms_status);
+//    bms_status.write(msg.buf);
+//    CAN.write(msg);
+//    can_bms_status_timer = 0;
+//  }
+//  // Write BMS_voltages message
+//  if (can_bms_voltages_timer > 5) {
+//    msg.id = ID_BMS_VOLTAGES;
+//    msg.len = sizeof(bms_voltages);
+//    bms_voltages.write(msg.buf);
+//    CAN.write(msg);
+//    can_bms_voltages_timer = 0;
+//  }
+//  // Write BMS_temperatures message
+//  if (can_bms_temps_timer > 25) {
+//    msg.id = ID_BMS_TEMPERATURES;
+//    msg.len = sizeof(bms_temperatures);
+//    bms_temperatures.write(msg.buf);
+//    CAN.write(msg);
+//    can_bms_temps_timer = 0;
+//  }
+//  // Write BMS_onboard_temperatures message
+//  if (can_bms_onboard_temps_timer > 50) {
+//    msg.id = ID_BMS_ONBOARD_TEMPERATURES;
+//    msg.len = sizeof(bms_onboard_temperatures);
+//    bms_onboard_temperatures.write(msg.buf);
+//    CAN.write(msg);
+//    can_bms_onboard_temps_timer = 0;
+//  }
+//  // write detailed voltages for one IC group
+//  if (can_bms_detailed_voltages_timer > 10) {
+//    write_CAN_detailed_voltages();
+//    can_bms_detailed_voltages_timer = 0;
+//  }
+//  if (can_bms_detailed_temps_timer > 40) {
+//    write_CAN_detailed_temps();
+//    can_bms_detailed_temps_timer = 0;
+//  }
+//}
 
 //detailed voltages CAN message handler; writes the CAN message for one ic group at a time
-void write_CAN_detailed_voltages() {
-  if (can_voltage_group > 9) {
-    can_voltage_ic++;
-    can_voltage_group = 0;
-  }
-  if (can_voltage_ic > 7) {
-    can_voltage_ic = 0;
-    can_voltage_group = 0;
-  }
-  if (!(can_voltage_ic % 2 && can_voltage_group == 9)) {
-    bms_detailed_voltages.set_ic_id(can_voltage_ic);
-    bms_detailed_voltages.set_group_id(can_voltage_group / 3);
-    bms_detailed_voltages.set_voltage_0(cell_voltages[can_voltage_ic][can_voltage_group]);
-    bms_detailed_voltages.set_voltage_1(cell_voltages[can_voltage_ic][can_voltage_group + 1]);
-    bms_detailed_voltages.set_voltage_2(cell_voltages[can_voltage_ic][can_voltage_group + 2]);
-    msg.id = ID_BMS_DETAILED_VOLTAGES;
-    msg.len = sizeof(bms_detailed_voltages);
-    bms_detailed_voltages.write(msg.buf);
-    CAN.write(msg);
-  }
-  can_voltage_group += 3;
-}
+//void write_CAN_detailed_voltages() {
+//  if (can_voltage_group > 9) {
+//    can_voltage_ic++;
+//    can_voltage_group = 0;
+//  }
+//  if (can_voltage_ic > 7) {
+//    can_voltage_ic = 0;
+//    can_voltage_group = 0;
+//  }
+//  if (!(can_voltage_ic % 2 && can_voltage_group == 9)) {
+//    bms_detailed_voltages.set_ic_id(can_voltage_ic);
+//    bms_detailed_voltages.set_group_id(can_voltage_group / 3);
+//    bms_detailed_voltages.set_voltage_0(cell_voltages[can_voltage_ic][can_voltage_group]);
+//    bms_detailed_voltages.set_voltage_1(cell_voltages[can_voltage_ic][can_voltage_group + 1]);
+//    bms_detailed_voltages.set_voltage_2(cell_voltages[can_voltage_ic][can_voltage_group + 2]);
+//    msg.id = ID_BMS_DETAILED_VOLTAGES;
+//    msg.len = sizeof(bms_detailed_voltages);
+//    bms_detailed_voltages.write(msg.buf);
+//    CAN.write(msg);
+//  }
+//  can_voltage_group += 3;
+//}
 
-void write_CAN_detailed_temps() {
-  if (can_gpio_group > 3) {
-    can_gpio_ic++;
-    can_gpio_group = 0;
-  }
-  if (can_gpio_ic > 7) {
-    can_gpio_ic = 0;
-  }
-  bms_detailed_temperatures.set_ic_id(can_gpio_ic);
-  bms_detailed_temperatures.set_group_id(can_gpio_group / 3);
-  bms_detailed_temperatures.set_temperature_0((uint16_t) (gpio_temps[can_gpio_ic][can_gpio_group] * 100));
-  bms_detailed_temperatures.set_temperature_1((uint16_t) (gpio_temps[can_gpio_ic][can_gpio_group + 1] * 100));
-  bms_detailed_temperatures.set_temperature_2((uint16_t) (gpio_temps[can_gpio_ic][can_gpio_group + 2] * 100));
-  msg.id = ID_BMS_DETAILED_TEMPERATURES;
-  msg.len = sizeof(bms_detailed_temperatures);
-  bms_detailed_temperatures.write(msg.buf);
-  CAN.write(msg);
-  can_gpio_group += 3;
-}
+//void write_CAN_detailed_temps() {
+//  if (can_gpio_group > 3) {
+//    can_gpio_ic++;
+//    can_gpio_group = 0;
+//  }
+//  if (can_gpio_ic > 7) {
+//    can_gpio_ic = 0;
+//  }
+//  bms_detailed_temperatures.set_ic_id(can_gpio_ic);
+//  bms_detailed_temperatures.set_group_id(can_gpio_group / 3);
+//  bms_detailed_temperatures.set_temperature_0((uint16_t) (gpio_temps[can_gpio_ic][can_gpio_group] * 100));
+//  bms_detailed_temperatures.set_temperature_1((uint16_t) (gpio_temps[can_gpio_ic][can_gpio_group + 1] * 100));
+//  bms_detailed_temperatures.set_temperature_2((uint16_t) (gpio_temps[can_gpio_ic][can_gpio_group + 2] * 100));
+//  msg.id = ID_BMS_DETAILED_TEMPERATURES;
+//  msg.len = sizeof(bms_detailed_temperatures);
+//  bms_detailed_temperatures.write(msg.buf);
+//  CAN.write(msg);
+//  can_gpio_group += 3;
+//}
 
 // Pulses pin 5 to keep watchdog circuit active
-void ams_ok_pulse() {
-  if (!overtemp_fault_state && !uv_fault_state && !ov_fault_state  && !pack_ov_fault_state) {
-    next_pulse = !next_pulse;
-  }
-  digitalWrite(5, (next_pulse ? HIGH : LOW));
-}
+// void ams_ok_pulse() {
+//  if (!overtemp_fault_state && !uv_fault_state && !ov_fault_state  && !pack_ov_fault_state) {
+//    next_pulse = !next_pulse;
+//  }
+//  digitalWrite(5, (next_pulse ? HIGH : LOW));
+//}
 
 // Data print functions
 // Print cell voltages
@@ -540,19 +538,19 @@ void print_voltages() {
   }
 
   Serial.print("Total pack voltage: "); Serial.print(total_voltage / 10000.0, 4); Serial.print("V\t"); Serial.print("Max voltage differential: "); Serial.print(max_voltage / 10000.0 - min_voltage / 10000.0, 4); Serial.println("V");
-  Serial.print("AMS status: ");
-  if (bms_status.get_state() == BMS_STATE_DISCHARGING) {
-    Serial.println("Discharging");
-  } else if (bms_status.get_state() == BMS_STATE_CHARGING) {
-    Serial.println("Charging");
-  }
+  // Serial.print("AMS status: ");
+  //  if (bms_status.get_state() == BMS_STATE_DISCHARGING) {
+  //    Serial.println("Discharging");
+  //  } else if (bms_status.get_state() == BMS_STATE_CHARGING) {
+  //    Serial.println("Charging");
+  //  }
   Serial.println("------------------------------------------------------------------------------------------------------------------------------------------------------------");
   Serial.print("Max Voltage: "); Serial.print(cell_voltages[max_voltage_location[0]][max_voltage_location[1]] / 10000.0, 4); Serial.print("V \t ");
   Serial.print("Min Voltage: "); Serial.print(cell_voltages[min_voltage_location[0]][min_voltage_location[1]] / 10000.0, 4); Serial.print("V \t ");
   Serial.print("Avg Voltage: "); Serial.print(total_voltage / 210000.0, 4); Serial.println("V \t "); // ORIGINAL: 840000
   Serial.println("------------------------------------------------------------------------------------------------------------------------------------------------------------");
   Serial.println("Raw Cell Voltages\t\t\t\t\t\t\t\t\t\t\t\t\tBalancing Status");
-  Serial.print("\tC0\tC1\tC2\tC3\tC4\tC5\tC6\tC7\tC8\tC9\tC10\tC11\t\t");  
+  Serial.print("\tC0\tC1\tC2\tC3\tC4\tC5\tC6\tC7\tC8\tC9\tC10\tC11\t\t");
   if (currently_balancing) {
     Serial.println("\tC0\tC1\tC2\tC3\tC4\tC5\tC6\tC7\tC8\tC9\tC10\tC11");
   }
@@ -578,9 +576,9 @@ void print_gpios() {
   if (max_thermistor_voltage > MAX_THERMISTOR_VOLTAGE) {
     Serial.print("OVERTEMP FAULT: "); Serial.print("\tConsecutive fault #: "); Serial.println(overtemp_fault_counter);
   }
-  Serial.print("Max Board Temp: "); Serial.print(gpio_temps[max_board_temp_location[0]][max_board_temp_location[1]], 3); Serial.print("C \t "); // ?????? what does board mean?
+  Serial.print("Max Board Temp: "); Serial.print(gpio_temps[max_board_temp_location[0]][max_board_temp_location[1]], 3); Serial.print("C \t ");
   Serial.print("Min Board Temp: "); Serial.print(gpio_temps[min_board_temp_location[0]][min_board_temp_location[1]], 3); Serial.print("C \t\t");
-  Serial.print("Avg Board Temp: "); Serial.print(total_board_temps / 4, 3); Serial.println("C \t"); 
+  Serial.print("Avg Board Temp: "); Serial.print(total_board_temps / 4, 3); Serial.println("C \t");
   Serial.print("Max Thermistor Temp: "); Serial.print(gpio_temps[max_thermistor_location[0]][max_thermistor_location[1]], 3); Serial.print("C \t ");
   Serial.print("Min Thermistor Temp: "); Serial.print(gpio_temps[min_thermistor_location[0]][min_thermistor_location[1]], 3); Serial.print("C \t");
   Serial.print("Avg Thermistor Temp: "); Serial.print(total_thermistor_temps / 32, 3); Serial.println("C \t");
@@ -602,7 +600,7 @@ void print_gpios() {
     Serial.println();
   }
   Serial.println("------------------------------------------------------------------------------------------------------------------------------------------------------------");
-  for (int i = 0; i < 17; i++) { // WHITE SPACE
+  for (int i = 0; i < 19; i++) { // WHITE SPACE
     Serial.println();
   }
 }
