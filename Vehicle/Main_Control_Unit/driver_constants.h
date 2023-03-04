@@ -3,7 +3,7 @@
 #include "drivers.h"
 
 #ifdef DRIVER
-    #if DRIVER == DAVID
+    #if DRIVER == DEFAULT_DRIVER
         #define BRAKE_ACTIVE 800                // Threshold for brake pedal active  
 
         #define MIN_ACCELERATOR_PEDAL_1 1280    // Low accelerator implausibility threshold

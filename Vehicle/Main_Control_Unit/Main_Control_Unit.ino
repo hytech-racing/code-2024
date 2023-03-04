@@ -23,10 +23,10 @@
 
 // constants to define for different operation
 
-#define DRIVER DAVID
-#define TORQUE_1 15
-#define TORQUE_2 18
-#define TORQUE_3 21
+#define DRIVER DEFAULT_DRIVER
+#define TORQUE_1 70
+#define TORQUE_2 85
+#define TORQUE_3 100
 
 
 // set to true or false for debugging
@@ -618,7 +618,7 @@ void parse_telem_can_message(const CAN_message_t &RX_msg) {
       case ID_BMS_TEMPERATURES:              bms_temperatures.load(rx_msg.buf);              break;
       case ID_BMS_VOLTAGES:
         bms_voltages.load(rx_msg.buf);
-        if (bms_voltages.get_low() < PACK_CHARGE_CRIT_THRESHOLD || bms_voltages.get_total() < PACK_CHARGE_CRIT_THRESHOLD) {  //dummy threshold
+        if (bms_voltages.get_low() < PACK_CHARGE_CRIT_LOWEST_CELL_THRESHOLD || bms_voltages.get_total() < PACK_CHARGE_CRIT_TOTAL_THRESHOLD) { 
           mcu_status.set_pack_charge_critical(true);
         } else mcu_status.set_pack_charge_critical(false);
         break;
@@ -819,7 +819,7 @@ inline void set_inverter_torques() {
 /* Read 24_Sense_ECU which checks GLV voltage */
 inline void read_glv_value() {
   if (timer_glv_read.check()) {
-    mcu_analog_readings.set_glv_battery_voltage(ADC3.read_adc(ADC_GLV_READ_CHANNEL));
+    mcu_analog_readings.set_glv_battery_voltage(ADC3.read_channel(ADC_GLV_READ_CHANNEL));
   }
 
 }
@@ -827,10 +827,10 @@ inline void read_glv_value() {
 /* Read pedal sensor values */
 inline void read_pedal_values() { //add timer
   /* Filter ADC readings */
-  filtered_accel1_reading = ALPHA * filtered_accel1_reading + (1 - ALPHA) * ADC2.read_adc(ADC_ACCEL_1_CHANNEL);
-  filtered_accel2_reading = ALPHA * filtered_accel2_reading + (1 - ALPHA) * ADC2.read_adc(ADC_ACCEL_2_CHANNEL);
-  filtered_brake1_reading = ALPHA * filtered_brake1_reading + (1 - ALPHA) * ADC2.read_adc(ADC_BRAKE_1_CHANNEL);
-  filtered_brake2_reading = ALPHA * filtered_brake2_reading + (1 - ALPHA) * ADC2.read_adc(ADC_BRAKE_2_CHANNEL);
+  filtered_accel1_reading = ALPHA * filtered_accel1_reading + (1 - ALPHA) * ADC2.read_channel(ADC_ACCEL_1_CHANNEL);
+  filtered_accel2_reading = ALPHA * filtered_accel2_reading + (1 - ALPHA) * ADC2.read_channel(ADC_ACCEL_2_CHANNEL);
+  filtered_brake1_reading = ALPHA * filtered_brake1_reading + (1 - ALPHA) * ADC2.read_channel(ADC_BRAKE_1_CHANNEL);
+  filtered_brake2_reading = ALPHA * filtered_brake2_reading + (1 - ALPHA) * ADC2.read_channel(ADC_BRAKE_2_CHANNEL);
 
 #if DEBUG
   // Serial.print("ACCEL 1: "); Serial.println(filtered_accel1_reading);
@@ -851,17 +851,17 @@ inline void read_load_cell_values() {
   if (timer_load_cells_read.check()) {
     //load cell is 2mV/V, 10V excitation, 1000lb max
     //goes through 37.5x gain of INA823, 21x gain of OPA991, +0.314V offset, 0.1912x reduction on ECU and MAX7400 before reaching ADC
-    mcu_load_cells.set_FL_load_cell((uint16_t) (((ADC2.read_adc(ADC_FL_LOAD_CELL_CHANNEL) / 0.1912) - 0.314) / 787.5 * 50));
-    mcu_load_cells.set_FR_load_cell((uint16_t) (((ADC2.read_adc(ADC_FR_LOAD_CELL_CHANNEL) / 0.1912) - 0.314) / 787.5 * 50));
-    mcu_load_cells.set_RL_load_cell((uint16_t) (((ADC1.read_adc(ADC_RL_LOAD_CELL_CHANNEL) / 0.1912) - 0.314) / 787.5 * 50));
-    mcu_load_cells.set_RR_load_cell((uint16_t) (((ADC2.read_adc(ADC_RR_LOAD_CELL_CHANNEL) / 0.1912) - 0.314) / 787.5 * 50));
+    mcu_load_cells.set_FL_load_cell((uint16_t) (((ADC2.read_channel(ADC_FL_LOAD_CELL_CHANNEL) / 0.1912) - 0.314) / 787.5 * 50));
+    mcu_load_cells.set_FR_load_cell((uint16_t) (((ADC2.read_channel(ADC_FR_LOAD_CELL_CHANNEL) / 0.1912) - 0.314) / 787.5 * 50));
+    mcu_load_cells.set_RL_load_cell((uint16_t) (((ADC1.read_channel(ADC_RL_LOAD_CELL_CHANNEL) / 0.1912) - 0.314) / 787.5 * 50));
+    mcu_load_cells.set_RR_load_cell((uint16_t) (((ADC2.read_channel(ADC_RR_LOAD_CELL_CHANNEL) / 0.1912) - 0.314) / 787.5 * 50));
   }
 }
 
 inline void read_steering_values() {
   if (timer_steering_read.check()) {
     mcu_analog_readings.set_steering_1(STEERING.read_steering());
-    mcu_analog_readings.set_steering_2(ADC1.read_adc(ADC_STEERING_CHANNEL));
+    mcu_analog_readings.set_steering_2(ADC1.read_channel(ADC_STEERING_CHANNEL));
 
   }
 }
@@ -1020,4 +1020,8 @@ inline void send_CAN_IMU_gyroscope() {
     msg.len = sizeof(imu_gyroscope);
     TELEM_CAN.write(msg);
   }
+}
+
+inline void read_all_adcs(){
+  
 }

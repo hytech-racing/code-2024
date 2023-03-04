@@ -80,7 +80,7 @@
 
 
 #define ALPHA 0.9772                     // parameter for the sowftware filter used on ADC pedal channels
-#define ADC_SPI_SPEED 1800000            // max SPI clokc frequency for MCP3208 is 2MHz in ideal conditions
+#define ADC_SPI_SPEED 3000000            
 #define TORQUE_ADJUSTMENT_VOLTAGE 3.5242 
 
 #define LOAD_CELL1_OFFSET 0
@@ -96,4 +96,5 @@
 #define DASH_HEARTBEAT_TIMEOUT 1000
 #define TIMER_SOFTWARE_ENABLE 100
 
-#define PACK_CHARGE_CRIT_THRESHOLD 24
+#define PACK_CHARGE_CRIT_TOTAL_THRESHOLD 420
+#define PACK_CHARGE_CRIT_LOWEST_CELL_THRESHOLD 35000

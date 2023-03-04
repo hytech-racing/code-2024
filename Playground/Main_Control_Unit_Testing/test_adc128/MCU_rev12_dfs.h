@@ -78,7 +78,7 @@
 
 
 #define ALPHA 0.9772                     // parameter for the sowftware filter used on ADC pedal channels
-#define ADC_SPI_SPEED 1800000            // max SPI clokc frequency for MCP3208 is 2MHz in ideal conditions
+#define ADC_SPI_SPEED 1000000            // max SPI clokc frequency for MCP3208 is 2MHz in ideal conditions
 #define TORQUE_ADJUSTMENT_VOLTAGE 3.5242 
 
 #define LOAD_CELL1_OFFSET 0
