@@ -97,13 +97,6 @@ Metro timer_watchdog_timer = Metro(500);
 // until a CAN message comes in which resets the timer and the interval
 Metro timer_bms_heartbeat = Metro(0, 1);
 
-/*
-   Variables to store filtered values from ADC channels
-*/
-float filtered_accel1_reading{};
-float filtered_accel2_reading{};
-float filtered_brake1_reading{};
-float filtered_brake2_reading{};
 
 bool imd_faulting = false;
 bool inverter_restart = false; // True when restarting the inverter
@@ -352,13 +345,6 @@ inline void send_CAN_mcu_status() {
 
 inline void send_CAN_mcu_pedal_readings() {
   if (timer_CAN_mcu_pedal_readings_send.check()) {
-    // Update the pedal readings to send over CAN
-    mcu_pedal_readings.set_accelerator_pedal_1(filtered_accel1_reading);
-    mcu_pedal_readings.set_accelerator_pedal_2(filtered_accel2_reading);
-    mcu_pedal_readings.set_brake_pedal_1(filtered_brake1_reading);
-    mcu_pedal_readings.set_brake_pedal_2(filtered_brake2_reading);
-
-    // Send Main Control Unit pedal reading message
     mcu_pedal_readings.write(msg.buf);
     msg.id = ID_MCU_PEDAL_READINGS;
     msg.len = sizeof(mcu_pedal_readings);
@@ -472,13 +458,13 @@ inline void state_machine() {
 
       // FSAE EV.5.5
       // FSAE T.4.2.10
-      if (filtered_accel1_reading < MIN_ACCELERATOR_PEDAL_1 || filtered_accel1_reading > MAX_ACCELERATOR_PEDAL_1) {
+      if (mcu_pedal_readings.get_accelerator_pedal_1() < MIN_ACCELERATOR_PEDAL_1 || mcu_pedal_readings.get_accelerator_pedal_1() > MAX_ACCELERATOR_PEDAL_1) {
         mcu_status.set_no_accel_implausability(false);
 #if DEBUG
         Serial.println("T.4.2.10 1");
 #endif
       }
-      else if (filtered_accel2_reading > MAX_ACCELERATOR_PEDAL_2 || filtered_accel2_reading < MIN_ACCELERATOR_PEDAL_2) {
+      else if (mcu_pedal_readings.get_accelerator_pedal_2() > MAX_ACCELERATOR_PEDAL_2 || mcu_pedal_readings.get_accelerator_pedal_2() < MIN_ACCELERATOR_PEDAL_2) {
         mcu_status.set_no_accel_implausability(false);
 #if DEBUG
         Serial.println("T.4.2.10 2");
@@ -486,12 +472,12 @@ inline void state_machine() {
       }
       // check that the pedals are reading within 10% of each other
       // T.4.2.4
-      else if (fabs((filtered_accel1_reading - START_ACCELERATOR_PEDAL_1) / (END_ACCELERATOR_PEDAL_1 - START_ACCELERATOR_PEDAL_1) -
-                    (filtered_accel2_reading - START_ACCELERATOR_PEDAL_2) / (END_ACCELERATOR_PEDAL_2 - START_ACCELERATOR_PEDAL_2)) > 0.1) {
+      else if (fabs((mcu_pedal_readings.get_accelerator_pedal_1() - START_ACCELERATOR_PEDAL_1) / (END_ACCELERATOR_PEDAL_1 - START_ACCELERATOR_PEDAL_1) -
+                    (mcu_pedal_readings.get_accelerator_pedal_2() - START_ACCELERATOR_PEDAL_2) / (END_ACCELERATOR_PEDAL_2 - START_ACCELERATOR_PEDAL_2)) > 0.1) {
 #if DEBUG
         Serial.println("T.4.2.4");
-        Serial.printf("pedal 1 - %f\n", (filtered_accel1_reading - START_ACCELERATOR_PEDAL_1) / (END_ACCELERATOR_PEDAL_1 - START_ACCELERATOR_PEDAL_1));
-        Serial.printf("pedal 2 - %f\n", (filtered_accel2_reading - START_ACCELERATOR_PEDAL_2) / (END_ACCELERATOR_PEDAL_2 - START_ACCELERATOR_PEDAL_2));
+        Serial.printf("pedal 1 - %f\n", (mcu_pedal_readings.get_accelerator_pedal_1() - START_ACCELERATOR_PEDAL_1) / (END_ACCELERATOR_PEDAL_1 - START_ACCELERATOR_PEDAL_1));
+        Serial.printf("pedal 2 - %f\n", (mcu_pedal_readings.get_accelerator_pedal_2() - START_ACCELERATOR_PEDAL_2) / (END_ACCELERATOR_PEDAL_2 - START_ACCELERATOR_PEDAL_2));
 #endif
         mcu_status.set_no_accel_implausability(false);
       }
@@ -502,7 +488,7 @@ inline void state_machine() {
       // BSE check
       // EV.5.6
       // FSAE T.4.3.4
-      if (filtered_brake1_reading < 409 || filtered_brake1_reading > 3687) {
+      if (mcu_pedal_readings.get_brake_pedal_1() < MIN_BRAKE_PEDAL_1 || mcu_pedal_readings.get_brake_pedal_1() > MAX_BRAKE_PEDAL_1) {
         mcu_status.set_no_brake_implausability(false);
       }
       else {
@@ -513,9 +499,9 @@ inline void state_machine() {
       // APPS/Brake Pedal Plausability Check
       if  (
         (
-          (filtered_accel1_reading > ((END_ACCELERATOR_PEDAL_1 - START_ACCELERATOR_PEDAL_1) / 4 + START_ACCELERATOR_PEDAL_1))
+          (mcu_pedal_readings.get_accelerator_pedal_1() > ((END_ACCELERATOR_PEDAL_1 - START_ACCELERATOR_PEDAL_1) / 4 + START_ACCELERATOR_PEDAL_1))
           ||
-          (filtered_accel2_reading > ((END_ACCELERATOR_PEDAL_2 - START_ACCELERATOR_PEDAL_2) / 4 + START_ACCELERATOR_PEDAL_2))
+          (mcu_pedal_readings.get_accelerator_pedal_2() > ((END_ACCELERATOR_PEDAL_2 - START_ACCELERATOR_PEDAL_2) / 4 + START_ACCELERATOR_PEDAL_2))
         )
         && mcu_status.get_brake_pedal_active()
       )
@@ -524,9 +510,9 @@ inline void state_machine() {
       }
       else if
       (
-        (filtered_accel1_reading < ((END_ACCELERATOR_PEDAL_1 - START_ACCELERATOR_PEDAL_1) / 20 + START_ACCELERATOR_PEDAL_1))
+        (mcu_pedal_readings.get_accelerator_pedal_1() < ((END_ACCELERATOR_PEDAL_1 - START_ACCELERATOR_PEDAL_1) / 20 + START_ACCELERATOR_PEDAL_1))
         &&
-        (filtered_accel2_reading < ((END_ACCELERATOR_PEDAL_2 - START_ACCELERATOR_PEDAL_2) / 20 + START_ACCELERATOR_PEDAL_2))
+        (mcu_pedal_readings.get_accelerator_pedal_2() < ((END_ACCELERATOR_PEDAL_2 - START_ACCELERATOR_PEDAL_2) / 20 + START_ACCELERATOR_PEDAL_2))
       )
       {
         mcu_status.set_no_accel_brake_implausability(true);
@@ -760,11 +746,11 @@ inline void set_inverter_torques() {
   int calculated_torque = 0;
   const int max_torque_Nm = mcu_status.get_max_torque();
   const float max_torque = max_torque_Nm / 0.0098; // max possible value for torque multiplier, unit in 0.1% nominal torque
-  int accel1 = map(round(filtered_accel1_reading), START_ACCELERATOR_PEDAL_1, END_ACCELERATOR_PEDAL_1, 0, 1000);
-  int accel2 = map(round(filtered_accel2_reading), START_ACCELERATOR_PEDAL_2, END_ACCELERATOR_PEDAL_2, 0, 1000);
+  int accel1 = map(round(mcu_pedal_readings.get_accelerator_pedal_1()), START_ACCELERATOR_PEDAL_1, END_ACCELERATOR_PEDAL_1, 0, 1000);
+  int accel2 = map(round(mcu_pedal_readings.get_accelerator_pedal_2()), START_ACCELERATOR_PEDAL_2, END_ACCELERATOR_PEDAL_2, 0, 1000);
 
-  int brake1 = map(round(filtered_brake1_reading), START_BRAKE_PEDAL_1, END_BRAKE_PEDAL_1, 0, 1000);
-  int brake2 = map(round(filtered_brake2_reading), START_BRAKE_PEDAL_2, END_BRAKE_PEDAL_2, 0, 1000);
+  int brake1 = map(round(mcu_pedal_readings.get_brake_pedal_1()), START_BRAKE_PEDAL_1, END_BRAKE_PEDAL_1, 0, 1000);
+  int brake2 = map(round(mcu_pedal_readings.get_brake_pedal_2()), START_BRAKE_PEDAL_2, END_BRAKE_PEDAL_2, 0, 1000);
 
 
   // torque values are greater than the max possible value, set them to max
@@ -825,25 +811,24 @@ inline void read_glv_value() {
 }
 
 /* Read pedal sensor values */
-inline void read_pedal_values() { //add timer
-  /* Filter ADC readings */
-  filtered_accel1_reading = ALPHA * filtered_accel1_reading + (1 - ALPHA) * ADC2.read_channel(ADC_ACCEL_1_CHANNEL);
-  filtered_accel2_reading = ALPHA * filtered_accel2_reading + (1 - ALPHA) * ADC2.read_channel(ADC_ACCEL_2_CHANNEL);
-  filtered_brake1_reading = ALPHA * filtered_brake1_reading + (1 - ALPHA) * ADC2.read_channel(ADC_BRAKE_1_CHANNEL);
-  filtered_brake2_reading = ALPHA * filtered_brake2_reading + (1 - ALPHA) * ADC2.read_channel(ADC_BRAKE_2_CHANNEL);
+inline void read_pedal_values() {
+  mcu_pedal_readings.set_accelerator_pedal_1(ADC2.read_channel(ADC_ACCEL_1_CHANNEL));
+  mcu_pedal_readings.set_accelerator_pedal_2(ADC2.read_channel(ADC_ACCEL_2_CHANNEL));
+  mcu_pedal_readings.set_brake_pedal_1(ADC2.read_channel(ADC_BRAKE_1_CHANNEL));
+  mcu_pedal_readings.set_brake_pedal_2(ADC2.read_channel(ADC_BRAKE_2_CHANNEL));
 
 #if DEBUG
-  // Serial.print("ACCEL 1: "); Serial.println(filtered_accel1_reading);
-  // Serial.print("ACCEL 2: "); Serial.println(filtered_accel2_reading);
-  //  Serial.print("BRAKE 1: "); Serial.println(filtered_brake1_reading);
-  //  Serial.print("BRAKE 2: "); Serial.println(filtered_brake2_reading);
+  // Serial.print("ACCEL 1: "); Serial.println(mcu_pedal_readings.get_accelerator_pedal_1()1_reading);
+  // Serial.print("ACCEL 2: "); Serial.println(mcu_pedal_readings.get_accelerator_pedal_1()2_reading);
+  //  Serial.print("BRAKE 1: "); Serial.println(mcu_pedal_readings.get_brake_pedal_1());
+  //  Serial.print("BRAKE 2: "); Serial.println(mcu_pedal_readings.get_brake_pedal_2());
 #endif
 
   // only uses front brake pedal
-  mcu_status.set_brake_pedal_active(filtered_brake1_reading >= BRAKE_ACTIVE);
+  mcu_status.set_brake_pedal_active(mcu_pedal_readings.get_brake_pedal_1() >= BRAKE_ACTIVE);
   digitalWrite(BRAKE_LIGHT_CTRL, mcu_status.get_brake_pedal_active());
 
-  mcu_status.set_mech_brake_active(filtered_brake1_reading >= BRAKE_THRESHOLD_MECH_BRAKE); //define in driver_constraints.h (70%)
+  mcu_status.set_mech_brake_active(mcu_pedal_readings.get_brake_pedal_1() >= BRAKE_THRESHOLD_MECH_BRAKE); //define in driver_constraints.h (70%)
 
 }
 
