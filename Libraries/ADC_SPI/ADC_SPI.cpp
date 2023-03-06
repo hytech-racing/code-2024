@@ -51,11 +51,11 @@ void ADC_SPI::init(int CS, unsigned int SPIspeed)
  */
 uint16_t ADC_SPI::read_channel(int channel)
 {
-	// Gain control of the SPI port
-	// and configure settings
-	SPI.beginTransaction(SPISettings(SPI_SPEED, MSBFIRST, SPI_MODE0));
+	// // Gain control of the SPI port
+	// // and configure settings
+	// SPI.beginTransaction(SPISettings(SPI_SPEED, MSBFIRST, SPI_MODE0));
 
-	// Take the SS pin low to select the chip:
+	// // Take the SS pin low to select the chip:
 	digitalWrite(ADC_SPI_CS, LOW);
 
 	// Set up channel
@@ -89,8 +89,9 @@ void ADC_SPI::read_all_channels(uint16_t *array)
 		lo = SPI.transfer(0);
 		array[i] = hi << 8 | lo;
 	}
-	array[7] = SPI.transfer(0);
-	array[7] = SPI.transfer(0);
+	hi =  SPI.transfer(0);
+	lo = SPI.transfer(0);
+	array[7] = hi << 8 | lo;
 	SPI.endTransaction();
-	digitalWrite(ADC_SPI_CS, LOW);
+	digitalWrite(ADC_SPI_CS, HIGH);
 }
