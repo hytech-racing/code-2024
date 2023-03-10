@@ -38,7 +38,6 @@ CAN_message_t msg;
 
 // CAN Messages
 Dashboard_status dashboard_status{};
-MC_fault_codes mc_fault_codes{};
 MCU_status mcu_status{};
 MCU_analog_readings mcu_analog_readings;
 
@@ -70,8 +69,8 @@ void setup() {
     btn_torque_mode.begin(BTN_TORQUE_MODE, 100);
     btn_led_dimmer.begin(BTN_LED_DIMMER, 100);
 
-    int dial_pins[DIAL_SIZE] = {DIAL_MODE_ONE, DIAL_MODE_TWO, DIAL_ACCELERATION_LAUNCH_CONTROL, DIAL_SKIDPAD, DIAL_AUTOCROSS, DIAL_ENDURANCE};
-    dial_torque_vectoring.begin(dial_pins, DIAL_SIZE, 100);
+   int dial_pins[DIAL_SIZE]= {DIAL_MODE_ONE, DIAL_MODE_TWO, DIAL_ACCELERATION_LAUNCH_CONTROL, DIAL_SKIDPAD, DIAL_AUTOCROSS, DIAL_ENDURANCE};
+   dial_torque_vectoring.begin(dial_pins, DIAL_SIZE, 100);
 
     
 
@@ -83,13 +82,13 @@ void setup() {
 
     //Initializes CAN
     CAN.begin();
-    CAN.setBaudRate(500000);
+    CAN.setBaudRate(1000000);
 
     mcu_status.set_imd_ok_high(true);
     mcu_status.set_bms_ok_high(true);
 
     dashboard_neopixels.begin();
-    dashboard_neopixels.setPixelColor(LED_LIST::AMS, LED_ON_GREEN);
+//    dashboard_neopixels.setPixelColor(LED_LIST::AMS, LED_ON_GREEN);
     dashboard_neopixels.show();
     dashboard_neopixels.setBrightness(brightness);
 
@@ -101,6 +100,7 @@ void loop() {
     inertia_status();
     neopixel_update();
     btn_update();
+    dial_update();
 
     static bool should_send = false;
 
@@ -124,10 +124,12 @@ void loop() {
     // How does the check for button press work
     // the xor against previous buttons removes the button flags that were sent previously
     // the and enforces that only buttons that are currently pressed are allowed to be sent
-    if(should_send &&
-        (timer_can_update.check() || (temp_buttons) || (prev_start_state != dashboard_status.get_start_btn()))
-      ){
-        //create message to send
+//    if(should_send &&
+//        (timer_can_update.check() || (temp_buttons) || (prev_start_state != dashboard_status.get_start_btn()))
+//      ){
+      if(
+        (timer_can_update.check())) {
+        
         msg.id = ID_DASHBOARD_STATUS;
         dashboard_status.set_button_flags(temp_buttons);
         msg.len = sizeof(dashboard_status);
@@ -162,7 +164,7 @@ inline void neopixel_update(){
 }
 
 inline void dial_update(){
-  dashboard_status.set_dial_state((dial_torque_vectoring.readMode()));
+  dashboard_status.set_dial_state((uint8_t)(dial_torque_vectoring.readMode()));
   if(dashboard_status.get_dial_state() == 2){
     dashboard_neopixels.setPixelColor(LED_LIST::LAUNCH_CTRL, LED_ON_GREEN);
     dashboard_status.set_launch_control_led(static_cast<uint8_t>(LED_MODES::ON));
@@ -203,11 +205,7 @@ inline void read_can(){
                 timer_mcu_heartbeat.interval(MCU_HEARTBEAT_TIMEOUT);
                 mcu_analog_readings_received();
                 break;
-                
-            case ID_MC_FAULT_CODES:
-                mc_fault_codes.load(msg.buf);
-                mc_fault_codes_received();
-                break;
+               
             default:
                 break;
         }
@@ -230,42 +228,41 @@ inline void mcu_status_received(){
     // control BUZZER_CTRL
     digitalWrite(BUZZER_CTRL, mcu_status.get_activate_buzzer());
 
-    //BMS/AMS LED (bms and ams are the same thing)
-    if (!mcu_status.get_bms_ok_high()){
+    if (mcu_status.get_bms_ok_high()){
         dashboard_neopixels.setPixelColor(LED_LIST::AMS, LED_ON_GREEN);
         dashboard_status.set_ams_led(static_cast<uint8_t>(LED_MODES::ON));
-        display_list[4] = 0;
-        timer_led_ams.reset();
+        display_list[4] = 1;
+        
     }
     // else if (init_ams){
     //     led_ams.setMode(LED_MODES::OFF);
     //     dashboard_status.set_ams_led(static_cast<uint8_t>(LED_MODES::OFF));
     //     init_ams = false;
     // }
-    else if (dashboard_neopixels.getPixelColor(LED_LIST::AMS) != LED_OFF && timer_led_ams.check()){
+    else if (dashboard_neopixels.getPixelColor(LED_LIST::AMS) != LED_OFF){
   
         dashboard_neopixels.setPixelColor(LED_LIST::AMS, LED_RED);
         dashboard_status.set_ams_led(static_cast<uint8_t>(LED_MODES::RED));
-        display_list[4] = 1;
+        display_list[4] = 0;
     }
 
     //IMD LED
-    if (!mcu_status.get_imd_ok_high()){
+    if (mcu_status.get_imd_ok_high()){
         dashboard_neopixels.setPixelColor(LED_LIST::IMD, LED_ON_GREEN);
         dashboard_status.set_imd_led(static_cast<uint8_t>(LED_MODES::ON));
-        display_list[3] = 0;
-        timer_led_imd.reset();
+        display_list[3] = 1;
+        
     }
     // else if (init_imd){
     //     led_imd.setMode(LED_MODES::OFF);
     //     dashboard_status.set_imd_led(static_cast<uint8_t>(LED_MODES::OFF));
     //     init_imd = false;
     // }
-    else if (dashboard_neopixels.getPixelColor(LED_LIST::IMD) != LED_OFF && timer_led_imd.check()){
+    else if (dashboard_neopixels.getPixelColor(LED_LIST::IMD) != LED_OFF){
   
         dashboard_neopixels.setPixelColor(LED_LIST::IMD, LED_RED);
         dashboard_status.set_imd_led(static_cast<uint8_t>(LED_MODES::RED));
-        display_list[3] = 1;
+        display_list[3] = 0;
     }
 
     //Start LED
@@ -340,7 +337,7 @@ inline void mcu_status_received(){
     }
 
     //Mechanical Braking LED
-    if(mcu_status.get_mech_brake_active()) {
+    if(!mcu_status.get_mech_brake_active()) {
         dashboard_neopixels.setPixelColor(LED_LIST::BRAKE_ENGAGE, LED_OFF);
         dashboard_status.set_mech_brake_led(static_cast<uint8_t>(LED_MODES::OFF));
         
@@ -351,7 +348,7 @@ inline void mcu_status_received(){
        
     }
 
-    if(mcu_status.get_launch_ctrl_active()) {
+    if(!mcu_status.get_launch_ctrl_active()) {
         dashboard_neopixels.setPixelColor(LED_LIST::LAUNCH_CTRL, LED_OFF);
         dashboard_status.set_launch_control_led(static_cast<uint8_t>(LED_MODES::OFF));
     } else {
@@ -360,40 +357,40 @@ inline void mcu_status_received(){
     }
 }
 
-inline void mc_fault_codes_received(){
-    bool is_mc_err = false;
-
-    if (mc_fault_codes.get_post_fault_hi() ||
-        mc_fault_codes.get_post_fault_lo() ||
-        mc_fault_codes.get_run_fault_hi() ||
-        mc_fault_codes.get_run_fault_lo())
-    {
-        is_mc_err = true;
-    }
-    //MC Error LED
-
-    if (is_mc_err){
-        dashboard_neopixels.setPixelColor(LED_LIST::MC_ERR, LED_RED);
-        dashboard_status.set_mc_error_led(static_cast<uint8_t>(LED_MODES::ON));
-        display_list[2] = 1;
-        timer_led_mc_err.reset();   
-    // display fault for 1 second and then it clears
-    } else if (dashboard_neopixels.getPixelColor(LED_LIST::MC_ERR) != LED_OFF && timer_led_mc_err.check()){
-        dashboard_neopixels.setPixelColor(LED_LIST::MC_ERR, LED_OFF);
-        dashboard_status.set_mc_error_led(static_cast<uint8_t>(LED_MODES::OFF));
-        display_list[2] = 0;
-    }
-
-    /*if (is_mc_err){
-        led_mc_err.setMode(LED_MODES::ON);
-        dashboard_status.set_mc_error_led(static_cast<uint8_t>(LED_MODES::ON));
-        timer_led_mc_err.reset();
-    }
-    else if (led_mc_err.getMode() != LED_MODES::OFF && timer_led_mc_err.check()){
-        led_mc_err.setMode(LED_MODES::SLOW);
-        dashboard_status.set_mc_error_led(static_cast<uint8_t>(LED_MODES::SLOW));
-    }*/
-}
+//inline void mc_fault_codes_received(){
+//    bool is_mc_err = false;
+//
+//    if (mc_fault_codes.get_post_fault_hi() ||
+//        mc_fault_codes.get_post_fault_lo() ||
+//        mc_fault_codes.get_run_fault_hi() ||
+//        mc_fault_codes.get_run_fault_lo())
+//    {
+//        is_mc_err = true;
+//    }
+//    //MC Error LED
+//
+//    if (is_mc_err){
+//        dashboard_neopixels.setPixelColor(LED_LIST::MC_ERR, LED_RED);
+//        dashboard_status.set_mc_error_led(static_cast<uint8_t>(LED_MODES::ON));
+//        display_list[2] = 1;
+//        timer_led_mc_err.reset();   
+//    // display fault for 1 second and then it clears
+//    } else if (dashboard_neopixels.getPixelColor(LED_LIST::MC_ERR) != LED_OFF && timer_led_mc_err.check()){
+//        dashboard_neopixels.setPixelColor(LED_LIST::MC_ERR, LED_OFF);
+//        dashboard_status.set_mc_error_led(static_cast<uint8_t>(LED_MODES::OFF));
+//        display_list[2] = 0;
+//    }
+//
+//    /*if (is_mc_err){
+//        led_mc_err.setMode(LED_MODES::ON);
+//        dashboard_status.set_mc_error_led(static_cast<uint8_t>(LED_MODES::ON));
+//        timer_led_mc_err.reset();
+//    }
+//    else if (led_mc_err.getMode() != LED_MODES::OFF && timer_led_mc_err.check()){
+//        led_mc_err.setMode(LED_MODES::SLOW);
+//        dashboard_status.set_mc_error_led(static_cast<uint8_t>(LED_MODES::SLOW));
+//    }*/
+//}
 
 inline void inertia_status() {
     if (digitalRead(INERTIA_READ) && !digitalRead(SHUTDOWN_H_READ)) {
