@@ -22,6 +22,7 @@
 #define IMU_SYNC 37
 #define IMU_CS 38
 #define IMU_RESET 36
+#define VEHICLE_TILT_ANGLE_X 0.0261799 // (in radians) ~ 1.5 degrees
 
 #define CAN_ECU_RX1 22
 #define CAN_ECU_TX1 23

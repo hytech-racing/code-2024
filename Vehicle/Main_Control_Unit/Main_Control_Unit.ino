@@ -130,7 +130,7 @@ void setup() {
   IMU.regWrite(FLTR_CTRL, 0x500); // Set digital filter
   IMU.regWrite(DEC_RATE, 0), // Disable decimation
 
-               pinMode(BRAKE_LIGHT_CTRL, OUTPUT);
+  pinMode(BRAKE_LIGHT_CTRL, OUTPUT);
 
   // change to input if comparator is PUSH PULL
   pinMode(INVERTER_EN, OUTPUT);
@@ -980,9 +980,25 @@ inline void read_status_values() {
 
 // IMU functions
 inline void read_imu() {
-  imu_accelerometer.set_lat_accel(IMU.regRead(X_ACCL_OUT)); // * 0.00245); // 0.00245 is the scale, Left is positive
-  imu_accelerometer.set_long_accel(IMU.regRead(Y_ACCL_OUT)); // * 0.00245); // 0.00245 is the scale, Backwards is positive, need to fix?
-  imu_accelerometer.set_vert_accel(IMU.regRead(Z_ACCL_OUT)); // * 0.00245); // 0.00245 is the scale, Up is positive
+  double sin = sin(VEHICLE_TILT_ANGLE_X);
+  double cos = cos(VEHICLE_TILT_ANGLE_X);
+  double accel_x = IMU.regRead(X_ACCL_OUT) * 0.00245; // 0.00245 is the scale
+  double accel_y = IMU.regRead(Y_ACCL_OUT) * 0.00245; // 0.00245 is the scale
+  double accel_z = IMU.regRead(Z_ACCL_OUT) * 0.00245; // 0.00245 is the scale
+  double x_gyro = IMU.regRead(X_GYRO_OUT) * 0.005; // 0.005 is the scale
+  double y_gyro = IMU.regRead(Y_GYRO_OUT) * 0.005; // 0.005 is the scale
+  double z_gyro = IMU.regRead(Z_GYRO_OUT) * 0.005; // 0.005 is the scale
+  double input[6] = {-accel_y, accel_x, accel_z, x_gyro, y_gyro, z_gyro}; // the weird order has to do with orienting the IMU correct wrt to the car
+  double* out = malloc(6 * sizeof(double));
+   out[0] = (input[0] * cos2) + (input[2] * sin2);
+   out[1] = input[1];
+   out[2] = (input[2] * cos2) - (input[0] * sin2);
+   out[3] = (input[4] * cos2) + (input[5] * sin2);
+   out[4] = input[4]; 
+   out[5] = (input[5] * cos2) - (input[3] * sin2);
+  imu_accelerometer.set_lat_accel(out[1] * 102); // * 0.00245); // 0.00245 is the scale, Left is positive
+  imu_accelerometer.set_long_accel(out[0] * 102); // * 0.00245); // 0.00245 is the scale, Backwards is positive, need to fix?
+  imu_accelerometer.set_vert_accel(out[2] * 102); // * 0.00245); // 0.00245 is the scale, Up is positive
   // question about yaw, pitch and roll rates?
   imu_gyroscope.set_pitch(IMU.regRead(X_GYRO_OUT)); // * 0.005); // 0.005 is the scale,
   imu_gyroscope.set_yaw(IMU.regRead(Z_GYRO_OUT)); // * 0.005);  // 0.005 is the scale
