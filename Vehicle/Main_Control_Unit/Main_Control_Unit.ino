@@ -188,6 +188,9 @@ void setup() {
 }
 
 void loop() {
+  FRONT_INV_CAN.events();
+  REAR_INV_CAN.events();
+  TELEM_CAN.events();
   read_pedal_values();
   read_load_cell_values();
   read_steering_values();
@@ -599,7 +602,6 @@ inline void software_shutdown() {
 /* Parse incoming CAN messages */
 void parse_telem_can_message(const CAN_message_t &RX_msg) {
   static CAN_message_t rx_msg = RX_msg;
-  while (TELEM_CAN.read(rx_msg)) {
     switch (rx_msg.id) {
       case ID_BMS_TEMPERATURES:              bms_temperatures.load(rx_msg.buf);              break;
       case ID_BMS_VOLTAGES:
@@ -642,12 +644,10 @@ void parse_telem_can_message(const CAN_message_t &RX_msg) {
         dashboard_status.set_button_flags(0);
         break;
     }
-  }
 }
 
 void parse_front_inv_can_message(const CAN_message_t &RX_msg) {
   static CAN_message_t rx_msg = RX_msg;
-  while (FRONT_INV_CAN.read(rx_msg)) {
     switch (rx_msg.id) {
       case ID_MC1_STATUS:       mc_status[0].load(rx_msg.buf);    break;
       case ID_MC2_STATUS:       mc_status[1].load(rx_msg.buf);    break;
@@ -656,12 +656,11 @@ void parse_front_inv_can_message(const CAN_message_t &RX_msg) {
       case ID_MC1_ENERGY:       mc_energy[0].load(rx_msg.buf);    break;
       case ID_MC2_ENERGY:       mc_energy[1].load(rx_msg.buf);    break;
     }
-  }
 }
 
 void parse_rear_inv_can_message(const CAN_message_t &RX_msg) {
   static CAN_message_t rx_msg = RX_msg;
-  while (REAR_INV_CAN.read(rx_msg)) {
+
     switch (rx_msg.id) {
       case ID_MC3_STATUS:       mc_status[2].load(rx_msg.buf);    break;
       case ID_MC4_STATUS:       mc_status[3].load(rx_msg.buf);    break;
@@ -670,7 +669,6 @@ void parse_rear_inv_can_message(const CAN_message_t &RX_msg) {
       case ID_MC3_ENERGY:       mc_energy[2].load(rx_msg.buf);    break;
       case ID_MC4_ENERGY:       mc_energy[3].load(rx_msg.buf);    break;
     }
-  }
 }
 //FIXME
 inline void power_off_inverter() {
