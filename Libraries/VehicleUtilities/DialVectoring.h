@@ -18,7 +18,6 @@ class DialVectoring {
 
     private:
         DIAL_MODES mode = MODE_ONE;
-        bool debouncing;
         unsigned int size;
         int pins[6];
         Metro metro;
@@ -32,7 +31,6 @@ class DialVectoring {
                 
                 this->pins[i] = pins[i];
                 pinMode(this->pins[i], mode);
-                debouncing = false; 
                 metro = Metro(interval);
             }
             // readMode();
@@ -43,15 +41,8 @@ class DialVectoring {
             for(unsigned int i =0; i< size; i++){
                 
                 bool reading = digitalRead(pins[i]);
-                
-                if(!reading){
-                    metro.reset();
-                }
-                while(!metro.check()) {
-
-                }
-                if(!reading){
-                    
+              
+                if(!reading) {
                     newState = DIAL_MODES(i);
                     break;
                 }
