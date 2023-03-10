@@ -165,6 +165,7 @@ inline void neopixel_update(){
 
 inline void dial_update(){
   dashboard_status.set_dial_state((uint8_t)(dial_torque_vectoring.readMode()));
+  Serial.println(dashboard_status.get_dial_state());
   if(dashboard_status.get_dial_state() == 2){
     dashboard_neopixels.setPixelColor(LED_LIST::LAUNCH_CTRL, LED_ON_GREEN);
     dashboard_status.set_launch_control_led(static_cast<uint8_t>(LED_MODES::ON));

@@ -601,7 +601,7 @@ inline void software_shutdown() {
 
 /* Parse incoming CAN messages */
 void parse_telem_can_message(const CAN_message_t &RX_msg) {
-  static CAN_message_t rx_msg = RX_msg;
+  CAN_message_t rx_msg = RX_msg;
     switch (rx_msg.id) {
       case ID_BMS_TEMPERATURES:              bms_temperatures.load(rx_msg.buf);              break;
       case ID_BMS_VOLTAGES:
@@ -647,7 +647,7 @@ void parse_telem_can_message(const CAN_message_t &RX_msg) {
 }
 
 void parse_front_inv_can_message(const CAN_message_t &RX_msg) {
-  static CAN_message_t rx_msg = RX_msg;
+  CAN_message_t rx_msg = RX_msg;
     switch (rx_msg.id) {
       case ID_MC1_STATUS:       mc_status[0].load(rx_msg.buf);    break;
       case ID_MC2_STATUS:       mc_status[1].load(rx_msg.buf);    break;
@@ -659,7 +659,7 @@ void parse_front_inv_can_message(const CAN_message_t &RX_msg) {
 }
 
 void parse_rear_inv_can_message(const CAN_message_t &RX_msg) {
-  static CAN_message_t rx_msg = RX_msg;
+  CAN_message_t rx_msg = RX_msg;
 
     switch (rx_msg.id) {
       case ID_MC3_STATUS:       mc_status[2].load(rx_msg.buf);    break;

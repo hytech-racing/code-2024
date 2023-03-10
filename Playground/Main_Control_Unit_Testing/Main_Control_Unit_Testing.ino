@@ -188,10 +188,21 @@ void setup() {
   //setup_total_discharge();
 
 }
-
+void canSniff(const CAN_message_t &msg) {
+  Serial.print("MB "); Serial.print(msg.mb);
+  Serial.print("  OVERRUN: "); Serial.print(msg.flags.overrun);
+  Serial.print("  LEN: "); Serial.print(msg.len);
+  Serial.print(" EXT: "); Serial.print(msg.flags.extended);
+  Serial.print(" TS: "); Serial.print(msg.timestamp);
+  Serial.print(" ID: "); Serial.print(msg.id, HEX);
+  Serial.print(" Buffer: ");
+  for ( uint8_t i = 0; i < msg.len; i++ ) {
+    Serial.print(msg.buf[i], HEX); Serial.print(" ");
+  } Serial.println();
+}
 void loop() {
-  FRONT_INV_CAN.events();
-  REAR_INV_CAN.events();
+//  FRONT_INV_CAN.events();
+//  REAR_INV_CAN.events();
   TELEM_CAN.events();
  
 //  read_pedal_values();
@@ -222,9 +233,9 @@ void loop() {
 }
 
 inline void read_dashboard() {
-  if(timer_print.check()) {
-     Serial.println(dashboard_status.get_dial_state());
-  }
+//  if(timer_print.check()) {
+//     Serial.println(dashboard_status.get_dial_state());
+//  }
  
  
 }
@@ -632,9 +643,9 @@ inline void software_shutdown() {
 
 /* Parse incoming CAN messages */
 void parse_telem_can_message(const CAN_message_t &RX_msg) {
-  static CAN_message_t rx_msg = RX_msg;
+   CAN_message_t rx_msg = RX_msg;
   
-    
+   Serial.println(rx_msg.buf[2]);
     switch (rx_msg.id) {
       case ID_BMS_TEMPERATURES:              bms_temperatures.load(rx_msg.buf);              break;
       case ID_BMS_VOLTAGES:
@@ -653,6 +664,7 @@ void parse_telem_can_message(const CAN_message_t &RX_msg) {
       case ID_DASHBOARD_STATUS:
       
         dashboard_status.load(rx_msg.buf);
+       
         /* process dashboard buttons */
         if (dashboard_status.get_mode_btn()) {
           switch (mcu_status.get_torque_mode()) {
@@ -674,6 +686,7 @@ void parse_telem_can_message(const CAN_message_t &RX_msg) {
           inverter_restart = true;
           timer_reset_inverter.reset();
         }
+        
         // eliminate all action buttons to not process twice
         dashboard_status.set_button_flags(0);
         break;
