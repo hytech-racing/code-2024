@@ -14,7 +14,10 @@
 #include <Metro.h>
 
 // CONSTANT DEFINITIONS: define important values, such as IC count and cells per IC
-#define TOTAL_IC 2                  // Number of LTC6811-2 ICs that are used in the accumulator
+#define LOWER_IC 10                // The lower LTC6811-2 IC address (0-11) of the segment
+#define HIGHER_IC 11               // The higher LTC6811-2 IC address (0-11) of the segment
+#define IC_PER_AMS 2               // Number of LTC6811-2 ICs per AMS segment
+#define TOTAL_IC 12                // Number of LTC6811-2 ICs that are used in the accumulator
 #define EVEN_IC_CELLS 12           // Number of cells monitored by ICs with even addresses
 #define ODD_IC_CELLS 9             // Number of cells monitored by ICS with odd addresses
 #define THERMISTORS_PER_IC 4       // Number of cell temperature monitoring thermistors connected to each IC 
@@ -121,6 +124,7 @@ void setup() {
   for (int i = 0; i < TOTAL_IC; i++) {
     ic[i] = LTC6811_2(i);
   }
+  
   // bms_status.set_state(BMS_STATE_DISCHARGING);
   // parse_CAN_CCU_status();
 }
@@ -150,7 +154,7 @@ void loop() {
 
 // Check whether all LTC6811-2's are at the same state and ready to be read
 bool check_ics(int state) {
-  for (int i = 0; i < TOTAL_IC; i++) { // ORIGINAL: 8
+  for (int i = LOWER_IC; i < LOWER_IC + IC_PER_AMS; i++) {
     if (!ic[i].check(state)) {
       return false;
     }
@@ -163,7 +167,7 @@ bool check_ics(int state) {
 void read_voltages() {
   if (check_ics(0)) {
     Reg_Group_Config configuration = Reg_Group_Config((uint8_t) 0x1F, false, false, vuv, vov, (uint16_t) 0x0, (uint8_t) 0x1); // base configuration for the configuration register group
-    for (int i = 0; i < TOTAL_IC; i++) {
+    for (int i = LOWER_IC; i < LOWER_IC + IC_PER_AMS; i++) {
       ic[i].wakeup();
       ic[i].wrcfga(configuration);
       ic[i].adcv(static_cast<CELL_SELECT>(0));
@@ -173,7 +177,7 @@ void read_voltages() {
     total_voltage = 0;
     max_voltage = 0;
     min_voltage = 65535;
-    for (int i = 0; i < TOTAL_IC; i++) {
+    for (int i = LOWER_IC; i < LOWER_IC + IC_PER_AMS; i++) {
       ic[i].wakeup();
       Reg_Group_Cell_A reg_group_a = ic[i].rdcva();
       Reg_Group_Cell_B reg_group_b = ic[i].rdcvb();
@@ -264,7 +268,7 @@ void voltage_fault_check() {
 void read_gpio() {
   if (check_ics(2)) {
     Reg_Group_Config configuration = Reg_Group_Config((uint8_t) 0x1F, false, false, vuv, vov, (uint16_t) 0x0, (uint8_t) 0x1); // base configuration for the configuration register group
-    for (int i = 0; i < TOTAL_IC; i++) {
+    for (int i = LOWER_IC; i < LOWER_IC + IC_PER_AMS; i++) {
       ic[i].wakeup();
       ic[i].wrcfga(configuration);
       ic[i].adax(static_cast<GPIO_SELECT>(0));
@@ -278,7 +282,7 @@ void read_gpio() {
     min_board_temp_voltage = 65535;
     total_board_temps = 0;
     total_thermistor_temps = 0;
-    for (int i = 0; i < TOTAL_IC; i++) {
+    for (int i = LOWER_IC; i < LOWER_IC + IC_PER_AMS; i++) {
       ic[i].wakeup();
       Reg_Group_Aux_A reg_group_a = ic[i].rdauxa();
       Reg_Group_Aux_B reg_group_b = ic[i].rdauxb();
@@ -363,7 +367,7 @@ void balance_cells() {
       return;
     }
     Serial.print("Balancing voltage: "); Serial.println(min_voltage / 10000.0, 4);
-    for (uint16_t i = 0; i < TOTAL_IC; i++) {
+    for (uint16_t i = LOWER_IC; i < LOWER_IC + IC_PER_AMS; i++) {
       uint16_t cell_balance_setting = 0x0;
       // determine which cells of the IC need balancing
       uint8_t cell_count;
@@ -555,7 +559,7 @@ void print_voltages() {
     Serial.println("\tC0\tC1\tC2\tC3\tC4\tC5\tC6\tC7\tC8\tC9\tC10\tC11");
   }
   Serial.println();
-  for (int ic = 0; ic < TOTAL_IC; ic++) {
+  for (int ic = LOWER_IC; ic < LOWER_IC + IC_PER_AMS; ic++) {
     Serial.print("IC"); Serial.print(ic); Serial.print("\t");
     for (int cell = 0; cell < EVEN_IC_CELLS; cell++) {
       Serial.print(cell_voltages[ic][cell] / 10000.0, 4); Serial.print("V\t");
@@ -586,7 +590,7 @@ void print_gpios() {
   Serial.println("------------------------------------------------------------------------------------------------------------------------------------------------------------");
   Serial.println("Raw Segment Temperatures");
   Serial.println("                  \tT0\tT1\tT2\tT3");
-  for (int ic = 0; ic < TOTAL_IC; ic++) {
+  for (int ic = LOWER_IC; ic < LOWER_IC + IC_PER_AMS; ic++) {
     Serial.print("Cell Temperatures"); Serial.print(ic); Serial.print("\t");
     for (int cell = 0; cell < 4; cell++) {
       Serial.print(gpio_temps[ic][cell], 3); Serial.print("C\t");
