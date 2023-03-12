@@ -9,7 +9,6 @@
 #define MC_MAX_SPEED 20000
 
 #define BRAKE_LIGHT_CTRL 7
-#define BRAKE_THRESHOLD_MECH_BRAKE 1000
 
 #define ECU_CLK 13 
 #define ECU_SDI 12
@@ -54,10 +53,10 @@
 /*
  * ADC pin definitions
  */
-#define ADC_BRAKE_1_CHANNEL 4
-#define ADC_BRAKE_2_CHANNEL 7
-#define ADC_ACCEL_1_CHANNEL 2
-#define ADC_ACCEL_2_CHANNEL 3
+#define ADC_BRAKE_1_CHANNEL 2
+#define ADC_BRAKE_2_CHANNEL 3
+#define ADC_ACCEL_1_CHANNEL 0
+#define ADC_ACCEL_2_CHANNEL 1
 
 #define ADC_STEERING_CHANNEL 4
 
@@ -81,7 +80,7 @@
 
 
 #define ALPHA 0.9772                     // parameter for the sowftware filter used on ADC pedal channels
-#define ADC_SPI_SPEED 3000000            
+#define ADC_SPI_SPEED 2000000            
 #define TORQUE_ADJUSTMENT_VOLTAGE 3.5242 
 
 #define LOAD_CELL1_OFFSET 0

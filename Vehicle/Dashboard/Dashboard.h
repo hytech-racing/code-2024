@@ -1,54 +1,32 @@
 #pragma once
 
 // Button pin definition
-#define BTN_MODE 21
-#define BTN_START 22
-#define BTN_MC_CYCLE 20
+#define BTN_MARK 6
+#define BTN_MODE 7
+#define BTN_START A2
+#define BTN_LC A3
+#define BTN_MC_CYCLE 9
 
-//RANDOM FOR NOW
-#define BTN_TORQUE_MODE 19
-#define BTN_LED_DIMMER 18
+// LED and buzzer pin definition
+#define BUZZER A4
+#define LED_AMS 0
+#define LED_IMD 1
+#define LED_MODE 2
+#define LED_MC_ERR 3
+#define LED_START 4
+#define LED_INERTIA A5
 
-//Dial pin definition (RANDOM FOR NOW)
-#define DIAL_SIZE 6
-#define DIAL_MODE_ONE 9
-#define DIAL_MODE_TWO 8
-#define DIAL_ACCELERATION_LAUNCH_CONTROL 7
-#define DIAL_SKIDPAD 6
-#define DIAL_AUTOCROSS 5
-#define DIAL_ENDURANCE 4
+// MCP CAN pin definition
+#define CAN_CS 10
 
-
-
-// LED and BUZZER_CTRL pin definition
-#define BUZZER_CTRL 3
-#define NEOPIXEL_CTRL 2
-#define NEOPIXEL_COUNT 13
-//#define LED_MECH_BRAKE 10
-
-#define LED_OFF 0
-#define LED_ON_GREEN 0xFF00
-#define LED_YELLOW 0xFFFF00
-#define LED_RED 0xFF0000
-
-// enum class LED_COLORS { OFF = 0, ON = 0xFF00 , BLUE = 0xFF , RED = 0xFF0000};
-// OFF: OFF, ON: GREEN/OK, YELLOW : WARNING/MISC RED : CRITICAL
-enum class LED_MODES { OFF = 0, ON = 1, YELLOW = 2, RED = 3};
-enum LED_LIST { AMS = 0, IMD = 1, MC_ERR = 2, GEN_PURP = 3, INERTIA = 4, BOTS = 5, 
-                COCKPIT_BRB = 6, CRIT_CHARGE = 7, GLV = 8, BRAKE_ENGAGE = 9, LAUNCH_CTRL = 10, 
-                TORQUE_MODE = 11, RDY_DRIVE = 12};
-
-// MCP IO Expander pin definition //
-#define IO_CS 10
+// MCP IO Expander pin definition
+#define IO_CS 8
 #define IO_ADDR 0
 
 // Critical read pin definitions
-#define SSOK_READ 16 //BOTS
-#define SHUTDOWN_H_READ 17 //BRB
-#define INERTIA_READ 15
-
-//GLV threshold
-#define GLV_THRESHOLD 60000
+#define SSOK_READ A6
+#define SHUTDOWN_H_READ A7
+#define INERTIA_READ A1
 
 // IO Expander Number Encodings
 // 1 = Inertia, 2 = MC Err, 3 = Inertia, 4 = IMD, ..., 10 = default off state

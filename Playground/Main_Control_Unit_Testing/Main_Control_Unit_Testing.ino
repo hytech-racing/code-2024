@@ -84,6 +84,7 @@ Metro timer_CAN_mc_torque_command_forward = Metro(100);
 Metro timer_ready_sound = Metro(2000); // Time to play RTD sound
 
 Metro timer_load_cells_read = Metro(10);
+Metro timer_pedals_read = Metro(100);
 Metro timer_steering_read = Metro(10);
 Metro timer_glv_read = Metro(10);
 
@@ -205,7 +206,7 @@ void loop() {
 //  REAR_INV_CAN.events();
   TELEM_CAN.events();
  
-//  read_pedal_values();
+  read_pedal_values();
 //  read_load_cell_values();
 //  read_steering_values();
 //  read_status_values();
@@ -227,7 +228,7 @@ void loop() {
 //  state_machine();
     software_shutdown();
 //    Serial.println("ok");
-    read_dashboard();
+//    read_dashboard();
 //    write_dashboard();
 
 }
@@ -798,8 +799,8 @@ inline void set_inverter_torques() {
   int accel1 = map(round(mcu_pedal_readings.get_accelerator_pedal_1()), START_ACCELERATOR_PEDAL_1, END_ACCELERATOR_PEDAL_1, 0, 1000);
   int accel2 = map(round(mcu_pedal_readings.get_accelerator_pedal_2()), START_ACCELERATOR_PEDAL_2, END_ACCELERATOR_PEDAL_2, 0, 1000);
 
-  int brake1 = map(round(mcu_pedal_readings.get_brake_pedal_1()), START_BRAKE_PEDAL_1, END_BRAKE_PEDAL_1, 0, 1000);
-  int brake2 = map(round(mcu_pedal_readings.get_brake_pedal_2()), START_BRAKE_PEDAL_2, END_BRAKE_PEDAL_2, 0, 1000);
+  int brake1 = map(round(mcu_pedal_readings.get_brake_pedal_1()), START_BRAKE_PEDAL_1, BRAKE_THRESHOLD_MECH_BRAKE_1, 0, 1000);
+  int brake2 = map(round(mcu_pedal_readings.get_brake_pedal_2()), START_BRAKE_PEDAL_2, BRAKE_THRESHOLD_MECH_BRAKE_1, 0, 1000);
 
 
   // torque values are greater than the max possible value, set them to max
@@ -817,6 +818,13 @@ inline void set_inverter_torques() {
   if (avg_accel < 0) {
     avg_accel = 0;
   }
+  if (avg_accel > 1000) {
+    avg_accel = max_torque;
+  }
+  if (avg_accel < 0) {
+    avg_accel = 0;
+  }
+  
 
 
 
@@ -861,23 +869,41 @@ inline void read_glv_value() {
 
 /* Read pedal sensor values */
 inline void read_pedal_values() {
-  mcu_pedal_readings.set_accelerator_pedal_1(ADC2.read_channel(ADC_ACCEL_1_CHANNEL));
-  mcu_pedal_readings.set_accelerator_pedal_2(ADC2.read_channel(ADC_ACCEL_2_CHANNEL));
-  mcu_pedal_readings.set_brake_pedal_1(ADC2.read_channel(ADC_BRAKE_1_CHANNEL));
-  mcu_pedal_readings.set_brake_pedal_2(ADC2.read_channel(ADC_BRAKE_2_CHANNEL));
+  if (timer_pedals_read.check()) {
+//        Serial.println(ADC1.read_channel(ADC_BRAKE_1_CHANNEL));
+//        Serial.println(ADC1.read_channel(ADC_BRAKE_2_CHANNEL));
+ 
+  mcu_pedal_readings.set_accelerator_pedal_1(ADC1.read_channel(ADC_ACCEL_1_CHANNEL));
+  mcu_pedal_readings.set_accelerator_pedal_2(ADC1.read_channel(ADC_ACCEL_2_CHANNEL));
+  mcu_pedal_readings.set_brake_pedal_1(ADC1.read_channel(ADC_BRAKE_1_CHANNEL));
+  mcu_pedal_readings.set_brake_pedal_2(ADC1.read_channel(ADC_BRAKE_2_CHANNEL));
+
+  
 
 #if DEBUG
-  // Serial.print("ACCEL 1: "); Serial.println(mcu_pedal_readings.get_accelerator_pedal_1()1_reading);
-  // Serial.print("ACCEL 2: "); Serial.println(mcu_pedal_readings.get_accelerator_pedal_1()2_reading);
-  //  Serial.print("BRAKE 1: "); Serial.println(mcu_pedal_readings.get_brake_pedal_1());
-  //  Serial.print("BRAKE 2: "); Serial.println(mcu_pedal_readings.get_brake_pedal_2());
+  int accel1 = map(round(mcu_pedal_readings.get_accelerator_pedal_1()), START_ACCELERATOR_PEDAL_1, END_ACCELERATOR_PEDAL_1, 0, 1000);
+  int accel2 = map(round(mcu_pedal_readings.get_accelerator_pedal_2()), START_ACCELERATOR_PEDAL_2, END_ACCELERATOR_PEDAL_2, 0, 1000);
+
+  int brake1 = map(round(mcu_pedal_readings.get_brake_pedal_1()), START_BRAKE_PEDAL_1, BRAKE_THRESHOLD_MECH_BRAKE_1, 0, 1000);
+  int brake2 = map(round(mcu_pedal_readings.get_brake_pedal_2()), START_BRAKE_PEDAL_2, BRAKE_THRESHOLD_MECH_BRAKE_2, 0, 1000);
+//   Serial.print("ACCEL 1: "); Serial.println(mcu_pedal_readings.get_accelerator_pedal_1());
+//   Serial.print("ACCEL 2: "); Serial.println(mcu_pedal_readings.get_accelerator_pedal_2());
+//    Serial.print("BRAKE 1: "); Serial.println(mcu_pedal_readings.get_brake_pedal_1());
+//    Serial.print("BRAKE 2: "); Serial.println(mcu_pedal_readings.get_brake_pedal_2());
+
+   Serial.print("ACCEL 1: "); Serial.println(accel1);
+   Serial.print("ACCEL 2: "); Serial.println(accel2);
+    Serial.print("BRAKE 1: "); Serial.println(brake1);
+    Serial.print("BRAKE 2: "); Serial.println(brake2);
+
 #endif
 
   // only uses front brake pedal
   mcu_status.set_brake_pedal_active(mcu_pedal_readings.get_brake_pedal_1() >= BRAKE_ACTIVE);
   digitalWrite(BRAKE_LIGHT_CTRL, mcu_status.get_brake_pedal_active());
 
-  mcu_status.set_mech_brake_active(mcu_pedal_readings.get_brake_pedal_1() >= BRAKE_THRESHOLD_MECH_BRAKE); //define in driver_constraints.h (70%)
+  mcu_status.set_mech_brake_active(mcu_pedal_readings.get_brake_pedal_1() >= BRAKE_THRESHOLD_MECH_BRAKE_1); //define in driver_constraints.h (70%)
+  }
 
 }
 
