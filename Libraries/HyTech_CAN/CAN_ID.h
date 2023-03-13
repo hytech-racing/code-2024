@@ -1,23 +1,27 @@
-#define ID_MC_TEMPERATURES_1										0xA0
-#define ID_MC_TEMPERATURES_2										0xA1
-#define ID_MC_TEMPERATURES_3										0xA2
-#define ID_MC_ANALOG_INPUTS_VOLTAGES								0xA3
-#define ID_MC_DIGITAL_INPUT_STATUS									0xA4
-#define ID_MC_MOTOR_POSITION_INFORMATION							0xA5
-#define ID_MC_CURRENT_INFORMATION									0xA6
-#define ID_MC_VOLTAGE_INFORMATION									0xA7
-#define ID_MC_FLUX_INFORMATION										0xA8
-#define ID_MC_INTERNAL_VOLTAGES										0xA9
-#define ID_MC_INTERNAL_STATES										0xAA
-#define ID_MC_FAULT_CODES											0xAB
-#define ID_MC_TORQUE_TIMER_INFORMATION								0xAC
-#define ID_MC_FLUX_WEAKENING_OUTPUT									0xAD
-#define ID_MC_FIRMWARE_INFORMATION									0xAE
-#define ID_MC_DIAGNOSTIC_DATA										0xAF
+#define ID_MC1_STATUS												0xA0
+#define ID_MC2_STATUS												0xA1
+#define ID_MC3_STATUS												0xA2
+#define ID_MC4_STATUS												0xA3
+#define ID_MC1_TEMPS												0xA4
+#define ID_MC2_TEMPS												0xA5
+#define ID_MC3_TEMPS												0xA6
+#define ID_MC4_TEMPS												0xA7
+#define ID_MC1_ENERGY												0xA8
+#define ID_MC2_ENERGY												0xA9
+#define ID_MC3_ENERGY												0xAA
+#define ID_MC4_ENERGY												0xAB
 
-#define ID_MC_COMMAND_MESSAGE										0xC0
-#define ID_MC_READ_WRITE_PARAMETER_COMMAND							0xC1
-#define ID_MC_READ_WRITE_PARAMETER_RESPONSE							0xC2
+#define ID_MC1_SETPOINTS_COMMAND									0xB0
+#define ID_MC2_SETPOINTS_COMMAND									0xB1
+#define ID_MC3_SETPOINTS_COMMAND									0xB2
+#define ID_MC4_SETPOINTS_COMMAND									0xB3
+#define ID_MC1_TORQUE_COMMAND										0xB4
+#define ID_MC2_TORQUE_COMMAND										0xB5
+#define ID_MC3_TORQUE_COMMAND										0xB6
+#define ID_MC4_TORQUE_COMMAND										0xB7
+
+
+
 #define ID_MCU_STATUS												0xC3
 #define ID_MCU_PEDAL_READINGS										0xC4
 #define ID_MCU_ANALOG_READINGS										0xCC
