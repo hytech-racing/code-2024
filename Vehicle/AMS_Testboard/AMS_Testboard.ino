@@ -1,8 +1,8 @@
 /* AMS TESTBOARD CODE
    The AMS Testboard code is used to debug the AMS and its control and communication with Analog Devices LTC6811-2 battery stack monitors, per the HyTech Racing HT06 Accumulator Design.
    See LTC6811_2.cpp and LTC6811-2 Datasheet provided by Analog Devices for more details.
-   Author: Zekun Li, Liwei Sun, Ethan Su (not really lol)
-   Version: 1.05
+   Author: Zekun Li, Liwei Sun, Ethan Su
+   Version: 1.0
    Since: 02/13/2023
 */
 
