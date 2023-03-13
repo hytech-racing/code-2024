@@ -188,15 +188,6 @@ bool check_ics(int state) {
   return true;
 }
 
-// Check whether all LTC6811-2's are at the same state and ready to be read
-bool check_ics(int state) {
-  for (int i = 0; i < TOTAL_IC; i++) {
-    if (!ic[i].check(state)) {
-      return false;
-    }
-  }
-  return true;
-}
 
 // READ functions to collect and read data from the LTC6811-2
 // Read cell voltages from all twelve (TOTAL_IC) LTC6811-2; voltages are read in with units of 100μV
