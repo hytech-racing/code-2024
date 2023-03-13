@@ -4,8 +4,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#define DEFAULT_SPI_CS 10
-#define DEFAULT_SPI_SPEED 1000000
+#define DEFAULT_ADC_SPI_CS 10
+#define DEFAULT_ADC_SPI_SPEED 2000000
 
 class ADC_SPI {
 	public:
@@ -13,7 +13,8 @@ class ADC_SPI {
 		ADC_SPI(int CS);
         ADC_SPI(int CS, unsigned int SPIspeed);
 		void init(int CS, unsigned int SPIspeed);
-		uint16_t read_adc(int channel);
+		uint16_t read_channel(int channel);
+		void read_all_channels(uint16_t* array);
 	private:
 		int ADC_SPI_CS;
         unsigned int SPI_SPEED;

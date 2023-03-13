@@ -17,6 +17,11 @@ public:
     inline int16_t get_long_accel() const { return long_accel; }
     inline int16_t get_vert_accel() const { return vert_accel; }
 
+    // New Setters
+    inline void set_lat_accel(int16_t lat_accel) { this->lat_accel = lat_accel; }
+    inline void set_long_accel(int16_t long_accel) { this->long_accel = long_accel; }
+    inline void set_vert_accel(int16_t vert_accel) { this->vert_accel = vert_accel; }
+
 private:
     // @Parse @Unit(m/s/s) @Scale(102)
     int16_t lat_accel;

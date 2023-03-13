@@ -18,6 +18,11 @@ public:
     inline int16_t get_pitch() const { return pitch; }
     inline int16_t get_roll() const { return roll; }
 
+    // Setters
+    inline void set_yaw(int16_t yaw) { this->yaw = yaw; }
+    inline void set_pitch(int16_t pitch) { this->pitch = pitch; }
+    inline void set_roll(int16_t roll) { this->roll = roll; }
+
 private:
     // @Parse @Unit(DEG/S) @Scale(3)
     int16_t yaw;
