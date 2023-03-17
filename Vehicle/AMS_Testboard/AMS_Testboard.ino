@@ -15,8 +15,8 @@
 
 // CONSTANT DEFINITIONS: define important values, such as IC count and cells per IC
 #define LOWER_IC 0                // The lower LTC6811-2 IC address (0-11) of the segment
-#define HIGHER_IC 1               // The higher LTC6811-2 IC address (0-11) of the segment
-#define IC_PER_AMS 2               // Number of LTC6811-2 ICs per AMS segment
+#define HIGHER_IC 11               // The higher LTC6811-2 IC address (0-11) of the segment
+#define IC_PER_AMS 12               // Number of LTC6811-2 ICs per AMS segment
 #define TOTAL_IC 12                // Number of LTC6811-2 ICs that are used in the accumulator
 #define EVEN_IC_CELLS 12           // Number of cells monitored by ICs with even addresses
 #define ODD_IC_CELLS 9             // Number of cells monitored by ICS with odd addresses
