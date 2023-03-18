@@ -23,7 +23,7 @@
 #define MAX_SUCCESSIVE_FAULTS 20   // Number of successive faults permitted before AMS fault is broadcast over CAN
 #define MIN_VOLTAGE 30000          // Minimum allowable single cell voltage in units of 100μV
 #define MAX_VOLTAGE 42000          // Maxiumum allowable single cell voltage in units of 100μV
-#define MAX_TOTAL_VOLTAGE 5300000  // Maximum allowable pack total voltage in units of 100μV
+#define MAX_TOTAL_VOLTAGE 5330000  // Maximum allowable pack total voltage in units of 100μV
 #define MAX_THERMISTOR_VOLTAGE 26225   // Maximum allowable pack temperature corresponding to 60C in units 100μV
 #define BALANCE_ON true
 #define BALANCE_COOL 6000             // Sets balancing duty cycle as 33.3%
@@ -457,7 +457,7 @@ void write_CAN_messages() {
   // set voltage message values
   bms_voltages.set_low(min_voltage);
   bms_voltages.set_high(max_voltage);
-  bms_voltages.set_average(total_voltage / 84);
+  bms_voltages.set_average(total_voltage / 126);
   bms_voltages.set_total(total_voltage / 100);
   // set temperature message values
   bms_temperatures.set_low_temperature(gpio_temps[min_thermistor_location[0]][min_thermistor_location[1]] * 100);
@@ -587,7 +587,7 @@ void print_voltages() {
   Serial.println("------------------------------------------------------------------------------------------------------------------------------------------------------------");
   Serial.print("Max Voltage: "); Serial.print(cell_voltages[max_voltage_location[0]][max_voltage_location[1]] / 10000.0, 4); Serial.print("V \t ");
   Serial.print("Min Voltage: "); Serial.print(cell_voltages[min_voltage_location[0]][min_voltage_location[1]] / 10000.0, 4); Serial.print("V \t");
-  Serial.print("Avg Voltage: "); Serial.print(total_voltage / 840000.0, 4); Serial.println("V \t");
+  Serial.print("Avg Voltage: "); Serial.print(total_voltage / 1260000.0, 4); Serial.println("V \t");
   Serial.println("------------------------------------------------------------------------------------------------------------------------------------------------------------");
   Serial.println("Raw Cell Voltages\t\t\t\t\t\t\t\t\t\t\t\t\tBalancing Status");
   Serial.print("\tC0\tC1\tC2\tC3\tC4\tC5\tC6\tC7\tC8\tC9\tC10\tC11\t\t");
