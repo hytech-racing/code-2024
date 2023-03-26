@@ -55,7 +55,6 @@ bool charge_enable = false;
 
 static CAN_message_t rx_msg;
 static CAN_message_t tx_msg;
-//FlexCAN CAN(500000);
 FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> CAN;
 Metro update_ls = Metro(1000);
 Metro update_CAN = Metro(500);
@@ -71,7 +70,7 @@ void print_temps();
 void print_charger_data();
 
 void setup() {
-  #if TELEMETRYBOARD == 1
+  #if TELEMETRYBOARD == 0 // switch back to 1
     Serial.begin(115200);
     Serial.println("CAN system and Serial communication initialized");
   #endif
@@ -108,6 +107,7 @@ void setup() {
 }
 
 void loop() {
+  CAN.events();
   if (update_CAN.check()) {
     ccu_status.write(tx_msg.buf);
     tx_msg.id = ID_CCU_STATUS;
@@ -129,7 +129,7 @@ void loop() {
 #endif
 
   if (update_ls.check()) {
-    #if TELEMETRYBOARD == 1
+    #if TELEMETRYBOARD == 1 // switch abck to 1
       print_cells();
       print_temps();
       Serial.print("Charge enable: ");
@@ -204,7 +204,7 @@ void check_shutdown_signals() {
 }
 void configure_charging() {
   if (charge_enable) {
-    //maxChargingVoltage is 5290V, with .1V/Bit. Hex Value: 14AA
+    //maxChargingVoltage is 529.0V, with .1V/Bit. Hex Value: 14AA
     charger_configure.set_max_charging_voltage_high(0x14);
     charger_configure.set_max_charging_voltage_low(0xAA);
     charger_configure.set_max_charging_current_low(set_charge_current());
@@ -217,7 +217,7 @@ void configure_charging() {
   }
 }
 
-int set_charge_current() {
+int set_charge_current() { //not divided by 10 to keep precision
   uint16_t output_voltage = (charger_data.get_output_dc_voltage_high() << 8 | charger_data.get_output_dc_voltage_low());
   uint16_t max_current;
   
@@ -318,7 +318,7 @@ void print_charger_data() {
   uint8_t output_current_high = charger_data.get_output_current_high();
   uint8_t output_current_low = charger_data.get_output_current_low();
 
-  #if TELEMETRYBOARD == 1
+  #if TELEMETRYBOARD == 0 //switch back to 1
 
     Serial.println("------------------------------------------------------------------------------------------------------------------------------------------------------------");
     Serial.print(ac_voltage_high * 16 * 16 + ac_voltage_low);
