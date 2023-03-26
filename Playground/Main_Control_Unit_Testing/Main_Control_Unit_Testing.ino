@@ -83,7 +83,7 @@ Metro timer_CAN_mc_torque_command_forward = Metro(100);
 
 Metro timer_ready_sound = Metro(2000); // Time to play RTD sound
 
-Metro timer_load_cells_read = Metro(10);
+Metro timer_load_cells_read = Metro(100);
 Metro timer_pedals_read = Metro(100);
 Metro timer_steering_read = Metro(10);
 Metro timer_glv_read = Metro(10);
@@ -206,8 +206,9 @@ void loop() {
 //  REAR_INV_CAN.events();
   TELEM_CAN.events();
  
-  read_pedal_values();
-//  read_load_cell_values();
+//  read_pedal_values();
+//  read_load_cell_values()
+calibrate_load_cell_values();
 //  read_steering_values();
 //  read_status_values();
 //
@@ -915,6 +916,27 @@ inline void read_load_cell_values() {
     mcu_load_cells.set_FR_load_cell((uint16_t) (((ADC2.read_channel(ADC_FR_LOAD_CELL_CHANNEL) / 0.1912) - 0.314) / 787.5 * 50));
     mcu_load_cells.set_RL_load_cell((uint16_t) (((ADC1.read_channel(ADC_RL_LOAD_CELL_CHANNEL) / 0.1912) - 0.314) / 787.5 * 50));
     mcu_load_cells.set_RR_load_cell((uint16_t) (((ADC2.read_channel(ADC_RR_LOAD_CELL_CHANNEL) / 0.1912) - 0.314) / 787.5 * 50));
+  }
+}
+inline void calibrate_load_cell_values() {
+  //min is 45, calib is 15
+  //270 89 calibration
+   if (timer_load_cells_read.check()) {
+    uint16_t dummy = ADC2.read_channel(ADC_FR_LOAD_CELL_CHANNEL);
+    Serial.print("RAW: "); Serial.println(dummy);
+    int mapCalib = map(dummy, 45, 270, 0, 100);
+    Serial.print("Map Calib: "); Serial.println(mapCalib);
+    
+    //load cell is 2mV/V, 10V excitation, 1000lb max
+    //goes through 37.5x gain of INA823, 21x gain of OPA991, +0.314V offset, 0.1912x reduction on ECU and MAX7400 before reaching ADC
+//    mcu_load_cells.set_FL_load_cell((uint16_t) (((ADC2.read_channel(ADC_FL_LOAD_CELL_CHANNEL) / 0.1912) - 0.314) / 787.5 * 50));
+    mcu_load_cells.set_FR_load_cell((uint16_t) (((dummy / 0.1912) - 0.314) / (787.5 * 50)));
+//    mcu_load_cells.set_RL_load_cell((uint16_t) (((ADC1.read_channel(ADC_RL_LOAD_CELL_CHANNEL) / 0.1912) - 0.314) / 787.5 * 50));
+//    mcu_load_cells.set_RR_load_cell((uint16_t) (((ADC2.read_channel(ADC_RR_LOAD_CELL_CHANNEL) / 0.1912) - 0.314) / 787.5 * 50));
+//    Serial.print("Calibration: "); Serial.println(mcu_load_cells.get_FR_load_cell()); 
+
+      Serial.print("Calibration: "); Serial.println((((dummy / 819.0 ) / 0.1912) - 0.314) / (787.5) * 50000);
+      
   }
 }
 
