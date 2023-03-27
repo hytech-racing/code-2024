@@ -386,6 +386,7 @@ void temp_fault_check() {
 void balance_cells() {
   if (balance_timer.check()) {
     balance_timer.reset();
+    
     if (min_voltage < 30000 || min_voltage > 42000) {
       Serial.print("BALANCE HALT: BALANCE VOLTAGE SET AS "); Serial.print(min_voltage / 10000.0, 4); Serial.println(", OUTSIDE OF SAFE BOUNDS.");
       return;
@@ -394,6 +395,7 @@ void balance_cells() {
       Serial.print("BALANCE HALT: CHECK PACK FAULTS");
       return;
     }
+    
     Serial.print("Balancing voltage: "); Serial.println(min_voltage / 10000.0, 4);
     for (uint16_t i = 0; i < TOTAL_IC; i++) {
       uint16_t cell_balance_setting = 0x0;
@@ -619,10 +621,10 @@ void print_gpios() {
   }
   Serial.print("Max Board Temp: "); Serial.print(gpio_temps[max_board_temp_location[0]][max_board_temp_location[1]], 3); Serial.print("C \t ");
   Serial.print("Min Board Temp: "); Serial.print(gpio_temps[min_board_temp_location[0]][min_board_temp_location[1]], 3); Serial.print("C \t");
-  Serial.print("Avg Board Temp: "); Serial.print(total_board_temps / 4, 3); Serial.println("C \t");
+  Serial.print("Avg Board Temp: "); Serial.print(total_board_temps / 6, 3); Serial.println("C \t");
   Serial.print("Max Thermistor Temp: "); Serial.print(gpio_temps[max_thermistor_location[0]][max_thermistor_location[1]], 3); Serial.print("C \t");
   Serial.print("Min Thermistor Temp: "); Serial.print(gpio_temps[min_thermistor_location[0]][min_thermistor_location[1]], 3); Serial.print("C \t");
-  Serial.print("Avg Thermistor Temp: "); Serial.print(total_thermistor_temps / 32, 3); Serial.println("C \t");
+  Serial.print("Avg Thermistor Temp: "); Serial.print(total_thermistor_temps / 48, 3); Serial.println("C \t");
   Serial.print("Max Humidity: "); Serial.print(gpio_temps[max_humidity_location[0]][max_humidity_location[1]], 3); Serial.println("% \t ");
   Serial.println("------------------------------------------------------------------------------------------------------------------------------------------------------------");
   Serial.println("Raw Segment Temperatures");
