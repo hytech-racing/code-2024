@@ -57,7 +57,7 @@ static CAN_message_t rx_msg;
 static CAN_message_t tx_msg;
 FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> CAN;
 Metro update_ls = Metro(1000);
-Metro update_CAN = Metro(500);
+Metro update_CAN = Metro(1000);
 Metro update_watchdog = Metro(100);
 
 void print_cells();
@@ -77,12 +77,16 @@ void setup() {
   CAN.begin();
   CAN.setBaudRate(500000);
 
+
   /* Configure CAN rx interrupt */
+  CAN.enableMBInterrupts();
   CAN.onReceive(parse_can_message);
   
   /* Configure CAN rx interrupt */
+
   delay(2000);
-  
+  rx_msg.flags.extended = true;
+  tx_msg.flags.extended = true;
   pinMode(LED, OUTPUT);
   digitalWrite(LED, HIGH);
   pinMode(SHUTDOWN_A, INPUT);
@@ -109,10 +113,10 @@ void setup() {
 void loop() {
   CAN.events();
   if (update_CAN.check()) {
-    ccu_status.write(tx_msg.buf);
-    tx_msg.id = ID_CCU_STATUS;
-    tx_msg.len = sizeof(ccu_status);
-    CAN.write(tx_msg); 
+//    ccu_status.write(tx_msg.buf);
+//    tx_msg.id = ID_CCU_STATUS;
+//    tx_msg.len = sizeof(ccu_status);
+//    CAN.write(tx_msg); 
 
     //tx_msg.ext = 1; //FIXME
     charger_configure.write(tx_msg.buf);
@@ -149,7 +153,7 @@ void loop() {
 
 void parse_can_message(const CAN_message_t &RX_msg) {
   rx_msg = RX_msg;
-  while (CAN.read(rx_msg)) {
+  Serial.println(rx_msg.id, HEX);
     if (rx_msg.id == ID_BMS_DETAILED_TEMPERATURES) {
       BMS_detailed_temperatures temp = BMS_detailed_temperatures(rx_msg.buf);
       bms_detailed_temperatures[temp.get_ic_id()][temp.get_group_id()].load(rx_msg.buf);
@@ -189,10 +193,11 @@ void parse_can_message(const CAN_message_t &RX_msg) {
     }
 
     if (rx_msg.id == ID_CHARGER_DATA) {
+      
       charger_data.load(rx_msg.buf);
     }
     
-  }
+
 }
 
 void check_shutdown_signals() {
@@ -205,8 +210,8 @@ void check_shutdown_signals() {
 void configure_charging() {
   if (charge_enable) {
     //maxChargingVoltage is 529.0V, with .1V/Bit. Hex Value: 14AA
-    charger_configure.set_max_charging_voltage_high(0x14);
-    charger_configure.set_max_charging_voltage_low(0xAA);
+    charger_configure.set_max_charging_voltage_high(0x00);
+    charger_configure.set_max_charging_voltage_low(0xC8);
     charger_configure.set_max_charging_current_low(set_charge_current());
     charger_configure.set_control(0);
   } else {
@@ -323,7 +328,7 @@ void print_charger_data() {
     Serial.println("------------------------------------------------------------------------------------------------------------------------------------------------------------");
     Serial.print(ac_voltage_high * 16 * 16 + ac_voltage_low);
     Serial.print(" V\t\t");
-    Serial.print(output_voltage_high * 16 * 16 + output_voltage_low);
+    Serial.print((output_voltage_high * 16 * 16 + output_voltage_low) /10.0);
     Serial.print(" V\t\t");
     Serial.print(output_current_high * 16 * 16 + output_current_low);
     Serial.print(" A\t\t");

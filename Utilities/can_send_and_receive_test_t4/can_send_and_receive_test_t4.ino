@@ -7,7 +7,7 @@
 #include <Metro.h>
 
 // FlexCAN CAN(500000);
-FlexCAN_T4<CAN1> CAN;
+FlexCAN_T4<CAN2> CAN;
 CAN_message_t msg;
 Metro timer_can = Metro(1000);
 Metro timer_light = Metro(3);
@@ -40,7 +40,7 @@ void loop() {
         Serial.println();
     }
 
-    while (CAN.read(msg)) { // Receive a message on CAN
+      while (CAN.read(msg)) { // Receive a message on CAN
         Serial.print("Received 0x");
         Serial.print(msg.id, HEX);
         Serial.print(": ");
