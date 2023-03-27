@@ -795,7 +795,7 @@ inline void set_inverter_torques() {
       mc_setpoints_command[i].set_neg_torque_limit(0);
     }
     else {
-      mc_setpoints_command[i].set_speed_setpoint(-MC_MAX_SPEED);
+      mc_setpoints_command[i].set_speed_setpoint(0);
       mc_setpoints_command[i].set_pos_torque_limit(0);
       mc_setpoints_command[i].set_neg_torque_limit(torque_setpoint_array[i]);
     }
