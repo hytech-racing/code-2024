@@ -131,7 +131,7 @@ void setup() {
   IMU.regWrite(FLTR_CTRL, 0x500); // Set digital filter
   IMU.regWrite(DEC_RATE, 0), // Disable decimation
 
-  pinMode(BRAKE_LIGHT_CTRL, OUTPUT);
+               pinMode(BRAKE_LIGHT_CTRL, OUTPUT);
 
   // change to input if comparator is PUSH PULL
   pinMode(INVERTER_EN, OUTPUT);
@@ -209,7 +209,7 @@ void loop() {
   forward_CAN_mc_setpoints_command();
   /* Finish restarting the inverter when timer expires */
   reset_inverters();
-  
+
   /* handle state functionality */
   state_machine();
   software_shutdown();
@@ -603,77 +603,77 @@ inline void software_shutdown() {
 /* Parse incoming CAN messages */
 void parse_telem_can_message(const CAN_message_t &RX_msg) {
   CAN_message_t rx_msg = RX_msg;
-    switch (rx_msg.id) {
-      case ID_BMS_TEMPERATURES:              bms_temperatures.load(rx_msg.buf);              break;
-      case ID_BMS_VOLTAGES:
-        bms_voltages.load(rx_msg.buf);
-        if (bms_voltages.get_low() < PACK_CHARGE_CRIT_LOWEST_CELL_THRESHOLD || bms_voltages.get_total() < PACK_CHARGE_CRIT_TOTAL_THRESHOLD) { 
-          mcu_status.set_pack_charge_critical(true);
-        } else mcu_status.set_pack_charge_critical(false);
-        break;
-      case ID_BMS_COULOMB_COUNTS:            bms_coulomb_counts.load(rx_msg.buf);            break;
-      case ID_BMS_STATUS:
-        bms_status.load(rx_msg.buf);
-        // BMS heartbeat timer
-        timer_bms_heartbeat.reset();
-        timer_bms_heartbeat.interval(BMS_HEARTBEAT_TIMEOUT);
-        break;
-      case ID_DASHBOARD_STATUS:
-        dashboard_status.load(rx_msg.buf);
-        /* process dashboard buttons */
-        if (dashboard_status.get_mode_btn()) {
-          switch (mcu_status.get_torque_mode()) {
-            case 1:
-              mcu_status.set_max_torque(TORQUE_2);
-              mcu_status.set_torque_mode(2); break;
-            case 2:
-              mcu_status.set_max_torque(TORQUE_3);
-              mcu_status.set_torque_mode(3); break;
-            case 3:
-              mcu_status.set_max_torque(TORQUE_1);
-              mcu_status.set_torque_mode(1); break;
-          }
+  switch (rx_msg.id) {
+    case ID_BMS_TEMPERATURES:              bms_temperatures.load(rx_msg.buf);              break;
+    case ID_BMS_VOLTAGES:
+      bms_voltages.load(rx_msg.buf);
+      if (bms_voltages.get_low() < PACK_CHARGE_CRIT_LOWEST_CELL_THRESHOLD || bms_voltages.get_total() < PACK_CHARGE_CRIT_TOTAL_THRESHOLD) {
+        mcu_status.set_pack_charge_critical(true);
+      } else mcu_status.set_pack_charge_critical(false);
+      break;
+    case ID_BMS_COULOMB_COUNTS:            bms_coulomb_counts.load(rx_msg.buf);            break;
+    case ID_BMS_STATUS:
+      bms_status.load(rx_msg.buf);
+      // BMS heartbeat timer
+      timer_bms_heartbeat.reset();
+      timer_bms_heartbeat.interval(BMS_HEARTBEAT_TIMEOUT);
+      break;
+    case ID_DASHBOARD_STATUS:
+      dashboard_status.load(rx_msg.buf);
+      /* process dashboard buttons */
+      if (dashboard_status.get_mode_btn()) {
+        switch (mcu_status.get_torque_mode()) {
+          case 1:
+            mcu_status.set_max_torque(TORQUE_2);
+            mcu_status.set_torque_mode(2); break;
+          case 2:
+            mcu_status.set_max_torque(TORQUE_3);
+            mcu_status.set_torque_mode(3); break;
+          case 3:
+            mcu_status.set_max_torque(TORQUE_1);
+            mcu_status.set_torque_mode(1); break;
         }
-        if (dashboard_status.get_launch_ctrl_btn()) {
-          mcu_status.toggle_launch_ctrl_active();
-        }
-        if (dashboard_status.get_mc_cycle_btn()) {
-          inverter_restart = true;
-          timer_reset_inverter.reset();
-        }
-        // eliminate all action buttons to not process twice
-        dashboard_status.set_button_flags(0);
-        break;
-    }
+      }
+      if (dashboard_status.get_launch_ctrl_btn()) {
+        mcu_status.toggle_launch_ctrl_active();
+      }
+      if (dashboard_status.get_mc_cycle_btn()) {
+        inverter_restart = true;
+        timer_reset_inverter.reset();
+      }
+      // eliminate all action buttons to not process twice
+      dashboard_status.set_button_flags(0);
+      break;
+  }
 }
 
 void parse_front_inv_can_message(const CAN_message_t &RX_msg) {
   CAN_message_t rx_msg = RX_msg;
-    switch (rx_msg.id) {
-      case ID_MC1_STATUS:       mc_status[0].load(rx_msg.buf);    break;
-      case ID_MC2_STATUS:       mc_status[1].load(rx_msg.buf);    break;
-      case ID_MC1_TEMPS:        mc_temps[0].load(rx_msg.buf);    break;
-      case ID_MC2_TEMPS:        mc_temps[1].load(rx_msg.buf);    break;
-      case ID_MC1_ENERGY:       mc_energy[0].load(rx_msg.buf);    break;
-      case ID_MC2_ENERGY:       mc_energy[1].load(rx_msg.buf);    break;
-    }
+  switch (rx_msg.id) {
+    case ID_MC1_STATUS:       mc_status[0].load(rx_msg.buf);    break;
+    case ID_MC2_STATUS:       mc_status[1].load(rx_msg.buf);    break;
+    case ID_MC1_TEMPS:        mc_temps[0].load(rx_msg.buf);    break;
+    case ID_MC2_TEMPS:        mc_temps[1].load(rx_msg.buf);    break;
+    case ID_MC1_ENERGY:       mc_energy[0].load(rx_msg.buf);    break;
+    case ID_MC2_ENERGY:       mc_energy[1].load(rx_msg.buf);    break;
+  }
 }
 
 void parse_rear_inv_can_message(const CAN_message_t &RX_msg) {
   CAN_message_t rx_msg = RX_msg;
 
-    switch (rx_msg.id) {
-      case ID_MC3_STATUS:       mc_status[2].load(rx_msg.buf);    break;
-      case ID_MC4_STATUS:       mc_status[3].load(rx_msg.buf);    break;
-      case ID_MC3_TEMPS:        mc_temps[2].load(rx_msg.buf);    break;
-      case ID_MC4_TEMPS:        mc_temps[3].load(rx_msg.buf);    break;
-      case ID_MC3_ENERGY:       mc_energy[2].load(rx_msg.buf);    break;
-      case ID_MC4_ENERGY:       mc_energy[3].load(rx_msg.buf);    break;
-    }
+  switch (rx_msg.id) {
+    case ID_MC3_STATUS:       mc_status[2].load(rx_msg.buf);    break;
+    case ID_MC4_STATUS:       mc_status[3].load(rx_msg.buf);    break;
+    case ID_MC3_TEMPS:        mc_temps[2].load(rx_msg.buf);    break;
+    case ID_MC4_TEMPS:        mc_temps[3].load(rx_msg.buf);    break;
+    case ID_MC3_ENERGY:       mc_energy[2].load(rx_msg.buf);    break;
+    case ID_MC4_ENERGY:       mc_energy[3].load(rx_msg.buf);    break;
+  }
 }
 //FIXME
 inline void power_off_inverter() {
-    digitalWrite(INVERTER_24V_EN, LOW);
+  digitalWrite(INVERTER_24V_EN, LOW);
   mcu_status.set_inverter_powered(false);
 
 #if DEBUG
@@ -773,7 +773,7 @@ inline void set_inverter_torques() {
   if (avg_accel < 0) {
     avg_accel = 0;
   }
-  
+
 
 
   if (mcu_status.get_launch_ctrl_active()) {
@@ -794,10 +794,14 @@ inline void set_inverter_torques() {
       mc_setpoints_command[i].set_pos_torque_limit(torque_setpoint_array[i]);
       mc_setpoints_command[i].set_neg_torque_limit(0);
     }
-    else {
+    else if (mc_status[2].get_speed() > 770) { //EV.4.1.3
       mc_setpoints_command[i].set_speed_setpoint(0);
       mc_setpoints_command[i].set_pos_torque_limit(0);
       mc_setpoints_command[i].set_neg_torque_limit(torque_setpoint_array[i]);
+    } else {
+      mc_setpoints_command[i].set_speed_setpoint(0);
+      mc_setpoints_command[i].set_pos_torque_limit(0);
+      mc_setpoints_command[i].set_neg_torque_limit(0);
     }
   }
 
@@ -818,24 +822,24 @@ inline void read_glv_value() {
 /* Read pedal sensor values */
 inline void read_pedal_values() {
   if (timer_pedals_read.check()) {
-    
-  
+
+
     mcu_pedal_readings.set_accelerator_pedal_1(ADC1.read_channel(ADC_ACCEL_1_CHANNEL));
     mcu_pedal_readings.set_accelerator_pedal_2(ADC1.read_channel(ADC_ACCEL_2_CHANNEL));
     mcu_pedal_readings.set_brake_pedal_1(ADC1.read_channel(ADC_BRAKE_1_CHANNEL));
     mcu_pedal_readings.set_brake_pedal_2(ADC1.read_channel(ADC_BRAKE_2_CHANNEL));
-    
-    #if DEBUG
+
+#if DEBUG
     // Serial.print("ACCEL 1: "); Serial.println(mcu_pedal_readings.get_accelerator_pedal_1()1_reading);
     // Serial.print("ACCEL 2: "); Serial.println(mcu_pedal_readings.get_accelerator_pedal_1()2_reading);
     //  Serial.print("BRAKE 1: "); Serial.println(mcu_pedal_readings.get_brake_pedal_1());
     //  Serial.print("BRAKE 2: "); Serial.println(mcu_pedal_readings.get_brake_pedal_2());
-    #endif
-    
+#endif
+
     // only uses front brake pedal
     mcu_status.set_brake_pedal_active(mcu_pedal_readings.get_brake_pedal_1() >= BRAKE_ACTIVE);
     digitalWrite(BRAKE_LIGHT_CTRL, mcu_status.get_brake_pedal_active());
-    
+
     mcu_status.set_mech_brake_active(mcu_pedal_readings.get_brake_pedal_1() >= BRAKE_THRESHOLD_MECH_BRAKE_1); //define in driver_constraints.h (70%)
   }
 }
@@ -996,19 +1000,19 @@ inline void read_imu() {
   double x_gyro = IMU.regRead(X_GYRO_OUT) * 0.005; // 0.005 is the scale
   double y_gyro = IMU.regRead(Y_GYRO_OUT) * 0.005; // 0.005 is the scale
   double z_gyro = IMU.regRead(Z_GYRO_OUT) * 0.005; // 0.005 is the scale
-  double input[6] = {-accel_y, accel_x, accel_z, x_gyro, y_gyro, z_gyro}; // the weird order has to do with orienting the IMU correct wrt to the car
+  double input[6] = { -accel_y, accel_x, accel_z, x_gyro, y_gyro, z_gyro}; // the weird order has to do with orienting the IMU correct wrt to the car
   double* out = malloc(6 * sizeof(double));
-   out[0] = (input[0] * cosAngle) + (input[2] * sinAngle);
-   out[1] = input[1];
-   out[2] = (input[2] * cosAngle) - (input[0] * sinAngle);
-   out[3] = (input[4] * cosAngle) + (input[5] * sinAngle);
-   out[4] = input[4]; 
-   out[5] = (input[5] * cosAngle) - (input[3] * sinAngle);
+  out[0] = (input[0] * cosAngle) + (input[2] * sinAngle);
+  out[1] = input[1];
+  out[2] = (input[2] * cosAngle) - (input[0] * sinAngle);
+  out[3] = (input[4] * cosAngle) + (input[5] * sinAngle);
+  out[4] = input[4];
+  out[5] = (input[5] * cosAngle) - (input[3] * sinAngle);
   imu_accelerometer.set_lat_accel((int16_t)(out[1] * 102)); // * 0.00245); // 0.00245 is the scale, Left is positive
   imu_accelerometer.set_long_accel((int16_t)(out[0] * 102)); // * 0.00245); // 0.00245 is the scale, Backwards is positive, need to fix?
   imu_accelerometer.set_vert_accel((int16_t)(out[2] * 102)); // * 0.00245); // 0.00245 is the scale, Up is positive
   // question about yaw, pitch and roll rates?
-  imu_gyroscope.set_pitch((int16_t)-(out[3] * 102)); // * 0.005); // 0.005 is the scale,
+  imu_gyroscope.set_pitch((int16_t) - (out[3] * 102)); // * 0.005); // 0.005 is the scale,
   imu_gyroscope.set_yaw((int16_t)(-out[5] * 102)); // * 0.005);  // 0.005 is the scale
   imu_gyroscope.set_roll((int16_t)(-out[4] * 102)); // * 0.005); // 0.005 is the scale
 }
@@ -1031,6 +1035,6 @@ inline void send_CAN_IMU_gyroscope() {
   }
 }
 
-inline void read_all_adcs(){
-  
+inline void read_all_adcs() {
+
 }
