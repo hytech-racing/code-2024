@@ -796,6 +796,7 @@ inline void set_inverter_torques() {
     //torque * speed / 1000 (kW)
     // scale down by 80/power%
     //lots of variables for documentation purposes
+    //since torque unit to nominal torque and power conversion are linear, the diff can be applied directly to the torque setpoint value.
   for(int i = 0; i < 4; i++) {
     uint16_t currTorque =  torque_setpoint_array[i];
     float angularSpeed = mc_status[i].get_speed() / 60 * 2 * PI;
