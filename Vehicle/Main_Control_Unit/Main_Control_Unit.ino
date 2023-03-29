@@ -777,7 +777,7 @@ inline void set_inverter_torques() {
 
 
   if (mcu_status.get_launch_ctrl_active()) {
-
+    
   } else {
     //currently in debug mode, no torque vectoring
 
@@ -788,6 +788,26 @@ inline void set_inverter_torques() {
 
 
   }
+  //
+
+    //power limit to 80kW
+    //look at all torques 
+    //look at motor speeds / convert from rpm to angular speed
+    //torque * speed / 1000 (kW)
+    // scale down by 80/power%
+    //lots of variables for documentation purposes
+  for(int i = 0; i < 4; i++) {
+    uint16_t currTorque =  torque_setpoint_array[i];
+    float angularSpeed = mc_status[i].get_speed() / 60 * 2 * PI;
+    float power = currTorque / 1000.0 * 9.8 * angularSpeed / 1000;
+    if (power > 80) {
+      float diff = 80 / power;
+      torque_setpoint_array[i] = (uint16_t) currTorque * diff;
+    }
+   
+    
+  }
+
   for (int i = 0; i < sizeof(torque_setpoint_array); i++) {
     if (torque_setpoint_array[i] >= 0) {
       mc_setpoints_command[i].set_speed_setpoint(MC_MAX_SPEED);
@@ -800,11 +820,6 @@ inline void set_inverter_torques() {
       mc_setpoints_command[i].set_neg_torque_limit(torque_setpoint_array[i]);
     }
   }
-
-
-
-  //power limit to 80kW
-  //add this plz
 
 }
 /* Read 24_Sense_ECU which checks GLV voltage */
