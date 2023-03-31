@@ -390,6 +390,7 @@ void write_total_discharge() {
 /*
   Puts encoded data into a SER_PKT_LEN + 2 long array
   @param *cobs_buf array of uint8_t[SER_PKT_LEN + 2]
+
   */
 void create_ser_data(uint8_t *cobs_buf) {
     /*
@@ -421,6 +422,8 @@ void create_ser_data(uint8_t *cobs_buf) {
     //Serial.println();
     memset(xb_buf, 0, sizeof(CAN_message_t));
 }
+
+void create_ser_data()
 
 int write_xbee_data() {
     /*
