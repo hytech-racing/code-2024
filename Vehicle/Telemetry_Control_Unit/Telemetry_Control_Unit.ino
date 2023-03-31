@@ -6,6 +6,10 @@
  * Rev 2 - 4/23/2019
  * Last Modified: 9/29/2022
  */
+
+ /*
+  * TODO: GPS
+  */
 #define GPS_EN false
 #define COULOUMB_COUNTING_EN false
 
@@ -23,6 +27,7 @@
 #define NRF Serial2
 #define ESP Serial8
 
+#define NUM_BMS_IC 12
 #define SER_PKT_LEN 15
 #define TEMP_SENSE_CHANNEL 0
 #define ECU_CURRENT_CHANNEL 1
@@ -60,7 +65,6 @@ ADC_SPI ADC(A1, 1800000);
 Metro timer_mcu_status = Metro(2000);
 Metro timer_debug_dashboard = Metro(2000);
 Metro timer_debug_mcu_pedal_readings = Metro(200);
-Metro timer_debug_mcu_wheel_speed = Metro(200);
 Metro timer_debug_bms_balancing_status = Metro(3000);
 Metro timer_mcu_analog_readings = Metro(500);
 Metro timer_debug_bms_status = Metro(1000);
@@ -72,7 +76,6 @@ Metro timer_energy = Metro(1000);
 Metro timer_setpoints_command = Metro(1000);
 Metro timer_status = Metro(1000);
 Metro timer_temps = Metro(1000);
-Metro timer_torque_command = Metro(1000);
 Metro timer_detailed_voltages = Metro(1000);
 Metro timer_status_send = Metro(100);
 Metro timer_status_send_xbee = Metro(2000);
@@ -114,11 +117,11 @@ MC_temps mc3_temps;
 MC_temps mc4_temps;
 
 BMS_voltages bms_voltages;
-BMS_detailed_voltages bms_detailed_voltages[4][8];
+BMS_detailed_voltages bms_detailed_voltages[4][NUM_BMS_IC];
 BMS_temperatures bms_temperatures;
-BMS_detailed_temperatures bms_detailed_temperatures[2][8];
+BMS_detailed_temperatures bms_detailed_temperatures[2][NUM_BMS_IC];
 BMS_onboard_temperatures bms_onboard_temperatures;
-BMS_onboard_detailed_temperatures bms_onboard_detailed_temperatures[8];
+BMS_onboard_detailed_temperatures bms_onboard_detailed_temperatures[NUM_BMS_IC]; // Not used
 BMS_status bms_status;
 BMS_balancing_status bms_balancing_status[2];
 BMS_coulomb_counts bms_coulomb_counts;                                                
@@ -227,71 +230,75 @@ void loop() {
 }
 /* Parse all CAN lines */
 void parse_can_lines() {
-  parse_can_message(CAN_1.read(msg_rx));
-  parse_can_message(CAN_2.read(msg_rx));
-  parse_can_message(CAN_3.read(msg_rx));
+  while(CAN_1.read(msg_rx)) {
+    parse_can_message(msg_rx);
+  }
+  while(CAN_2.read(msg_rx)) {
+    parse_can_message(msg_rx);
+  }
+  while(CAN_3.read(msg_rx)) {
+    parse_can_message(msg_rx);
+  }
 }
 
 /* Parse a result of a CAN line 
-  @param can_read_result     Result of reading from a can line 
+  @param msg     Result of reading from a can line 
   */
-void parse_can_message(int can_read_result) {
-    while (can_read_result) {
-        write_to_SD(&msg_rx); // Write to SD card buffer (if the buffer fills up, triggering a flush to disk, this will take 8ms)
-        // Identify received CAN messages and load contents into corresponding structs
-        if (msg_rx.id == ID_BMS_DETAILED_VOLTAGES) {
-            BMS_detailed_voltages temp = BMS_detailed_voltages(msg_rx.buf);
-            bms_detailed_voltages[temp.get_group_id()][temp.get_ic_id()].load(msg_rx.buf);
-        }
-        else if (msg_rx.id == ID_BMS_DETAILED_TEMPERATURES) {
-            BMS_detailed_temperatures temp = BMS_detailed_temperatures(msg_rx.buf);
-            bms_detailed_temperatures[temp.get_group_id()][temp.get_ic_id()].load(msg_rx.buf);
-        }
-        else if (msg_rx.id == ID_BMS_ONBOARD_DETAILED_TEMPERATURES) {
-            BMS_onboard_detailed_temperatures temp = BMS_onboard_detailed_temperatures(msg_rx.buf);
-            bms_onboard_detailed_temperatures[temp.get_ic_id()].load(msg_rx.buf);
-        }
-        else if (msg_rx.id == ID_BMS_BALANCING_STATUS) {
-            BMS_balancing_status temp = BMS_balancing_status(msg_rx.buf);
-            bms_balancing_status[temp.get_group_id()].load(msg_rx.buf);
-        }
-        else switch(msg_rx.id) {
-            case ID_MCU_STATUS:                         
-                // Serial.println("mcu_received");
-                mcu_status.load(msg_rx.buf);                        break;
-            case ID_DASHBOARD_STATUS:                   dashboard_status.load(msg_rx.buf);                  break;
-            case ID_MCU_PEDAL_READINGS:                 mcu_pedal_readings.load(msg_rx.buf);                break;
-            case ID_MCU_ANALOG_READINGS:                mcu_analog_readings.load(msg_rx.buf);               break;
-            case ID_BMS_VOLTAGES:                       bms_voltages.load(msg_rx.buf);                      break;
-            case ID_BMS_TEMPERATURES:                   bms_temperatures.load(msg_rx.buf);                  break;
-            case ID_BMS_ONBOARD_TEMPERATURES:           bms_onboard_temperatures.load(msg_rx.buf);          break;
-            case ID_BMS_STATUS:                         bms_status.load(msg_rx.buf);                        break;
-            case ID_BMS_COULOMB_COUNTS:                 bms_coulomb_counts.load(msg_rx.buf);                break;
-            case ID_CCU_STATUS:                         ccu_status.load(msg_rx.buf);                        break;
-            case ID_MC1_STATUS:                         mc1_status.load(msg_rx.buf);                        break;
-            case ID_MC2_STATUS:                         mc2_status.load(msg_rx.buf);                        break;
-            case ID_MC3_STATUS:                         mc3_status.load(msg_rx.buf);                        break;
-            case ID_MC4_STATUS:                         mc4_status.load(msg_rx.buf);                        break;
-            case ID_MC1_TEMPS:                          mc1_temps.load(msg_rx.buf);                         break;
-            case ID_MC2_TEMPS:                          mc2_temps.load(msg_rx.buf);                         break;
-            case ID_MC3_TEMPS:                          mc3_temps.load(msg_rx.buf);                         break;
-            case ID_MC4_TEMPS:                          mc4_temps.load(msg_rx.buf);                         break;
-            case ID_MC1_ENERGY:                         mc1_energy.load(msg_rx.buf);                        break;
-            case ID_MC2_ENERGY:                         mc2_energy.load(msg_rx.buf);                        break;
-            case ID_MC3_ENERGY:                         mc3_energy.load(msg_rx.buf);                        break;
-            case ID_MC4_ENERGY:                         mc4_energy.load(msg_rx.buf);                        break;
-            case ID_MC1_SETPOINTS_COMMAND:              mc1_setpoints_command.load(msg_rx.buf);             break;
-            case ID_MC2_SETPOINTS_COMMAND:              mc2_setpoints_command.load(msg_rx.buf);             break;
-            case ID_MC3_SETPOINTS_COMMAND:              mc3_setpoints_command.load(msg_rx.buf);             break;
-            case ID_MC4_SETPOINTS_COMMAND:              mc4_setpoints_command.load(msg_rx.buf);             break;
-            case ID_EM_STATUS:                          em_status.load(msg_rx.buf);                         break;
-            case ID_EM_MEASUREMENT:                     em_measurement.load(msg_rx.buf);                    break;
-            case ID_IMU_ACCELEROMETER:                  imu_accelerometer.load(msg_rx.buf);                 break;
-            case ID_IMU_GYROSCOPE:                      imu_gyroscope.load(msg_rx.buf);                     break;
-            case ID_SAB_READINGS_FRONT:                 sab_readings_front.load(msg_rx.buf);                break;
-            case ID_SAB_READINGS_REAR:                  sab_readings_rear.load(msg_rx.buf);                 break;
-            case ID_SAB_READINGS_GPS:                   sab_readings_gps.load(msg_rx.buf);                  break;
-        }
+void parse_can_message(CAN_message_t& msg) {
+    write_to_SD(&msg); // Write to SD card buffer (if the buffer fills up, triggering a flush to disk, this will take 8ms)
+    // Identify received CAN messages and load contents into corresponding structs
+    if (msg.id == ID_BMS_DETAILED_VOLTAGES) {
+        BMS_detailed_voltages temp = BMS_detailed_voltages(msg.buf);
+        bms_detailed_voltages[temp.get_group_id()][temp.get_ic_id()].load(msg.buf);
+    }
+    else if (msg.id == ID_BMS_DETAILED_TEMPERATURES) {
+        BMS_detailed_temperatures temp = BMS_detailed_temperatures(msg.buf);
+        bms_detailed_temperatures[temp.get_group_id()][temp.get_ic_id()].load(msg.buf);
+    }
+    else if (msg.id == ID_BMS_ONBOARD_DETAILED_TEMPERATURES) {
+        BMS_onboard_detailed_temperatures temp = BMS_onboard_detailed_temperatures(msg.buf);
+        bms_onboard_detailed_temperatures[temp.get_ic_id()].load(msg.buf);
+    }
+    else if (msg.id == ID_BMS_BALANCING_STATUS) {
+        BMS_balancing_status temp = BMS_balancing_status(msg.buf);
+        bms_balancing_status[temp.get_group_id()].load(msg.buf);
+    }
+    else switch(msg.id) {
+        case ID_MCU_STATUS:                         
+            // Serial.println("mcu_received");
+            mcu_status.load(msg.buf);                        break;
+        case ID_DASHBOARD_STATUS:                   dashboard_status.load(msg.buf);                  break;
+        case ID_MCU_PEDAL_READINGS:                 mcu_pedal_readings.load(msg.buf);                break;
+        case ID_MCU_ANALOG_READINGS:                mcu_analog_readings.load(msg.buf);               break;
+        case ID_BMS_VOLTAGES:                       bms_voltages.load(msg.buf);                      break;
+        case ID_BMS_TEMPERATURES:                   bms_temperatures.load(msg.buf);                  break;
+        case ID_BMS_ONBOARD_TEMPERATURES:           bms_onboard_temperatures.load(msg.buf);          break;
+        case ID_BMS_STATUS:                         bms_status.load(msg.buf);                        break;
+        case ID_BMS_COULOMB_COUNTS:                 bms_coulomb_counts.load(msg.buf);                break;
+        case ID_CCU_STATUS:                         ccu_status.load(msg.buf);                        break;
+        case ID_MC1_STATUS:                         mc1_status.load(msg.buf);                        break;
+        case ID_MC2_STATUS:                         mc2_status.load(msg.buf);                        break;
+        case ID_MC3_STATUS:                         mc3_status.load(msg.buf);                        break;
+        case ID_MC4_STATUS:                         mc4_status.load(msg.buf);                        break;
+        case ID_MC1_TEMPS:                          mc1_temps.load(msg.buf);                         break;
+        case ID_MC2_TEMPS:                          mc2_temps.load(msg.buf);                         break;
+        case ID_MC3_TEMPS:                          mc3_temps.load(msg.buf);                         break;
+        case ID_MC4_TEMPS:                          mc4_temps.load(msg.buf);                         break;
+        case ID_MC1_ENERGY:                         mc1_energy.load(msg.buf);                        break;
+        case ID_MC2_ENERGY:                         mc2_energy.load(msg.buf);                        break;
+        case ID_MC3_ENERGY:                         mc3_energy.load(msg.buf);                        break;
+        case ID_MC4_ENERGY:                         mc4_energy.load(msg.buf);                        break;
+        case ID_MC1_SETPOINTS_COMMAND:              mc1_setpoints_command.load(msg.buf);             break;
+        case ID_MC2_SETPOINTS_COMMAND:              mc2_setpoints_command.load(msg.buf);             break;
+        case ID_MC3_SETPOINTS_COMMAND:              mc3_setpoints_command.load(msg.buf);             break;
+        case ID_MC4_SETPOINTS_COMMAND:              mc4_setpoints_command.load(msg.buf);             break;
+        case ID_EM_STATUS:                          em_status.load(msg.buf);                         break;
+        case ID_EM_MEASUREMENT:                     em_measurement.load(msg.buf);                    break;
+        case ID_IMU_ACCELEROMETER:                  imu_accelerometer.load(msg.buf);                 break;
+        case ID_IMU_GYROSCOPE:                      imu_gyroscope.load(msg.buf);                     break;
+        case ID_SAB_READINGS_FRONT:                 sab_readings_front.load(msg.buf);                break;
+        case ID_SAB_READINGS_REAR:                  sab_readings_rear.load(msg.buf);                 break;
+        case ID_SAB_READINGS_GPS:                   sab_readings_gps.load(msg.buf);                  break;
     }
 }
 
@@ -330,10 +337,10 @@ time_t getTeensy3Time() {
 
 inline void read_analog_values() {
     /* Filter ADC readings */
-    filtered_temp_reading        = ALPHA * filtered_temp_reading      + (1 - ALPHA) * ADC.read_adc(TEMP_SENSE_CHANNEL);
-    filtered_ecu_current_reading   = ALPHA * filtered_ecu_current_reading   + (1 - ALPHA) * ADC.read_adc(ECU_CURRENT_CHANNEL);
-    filtered_supply_reading      = ALPHA * filtered_supply_reading      + (1 - ALPHA) * ADC.read_adc(SUPPLY_READ_CHANNEL);
-    filtered_cooling_current_reading = ALPHA * filtered_cooling_current_reading + (1 - ALPHA) * ADC.read_adc(COOLING_CURRENT_CHANNEL);
+    filtered_temp_reading        = ALPHA * filtered_temp_reading      + (1 - ALPHA) * ADC.read_channel(TEMP_SENSE_CHANNEL);
+    filtered_ecu_current_reading   = ALPHA * filtered_ecu_current_reading   + (1 - ALPHA) * ADC.read_channel(ECU_CURRENT_CHANNEL);
+    filtered_supply_reading      = ALPHA * filtered_supply_reading      + (1 - ALPHA) * ADC.read_channel(SUPPLY_READ_CHANNEL);
+    filtered_cooling_current_reading = ALPHA * filtered_cooling_current_reading + (1 - ALPHA) * ADC.read_channel(COOLING_CURRENT_CHANNEL);
 }
 void process_mcu_analog_readings() {
     //self derived
@@ -344,14 +351,14 @@ void process_mcu_analog_readings() {
     float glv_voltage_value = (((filtered_supply_reading/4096) * 5) * 55/12) + 0.14; //ADC->12V conversion + offset likely due to resistor values
     //Serial.print("GLV: ");
     //Serial.println(glv_voltage_value);
-    mcu_analog_readings.set_ecu_current(current_ecu * 5000);
-    mcu_analog_readings.set_cooling_current(current_cooling * 5000);
-    mcu_analog_readings.set_glv_battery_voltage(glv_voltage_value * 2500);
-    mcu_analog_readings.set_temperature(filtered_temp_reading);
+    //mcu_analog_readings.set_ecu_current(current_ecu * 5000);
+    //mcu_analog_readings.set_cooling_current(current_cooling * 5000);
+    //mcu_analog_readings.set_glv_battery_voltage(glv_voltage_value * 2500);
+    //mcu_analog_readings.set_temperature(filtered_temp_reading);
     mcu_analog_readings.write(msg_tx.buf);
     msg_tx.id = ID_MCU_ANALOG_READINGS;
     msg_tx.len = sizeof(mcu_analog_readings);
-    CAN.write(msg_tx);
+    CAN_1.write(msg_tx);
     mcu_analog_readings.write(xb_msg.buf);
     xb_msg.id = ID_MCU_ANALOG_READINGS;
     xb_msg.len = sizeof(mcu_analog_readings);
@@ -467,7 +474,7 @@ void send_xbee() {
         NRF.println(bms_voltages.get_total() / (double) 100, 2);*/
     }
     if (timer_debug_bms_detailed_voltages.check()) {
-        for (int ic = 0; ic < 8; ic++) {
+        for (int ic = 0; ic < NUM_BMS_IC; ic++) {
             for (int group = 0; group < ((ic % 2 == 0) ? 4 : 3); group++) {
                 bms_detailed_voltages[group][ic].write(xb_msg.buf);
                 xb_msg.len = sizeof(BMS_detailed_voltages);
@@ -489,7 +496,7 @@ void send_xbee() {
         NRF.println(bms_temperatures.get_high_temperature() / (double) 100, 2);*/
     }
     if (timer_debug_bms_detailed_temperatures.check()) {
-        for (int ic = 0; ic < 8; ic++) {
+        for (int ic = 0; ic < NUM_BMS_IC; ic++) {
             for (int group = 0; group < 2; group++) {
                 bms_detailed_temperatures[group][ic].write(xb_msg.buf);
                 xb_msg.len = sizeof(BMS_detailed_temperatures);
@@ -539,12 +546,6 @@ void send_xbee() {
             xb_msg.id = ID_BMS_BALANCING_STATUS;
             write_xbee_data();
         }
-    }
-    if (timer_debug_mcu_wheel_speed.check()) {
-        mcu_wheel_speed.write(xb_msg.buf);
-        xb_msg.len = sizeof(MCU_wheel_speed);
-        xb_msg.id = ID_MCU_WHEEL_SPEED;
-        write_xbee_data();
     }
     if (timer_debug_dashboard.check()) {
         dashboard_status.write(xb_msg.buf);
@@ -648,24 +649,6 @@ void send_xbee() {
         xb_msg.id = ID_MC4_TEMPS;
         write_xbee_data();
     }
-    if (timer_torque_command.check()) {
-        mc1_torque_command.write(xb_msg.buf);
-        xb_msg.len = sizeof(mc1_torque_command);
-        xb_msg.id = ID_MC1_TORQUE_COMMAND;
-        write_xbee_data();
-        mc2_torque_command.write(xb_msg.buf);
-        xb_msg.len = sizeof(mc2_torque_command);
-        xb_msg.id = ID_MC2_TORQUE_COMMAND;
-        write_xbee_data();
-        mc3_torque_command.write(xb_msg.buf);
-        xb_msg.len = sizeof(mc3_torque_command);
-        xb_msg.id = ID_MC3_TORQUE_COMMAND;
-        write_xbee_data();
-        mc4_torque_command.write(xb_msg.buf);
-        xb_msg.len = sizeof(mc4_torque_command);
-        xb_msg.id = ID_MC4_TORQUE_COMMAND;
-        write_xbee_data();
-    }    
     if (timer_sab_readings_front.check()) {
         sab_readings_front.write(xb_msg.buf);
         xb_msg.len = sizeof(sab_readings_front);
