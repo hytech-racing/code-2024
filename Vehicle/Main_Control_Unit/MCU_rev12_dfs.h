@@ -66,6 +66,9 @@
 #define ADC_FR_LOAD_CELL_CHANNEL 5
 #define ADC_RL_LOAD_CELL_CHANNEL 7
 #define ADC_RR_LOAD_CELL_CHANNEL 3
+
+#define ADC_CURRENT_CHANNEL 5
+#define ADC_REFERENCE_CHANNEL 6
 /*
  * Shutdown read thresholds
  */

@@ -785,7 +785,7 @@ inline void set_inverter_torques() {
     torque_setpoint_array[1] = avg_accel -  avg_brake * 2;
     torque_setpoint_array[2] = avg_accel -  avg_brake * 2;
     torque_setpoint_array[3] = avg_accel -  avg_brake * 2;
-
+ference
 
   }
   //
@@ -797,17 +797,51 @@ inline void set_inverter_torques() {
     // scale down by 80/power%
     //lots of variables for documentation purposes
     //since torque unit to nominal torque and power conversion are linear, the diff can be applied directly to the torque setpoint value.
+  float mech_power = 0;
+  float mdiff = 1;
+  float ediff = 1;
+  float diff = 1;
+  
   for(int i = 0; i < 4; i++) {
     uint16_t currTorque =  torque_setpoint_array[i];
-    float angularSpeed = mc_status[i].get_speed() / 60 * 2 * PI;
-    float power = currTorque / 1000.0 * 9.8 * angularSpeed / 1000;
-    if (power > 80) {
-      float diff = 80 / power;
-      torque_setpoint_array[i] = (uint16_t) currTorque * diff;
-    }
-   
-    
+    mech_power += ((currTorque / 1000.0 * 9.8) * mc_status[i].get_speed()) / 9.5488;
   }
+  
+  float current = (ADC1.read_channel(ADC_CURRENT_CHANNEL) - ADC1.read_channel(ADC_REFERENCE_CHANNEL));
+  current = ((((current / 819.0) / .1912) / 4.832 )  * 1000) / 6.67;
+  
+  float batt_power = (mc_energy.get_dc_bus_voltage * current) / 1000; //mc dc bus voltage
+  
+  //sum up kilowatts to align
+  //if mech_power is at 63 kW, it's requesting 80 kW from the motor
+  //2 kW safety factor for the more accurate motor readings.
+  //as our effiecency increases say 68 kW would be drawing 80kW from the motor
+  //as our efficiency decreases say 60 kW would be drawing 80kW from the motor 
+  //so if efficency is at 60kW and we want 63, we'd be drawing more from the battery triggering a safety problem
+  //so if efficency is at 68 kW, 63 would be drawing less power, which is fine but wasted power.
+  //if HV DC bus is over 80 kW, it's a violation
+  // 1 kW as a second safety factor.
+  if (mech_power > 61) {
+    mdiff = 61 / mech_power;
+  }
+  if (batt_power > 79) {
+    ediff = 79 / batt_power;
+  }
+  if (mech_power > 61 || batt_power > 79) {
+    diff = (ediff <= mdiff) ? ediff : mdiff; 
+  } else if (mech_power > 61) {
+    diff = mdiff;
+  } else if (batt_power > 79) {
+    diff = ediff;
+  }
+  torque_setpoint_array[0] = (uint16_t) currTorque * diff;
+  torque_setpoint_array[1] = (uint16_t) currTorque * diff;
+  torque_setpoint_array[2] = (uint16_t) currTorque * diff;
+  torque_setpoint_array[3] = (uint16_t) currTorque * diff;
+  //get current - reference, go backwards by the constant
+  //get rid of adc conversion, divide by voltage divider gain and divide by op amp gain
+  //relate to current to voltage relationship of 300 amp sensor
+  
 
   for (int i = 0; i < sizeof(torque_setpoint_array); i++) {
     if (torque_setpoint_array[i] >= 0) {
