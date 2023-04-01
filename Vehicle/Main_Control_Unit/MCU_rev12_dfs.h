@@ -22,6 +22,7 @@
 #define IMU_CS 38
 #define IMU_RESET 36
 #define VEHICLE_TILT_ANGLE_X 0.0261799 // (in radians) ~ 1.5 degrees
+#define ACCL_DUE_TO_GRAVITY  9.80665 // from https://physics.nist.gov/cgi-bin/cuu/Value?gn
 
 #define CAN_ECU_RX1 22
 #define CAN_ECU_TX1 23
@@ -66,6 +67,9 @@
 #define ADC_FR_LOAD_CELL_CHANNEL 5
 #define ADC_RL_LOAD_CELL_CHANNEL 7
 #define ADC_RR_LOAD_CELL_CHANNEL 3
+
+#define ADC_CURRENT_CHANNEL 5
+#define ADC_REFERENCE_CHANNEL 6
 /*
  * Shutdown read thresholds
  */
@@ -98,3 +102,8 @@
 
 #define PACK_CHARGE_CRIT_TOTAL_THRESHOLD 420
 #define PACK_CHARGE_CRIT_LOWEST_CELL_THRESHOLD 35000
+
+#define MECH_POWER_LIMIT 61
+#define DC_POWER_LIMIT 79
+
+#define REGEN_OFF_START_THRESHOLD 1540
