@@ -49,6 +49,7 @@ MCU_analog_readings mcu_analog_readings{};
 // IMU
 IMU_accelerometer imu_accelerometer;
 IMU_gyroscope imu_gyroscope;
+double imu_velocity;
 
 MC_status mc_status[4];
 MC_temps mc_temps[4];
@@ -63,6 +64,7 @@ BMS_voltages bms_voltages{};
 Dashboard_status dashboard_status{};
 
 //Timers
+Metro timer_imu_integration = Metro(50);
 Metro timer_CAN_imu_accelerometer_send = Metro(50);
 Metro timer_CAN_imu_gyroscope_send = Metro(50);
 Metro timer_CAN_inverter_status_read = Metro(20);
@@ -128,8 +130,11 @@ void setup() {
 
   // IMU set up
   IMU.regWrite(MSC_CTRL, 0xC1);  // Enable Data Ready, set polarity
+  delay(20); 
   IMU.regWrite(FLTR_CTRL, 0x500); // Set digital filter
+  delay(20);
   IMU.regWrite(DEC_RATE, 0), // Disable decimation
+  delay(20);
 
   pinMode(BRAKE_LIGHT_CTRL, OUTPUT);
 
@@ -209,11 +214,17 @@ void loop() {
   forward_CAN_mc_setpoints_command();
   /* Finish restarting the inverter when timer expires */
   reset_inverters();
-  
+
   /* handle state functionality */
   state_machine();
   software_shutdown();
 
+  if (timer_imu_integration.check()) {
+    double accel_y = IMU.regRead(Y_ACCL_OUT) * 0.00245;
+    double accel_z = IMU.regRead(Z_ACCL_OUT) * 0.00245;
+    double long_accel = ((-accel_y) * cosAngle) + (accel_z * sinAngle);
+    imu_velocity += (long_accel * 0.05);
+  }
 
 }
 
@@ -603,77 +614,77 @@ inline void software_shutdown() {
 /* Parse incoming CAN messages */
 void parse_telem_can_message(const CAN_message_t &RX_msg) {
   CAN_message_t rx_msg = RX_msg;
-    switch (rx_msg.id) {
-      case ID_BMS_TEMPERATURES:              bms_temperatures.load(rx_msg.buf);              break;
-      case ID_BMS_VOLTAGES:
-        bms_voltages.load(rx_msg.buf);
-        if (bms_voltages.get_low() < PACK_CHARGE_CRIT_LOWEST_CELL_THRESHOLD || bms_voltages.get_total() < PACK_CHARGE_CRIT_TOTAL_THRESHOLD) { 
-          mcu_status.set_pack_charge_critical(true);
-        } else mcu_status.set_pack_charge_critical(false);
-        break;
-      case ID_BMS_COULOMB_COUNTS:            bms_coulomb_counts.load(rx_msg.buf);            break;
-      case ID_BMS_STATUS:
-        bms_status.load(rx_msg.buf);
-        // BMS heartbeat timer
-        timer_bms_heartbeat.reset();
-        timer_bms_heartbeat.interval(BMS_HEARTBEAT_TIMEOUT);
-        break;
-      case ID_DASHBOARD_STATUS:
-        dashboard_status.load(rx_msg.buf);
-        /* process dashboard buttons */
-        if (dashboard_status.get_mode_btn()) {
-          switch (mcu_status.get_torque_mode()) {
-            case 1:
-              mcu_status.set_max_torque(TORQUE_2);
-              mcu_status.set_torque_mode(2); break;
-            case 2:
-              mcu_status.set_max_torque(TORQUE_3);
-              mcu_status.set_torque_mode(3); break;
-            case 3:
-              mcu_status.set_max_torque(TORQUE_1);
-              mcu_status.set_torque_mode(1); break;
-          }
+  switch (rx_msg.id) {
+    case ID_BMS_TEMPERATURES:              bms_temperatures.load(rx_msg.buf);              break;
+    case ID_BMS_VOLTAGES:
+      bms_voltages.load(rx_msg.buf);
+      if (bms_voltages.get_low() < PACK_CHARGE_CRIT_LOWEST_CELL_THRESHOLD || bms_voltages.get_total() < PACK_CHARGE_CRIT_TOTAL_THRESHOLD) {
+        mcu_status.set_pack_charge_critical(true);
+      } else mcu_status.set_pack_charge_critical(false);
+      break;
+    case ID_BMS_COULOMB_COUNTS:            bms_coulomb_counts.load(rx_msg.buf);            break;
+    case ID_BMS_STATUS:
+      bms_status.load(rx_msg.buf);
+      // BMS heartbeat timer
+      timer_bms_heartbeat.reset();
+      timer_bms_heartbeat.interval(BMS_HEARTBEAT_TIMEOUT);
+      break;
+    case ID_DASHBOARD_STATUS:
+      dashboard_status.load(rx_msg.buf);
+      /* process dashboard buttons */
+      if (dashboard_status.get_mode_btn()) {
+        switch (mcu_status.get_torque_mode()) {
+          case 1:
+            mcu_status.set_max_torque(TORQUE_2);
+            mcu_status.set_torque_mode(2); break;
+          case 2:
+            mcu_status.set_max_torque(TORQUE_3);
+            mcu_status.set_torque_mode(3); break;
+          case 3:
+            mcu_status.set_max_torque(TORQUE_1);
+            mcu_status.set_torque_mode(1); break;
         }
-        if (dashboard_status.get_launch_ctrl_btn()) {
-          mcu_status.toggle_launch_ctrl_active();
-        }
-        if (dashboard_status.get_mc_cycle_btn()) {
-          inverter_restart = true;
-          timer_reset_inverter.reset();
-        }
-        // eliminate all action buttons to not process twice
-        dashboard_status.set_button_flags(0);
-        break;
-    }
+      }
+      if (dashboard_status.get_launch_ctrl_btn()) {
+        mcu_status.toggle_launch_ctrl_active();
+      }
+      if (dashboard_status.get_mc_cycle_btn()) {
+        inverter_restart = true;
+        timer_reset_inverter.reset();
+      }
+      // eliminate all action buttons to not process twice
+      dashboard_status.set_button_flags(0);
+      break;
+  }
 }
 
 void parse_front_inv_can_message(const CAN_message_t &RX_msg) {
   CAN_message_t rx_msg = RX_msg;
-    switch (rx_msg.id) {
-      case ID_MC1_STATUS:       mc_status[0].load(rx_msg.buf);    break;
-      case ID_MC2_STATUS:       mc_status[1].load(rx_msg.buf);    break;
-      case ID_MC1_TEMPS:        mc_temps[0].load(rx_msg.buf);    break;
-      case ID_MC2_TEMPS:        mc_temps[1].load(rx_msg.buf);    break;
-      case ID_MC1_ENERGY:       mc_energy[0].load(rx_msg.buf);    break;
-      case ID_MC2_ENERGY:       mc_energy[1].load(rx_msg.buf);    break;
-    }
+  switch (rx_msg.id) {
+    case ID_MC1_STATUS:       mc_status[0].load(rx_msg.buf);    break;
+    case ID_MC2_STATUS:       mc_status[1].load(rx_msg.buf);    break;
+    case ID_MC1_TEMPS:        mc_temps[0].load(rx_msg.buf);    break;
+    case ID_MC2_TEMPS:        mc_temps[1].load(rx_msg.buf);    break;
+    case ID_MC1_ENERGY:       mc_energy[0].load(rx_msg.buf);    break;
+    case ID_MC2_ENERGY:       mc_energy[1].load(rx_msg.buf);    break;
+  }
 }
 
 void parse_rear_inv_can_message(const CAN_message_t &RX_msg) {
   CAN_message_t rx_msg = RX_msg;
 
-    switch (rx_msg.id) {
-      case ID_MC3_STATUS:       mc_status[2].load(rx_msg.buf);    break;
-      case ID_MC4_STATUS:       mc_status[3].load(rx_msg.buf);    break;
-      case ID_MC3_TEMPS:        mc_temps[2].load(rx_msg.buf);    break;
-      case ID_MC4_TEMPS:        mc_temps[3].load(rx_msg.buf);    break;
-      case ID_MC3_ENERGY:       mc_energy[2].load(rx_msg.buf);    break;
-      case ID_MC4_ENERGY:       mc_energy[3].load(rx_msg.buf);    break;
-    }
+  switch (rx_msg.id) {
+    case ID_MC3_STATUS:       mc_status[2].load(rx_msg.buf);    break;
+    case ID_MC4_STATUS:       mc_status[3].load(rx_msg.buf);    break;
+    case ID_MC3_TEMPS:        mc_temps[2].load(rx_msg.buf);    break;
+    case ID_MC4_TEMPS:        mc_temps[3].load(rx_msg.buf);    break;
+    case ID_MC3_ENERGY:       mc_energy[2].load(rx_msg.buf);    break;
+    case ID_MC4_ENERGY:       mc_energy[3].load(rx_msg.buf);    break;
+  }
 }
 //FIXME
 inline void power_off_inverter() {
-    digitalWrite(INVERTER_24V_EN, LOW);
+  digitalWrite(INVERTER_24V_EN, LOW);
   mcu_status.set_inverter_powered(false);
 
 #if DEBUG
@@ -773,7 +784,7 @@ inline void set_inverter_torques() {
   if (avg_accel < 0) {
     avg_accel = 0;
   }
-  
+
 
 
   if (mcu_status.get_launch_ctrl_active()) {
@@ -786,8 +797,67 @@ inline void set_inverter_torques() {
     torque_setpoint_array[2] = avg_accel -  avg_brake * 2;
     torque_setpoint_array[3] = avg_accel -  avg_brake * 2;
 
-
   }
+  /*
+     //very start check if mc_energy.get_feedback_torque > 0
+      //power limit to 80kW
+      //look at all torques
+      //look at motor speeds / convert from rpm to angular speed
+      //torque * speed / 1000 (kW)
+      // scale down by m/e limits
+      //lots of variables for documentation purposes
+      //since torque unit to nominal torque and power conversion are linear, the diff can be applied directly to the torque setpoint value.
+    if (mc_energy[0].get_feedback_torque() > 0 && mc_energy[1].get_feedback_torque() > 0
+    && mc_energy[0].get_feedback_torque() > 0 && mc_energy[0].get_feedback_torque() > 0) {
+      float mech_power = 0;
+      float mdiff = 1;
+      float ediff = 1;
+      float diff = 1;
+
+      for(int i = 0; i < 4; i++) {
+        mech_power += mc_energy[i].get_actual_power();
+      }
+      mech_power /= 1000;
+
+      float current = (ADC1.read_channel(ADC_CURRENT_CHANNEL) - ADC1.read_channel(ADC_REFERENCE_CHANNEL));
+      current = ((((current / 819.0) / .1912) / 4.832 )  * 1000) / 6.67;
+
+      float dc_power = (mc_energy[0].get_dc_bus_voltage() * current) / 1000; //mc dc bus voltage
+
+      //sum up kilowatts to align
+      //if mech_power is at 63 kW, it's requesting 80 kW from the motor
+      //2 kW safety factor for the more accurate motor readings.
+      //as our effiecency increases say 68 kW would be drawing 80kW from the motor
+      //as our efficiency decreases say 60 kW would be drawing 80kW from the motor
+      //so if efficency is at 60kW and we want 63, we'd be drawing more from the battery triggering a safety problem
+      //so if efficency is at 68 kW, 63 would be drawing less power, which is fine but wasted power.
+      //if HV DC bus is over 80 kW, it's a violation!
+      // 1 kW as a second safety factor.
+      if (mech_power > MECH_POWER_LIMIT) {
+        mdiff = MECH_POWER_LIMIT / mech_power;
+      }
+      if (dc_power > DC_POWER_LIMIT) {
+        ediff = DC_POWER_LIMIT / dc_power;
+      }
+      if (mech_power > MECH_POWER_LIMIT && dc_power > DC_POWER_LIMIT) {
+        diff = (ediff <= mdiff) ? ediff : mdiff;
+      }
+      torque_setpoint_array[0] = (uint16_t) torque_setpoint_array[0] * diff;
+      torque_setpoint_array[1] = (uint16_t) torque_setpoint_array[1] * diff;
+      torque_setpoint_array[2] = (uint16_t) torque_setpoint_array[2] * diff;
+      torque_setpoint_array[3] = (uint16_t) torque_setpoint_array[3] * diff;
+      //get current - reference, go backwards by the constant
+      //get rid of adc conversion, divide by voltage divider gain and divide by op amp gain
+      //relate to current to voltage relationship of 300 amp sensor
+    }
+  */
+//  uint16_t max_speed_regen = 0;
+//  for (int i = 0; i < sizeof(torque_setpoint_array); i++) {
+//
+//    max_speed_regen = (max_speed_regen < mc_status[i].get_speed()) ? mc_status[i].get_speed() : max_speed_regen;
+//
+//  }
+  
   for (int i = 0; i < sizeof(torque_setpoint_array); i++) {
     if (torque_setpoint_array[i] >= 0) {
       mc_setpoints_command[i].set_speed_setpoint(MC_MAX_SPEED);
@@ -795,16 +865,22 @@ inline void set_inverter_torques() {
       mc_setpoints_command[i].set_neg_torque_limit(0);
     }
     else {
-      mc_setpoints_command[i].set_speed_setpoint(-MC_MAX_SPEED);
+
+      float scale_down = 1;
+//      if (max_speed_regen < 770) {
+//        scale_down = 0;
+//      } else if (max_speed_regen > REGEN_OFF_START_THRESHOLD) {
+//        scale_down = 1;
+//      } else {
+//        scale_down = map(max_speed_regen, 770, REGEN_OFF_START_THRESHOLD, 0, 1);
+//      }
+
+
+      mc_setpoints_command[i].set_speed_setpoint(0);
       mc_setpoints_command[i].set_pos_torque_limit(0);
-      mc_setpoints_command[i].set_neg_torque_limit(torque_setpoint_array[i]);
+      mc_setpoints_command[i].set_neg_torque_limit(torque_setpoint_array[i] * scale_down);
     }
   }
-
-
-
-  //power limit to 80kW
-  //add this plz
 
 }
 /* Read 24_Sense_ECU which checks GLV voltage */
@@ -818,24 +894,24 @@ inline void read_glv_value() {
 /* Read pedal sensor values */
 inline void read_pedal_values() {
   if (timer_pedals_read.check()) {
-    
-  
+
+
     mcu_pedal_readings.set_accelerator_pedal_1(ADC1.read_channel(ADC_ACCEL_1_CHANNEL));
     mcu_pedal_readings.set_accelerator_pedal_2(ADC1.read_channel(ADC_ACCEL_2_CHANNEL));
     mcu_pedal_readings.set_brake_pedal_1(ADC1.read_channel(ADC_BRAKE_1_CHANNEL));
     mcu_pedal_readings.set_brake_pedal_2(ADC1.read_channel(ADC_BRAKE_2_CHANNEL));
-    
-    #if DEBUG
+
+#if DEBUG
     // Serial.print("ACCEL 1: "); Serial.println(mcu_pedal_readings.get_accelerator_pedal_1()1_reading);
     // Serial.print("ACCEL 2: "); Serial.println(mcu_pedal_readings.get_accelerator_pedal_1()2_reading);
     //  Serial.print("BRAKE 1: "); Serial.println(mcu_pedal_readings.get_brake_pedal_1());
     //  Serial.print("BRAKE 2: "); Serial.println(mcu_pedal_readings.get_brake_pedal_2());
-    #endif
-    
+#endif
+
     // only uses front brake pedal
     mcu_status.set_brake_pedal_active(mcu_pedal_readings.get_brake_pedal_1() >= BRAKE_ACTIVE);
     digitalWrite(BRAKE_LIGHT_CTRL, mcu_status.get_brake_pedal_active());
-    
+
     mcu_status.set_mech_brake_active(mcu_pedal_readings.get_brake_pedal_1() >= BRAKE_THRESHOLD_MECH_BRAKE_1); //define in driver_constraints.h (70%)
   }
 }
@@ -996,21 +1072,19 @@ inline void read_imu() {
   double x_gyro = IMU.regRead(X_GYRO_OUT) * 0.005; // 0.005 is the scale
   double y_gyro = IMU.regRead(Y_GYRO_OUT) * 0.005; // 0.005 is the scale
   double z_gyro = IMU.regRead(Z_GYRO_OUT) * 0.005; // 0.005 is the scale
-  double input[6] = {-accel_y, accel_x, accel_z, x_gyro, y_gyro, z_gyro}; // the weird order has to do with orienting the IMU correct wrt to the car
-  double* out = malloc(6 * sizeof(double));
-   out[0] = (input[0] * cosAngle) + (input[2] * sinAngle);
-   out[1] = input[1];
-   out[2] = (input[2] * cosAngle) - (input[0] * sinAngle);
-   out[3] = (input[4] * cosAngle) + (input[5] * sinAngle);
-   out[4] = input[4]; 
-   out[5] = (input[5] * cosAngle) - (input[3] * sinAngle);
-  imu_accelerometer.set_lat_accel((int16_t)(out[1] * 102)); // * 0.00245); // 0.00245 is the scale, Left is positive
-  imu_accelerometer.set_long_accel((int16_t)(out[0] * 102)); // * 0.00245); // 0.00245 is the scale, Backwards is positive, need to fix?
-  imu_accelerometer.set_vert_accel((int16_t)(out[2] * 102)); // * 0.00245); // 0.00245 is the scale, Up is positive
+  double long_accel = ((-accel_y) * cosAngle) + (accel_z * sinAngle);
+  double lat_accel = accel_x;
+  double vert_accel = -((accel_z * cosAngle) - (-accel_y * sinAngle));
+  double pitch = (y_gyro * cosAngle) + (z_gyro * sinAngle);
+  double roll = y_gyro; 
+  double yaw = (z_gyro * cosAngle) - (x_gyro * sinAngle);
+  imu_accelerometer.set_lat_accel((int16_t)(lat_accel * 102)); // * 0.00245); // 0.00245 is the scale
+  imu_accelerometer.set_long_accel((int16_t)(long_accel * 102)); // * 0.00245); // 0.00245 is the scale
+  imu_accelerometer.set_vert_accel((int16_t)(vert_accel * 102)); // * 0.00245); // 0.00245 is the scale
   // question about yaw, pitch and roll rates?
-  imu_gyroscope.set_pitch((int16_t)-(out[3] * 102)); // * 0.005); // 0.005 is the scale,
-  imu_gyroscope.set_yaw((int16_t)(-out[5] * 102)); // * 0.005);  // 0.005 is the scale
-  imu_gyroscope.set_roll((int16_t)(-out[4] * 102)); // * 0.005); // 0.005 is the scale
+  imu_gyroscope.set_pitch((int16_t)(pitch * 102)); // * 0.005); // 0.005 is the scale,
+  imu_gyroscope.set_yaw((int16_t)(yaw * 102)); // * 0.005);  // 0.005 is the scale
+  imu_gyroscope.set_roll((int16_t)(roll * 102)); // * 0.005); // 0.005 is the scale
 }
 
 inline void send_CAN_IMU_accelerometer() {
@@ -1031,6 +1105,10 @@ inline void send_CAN_IMU_gyroscope() {
   }
 }
 
-inline void read_all_adcs(){
-  
+inline void calibrate_imu_velocity(double calibrate_to) {
+  imu_velocity = calibrate_to;
+}
+
+inline void read_all_adcs() {
+
 }
