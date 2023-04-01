@@ -777,7 +777,7 @@ inline void set_inverter_torques() {
 
 
   if (mcu_status.get_launch_ctrl_active()) {
-    
+
   } else {
     //currently in debug mode, no torque vectoring
 
@@ -787,74 +787,87 @@ inline void set_inverter_torques() {
     torque_setpoint_array[3] = avg_accel -  avg_brake * 2;
 
   }
-/*  
-   //very start check if mc_energy.get_feedback_torque > 0
-    //power limit to 80kW
-    //look at all torques 
-    //look at motor speeds / convert from rpm to angular speed
-    //torque * speed / 1000 (kW)
-    // scale down by m/e limits
-    //lots of variables for documentation purposes
-    //since torque unit to nominal torque and power conversion are linear, the diff can be applied directly to the torque setpoint value.
-  if (mc_energy[0].get_feedback_torque() > 0 && mc_energy[1].get_feedback_torque() > 0 
-  && mc_energy[0].get_feedback_torque() > 0 && mc_energy[0].get_feedback_torque() > 0) {
-    float mech_power = 0;
-    float mdiff = 1;
-    float ediff = 1;
-    float diff = 1;
-    
-    for(int i = 0; i < 4; i++) {
-      mech_power += mc_energy[i].get_actual_power();
-    }
-    mech_power /= 1000;
-    
-    float current = (ADC1.read_channel(ADC_CURRENT_CHANNEL) - ADC1.read_channel(ADC_REFERENCE_CHANNEL));
-    current = ((((current / 819.0) / .1912) / 4.832 )  * 1000) / 6.67;
-    
-    float dc_power = (mc_energy[0].get_dc_bus_voltage() * current) / 1000; //mc dc bus voltage
-    
-    //sum up kilowatts to align
-    //if mech_power is at 63 kW, it's requesting 80 kW from the motor
-    //2 kW safety factor for the more accurate motor readings.
-    //as our effiecency increases say 68 kW would be drawing 80kW from the motor
-    //as our efficiency decreases say 60 kW would be drawing 80kW from the motor 
-    //so if efficency is at 60kW and we want 63, we'd be drawing more from the battery triggering a safety problem
-    //so if efficency is at 68 kW, 63 would be drawing less power, which is fine but wasted power.
-    //if HV DC bus is over 80 kW, it's a violation!
-    // 1 kW as a second safety factor.
-    if (mech_power > MECH_POWER_LIMIT) {
-      mdiff = MECH_POWER_LIMIT / mech_power;
-    }
-    if (dc_power > DC_POWER_LIMIT) {
-      ediff = DC_POWER_LIMIT / dc_power;
-    }
-    if (mech_power > MECH_POWER_LIMIT && dc_power > DC_POWER_LIMIT) {
-      diff = (ediff <= mdiff) ? ediff : mdiff; 
-    }
-    torque_setpoint_array[0] = (uint16_t) torque_setpoint_array[0] * diff;
-    torque_setpoint_array[1] = (uint16_t) torque_setpoint_array[1] * diff;
-    torque_setpoint_array[2] = (uint16_t) torque_setpoint_array[2] * diff;
-    torque_setpoint_array[3] = (uint16_t) torque_setpoint_array[3] * diff;
-    //get current - reference, go backwards by the constant
-    //get rid of adc conversion, divide by voltage divider gain and divide by op amp gain
-    //relate to current to voltage relationship of 300 amp sensor
-  }
-  */
+  /*
+     //very start check if mc_energy.get_feedback_torque > 0
+      //power limit to 80kW
+      //look at all torques
+      //look at motor speeds / convert from rpm to angular speed
+      //torque * speed / 1000 (kW)
+      // scale down by m/e limits
+      //lots of variables for documentation purposes
+      //since torque unit to nominal torque and power conversion are linear, the diff can be applied directly to the torque setpoint value.
+    if (mc_energy[0].get_feedback_torque() > 0 && mc_energy[1].get_feedback_torque() > 0
+    && mc_energy[0].get_feedback_torque() > 0 && mc_energy[0].get_feedback_torque() > 0) {
+      float mech_power = 0;
+      float mdiff = 1;
+      float ediff = 1;
+      float diff = 1;
 
+      for(int i = 0; i < 4; i++) {
+        mech_power += mc_energy[i].get_actual_power();
+      }
+      mech_power /= 1000;
+
+      float current = (ADC1.read_channel(ADC_CURRENT_CHANNEL) - ADC1.read_channel(ADC_REFERENCE_CHANNEL));
+      current = ((((current / 819.0) / .1912) / 4.832 )  * 1000) / 6.67;
+
+      float dc_power = (mc_energy[0].get_dc_bus_voltage() * current) / 1000; //mc dc bus voltage
+
+      //sum up kilowatts to align
+      //if mech_power is at 63 kW, it's requesting 80 kW from the motor
+      //2 kW safety factor for the more accurate motor readings.
+      //as our effiecency increases say 68 kW would be drawing 80kW from the motor
+      //as our efficiency decreases say 60 kW would be drawing 80kW from the motor
+      //so if efficency is at 60kW and we want 63, we'd be drawing more from the battery triggering a safety problem
+      //so if efficency is at 68 kW, 63 would be drawing less power, which is fine but wasted power.
+      //if HV DC bus is over 80 kW, it's a violation!
+      // 1 kW as a second safety factor.
+      if (mech_power > MECH_POWER_LIMIT) {
+        mdiff = MECH_POWER_LIMIT / mech_power;
+      }
+      if (dc_power > DC_POWER_LIMIT) {
+        ediff = DC_POWER_LIMIT / dc_power;
+      }
+      if (mech_power > MECH_POWER_LIMIT && dc_power > DC_POWER_LIMIT) {
+        diff = (ediff <= mdiff) ? ediff : mdiff;
+      }
+      torque_setpoint_array[0] = (uint16_t) torque_setpoint_array[0] * diff;
+      torque_setpoint_array[1] = (uint16_t) torque_setpoint_array[1] * diff;
+      torque_setpoint_array[2] = (uint16_t) torque_setpoint_array[2] * diff;
+      torque_setpoint_array[3] = (uint16_t) torque_setpoint_array[3] * diff;
+      //get current - reference, go backwards by the constant
+      //get rid of adc conversion, divide by voltage divider gain and divide by op amp gain
+      //relate to current to voltage relationship of 300 amp sensor
+    }
+  */
+//  uint16_t max_speed_regen = 0;
+//  for (int i = 0; i < sizeof(torque_setpoint_array); i++) {
+//
+//    max_speed_regen = (max_speed_regen < mc_status[i].get_speed()) ? mc_status[i].get_speed() : max_speed_regen;
+//
+//  }
+  
   for (int i = 0; i < sizeof(torque_setpoint_array); i++) {
     if (torque_setpoint_array[i] >= 0) {
       mc_setpoints_command[i].set_speed_setpoint(MC_MAX_SPEED);
       mc_setpoints_command[i].set_pos_torque_limit(torque_setpoint_array[i]);
       mc_setpoints_command[i].set_neg_torque_limit(0);
     }
-    else if (mc_status[2].get_speed() > 770) { //EV.4.1.3
+    else {
+
+      float scale_down = 1;
+//      if (max_speed_regen < 770) {
+//        scale_down = 0;
+//      } else if (max_speed_regen > REGEN_OFF_START_THRESHOLD) {
+//        scale_down = 1;
+//      } else {
+//        scale_down = map(max_speed_regen, 770, REGEN_OFF_START_THRESHOLD, 0, 1);
+//      }
+
+
       mc_setpoints_command[i].set_speed_setpoint(0);
       mc_setpoints_command[i].set_pos_torque_limit(0);
-      mc_setpoints_command[i].set_neg_torque_limit(torque_setpoint_array[i]);
-    } else {
-      mc_setpoints_command[i].set_speed_setpoint(0);
-      mc_setpoints_command[i].set_pos_torque_limit(0);
-      mc_setpoints_command[i].set_neg_torque_limit(0);
+      mc_setpoints_command[i].set_neg_torque_limit(torque_setpoint_array[i] * scale_down);
     }
   }
 
