@@ -11,7 +11,6 @@
 #define _USE_MATH_DEFINES
 #include <cmath>
 #include <time.h>
-#include <vector>
 
 #include "ADC_SPI.h"
 #include "STEERING_SPI.h"
@@ -1115,21 +1114,22 @@ inline void calibrate_imu_velocity(double calibrate_to) {
 }
 
 inline void pitch_angle_calibration() {
-  std::vector<double> z_accl_vec;
+  double z_accl_sum = 0.0;
+  int ctr = 0;
   time_t start_time, current_time;
   double elapsed_time;
   start_time = time(NULL);
   // Serial.println("Calibration Starts Now"); FOR DEBUGING PURPOSES 
   while (1) {
-    z_accl_vec.push_back(IMU.regRead(Z_ACCL_OUT) * 0.00245);
+    delay(50);
+    z_accl_sum += ((IMU.regRead(Z_ACCL_OUT) * 0.00245));
+    ctr++;
     current_time = time(NULL);
     elapsed_time = difftime(current_time, start_time);
     if (elapsed_time >= 5) break; // Code runs for 5 seconds. Change for desired duration.
   }
   // Serial.println("Calibration Has Ended");
-  double z_accl_sum = 0.0;
-  for (int i = 0; i < z_accl_vec.size(); i++) z_accl_sum += z_accl_vec[i];
-  double avg_z_accl = z_accl_sum / z_accl_vec.size();
+  double avg_z_accl = z_accl_sum / ctr;
   pitch_calibration_angle = std::acos(avg_z_accl/ACCL_DUE_TO_GRAVITY);
 }
 
