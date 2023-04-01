@@ -136,7 +136,7 @@ void setup() {
   IMU.regWrite(DEC_RATE, 0), // Disable decimation
   delay(20);
 
-  pinMode(BRAKE_LIGHT_CTRL, OUTPUT);
+               pinMode(BRAKE_LIGHT_CTRL, OUTPUT);
 
   // change to input if comparator is PUSH PULL
   pinMode(INVERTER_EN, OUTPUT);
