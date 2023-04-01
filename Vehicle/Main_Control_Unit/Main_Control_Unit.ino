@@ -10,6 +10,8 @@
 #include <HyTech_CAN.h>
 #define _USE_MATH_DEFINES
 #include <cmath>
+#include <time.h>
+#include <vector>
 
 #include "ADC_SPI.h"
 #include "STEERING_SPI.h"
@@ -50,6 +52,7 @@ MCU_analog_readings mcu_analog_readings{};
 IMU_accelerometer imu_accelerometer;
 IMU_gyroscope imu_gyroscope;
 double imu_velocity;
+double pitch_calibration_angle;
 
 MC_status mc_status[4];
 MC_temps mc_temps[4];
@@ -136,7 +139,7 @@ void setup() {
   IMU.regWrite(DEC_RATE, 0), // Disable decimation
   delay(20);
 
-               pinMode(BRAKE_LIGHT_CTRL, OUTPUT);
+  pinMode(BRAKE_LIGHT_CTRL, OUTPUT);
 
   // change to input if comparator is PUSH PULL
   pinMode(INVERTER_EN, OUTPUT);
@@ -220,6 +223,8 @@ void loop() {
   software_shutdown();
 
   if (timer_imu_integration.check()) {
+    double sinAngle = sin(VEHICLE_TILT_ANGLE_X);
+    double cosAngle = cos(VEHICLE_TILT_ANGLE_X);
     double accel_y = IMU.regRead(Y_ACCL_OUT) * 0.00245;
     double accel_z = IMU.regRead(Z_ACCL_OUT) * 0.00245;
     double long_accel = ((-accel_y) * cosAngle) + (accel_z * sinAngle);
@@ -1107,6 +1112,25 @@ inline void send_CAN_IMU_gyroscope() {
 
 inline void calibrate_imu_velocity(double calibrate_to) {
   imu_velocity = calibrate_to;
+}
+
+inline void pitch_angle_calibration() {
+  std::vector<double> z_accl_vec;
+  time_t start_time, current_time;
+  double elapsed_time;
+  start_time = time(NULL);
+  // Serial.println("Calibration Starts Now"); FOR DEBUGING PURPOSES 
+  while (1) {
+    z_accl_vec.push_back(IMU.regRead(Z_ACCL_OUT) * 0.00245);
+    current_time = time(NULL);
+    elapsed_time = difftime(current_time, start_time);
+    if (elapsed_time >= 5) break; // Code runs for 5 seconds. Change for desired duration.
+  }
+  // Serial.println("Calibration Has Ended");
+  double z_accl_sum = 0.0;
+  for (int i = 0; i < z_accl_vec.size(); i++) z_accl_sum += z_accl_vec[i];
+  double avg_z_accl = z_accl_sum / z_accl_vec.size();
+  pitch_calibration_angle = std::acos(avg_z_accl/ACCL_DUE_TO_GRAVITY);
 }
 
 inline void read_all_adcs() {
