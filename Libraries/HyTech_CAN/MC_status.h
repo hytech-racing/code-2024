@@ -17,8 +17,8 @@ public:
 
   inline uint16_t get_status_word()   const { return status_word; }
   inline int16_t get_speed()       const { return speed; }
-  inline int16_t get_torque_current()       const { return torque; }
-  inline int16_t get_magnetizing_current()       const { return torque_current; }
+  inline int16_t get_torque_current()       const { return torque_current; }
+  inline int16_t get_magnetizing_current()       const { return magnetizing_current; }
 
   inline bool get_system_ready() const {return status_word & 0x100; }
   inline bool get_error() const {return status_word & 0x200; }
