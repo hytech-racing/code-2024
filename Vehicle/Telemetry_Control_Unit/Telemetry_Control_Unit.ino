@@ -19,6 +19,7 @@
 #include <kinetis_flexcan.h>
 #include <Wire.h>
 #include <TimeLib.h>
+#include <Time.h>
 #include <Metro.h>
 #include <XBTools.h>
 #include <Adafruit_GPS.h>
@@ -159,7 +160,7 @@ void setup() {
     ESP.begin(115200);
 
     /* Set up real-time clock */
-    //Teensy3Clock.set(9999999999); // set time (epoch) at powerup  (COMMENT OUT THIS LINE AND PUSH ONCE RTC HAS BEEN SET!!!!)
+    Teensy3Clock.set(9999999999); // set time (epoch) at powerup  (COMMENT OUT THIS LINE AND PUSH ONCE RTC HAS BEEN SET!!!!)
     setSyncProvider(getTeensy3Time); // registers Teensy RTC as system time
     if (timeStatus() != timeSet) {
         Serial.println("RTC not set up - uncomment the Teensy3Clock.set() function call to set the time");
@@ -167,7 +168,7 @@ void setup() {
         Serial.println("System time set to RTC");
     }
     last_sec_epoch = Teensy3Clock.get();
-    
+
     //FLEXCAN0_MCR &= 0xFFFDFFFF; // Enables CAN message self-reception
     CAN_1.begin();
     CAN_2.begin();
@@ -423,7 +424,7 @@ void create_ser_data(uint8_t *cobs_buf) {
     memset(xb_buf, 0, sizeof(CAN_message_t));
 }
 
-void create_ser_data()
+void create_ser_data();
 
 int write_xbee_data() {
     /*
