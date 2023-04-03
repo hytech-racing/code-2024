@@ -39,15 +39,20 @@ esp_now_peer_info_t peerInfo;
 
 void esp_now_setup() {
   WiFi.mode(WIFI_STA);
-  WiFi.setTxPower(WIFI_POWER_19_5dBm);
-  int a = esp_wifi_set_protocol(WIFI_IF_AP, WIFI_PROTOCOL_LR);
-  Serial.println(a);
+
+  if (!WiFi.setTxPower(WIFI_POWER_19_5dBm)) {
+    Serial.println("Error setting transmit power");
+  }
+
+  if (esp_wifi_set_protocol(WIFI_IF_STA, WIFI_PROTOCOL_LR) != ESP_OK) {
+    Serial.println("Error initializing WIFI LR");
+    while (1);
+  }
 
   if (esp_now_init() != ESP_OK) {
     Serial.println("Error initializing ESP-NOW");
-    return;
+    while(1);
   }
-  esp_now_register_send_cb(onDataSent);
 
   memcpy(peerInfo.peer_addr, broadcastAddress, 6);
   peerInfo.channel = 0;
@@ -59,6 +64,7 @@ void esp_now_setup() {
     return;
   }
   // Register for a callback function that will be called when data is received
+  esp_now_register_send_cb(onDataSent);
   esp_now_register_recv_cb(onDataRecv);
 }
 
