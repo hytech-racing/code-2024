@@ -43,6 +43,8 @@ MCU_analog_readings mcu_analog_readings;
 
 // IO Expander Variables
 MCP23S08 expander(IO_ADDR, IO_CS);
+uint8_t number_encodings[11] = {0b01000000, 0b01111001, 0b00100100, 0b00110000, 0b00011001, 0b00010010, 0b00000010, 0b01111000, 0b10000000, 0b00011000, 0b11111111};
+uint8_t display_list[11] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 };
 
 Metro timer_mcu_heartbeat(0, 1);
 

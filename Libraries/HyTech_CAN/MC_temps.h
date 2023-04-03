@@ -22,8 +22,9 @@ public:
 private: // all temps in 0.1C
     int16_t motor_temp;
     int16_t inverter_temp; //cold plate temp
+    uint16_t diagnostic_number;
     int16_t igbt_temp;
-    int16_t diagnostic_number;
+    
 };
 
 #pragma pack(pop)
