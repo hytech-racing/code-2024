@@ -56,11 +56,6 @@ static CAN_message_t xb_msg;
 
 File logger;
 
-/*
- * Variables to help with time calculation
- */
-uint64_t global_ms_offset = 0;
-uint64_t last_sec_epoch;
 
 ADC_SPI ADC(A1, 1800000);
 Metro timer_mcu_status = Metro(2000);

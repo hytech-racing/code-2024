@@ -41,14 +41,7 @@ void setupSD() {
   @param *msg pointer to a CAN message
   */
 void write_to_SD(CAN_message_t *msg) { // Note: This function does not flush data to disk! It will happen when the buffer fills or when the above flush timer fires
-    // Calculate Time
-    //This block is verified to loop through
-    uint64_t sec_epoch = Teensy3Clock.get();
-    if (sec_epoch != last_sec_epoch) {
-        global_ms_offset = millis() % 1000;
-        last_sec_epoch = sec_epoch;
-    }
-    uint64_t current_time = sec_epoch * 1000 + (millis() - global_ms_offset) % 1000;
+    uint64_t current_time = getTime();
 
     // Log to SD
     logger.print(current_time);
