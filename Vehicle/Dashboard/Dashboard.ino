@@ -11,7 +11,7 @@
 
 // NEOPIXEL Variables
 Adafruit_NeoPixel dashboard_neopixels(NEOPIXEL_COUNT, NEOPIXEL_CTRL, NEO_GRBW + NEO_KHZ800);
-uint8_t brightness = 255;
+uint8_t curr_brightness = OUTSIDE_BRIGHTNESS;
 
 Metro timer_led_ams   (LED_MIN_FAULT); //Do I need this?
 Metro timer_led_imd   (LED_MIN_FAULT);
@@ -32,6 +32,7 @@ DialVectoring dial_torque_vectoring;
 
 // CAN Variables
 Metro timer_can_update = Metro(100);
+Metro timer_can_read = Metro(100);
 FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> CAN;
 CAN_message_t msg;
 
@@ -78,9 +79,9 @@ void setup() {
 
     pinMode(BUZZER_CTRL,OUTPUT);
 
-    pinMode(SSOK_READ, INPUT);
+    pinMode(BOTS_READ, INPUT);
     pinMode(INERTIA_READ, INPUT);
-    pinMode(SHUTDOWN_H_READ, INPUT);
+    pinMode(BRB_READ, INPUT);
 
     //Initializes CAN
     CAN.begin();
@@ -89,10 +90,9 @@ void setup() {
     mcu_status.set_imd_ok_high(true);
     mcu_status.set_bms_ok_high(true);
 
-    dashboard_neopixels.begin();
-//    dashboard_neopixels.setPixelColor(LED_LIST::AMS, LED_ON_GREEN);
-    dashboard_neopixels.show();
-    dashboard_neopixels.setBrightness(brightness);
+
+    neo_pixel_init();
+
 
     delay(7000);
 }
@@ -129,28 +129,42 @@ void loop() {
 //    if(should_send &&
 //        (timer_can_update.check() || (temp_buttons) || (prev_start_state != dashboard_status.get_start_btn()))
 //      ){
-      if(
-        (timer_can_update.check())) {
-        
-        msg.id = ID_DASHBOARD_STATUS;
-        dashboard_status.set_button_flags(temp_buttons);
-        msg.len = sizeof(dashboard_status);
-        dashboard_status.write(msg.buf);
-        CAN.write(msg);
-        //rest update timer
-        timer_can_update.reset();
-    }
+      if(timer_can_update.check()){   
+
+         msg.id = ID_DASHBOARD_STATUS;
+         dashboard_status.set_button_flags(temp_buttons);
+         msg.len = sizeof(dashboard_status);
+         dashboard_status.write(msg.buf);
+         CAN.write(msg);
+         //rest update timer
+         timer_can_update.reset();
+     }
     // clear buttons so they can be retoggled on in the loop
     dashboard_status.set_button_flags(0);
     prev_start_state = dashboard_status.get_start_btn();
 }
 
-inline void neopixel_update(){
-    uint8_t prevBrightness = brightness;
-    if (dashboard_status.get_led_dimmer_btn()) brightness = 128;
-    else brightness = 255;
+inline void neo_pixel_init() {
     
-    if (brightness != prevBrightness) dashboard_neopixels.setBrightness(brightness);
+    dashboard_neopixels.begin();
+    dashboard_neopixels.setBrightness(curr_brightness);
+    for (int i = 0; i < NEOPIXEL_COUNT; i++) {
+        dashboard_neopixels.setPixelColor(i, LED_ON_GREEN);
+        
+    }
+    dashboard_neopixels.show();
+    
+
+   
+}
+
+inline void neopixel_update(){
+    uint8_t prevBrightness = curr_brightness;
+    if (dashboard_status.get_led_dimmer_btn()) curr_brightness = LOW_BRIGHTNESS;
+    else curr_brightness = OUTSIDE_BRIGHTNESS;
+    
+//    if (brightness != prevBrightness) 
+    dashboard_neopixels.setBrightness(curr_brightness);
     
     shutdown_signals_read();
     dashboard_neopixels.show();
@@ -167,7 +181,6 @@ inline void neopixel_update(){
 
 inline void dial_update(){
   dashboard_status.set_dial_state((uint8_t)(dial_torque_vectoring.readMode()));
-  Serial.println(dashboard_status.get_dial_state());
   if(dashboard_status.get_dial_state() == 2){
     dashboard_neopixels.setPixelColor(LED_LIST::LAUNCH_CTRL, LED_ON_GREEN);
     dashboard_status.set_launch_control_led(static_cast<uint8_t>(LED_MODES::ON));
@@ -185,24 +198,27 @@ inline void btn_update(){
 
     dashboard_status.set_start_btn(btn_start.isPressed());
 }
-inline void shutdown_signals_read() {
-  dashboard_neopixels.setPixelColor(LED_LIST::BOTS, (digitalRead(SSOK_READ)) ? LED_RED : LED_OFF);
-  dashboard_status.set_bots_led(digitalRead(SSOK_READ));
-  dashboard_neopixels.setPixelColor(LED_LIST::COCKPIT_BRB, (digitalRead(SHUTDOWN_H_READ)) ? LED_RED : LED_OFF);
-  dashboard_status.set_cockpit_brb_led(digitalRead(SHUTDOWN_H_READ));
+inline void shutdown_signals_read() { // if one trips al lwill go red, set the other ones orange
+  dashboard_neopixels.setPixelColor(LED_LIST::BOTS, (digitalRead(BOTS_READ)) ? LED_ON_GREEN : LED_RED);
+  dashboard_status.set_bots_led(digitalRead(BOTS_READ));
+  dashboard_neopixels.setPixelColor(LED_LIST::COCKPIT_BRB, (digitalRead(BRB_READ)) ? LED_ON_GREEN : LED_RED);
+  dashboard_status.set_cockpit_brb_led(digitalRead(BRB_READ));
+
 }
 inline void read_can(){
 
-    while(CAN.read(msg)){
+    while(timer_can_read.check() && CAN.read(msg)){
 
         switch(msg.id){
             case ID_MCU_STATUS:
+                Serial.println("mcu status received");
                 mcu_status.load(msg.buf);
                 timer_mcu_heartbeat.reset();
                 timer_mcu_heartbeat.interval(MCU_HEARTBEAT_TIMEOUT);
                 mcu_status_received();
                 break;
             case ID_MCU_ANALOG_READINGS:
+            Serial.println("mcu analog readings received");
                 mcu_analog_readings.load(msg.buf);
                 timer_mcu_heartbeat.reset();
                 timer_mcu_heartbeat.interval(MCU_HEARTBEAT_TIMEOUT);
@@ -396,7 +412,7 @@ inline void mcu_status_received(){
 //}
 
 inline void inertia_status() {
-    if (digitalRead(INERTIA_READ) && !digitalRead(SHUTDOWN_H_READ)) {
+    if (digitalRead(INERTIA_READ) && !digitalRead(BRB_READ)) {
       
         dashboard_neopixels.setPixelColor(LED_LIST::INERTIA, LED_ON_GREEN);
         dashboard_status.set_inertia_led(static_cast<uint8_t>(LED_MODES::ON));

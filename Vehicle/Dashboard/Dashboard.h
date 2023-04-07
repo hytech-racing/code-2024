@@ -53,9 +53,11 @@ enum LED_LIST { AMS = 0, IMD = 1, MC_ERR = 2, GEN_PURP = 3, INERTIA = 4, BOTS = 
 
 #define LED_MIN_FAULT 1000
 // Critical read pin definitions
-#define SSOK_READ 16 //BOTS
-#define SHUTDOWN_H_READ 17 //BRB
-#define INERTIA_READ 15
+#define BOTS_READ A2 //BOTS
+#define BRB_READ A3 //BRB
+#define INERTIA_READ A1
 
 //GLV threshold
 #define GLV_THRESHOLD 60000
+#define OUTSIDE_BRIGHTNESS 255
+#define LOW_BRIGHTNESS 64
