@@ -122,6 +122,5 @@ void parse_can_message(CAN_message_t& msg) {
         case ID_IMU_GYROSCOPE:                      imu_gyroscope.load(msg.buf);                     break;
         case ID_SAB_READINGS_FRONT:                 sab_readings_front.load(msg.buf);                break;
         case ID_SAB_READINGS_REAR:                  sab_readings_rear.load(msg.buf);                 break;
-        case ID_SAB_READINGS_GPS:                   sab_readings_gps.load(msg.buf);                  break;
     }
 }

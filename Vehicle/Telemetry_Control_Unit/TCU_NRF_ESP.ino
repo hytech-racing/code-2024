@@ -291,10 +291,4 @@ void send_xbee() {
         xb_msg.id = ID_SAB_READINGS_REAR;
         write_xbee_data();
     }
-    if (timer_sab_readings_gps.check()) {
-        sab_readings_gps.write(xb_msg.buf);
-        xb_msg.len = sizeof(sab_readings_gps);
-        xb_msg.id = ID_SAB_READINGS_GPS;
-        write_xbee_data();
-    }
 }

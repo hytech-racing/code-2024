@@ -1,3 +1,5 @@
+uint64_t global_ms_offset = 0;
+uint64_t last_sec_epoch;
 
 void setupClock() {
     /* Set up real-time clock */
@@ -14,8 +16,6 @@ void setupClock() {
 /*
  * Variables to help with time calculation
  */
-uint64_t global_ms_offset = 0;
-uint64_t last_sec_epoch;
 
 uint64_t getTime() {
   // Calculate Time
