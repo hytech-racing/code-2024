@@ -85,7 +85,7 @@ void setup() {
 
     //Initializes CAN
     CAN.begin();
-    CAN.setBaudRate(1000000);
+    CAN.setBaudRate(500000);
 
     mcu_status.set_imd_ok_high(true);
     mcu_status.set_bms_ok_high(true);
