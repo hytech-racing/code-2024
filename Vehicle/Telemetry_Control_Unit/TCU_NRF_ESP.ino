@@ -64,13 +64,25 @@ int write_xbee_data() {
 }
 
 /*
- * Read a serial port and decodes
+ * TBD
+ * Read a serial port and decodes as soon as it finds a valid set of bytes
+ * 
  */
-int read_ser(Stream& port) {  
+int read_ser(Stream& port, uint8_t* output, uint8_t* buf, size_t& buf_start, size_t sz) {  
+    size_t index = 0;
+    size_t read = 0;
     while (port.available()) {
-      
+        buf[index] = port.read();
+        if (!buf[index]) {
+          index++;
+          read = index;
+          decode_ser_data(output, buf, index);
+          break;
+        }
+        index++;
+        read = index;
     }
-    return 0;
+    return read;
 }
 
 /*
@@ -291,4 +303,8 @@ void send_xbee() {
         xb_msg.id = ID_SAB_READINGS_REAR;
         write_xbee_data();
     }
+}
+
+size_t readNRF() {
+  return 0;
 }

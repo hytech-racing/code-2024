@@ -163,10 +163,12 @@ void setup() {
 
     setupSD();
 }
+
 void loop() {
     /* Process and log incoming CAN messages */
     parse_can_lines();
     read_analog_values();
+    readESP();
     /* Send messages over XBee */
     send_xbee();
     /* Flush data to SD card occasionally */
