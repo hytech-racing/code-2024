@@ -654,7 +654,7 @@ void parse_telem_can_message(const CAN_message_t &RX_msg) {
     case ID_DASHBOARD_STATUS:
       dashboard_status.load(rx_msg.buf);
       /* process dashboard buttons */
-      if (dashboard_status.get_torque_mode_btn()) {
+      if (dashboard_status.get_mode_btn()) {
         switch (mcu_status.get_torque_mode()) {
           case 1:
             mcu_status.set_max_torque(TORQUE_2);
