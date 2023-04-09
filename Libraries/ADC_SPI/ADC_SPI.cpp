@@ -58,40 +58,42 @@ uint16_t ADC_SPI::read_channel(int channel)
 	// // Take the SS pin low to select the chip:
 	digitalWrite(ADC_SPI_CS, LOW);
 
-	// Set up channel
-	SPI.beginTransaction(SPISettings(SPI_SPEED, MSBFIRST, SPI_MODE0));
-	SPI.transfer(channel << 3);
-	SPI.transfer(0);
+   SPI.beginTransaction(SPISettings(SPI_SPEED, MSBFIRST, SPI_MODE3));
 
-	uint8_t hi = SPI.transfer(0);
-	uint8_t lo = SPI.transfer(0);
+  SPI.transfer16(0);//start adc converting channel 0
+
+	uint16_t value = SPI.transfer16(channel << 11);
 
 	// Take the SS pin high to de-select the chip:
-	digitalWrite(ADC_SPI_CS, HIGH);
+	
 
 	// Release control of the SPI port
 	SPI.endTransaction();
+	digitalWrite(ADC_SPI_CS, HIGH);
 
-	return (hi << 8) | lo;
+	return value;
 }
 
-void ADC_SPI::read_all_channels(uint16_t *array)
+void ADC_SPI::read_all_channels(uint16_t *arr)
+
 {
-	digitalWrite(ADC_SPI_CS, LOW);
-	SPI.beginTransaction(SPISettings(SPI_SPEED, MSBFIRST, SPI_MODE0));
-	uint8_t hi;
-	uint8_t lo;
-	SPI.transfer(0);//start adc converting channel 0
-	SPI.transfer(0);	
-	for (int i = 0; i < 7; i++)
-	{
-		hi = SPI.transfer(((i+1)) << 3);
-		lo = SPI.transfer(0);
-		array[i] = hi << 8 | lo;
-	}
-	hi =  SPI.transfer(0);
-	lo = SPI.transfer(0);
-	array[7] = hi << 8 | lo;
-	SPI.endTransaction();
-	digitalWrite(ADC_SPI_CS, HIGH);
+
+ digitalWrite(ADC_SPI_CS, LOW);
+
+ SPI.beginTransaction(SPISettings(SPI_SPEED, MSBFIRST, SPI_MODE3));
+
+ SPI.transfer16(0);//start adc converting channel 0
+
+ for (int i = 0; i < 8; i++)
+{
+
+ arr[i] = SPI.transfer16((i+1)<<11);
+
+ }
+
+ SPI.endTransaction();
+
+ digitalWrite(ADC_SPI_CS, HIGH);
+ delayMicroseconds(1);
+
 }
