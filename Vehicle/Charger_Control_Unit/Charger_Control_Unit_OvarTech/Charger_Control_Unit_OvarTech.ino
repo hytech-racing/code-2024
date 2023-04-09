@@ -52,10 +52,12 @@ BMS_balancing_status bms_balancing_status[(TOTAL_IC + 3) / 4]; // Round up TOTAL
 
 int watchdog_state = 0;
 bool charge_enable = false;
+bool prev_charge_state = 0;
 
 static CAN_message_t rx_msg;
 static CAN_message_t tx_msg;
 FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> CAN;
+Metro update_teensy_ok = Metro(2000);
 Metro update_ls = Metro(1000);
 Metro update_CAN = Metro(50);
 Metro update_watchdog = Metro(25);
@@ -68,12 +70,13 @@ void configure_charging();
 void print_cells();
 void print_temps();
 void print_charger_data();
-
+inline void state_machine();
+inline void set_state(CHARGER_STATE new_state);
 void setup() {
-  #if TELEMETRYBOARD == 0 // switch back to 1
-    Serial.begin(115200);
-    Serial.println("CAN system and Serial communication initialized");
-  #endif
+#if TELEMETRYBOARD == 0 // switch back to 1
+  Serial.begin(115200);
+  Serial.println("CAN system and Serial communication initialized");
+#endif
   CAN.begin();
   CAN.setBaudRate(500000);
 
@@ -81,7 +84,7 @@ void setup() {
   /* Configure CAN rx interrupt */
   CAN.enableMBInterrupts();
   CAN.onReceive(parse_can_message);
-  
+
   /* Configure CAN rx interrupt */
 
   delay(2000);
@@ -96,18 +99,20 @@ void setup() {
   pinMode(SHUTDOWN_E, INPUT);
   pinMode(SHUTDOWN_F, INPUT);
   //the other teensy should not be sending out a teensy_OK signal?
-  #if TELEMETRYBOARD == 0
-  
-    pinMode(WATCHDOG_OUT, OUTPUT);
-  
-    pinMode(TEENSY_OK, OUTPUT);
-    digitalWrite(TEENSY_OK, HIGH);
-  #endif
+#if TELEMETRYBOARD == 0
+
+  pinMode(WATCHDOG_OUT, OUTPUT);
+
+  pinMode(TEENSY_OK, OUTPUT);
+  digitalWrite(TEENSY_OK, HIGH);
+#endif
 
   //prev_time = millis();
 
   ccu_status.set_charger_enabled(false);
-  
+  set_state(CHARGER_STATE::NOT_ACTIVE);
+
+
 }
 
 void loop() {
@@ -116,7 +121,7 @@ void loop() {
     ccu_status.write(tx_msg.buf);
     tx_msg.id = ID_CCU_STATUS;
     tx_msg.len = sizeof(ccu_status);
-    CAN.write(tx_msg); 
+    CAN.write(tx_msg);
 
     charger_configure.write(tx_msg.buf);
     tx_msg.id = ID_CHARGER_CONTROL;
@@ -132,23 +137,17 @@ void loop() {
 #endif
 
   if (update_ls.check()) {
-    #if TELEMETRYBOARD == 0 // switch abck to 1
-      print_cells();
-      print_temps();
-      Serial.print("Charge enable: ");
-      Serial.println(ccu_status.get_charger_enabled());
-      Serial.print("BMS state: ");
-      Serial.println(bms_status.get_state());
-      
-    #endif
+#if TELEMETRYBOARD == 0 // switch abck to 1
+    print_cells();
+    print_temps();
+    Serial.print("Charge enable: ");
+    Serial.println(ccu_status.get_charger_enabled());
+    Serial.print("BMS state: ");
+    Serial.println(bms_status.get_state());
+
+#endif
     print_charger_data();
-    //if charge has been enabled check if we get any error flags in bits 0-2, delatch ACU
-    //actaully check if we've had successful charging (flags 0) then we start checking for flags to delatch;
-//    if(ccu_status.get_charger_enabled && charger_data.get_flags() | 0x07) {
-//        digitalWrite(TEENSY_OK, LOW);
-//        
-//        
-//    }
+    state_machine();
     configure_charging();
   }
 
@@ -160,48 +159,48 @@ void loop() {
 void parse_can_message(const CAN_message_t &RX_msg) {
   rx_msg = RX_msg;
   //Serial.println(rx_msg.id, HEX);
-    if (rx_msg.id == ID_BMS_DETAILED_TEMPERATURES) {
-      BMS_detailed_temperatures temp = BMS_detailed_temperatures(rx_msg.buf);
-      bms_detailed_temperatures[temp.get_ic_id()][temp.get_group_id()].load(rx_msg.buf);
-    }
+  if (rx_msg.id == ID_BMS_DETAILED_TEMPERATURES) {
+    BMS_detailed_temperatures temp = BMS_detailed_temperatures(rx_msg.buf);
+    bms_detailed_temperatures[temp.get_ic_id()][temp.get_group_id()].load(rx_msg.buf);
+  }
 
-    if (rx_msg.id == ID_BMS_DETAILED_VOLTAGES) {
-      BMS_detailed_voltages temp = BMS_detailed_voltages(rx_msg.buf);
-      bms_detailed_voltages[temp.get_ic_id()][temp.get_group_id()].load(rx_msg.buf);
-    }
+  if (rx_msg.id == ID_BMS_DETAILED_VOLTAGES) {
+    BMS_detailed_voltages temp = BMS_detailed_voltages(rx_msg.buf);
+    bms_detailed_voltages[temp.get_ic_id()][temp.get_group_id()].load(rx_msg.buf);
+  }
 
-    if (rx_msg.id == ID_BMS_VOLTAGES) {
-      bms_voltages.load(rx_msg.buf);
-    }
+  if (rx_msg.id == ID_BMS_VOLTAGES) {
+    bms_voltages.load(rx_msg.buf);
+  }
 
-    if (rx_msg.id == ID_BMS_TEMPERATURES) {
-      bms_temperatures.load(rx_msg.buf);
-    }
+  if (rx_msg.id == ID_BMS_TEMPERATURES) {
+    bms_temperatures.load(rx_msg.buf);
+  }
 
-    if (rx_msg.id == ID_BMS_ONBOARD_TEMPERATURES) {
-      bms_onboard_temperatures.load(rx_msg.buf);
-    }
+  if (rx_msg.id == ID_BMS_ONBOARD_TEMPERATURES) {
+    bms_onboard_temperatures.load(rx_msg.buf);
+  }
 
-    if (rx_msg.id == ID_BMS_ONBOARD_DETAILED_TEMPERATURES) {
-      BMS_onboard_detailed_temperatures temp = BMS_onboard_detailed_temperatures(rx_msg.buf);
-      bms_onboard_detailed_temperatures[temp.get_ic_id()].load(rx_msg.buf);
-    }
+  if (rx_msg.id == ID_BMS_ONBOARD_DETAILED_TEMPERATURES) {
+    BMS_onboard_detailed_temperatures temp = BMS_onboard_detailed_temperatures(rx_msg.buf);
+    bms_onboard_detailed_temperatures[temp.get_ic_id()].load(rx_msg.buf);
+  }
 
-    if (rx_msg.id == ID_BMS_STATUS) {
-      bms_status = BMS_status(rx_msg.buf);
-      ccu_status.set_charger_enabled((bms_status.get_state() == BMS_STATE_CHARGING || bms_status.get_state() == BMS_STATE_BALANCING) && digitalRead(SHUTDOWN_F) == HIGH);
-      charge_enable = ccu_status.get_charger_enabled();
-    }
+  if (rx_msg.id == ID_BMS_STATUS) {
+    bms_status = BMS_status(rx_msg.buf);
+    ccu_status.set_charger_enabled((bms_status.get_state() == BMS_STATE_CHARGING || bms_status.get_state() == BMS_STATE_BALANCING) && digitalRead(SHUTDOWN_F) == HIGH);
+    charge_enable = ccu_status.get_charger_enabled();
+  }
 
-    if (rx_msg.id == ID_BMS_BALANCING_STATUS) {
-      BMS_balancing_status temp = BMS_balancing_status(rx_msg.buf);
-      bms_balancing_status[temp.get_group_id()].load(rx_msg.buf);
-    }
+  if (rx_msg.id == ID_BMS_BALANCING_STATUS) {
+    BMS_balancing_status temp = BMS_balancing_status(rx_msg.buf);
+    bms_balancing_status[temp.get_group_id()].load(rx_msg.buf);
+  }
 
-    if (rx_msg.id == ID_CHARGER_DATA) {
-      charger_data.load(rx_msg.buf);
-    }
-    
+  if (rx_msg.id == ID_CHARGER_DATA) {
+    charger_data.load(rx_msg.buf);
+  }
+
 
 }
 
@@ -214,30 +213,82 @@ void check_shutdown_signals() {
 }
 void configure_charging() {
   if (charge_enable) {
-    //maxChargingVoltage is 529.0V, with .1V/Bit. Hex Value: 14AA
-    charger_configure.set_max_charging_voltage_high(0x13);
-    charger_configure.set_max_charging_voltage_low(0xEC);
-    charger_configure.set_max_charging_current_low(set_charge_current());
-    charger_configure.set_control(0);
+
+    //check teensy isn't turning teensy ok back high for re-latching after exiting the charging state;
+    if (update_teensy_ok.check()) {
+      set_state(CHARGER_STATE::RDY_TO_CHARGE);
+    }
   } else {
-    charger_configure.set_max_charging_voltage_high(0);
-    charger_configure.set_max_charging_voltage_low(0);
-    charger_configure.set_max_charging_current_low(0);
-    charger_configure.set_control(1);
+    set_state(CHARGER_STATE::NOT_ACTIVE);
+
   }
 }
 
 int set_charge_current() { //not divided by 10 to keep precision
   uint16_t output_voltage = (charger_data.get_output_dc_voltage_high() << 8 | charger_data.get_output_dc_voltage_low());
   uint16_t max_current;
-  
-  if (output_voltage > 378*10) {// undervoltage threshold
-    max_current = (120 * AC_CURRENT) * 100/ output_voltage;
+
+  if (output_voltage > 378 * 10) { // undervoltage threshold
+    max_current = (120 * AC_CURRENT) * 100 / output_voltage;
   } else {
     max_current = 10;
   }
 
   return max_current;
+}
+
+inline void state_machine() {
+  switch (ccu_status.get_charger_state()) {
+    case CHARGER_STATE::NOT_ACTIVE: break;
+    case CHARGER_STATE::RDY_TO_CHARGE:
+      if (charger_data.get_flags() == 0) {
+        set_state(CHARGER_STATE::CHARGING);
+      }
+      break;
+    case CHARGER_STATE::CHARGING:
+      //check if charger stopped charging/got a flag
+      if (charger_data.get_flags() | 7 != 0) {
+        set_state(CHARGER_STATE::NOT_ACTIVE);
+        break;
+      }
+      //maxChargingVoltage is 529.0V, with .1V/Bit. Hex Value: 14AA
+      charger_configure.set_max_charging_voltage_high(0x13);
+      charger_configure.set_max_charging_voltage_low(0xEC);
+      charger_configure.set_max_charging_current_low(set_charge_current());
+      charger_configure.set_control(0);
+      //when you have charger enable check if you drop connection
+      //if you get a flag, set state to standby and turn off teensy ok
+  }
+}
+inline void set_state(CHARGER_STATE new_state) {
+  if (ccu_status.get_charger_state() == new_state) {
+    return;
+  }
+  switch (ccu_status.get_charger_state()) {
+    case CHARGER_STATE::NOT_ACTIVE:
+      charger_configure.set_max_charging_voltage_high(0);
+      charger_configure.set_max_charging_voltage_low(0);
+      charger_configure.set_max_charging_current_low(0);
+      charger_configure.set_control(1);
+      break;
+    case CHARGER_STATE::RDY_TO_CHARGE: break;
+    case CHARGER_STATE::CHARGING:
+      //turn off latch so no one gets DC bus electrocuted when charger gets disabled;
+      digitalWrite(TEENSY_OK, LOW);
+      update_teensy_ok.reset();
+  }
+  ccu_status.set_charger_state(new_state);
+  //entry logic
+  switch (ccu_status.get_charger_state()) {
+    case CHARGER_STATE::NOT_ACTIVE: break;
+    case CHARGER_STATE::RDY_TO_CHARGE:
+      //reenable latching capabilities
+      digitalWrite(TEENSY_OK, HIGH);
+      break;
+
+    case CHARGER_STATE::CHARGING: break;
+  }
+
 }
 void print_cells() {
   Serial.println("------------------------------------------------------------------------------------------------------------------------------------------------------------");
@@ -328,16 +379,16 @@ void print_charger_data() {
   uint8_t output_current_high = charger_data.get_output_current_high();
   uint8_t output_current_low = charger_data.get_output_current_low();
 
-  #if TELEMETRYBOARD == 0 //switch back to 1
+#if TELEMETRYBOARD == 0 //switch back to 1
 
-    Serial.println("------------------------------------------------------------------------------------------------------------------------------------------------------------");
-    Serial.print(ac_voltage_high * 16 * 16 + ac_voltage_low);
-    Serial.print(" V\t\t");
-    Serial.print((output_voltage_high * 16 * 16 + output_voltage_low) /10.0);
-    Serial.print(" V\t\t");
-    Serial.print(output_current_high * 16 * 16 + output_current_low / 10.0);
-    Serial.print(" A\t\t");
-    Serial.print(charger_data.get_flags());
-    Serial.println();
-  #endif
+  Serial.println("------------------------------------------------------------------------------------------------------------------------------------------------------------");
+  Serial.print(ac_voltage_high * 16 * 16 + ac_voltage_low);
+  Serial.print(" V\t\t");
+  Serial.print((output_voltage_high * 16 * 16 + output_voltage_low) / 10.0);
+  Serial.print(" V\t\t");
+  Serial.print(output_current_high * 16 * 16 + output_current_low / 10.0);
+  Serial.print(" A\t\t");
+  Serial.print(charger_data.get_flags());
+  Serial.println();
+#endif
 }
