@@ -6,13 +6,13 @@
 #include "HyTech_CAN.h"
 #include "FlexCAN_T4.h"
 // Button pin definition
-#define BTN_MODE 20
-#define BTN_START 22
-#define BTN_MC_CYCLE 21
+#define BTN_SAFE_CTRL 20
+#define BTN_START 19
+#define BTN_MC_CYCLE 18
 
 //RANDOM FOR NOW
-#define BTN_TORQUE_MODE 19
-#define BTN_LED_DIMMER 18
+#define BTN_TORQUE_MODE 22
+#define BTN_LED_DIMMER 21
 
 //Dial pin definition (RANDOM FOR NOW)
 #define DIAL_SIZE 6
@@ -35,6 +35,7 @@
 #define LED_ON_GREEN 0xFF00
 #define LED_YELLOW 0xFFFF00
 #define LED_RED 0xFF0000
+#define LED_INIT 0xFF007F
 
 // enum class LED_COLORS { OFF = 0, ON = 0xFF00 , BLUE = 0xFF , RED = 0xFF0000};
 // OFF: OFF, ON: GREEN/OK, YELLOW : WARNING/MISC RED : CRITICAL
@@ -60,4 +61,4 @@ enum LED_LIST { AMS = 0, IMD = 1, MC_ERR = 2, GEN_PURP = 3, INERTIA = 4, BOTS = 
 //GLV threshold
 #define GLV_THRESHOLD 60000
 #define OUTSIDE_BRIGHTNESS 255
-#define LOW_BRIGHTNESS 64
+#define LOW_BRIGHTNESS 16

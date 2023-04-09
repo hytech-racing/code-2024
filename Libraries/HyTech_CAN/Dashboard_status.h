@@ -106,7 +106,7 @@ private:
          ssok_above_threshold,
          shutdown_h_above_threshold
         ) */
-    uint8_t dashboard_states;
+    uint8_t dashboard_states = 0;
 
     // (2 bits) unused
     /* @Parse @Flaglist(
@@ -117,7 +117,7 @@ private:
          toggle_mode_btn
          led_dimmer_btn
         ) */
-    uint8_t button_flags;
+    uint8_t button_flags = 0;
 
     //(2 bits unused)
     /* dial state
@@ -128,7 +128,7 @@ private:
         4 - AUTOCROSS
         5 - ENDURANCE
     */
-    uint8_t dial_state;
+    uint8_t dial_state = 0;
 
     /*
      * ams (2 bit)
@@ -147,7 +147,7 @@ private:
      *
      * (6 bits unused)
      */
-    uint32_t led_flags;
+    uint32_t led_flags = 0;
 };
 
 #pragma pack(pop)
