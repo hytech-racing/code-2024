@@ -55,20 +55,39 @@ void parse_can_message_macro(CAN_message_t& msg) {
 /* Parse all CAN lines */
 void parse_can_lines() {
   while(CAN_1.read(msg_rx)) {
+    Serial.print("CAN_1");
     parse_can_message(msg_rx);
   }
   while(CAN_2.read(msg_rx)) {
+    Serial.print("CAN_2");
     parse_can_message(msg_rx);
   }
-  while(CAN_3.read(msg_rx)) {
-    parse_can_message(msg_rx);
-  }
+  //while(CAN_3.read(msg_rx)) {
+  //  parse_can_message(msg_rx);
+  //}
+}
+
+void parse_can1_message(const CAN_message_t& rx_msg) {
+  Serial.println("CAN_1");  
+  CAN_message_t msg = rx_msg;
+  parse_can_message(msg);x`
+}
+void parse_can2_message(const CAN_message_t& rx_msg) {
+  Serial.println("CAN_2");
+  CAN_message_t msg = rx_msg;
+  parse_can_message(msg);
+}
+void parse_can3_message(const CAN_message_t& rx_msg) {
+  Serial.println("CAN_3");
+  CAN_message_t msg = rx_msg;
+  parse_can_message(msg);
 }
 
 /* Parse a result of a CAN line 
   @param msg     Result of reading from a can line 
   */
 void parse_can_message(CAN_message_t& msg) {
+    //CAN_message_t msg = rx_msg;
     write_to_SD(&msg); // Write to SD card buffer (if the buffer fills up, triggering a flush to disk, this will take 8ms)
     // Identify received CAN messages and load contents into corresponding structs
     if (msg.id == ID_BMS_DETAILED_VOLTAGES) {

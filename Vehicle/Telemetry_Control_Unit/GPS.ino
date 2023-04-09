@@ -58,6 +58,7 @@ void decodeFromBuffer() {
 }
 
 void processGPS() {
+    Serial.printf("Recieved GPS\n");
     gps_high_precision.set_gps_latitudeHp(gps_data.latitudeHp);
     gps_high_precision.set_gps_longitudeHp(gps_data.longitudeHp);
     gps_high_precision.set_gps_ellipsoidHp(gps_data.ellipsoidHp);

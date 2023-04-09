@@ -3,15 +3,21 @@
  */
 
 #include <SD.h>
+#define EN_SD
 
 void setupSD() {
+    #ifdef EN_SD
     /* Set up SD card */
     Serial.println("Initializing SD card...");
     SdFile::dateTimeCallback(sd_date_time); // Set date/time callback function
     if (!SD.begin(BUILTIN_SDCARD)) { // Begin Arduino SD API (Teensy 3.5)
         Serial.println("SD card failed or not present");
     }
-    
+    #endif
+}
+
+void createFile() {
+  #ifdef EN_SD    
     char filename[] = "data0000.CSV";
     for (uint8_t i = 0; i < 10000; i++) {
         filename[4] = i / 1000     + '0';
@@ -35,6 +41,7 @@ void setupSD() {
     
     logger.println("time,msg.id,msg.len,data"); // Print CSV heading to the logfile
     logger.flush();
+    #endif
 }
 
 /* Writes a given CAN message to the SD card
@@ -42,7 +49,7 @@ void setupSD() {
   */
 void write_to_SD(CAN_message_t *msg) { // Note: This function does not flush data to disk! It will happen when the buffer fills or when the above flush timer fires
     uint64_t current_time = getTime();
-
+    #ifdef EN_SD
     // Log to SD
     logger.print(current_time);
     logger.print(",");
@@ -57,4 +64,5 @@ void write_to_SD(CAN_message_t *msg) { // Note: This function does not flush dat
         logger.print(msg->buf[i], HEX);
     }
     logger.println();
+    #endif
 }

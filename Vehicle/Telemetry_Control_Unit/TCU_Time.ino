@@ -3,7 +3,7 @@ uint64_t last_sec_epoch;
 
 void setupClock() {
     /* Set up real-time clock */
-    Teensy3Clock.set(9999999999); // set time (epoch) at powerup  (COMMENT OUT THIS LINE AND PUSH ONCE RTC HAS BEEN SET!!!!)
+    //Teensy3Clock.set(9999999999); // set time (epoch) at powerup  (COMMENT OUT THIS LINE AND PUSH ONCE RTC HAS BEEN SET!!!!)
     setSyncProvider(getTeensy3Time); // registers Teensy RTC as system time
     if (timeStatus() != timeSet) {
         Serial.println("RTC not set up - uncomment the Teensy3Clock.set() function call to set the time");

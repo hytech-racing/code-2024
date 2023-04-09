@@ -14,6 +14,7 @@
 #define COULOUMB_COUNTING_EN false
 
 #include <SD.h>
+#include <MTP_Teensy.h>
 #include <FlexCAN_T4.h>
 #include <HyTech_CAN.h>
 #include <kinetis_flexcan.h>
@@ -147,26 +148,44 @@ void send_xbee();
 void sd_date_time(uint16_t* date, uint16_t* time);
 
 void setup() {
-    delay(5000); // Prevents suprious text files when turning the car on and off rapidly
+    MTP.begin();
+    setupSD();
+    MTP.addFilesystem(SD, "SD Card");
     
     /* Set up Serial, XBee and CAN */
     Serial.begin(115200);
     NRF.begin(115200);
     ESP.begin(115200);
 
-    //FLEXCAN0_MCR &= 0xFFFDFFFF; // Enables CAN message self-reception
-    CAN_1.begin();
-    CAN_2.begin();
-    CAN_3.begin();
-    
     setupClock();
 
-    setupSD();
+    createFile();
+
+    //FLEXCAN0_MCR &= 0xFFFDFFFF; // Enables CAN message self-reception
+    CAN_1.begin();
+    CAN_1.setBaudRate(500000);
+    CAN_2.begin();
+    CAN_2.setBaudRate(500000);
+    CAN_3.begin();
+    CAN_3.setBaudRate(500000);
+    CAN_1.enableMBInterrupts();
+    CAN_2.enableMBInterrupts();
+    CAN_3.enableMBInterrupts();
+    CAN_1.onReceive(parse_can1_message);
+    CAN_2.onReceive(parse_can2_message);
+    CAN_3.onReceive(parse_can3_message);
+    
+    //delay(5000); // Prevents suprious text files when turning the car on and off rapidly
+    
 }
 
 void loop() {
+    CAN_1.events();
+    CAN_2.events();
+    CAN_3.events();
+    MTP.loop();
     /* Process and log incoming CAN messages */
-    parse_can_lines();
+    //parse_can_lines();
     read_analog_values();
     readESP();
     /* Send messages over XBee */
@@ -220,7 +239,7 @@ void process_mcu_analog_readings() {
     mcu_analog_readings.write(msg_tx.buf);
     msg_tx.id = ID_MCU_ANALOG_READINGS;
     msg_tx.len = sizeof(mcu_analog_readings);
-    CAN_1.write(msg_tx);
+    //CAN_1.write(msg_tx);
     mcu_analog_readings.write(xb_msg.buf);
     xb_msg.id = ID_MCU_ANALOG_READINGS;
     xb_msg.len = sizeof(mcu_analog_readings);
