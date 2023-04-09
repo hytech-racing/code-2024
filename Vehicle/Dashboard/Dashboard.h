@@ -9,8 +9,6 @@
 #define BTN_SAFE_CTRL 20
 #define BTN_START 19
 #define BTN_MC_CYCLE 18
-
-//RANDOM FOR NOW
 #define BTN_TORQUE_MODE 22
 #define BTN_LED_DIMMER 21
 

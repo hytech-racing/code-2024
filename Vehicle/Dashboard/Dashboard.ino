@@ -123,7 +123,7 @@ void loop() {
   prev_buttons = curr_buttons;
   curr_buttons = dashboard_status.get_button_flags();
   temp_buttons = curr_buttons & (curr_buttons ^ prev_buttons);
-  temp_buttons = curr_buttons;
+
   
 
 
@@ -170,21 +170,7 @@ inline void neo_pixel_init() {
 }
 
 inline void neopixel_update() {
-  uint8_t prevBrightness = curr_brightness;
-  //if dashboard status reads one, and the last value was 0 toggle brightness
-  //if dashboard reads zero, keep old value
-  //if dashboard reads one, toggle the old value;
-
-  // the problem is that its being reset at the end of this code execution so we have some race conditions with dimming the light. 
-  /*
-   * what needs to happen is that when you first record that your dimming you want to toggle a state that then set brightness according to the toggled state
-   * the problem now is that because led dimmer flags are being reset prev_led_dimmer_state is set to 0;
-   * I need this to turn on only when it first comes on and isnt toggled unless its gone back to zero 
-   * 
-   * so now it has come on, lets check some things
-   * if its gone on dont let it turn back on unless its gone back to zero
-   */
-  //
+  
   if(dashboard_status.get_led_dimmer_btn() == 1) {
     if (prev_led_dimmer_state == 0) {
       //set brightnesses
@@ -265,24 +251,21 @@ inline void dial_update() {
 inline void btn_update() {
   // this sets the button to be high: it is set low in send can
   if (btn_safe_ctrl.isPressed())  {
-    Serial.println("safe");
+    
     dashboard_status.toggle_mode_btn();
   }
   if (btn_mc_cycle.isPressed())    {
-    Serial.println("mc_cycle");
+    
     dashboard_status.toggle_mc_cycle_btn();
   }
   if (btn_torque_mode.isPressed()) {
-    Serial.println("torque");
+    
     dashboard_status.toggle_torque_mode_btn();
   }
   if (btn_led_dimmer.isPressed())  {
     dashboard_status.toggle_led_dimmer_btn();
   }
 
-  if (btn_start.isPressed()) {
-    Serial.println("start");
-    }
   dashboard_status.set_start_btn(btn_start.isPressed());
 }
 
