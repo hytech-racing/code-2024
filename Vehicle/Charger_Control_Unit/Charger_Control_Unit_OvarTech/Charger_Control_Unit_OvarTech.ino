@@ -239,7 +239,9 @@ int set_charge_current() { //not divided by 10 to keep precision
 
 inline void state_machine() {
   switch (ccu_status.get_charger_state()) {
-    case CHARGER_STATE::NOT_ACTIVE: break;
+    case CHARGER_STATE::NOT_ACTIVE: 
+      configure_charging(); 
+      break;
     case CHARGER_STATE::RDY_TO_CHARGE:
       if (charger_data.get_flags() == 0) {
         set_state(CHARGER_STATE::CHARGING);
