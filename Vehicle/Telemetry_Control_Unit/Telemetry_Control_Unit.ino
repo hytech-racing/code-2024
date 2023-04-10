@@ -13,6 +13,9 @@
 #define GPS_EN false
 #define COULOUMB_COUNTING_EN false
 
+#define CIRCULAR_BUFFER_INT_SAFE
+#include "CircularBuffer.h"
+
 #include <SD.h>
 #include <MTP_Teensy.h>
 #include <FlexCAN_T4.h>
@@ -40,6 +43,7 @@
 /*
  * Variables to store filtered values from ADC channels
  */
+ADC_SPI ADC(A1, 1800000);
 float filtered_temp_reading{};
 float filtered_ecu_current_reading{};
 float filtered_supply_reading{};
@@ -54,11 +58,25 @@ FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> CAN_3;
 static CAN_message_t msg_rx;
 static CAN_message_t msg_tx;
 static CAN_message_t xb_msg;
+typedef struct CAN_msg_time {
+  CAN_message_t msg;
+  uint64_t time = 0;
+} CAN_msg_time;
+CircularBuffer<CAN_msg_time, 128> CAN_msg_q;
 
 File logger;
 
+typedef struct perf_counters {
+  uint16_t CAN_1_freq = 0;
+  uint16_t CAN_2_freq = 0;
+  uint16_t CAN_3_freq = 0;
+  uint16_t GPS_freq = 0;
+} perf_counters;
+perf_counters counters;
+Metro timer_debug_RTC = Metro(1000);
 
-ADC_SPI ADC(A1, 1800000);
+
+
 Metro timer_mcu_status = Metro(2000);
 Metro timer_debug_dashboard = Metro(2000);
 Metro timer_debug_mcu_pedal_readings = Metro(200);
@@ -77,7 +95,6 @@ Metro timer_detailed_voltages = Metro(1000);
 Metro timer_status_send = Metro(100);
 Metro timer_status_send_xbee = Metro(2000);
 Metro timer_gps = Metro(100);
-Metro timer_debug_RTC = Metro(1000);
 Metro timer_flush = Metro(100);
 #if COULOUMB_COUNTING_EN
 Metro timer_total_discharge = Metro(1000);
@@ -175,7 +192,9 @@ void setup() {
     CAN_2.onReceive(parse_can2_message);
     CAN_3.onReceive(parse_can3_message);
     
-    //delay(5000); // Prevents suprious text files when turning the car on and off rapidly
+    Serial.println("TCU On");
+    
+    delay(5000); // Prevents suprious text files when turning the car on and off rapidly
     
 }
 
@@ -197,6 +216,8 @@ void loop() {
     /* Print timestamp to serial occasionally */
     if (timer_debug_RTC.check()) {
         Serial.println(Teensy3Clock.get());
+        Serial.printf("CAN1: %u, CAN2: %u, CAN3: %u, GPS: %u\n",counters.CAN_1_freq, counters.CAN_2_freq, counters.CAN_3_freq, counters.GPS_freq);
+        counters = (perf_counters){.CAN_1_freq = 0, .CAN_2_freq = 0, .CAN_3_freq = 0, .GPS_freq = 0};
     }
     /* Process MCU analog readings */
     if (timer_mcu_analog_readings.check()) {
