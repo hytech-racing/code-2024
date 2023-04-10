@@ -62,7 +62,7 @@ float total_thermistor_temps = 0;
 Metro charging_timer = Metro(5000); // Timer to check if charger is still talking to ACU
 Metro CAN_timer = Metro(2); // Timer that spaces apart writes for CAN messages so as to not saturate CAN bus
 Metro print_timer = Metro(500);
-Metro balance_timer(BALANCE_HOT);
+Metro balance_timer(BALANCE_STANDARD);
 Metro timer_CAN_em_forward(100);
 IntervalTimer pulse_timer;    //AMS ok pulse timer
 bool next_pulse = true; //AMS ok pulse
@@ -118,7 +118,7 @@ void setup() {
   Serial.begin(115200);
   SPI.begin();
   TELEM_CAN.begin();
-  TELEM_CAN.setBaudRate(1000000);
+  TELEM_CAN.setBaudRate(500000);
   ENERGY_METER_CAN.begin();
   ENERGY_METER_CAN.setBaudRate(500000);
   ENERGY_METER_CAN.enableMBInterrupts();
@@ -464,11 +464,11 @@ void write_CAN_messages() {
   // set temperature message values
   bms_temperatures.set_low_temperature(gpio_temps[min_thermistor_location[0]][min_thermistor_location[1]] * 100);
   bms_temperatures.set_high_temperature(gpio_temps[max_thermistor_location[0]][max_thermistor_location[1]] * 100);
-  bms_temperatures.set_average_temperature(total_thermistor_temps * 100 / 32);
+  bms_temperatures.set_average_temperature(total_thermistor_temps * 100 / 48);
   // set onboard temperature message values
   bms_onboard_temperatures.set_low_temperature(gpio_temps[min_board_temp_location[0]][min_board_temp_location[1]] * 100);
   bms_onboard_temperatures.set_high_temperature(gpio_temps[max_board_temp_location[0]][max_board_temp_location[1]] * 100);
-  bms_onboard_temperatures.set_average_temperature(total_board_temps * 100 / 4);
+  bms_onboard_temperatures.set_average_temperature(total_board_temps * 100 / 6);
 
   //Write BMS_status message
   if (can_bms_status_timer > 100) {
