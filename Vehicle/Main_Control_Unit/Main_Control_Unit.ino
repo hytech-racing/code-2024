@@ -39,7 +39,7 @@
 #include "driver_constants.h"
 
 // Call the ADIS16460 IMU class
-ADIS16460 IMU(IMU_CS, IMU_DATAREADY, IMU_RESET); // Chip Select, Data Ready, Reset Pin Assignments
+//ADIS16460 IMU(IMU_CS, IMU_DATAREADY, IMU_RESET); // Chip Select, Data Ready, Reset Pin Assignments
 
 // Outbound CAN messages
 MCU_pedal_readings mcu_pedal_readings;
@@ -48,8 +48,8 @@ MCU_load_cells mcu_load_cells{};
 MCU_analog_readings mcu_analog_readings{};
 
 // IMU
-IMU_accelerometer imu_accelerometer;
-IMU_gyroscope imu_gyroscope;
+//IMU_accelerometer imu_accelerometer;
+//IMU_gyroscope imu_gyroscope;
 double imu_velocity;
 double pitch_calibration_angle;
 
@@ -99,9 +99,9 @@ bool imd_faulting = false;
 bool inverter_restart = false; // True when restarting the inverter
 INVERTER_STARTUP_STATE inverter_startup_state = INVERTER_STARTUP_STATE::WAIT_SYSTEM_READY;
 
-ADC_SPI ADC1(ADC1_CS, ADC_SPI_SPEED);
-ADC_SPI ADC2(ADC2_CS, ADC_SPI_SPEED);
-ADC_SPI ADC3(ADC3_CS, ADC_SPI_SPEED);
+ADC_SPI ADC1(ADC1_CS, ADC_SPI_SPEED, ECU_SDI, ECU_SDO, ECU_CLK);
+ADC_SPI ADC2(ADC2_CS, ADC_SPI_SPEED, ECU_SDI, ECU_SDO, ECU_CLK);
+ADC_SPI ADC3(ADC3_CS, ADC_SPI_SPEED, ECU_SDI, ECU_SDO, ECU_CLK);
 
 STEERING_SPI STEERING(STEERING_CS, STEERING_SPI_SPEED);
 
@@ -126,11 +126,11 @@ void setup() {
   set_all_inverters_disabled();
 
   // IMU set up
-  IMU.regWrite(MSC_CTRL, 0xC1);  // Enable Data Ready, set polarity
-  delay(20);
-  IMU.regWrite(FLTR_CTRL, 0x500); // Set digital filter
-  delay(20);
-  IMU.regWrite(DEC_RATE, 0), // Disable decimation
+//  IMU.regWrite(MSC_CTRL, 0xC1);  // Enable Data Ready, set polarity
+//  delay(20);
+//  IMU.regWrite(FLTR_CTRL, 0x500); // Set digital filter
+//  delay(20);
+//  IMU.regWrite(DEC_RATE, 0), // Disable decimation
                delay(20);
 
   pinMode(BRAKE_LIGHT_CTRL, OUTPUT);
@@ -146,6 +146,10 @@ void setup() {
   digitalWrite(WATCHDOG_INPUT, HIGH);
   pinMode(SOFTWARE_OK, OUTPUT);
   digitalWrite(SOFTWARE_OK, HIGH);
+
+  pinMode(ECU_CLK, OUTPUT);
+  pinMode(ECU_SDI, INPUT);
+  pinMode(ECU_SDO, OUTPUT);
 
 #if DEBUG
   Serial.begin(115200);
@@ -268,11 +272,36 @@ void loop() {
     //        break;
     //
     //    }
+    uint16_t arr[8];
     Serial.println("PEDAL OUTPUT");
+//    SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3));
+//    digitalWrite(ADC1_CS, LOW);
+//    for (uint16_t i = 0; i < 8; i++) {
+//      digitalWrite(ECU_CLK, HIGH);
+//      arr[i] = 0;
+//      uint16_t shiftout = (6-i) << 11;
+//      for (int j = 0; j < 16; j++) {
+//        // read outputs on the falling edge
+//        digitalWrite(ECU_CLK, LOW);
+//        arr[i] |= digitalRead(ECU_SDI) << (15 - j);
+//        delayMicroseconds(1);
+//        // write channel on the rising edge
+//        digitalWrite(ECU_SDO, shiftout & (0b1000000000000000 >> j) ? LOW : HIGH);
+//        digitalWrite(ECU_CLK, HIGH);
+//        delayMicroseconds(1);
+//      }
+//    }
+//    digitalWrite(ADC1_CS, HIGH);
+//    SPI.endTransaction();
     Serial.println(mcu_pedal_readings.get_accelerator_pedal_1());
     Serial.println(mcu_pedal_readings.get_accelerator_pedal_2());
     Serial.println(mcu_pedal_readings.get_brake_pedal_1());
     Serial.println(mcu_pedal_readings.get_brake_pedal_2());
+//    Serial.println(arr[0]);
+//    Serial.println(arr[1]);
+//    Serial.println(arr[2]);
+//    Serial.println(arr[3]);
+    Serial.println();
     Serial.println("LOAD CELLS");
     Serial.println(mcu_load_cells.get_FL_load_cell());
      Serial.println(mcu_load_cells.get_FR_load_cell());
@@ -986,47 +1015,47 @@ inline void read_status_values() {
 
 // IMU functions
 inline void read_imu() {
-  if (timer_read_imu.check()) {
-    double sinAngle = sin(VEHICLE_TILT_ANGLE_X);
-    double cosAngle = cos(VEHICLE_TILT_ANGLE_X);
-    double accel_x = IMU.regRead(X_ACCL_OUT) * 0.00245; // 0.00245 is the scale
-    double accel_y = IMU.regRead(Y_ACCL_OUT) * 0.00245; // 0.00245 is the scale
-    double accel_z = IMU.regRead(Z_ACCL_OUT) * 0.00245; // 0.00245 is the scale
-    double x_gyro = IMU.regRead(X_GYRO_OUT) * 0.005; // 0.005 is the scale
-    double y_gyro = IMU.regRead(Y_GYRO_OUT) * 0.005; // 0.005 is the scale
-    double z_gyro = IMU.regRead(Z_GYRO_OUT) * 0.005; // 0.005 is the scale
-    double long_accel = ((-accel_y) * cosAngle) + (accel_z * sinAngle);
-    double lat_accel = accel_x;
-    double vert_accel = -((accel_z * cosAngle) - (-accel_y * sinAngle));
-    double pitch = (y_gyro * cosAngle) + (z_gyro * sinAngle);
-    double roll = y_gyro;
-    double yaw = (z_gyro * cosAngle) - (x_gyro * sinAngle);
-    imu_accelerometer.set_lat_accel((int16_t)(lat_accel * 102)); // * 0.00245); // 0.00245 is the scale
-    imu_accelerometer.set_long_accel((int16_t)(long_accel * 102)); // * 0.00245); // 0.00245 is the scale
-    imu_accelerometer.set_vert_accel((int16_t)(vert_accel * 102)); // * 0.00245); // 0.00245 is the scale
-    // question about yaw, pitch and roll rates?
-    imu_gyroscope.set_pitch((int16_t)(pitch * 102)); // * 0.005); // 0.005 is the scale,
-    imu_gyroscope.set_yaw((int16_t)(yaw * 102)); // * 0.005);  // 0.005 is the scale
-    imu_gyroscope.set_roll((int16_t)(roll * 102)); // * 0.005); // 0.005 is the scale
-  }
+//  if (timer_read_imu.check()) {
+//    double sinAngle = sin(VEHICLE_TILT_ANGLE_X);
+//    double cosAngle = cos(VEHICLE_TILT_ANGLE_X);
+//    double accel_x = IMU.regRead(X_ACCL_OUT) * 0.00245; // 0.00245 is the scale
+//    double accel_y = IMU.regRead(Y_ACCL_OUT) * 0.00245; // 0.00245 is the scale
+//    double accel_z = IMU.regRead(Z_ACCL_OUT) * 0.00245; // 0.00245 is the scale
+//    double x_gyro = IMU.regRead(X_GYRO_OUT) * 0.005; // 0.005 is the scale
+//    double y_gyro = IMU.regRead(Y_GYRO_OUT) * 0.005; // 0.005 is the scale
+//    double z_gyro = IMU.regRead(Z_GYRO_OUT) * 0.005; // 0.005 is the scale
+//    double long_accel = ((-accel_y) * cosAngle) + (accel_z * sinAngle);
+//    double lat_accel = accel_x;
+//    double vert_accel = -((accel_z * cosAngle) - (-accel_y * sinAngle));
+//    double pitch = (y_gyro * cosAngle) + (z_gyro * sinAngle);
+//    double roll = y_gyro;
+//    double yaw = (z_gyro * cosAngle) - (x_gyro * sinAngle);
+//    imu_accelerometer.set_lat_accel((int16_t)(lat_accel * 102)); // * 0.00245); // 0.00245 is the scale
+//    imu_accelerometer.set_long_accel((int16_t)(long_accel * 102)); // * 0.00245); // 0.00245 is the scale
+//    imu_accelerometer.set_vert_accel((int16_t)(vert_accel * 102)); // * 0.00245); // 0.00245 is the scale
+//    // question about yaw, pitch and roll rates?
+//    imu_gyroscope.set_pitch((int16_t)(pitch * 102)); // * 0.005); // 0.005 is the scale,
+//    imu_gyroscope.set_yaw((int16_t)(yaw * 102)); // * 0.005);  // 0.005 is the scale
+//    imu_gyroscope.set_roll((int16_t)(roll * 102)); // * 0.005); // 0.005 is the scale
+//  }
 }
 
 inline void send_CAN_IMU_accelerometer() {
-  if (timer_CAN_imu_accelerometer_send.check()) {
-    imu_accelerometer.write(msg.buf);
-    msg.id = ID_IMU_ACCELEROMETER;
-    msg.len = sizeof(imu_accelerometer);
-    TELEM_CAN.write(msg);
-  }
+//  if (timer_CAN_imu_accelerometer_send.check()) {
+//    imu_accelerometer.write(msg.buf);
+//    msg.id = ID_IMU_ACCELEROMETER;
+//    msg.len = sizeof(imu_accelerometer);
+//    TELEM_CAN.write(msg);
+//  }
 }
 
 inline void send_CAN_IMU_gyroscope() {
-  if (timer_CAN_imu_gyroscope_send.check()) {
-    imu_gyroscope.write(msg.buf);
-    msg.id = ID_IMU_GYROSCOPE;
-    msg.len = sizeof(imu_gyroscope);
-    TELEM_CAN.write(msg);
-  }
+//  if (timer_CAN_imu_gyroscope_send.check()) {
+//    imu_gyroscope.write(msg.buf);
+//    msg.id = ID_IMU_GYROSCOPE;
+//    msg.len = sizeof(imu_gyroscope);
+//    TELEM_CAN.write(msg);
+//  }
 }
 
 inline void calibrate_imu_velocity(double calibrate_to) {
@@ -1034,23 +1063,23 @@ inline void calibrate_imu_velocity(double calibrate_to) {
 }
 
 inline void pitch_angle_calibration() {
-  double z_accl_sum = 0.0;
-  int ctr = 0;
-  time_t start_time, current_time;
-  double elapsed_time;
-  start_time = time(NULL);
-  // Serial.println("Calibration Starts Now"); FOR DEBUGING PURPOSES
-  while (1) {
-    delay(50);
-    z_accl_sum += ((IMU.regRead(Z_ACCL_OUT) * 0.00245));
-    ctr++;
-    current_time = time(NULL);
-    elapsed_time = difftime(current_time, start_time);
-    if (elapsed_time >= 5) break; // Code runs for 5 seconds. Change for desired duration.
-  }
-  // Serial.println("Calibration Has Ended");
-  double avg_z_accl = z_accl_sum / ctr;
-  pitch_calibration_angle = std::acos(avg_z_accl / ACCL_DUE_TO_GRAVITY);
+//  double z_accl_sum = 0.0;
+//  int ctr = 0;
+//  time_t start_time, current_time;
+//  double elapsed_time;
+//  start_time = time(NULL);
+//  // Serial.println("Calibration Starts Now"); FOR DEBUGING PURPOSES
+//  while (1) {
+//    delay(50);
+//    z_accl_sum += ((IMU.regRead(Z_ACCL_OUT) * 0.00245));
+//    ctr++;
+//    current_time = time(NULL);
+//    elapsed_time = difftime(current_time, start_time);
+//    if (elapsed_time >= 5) break; // Code runs for 5 seconds. Change for desired duration.
+//  }
+//  // Serial.println("Calibration Has Ended");
+//  double avg_z_accl = z_accl_sum / ctr;
+//  pitch_calibration_angle = std::acos(avg_z_accl / ACCL_DUE_TO_GRAVITY);
 }
 
 inline void calculate_pedal_implausibilities() {
