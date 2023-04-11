@@ -114,7 +114,20 @@ def parse_BMS_status(id, data):
     mask = id==msg_id
     data = data[mask]
     
-
+    vectors = [
+        (8, -1, True, lambda x: x, "state", ""),
+        (1, -1, True, lambda x: x, "overvoltage", ""),
+        (1, -1, True, lambda x: x, "total_voltage_high", ""),
+        (1, -1, True, lambda x: x, "discharge_overcurrent", ""),
+        (1, -1, True, lambda x: x, "charge_overcurrent", ""),
+        (1, -1, True, lambda x: x, "discharge_overtemp", ""),
+        (1, -1, True, lambda x: x, "charge_overtemp", ""),
+        (1, -1, True, lambda x: x, "undertemp", ""),
+        (1, -1, True, lambda x: x, "onboard_overtemp", ""),
+        (16, 24, False, lambda x: x/100, "current", ""),
+        (1, -1, True, lambda x: x, "shutdown_g_above_threshold", ""),
+        (1, -1, True, lambda x: x, "shutdown_h_above_threshold", ""),
+    ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
     out = parse_to_np(data, vectors, bitoffsets, bitmasks)
