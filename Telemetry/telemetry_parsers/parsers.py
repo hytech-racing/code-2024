@@ -26,14 +26,34 @@ def parse_BMS_detailed_temperatures(ordering, id, data):
     mask = id==msg_id
     data = data[mask]
     
-
+    # (Size (bits), Position (bits), lambda func, name, units)
+    vectors = [
+        (4, -1, lambda x: x, "id", ""),
+        (4, -1, lambda x: x, "group", ""),
+        (16, -1, lambda x: x/100, "temps", ""),
+        (16, -1, lambda x: x/100, "temps", ""),
+        (16, -1, lambda x: x/100, "temps", "")
+    ]
+    offsets = np.zeros((len(vectors),),dtype=np.uint16)
+    masks = np.zeros((len(vectors),),dtype=np.uint64)
+    for i in range(len(vectors)):
+        mask[i] = np.uint64((1 << vectors[i][0]) - 1)
+        if vectors[i][1] == -1 and i > 0:
+            offsets[i] = offsets[i-1]
+        elif vectors[i][1] > -1:
+            offsets[i] = vectors[i][1]
+        else:
+            offsets[i] = 0
+    
+    
+    """
     out = np.zeros((data.size, 5))
     out[:,0] = data & 0xF
     out[:,1] = (data & (0xF<<4))>>4
     out[:,2] = (data & (0xFFFF<<8))>>8
     out[:,3] = (data & (0xFFFF<<24))>>24
     out[:,4] = (data & (0xFFFF<<40))>>40
-
+    """
     #df = pd.DataFrame(arr, columns='cols')
     return out
 

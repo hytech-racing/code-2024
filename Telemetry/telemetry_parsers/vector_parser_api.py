@@ -55,5 +55,9 @@ def parse_file(filename):
     df = df[df['msg.len']*2 == df['data'].str.len()]
     df['time'] = pd.to_datetime(df['time'], unit='ms')
 
+    df = df[df['msg.len']*2 == df['data'].str.len()]
+    df["data"] = df["data"].apply(int, base = 16)
+    df["data"] = df['data'].to_numpy(dtype=np.uint64).byteswap()>>(8*(8-df["msg.len"])).to_numpy(dtype=np.uint16)
+
 def parse_message_vectorized(id, data):
     return
