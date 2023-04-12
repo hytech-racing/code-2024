@@ -43,9 +43,9 @@ def parse_BMS_detailed_temperatures(id, data):
     vectors = [
         (4 , -1, False, lambda x: x    , "id"    , ""),
         (4 , -1, False, lambda x: x    , "group" , ""),
-        (16, -1, False, lambda x: x/100, "temps" , ""),
-        (16, -1, False, lambda x: x/100, "temps" , ""),
-        (16, -1, False, lambda x: x/100, "temps" , "")
+        (16, -1,  True, lambda x: x/100, "temps" , ""),
+        (16, -1,  True, lambda x: x/100, "temps" , ""),
+        (16, -1,  True, lambda x: x/100, "temps" , "")
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
@@ -115,18 +115,19 @@ def parse_BMS_status(id, data):
     data = data[mask]
     
     vectors = [
-        (8, -1, True, lambda x: x, "state", ""),
-        (1, -1, True, lambda x: x, "overvoltage", ""),
-        (1, -1, True, lambda x: x, "total_voltage_high", ""),
-        (1, -1, True, lambda x: x, "discharge_overcurrent", ""),
-        (1, -1, True, lambda x: x, "charge_overcurrent", ""),
-        (1, -1, True, lambda x: x, "discharge_overtemp", ""),
-        (1, -1, True, lambda x: x, "charge_overtemp", ""),
-        (1, -1, True, lambda x: x, "undertemp", ""),
-        (1, -1, True, lambda x: x, "onboard_overtemp", ""),
-        (16, 24, False, lambda x: x/100, "current", ""),
-        (1, -1, True, lambda x: x, "shutdown_g_above_threshold", ""),
-        (1, -1, True, lambda x: x, "shutdown_h_above_threshold", ""),
+        (8, -1, False, lambda x: x, "state", ""),
+        (1, -1, False, lambda x: x, "overvoltage", ""),
+        (1, -1, False, lambda x: x, "undervoltage", ""),
+        (1, -1, False, lambda x: x, "total_voltage_high", ""),
+        (1, -1, False, lambda x: x, "discharge_overcurrent", ""),
+        (1, -1, False, lambda x: x, "charge_overcurrent", ""),
+        (1, -1, False, lambda x: x, "discharge_overtemp", ""),
+        (1, -1, False, lambda x: x, "charge_overtemp", ""),
+        (1, -1, False, lambda x: x, "undertemp", ""),
+        (1, -1, False, lambda x: x, "onboard_overtemp", ""),
+        (16, 24, True, lambda x: x/100, "current", ""),
+        (1, -1, False, lambda x: x, "shutdown_g_above_threshold", ""),
+        (1, -1, False, lambda x: x, "shutdown_h_above_threshold", ""),
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
@@ -223,32 +224,33 @@ def parse_Dashboard_status(id, data):
     data = data[mask]
     
     vectors = [
-        (1, -1, True, lambda x: x, "start_btn", ""),
-        (1, -1, True, lambda x: x, "buzzer_active", ""),
-        (1, -1, True, lambda x: x, "ssok_above_threshold", ""),
-        (1, -1, True, lambda x: x, "shutdown_h_above_threshold", ""),
+        (1, -1, False, lambda x: x, "start_btn", ""),
+        (1, -1, False, lambda x: x, "buzzer_active", ""),
+        (1, -1, False, lambda x: x, "ssok_above_threshold", ""),
+        (1, -1, False, lambda x: x, "shutdown_h_above_threshold", ""),
         
-        (1, 8, True, lambda x: x, "mark_btn", ""),
-        (1, -1, True, lambda x: x, "mode_btn", ""),
-        (1, -1, True, lambda x: x, "mc_cycle_btn", ""),
-        (1, -1, True, lambda x: x, "launch_ctrl_btn", ""),
-        (1, -1, True, lambda x: x, "torque_mode_btn", ""),
-        (1, -1, True, lambda x: x, "led_dimmer_btn", ""),
+        (1,  8, False, lambda x: x, "mark_btn", ""),
+        (1, -1, False, lambda x: x, "mode_btn", ""),
+        (1, -1, False, lambda x: x, "mc_cycle_btn", ""),
+        (1, -1, False, lambda x: x, "launch_ctrl_btn", ""),
+        (1, -1, False, lambda x: x, "torque_mode_btn", ""),
+        (1, -1, False, lambda x: x, "led_dimmer_btn", ""),
 
-        (8, 16, True, lambda x: x, "dial_state", ""),
+        (8, 16, False, lambda x: x, "dial_state", ""),
 
-        (2, -1, True, lambda x: x, "ams_led", ""),
-        (2, -1, True, lambda x: x, "imd_led", ""),
-        (2, -1, True, lambda x: x, "mode_led", ""),
-        (2, -1, True, lambda x: x, "mc_error_led", ""),
-        (2, -1, True, lambda x: x, "inertia_led", ""),
-        (2, -1, True, lambda x: x, "mech_brake_led", ""),
-        (2, -1, True, lambda x: x, "gen_purp_led", ""),
-        (2, -1, True, lambda x: x, "bots_led", ""),
-        (2, -1, True, lambda x: x, "cockpit_brb_led", ""),
-        (2, -1, True, lambda x: x, "crit_charge_led", ""),
-        (2, -1, True, lambda x: x, "glv_led", ""),
-        (2, -1, True, lambda x: x, "launch_control_led", ""),
+        (2, -1, False, lambda x: x, "ams_led", ""),
+        (2, -1, False, lambda x: x, "imd_led", ""),
+        (2, -1, False, lambda x: x, "mode_led", ""),
+        (2, -1, False, lambda x: x, "mc_error_led", ""),
+        (2, -1, False, lambda x: x, "start_led", ""),
+        (2, -1, False, lambda x: x, "inertia_led", ""),
+        (2, -1, False, lambda x: x, "mech_brake_led", ""),
+        (2, -1, False, lambda x: x, "gen_purp_led", ""),
+        (2, -1, False, lambda x: x, "bots_led", ""),
+        (2, -1, False, lambda x: x, "cockpit_brb_led", ""),
+        (2, -1, False, lambda x: x, "crit_charge_led", ""),
+        (2, -1, False, lambda x: x, "glv_led", ""),
+        (2, -1, False, lambda x: x, "launch_control_led", ""),
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
@@ -742,12 +744,12 @@ def parse_EM_status(id, data):
     data = data[mask]
     
     vectors = [
-        (4, -1, True, lambda x: x, "voltage_gain", "V"),
-        (4, -1, True, lambda x: x, "current_gain", "A"),
+        (4, -1, False, lambda x: x, "voltage_gain", "V"),
+        (4, -1, False, lambda x: x, "current_gain", "A"),
 
-        (1, -1, True, lambda x: x, "overvoltage", "")
-        (1, -1, True, lambda x: x, "overpower", "")
-        (1, -1, True, lambda x: x, "logging", "")
+        (1, -1, False, lambda x: x, "overvoltage", ""),
+        (1, -1, False, lambda x: x, "overpower", ""),
+        (1, -1, False, lambda x: x, "logging", "")
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
@@ -762,7 +764,10 @@ def parse_EM_measurement(id, data):
     mask = id==msg_id
     data = data[mask]
     
-
+    vectors = [
+        (32, -1, False, lambda x: x/(2**16), "voltage", ""),
+        (32, -1, False, lambda x: x/(2**16), "current", "")
+    ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
     out = parse_to_np(data, vectors, bitoffsets, bitmasks)
