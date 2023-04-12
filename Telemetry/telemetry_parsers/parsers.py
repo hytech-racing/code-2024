@@ -17,13 +17,13 @@ def parse_BMS_balancing_status(data, id = None, time=None):
 
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
     cols = [vector[4] for vector in vectors]
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
-    return [(out, cols, units, directory)]
+    return [(arr, cols, units, directory)]
 MESSAGE_DICT[0xDE] = (parse_BMS_balancing_status, "BMS_balancing_status") 
 
 def parse_BMS_coulomb_counts(data, id = None, time=None):
@@ -37,13 +37,13 @@ def parse_BMS_coulomb_counts(data, id = None, time=None):
 
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
     cols = [vector[4] for vector in vectors]
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
-    return [(out, cols, units, directory)]
+    return [(arr, cols, units, directory)]
 MESSAGE_DICT[0xE2] = (parse_BMS_coulomb_counts, "BMS_coulomb_counts") 
 
 #done-ish
@@ -64,13 +64,13 @@ def parse_BMS_detailed_temperatures(data, id = None, time=None):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
     cols = [vector[4] for vector in vectors]
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
-    return [(out, cols, units, directory)]
+    return [(arr, cols, units, directory)]
 MESSAGE_DICT[0xDA] = (parse_BMS_detailed_temperatures, "BMS_detailed_temperatures")
 
 #done-ish
@@ -91,13 +91,13 @@ def parse_BMS_detailed_voltages(data, id = None, time=None):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
     cols = [vector[4] for vector in vectors]
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
-    return [(out, cols, units, directory)]
+    return [(arr, cols, units, directory)]
 MESSAGE_DICT[0xD8] = (parse_BMS_detailed_voltages, "BMS_detailed_voltages") 
 
 def parse_BMS_onboard_detailed_temperatures(data, id = None, time=None):
@@ -111,13 +111,13 @@ def parse_BMS_onboard_detailed_temperatures(data, id = None, time=None):
 
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
     cols = [vector[4] for vector in vectors]
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
-    return [(out, cols, units, directory)]
+    return [(arr, cols, units, directory)]
 MESSAGE_DICT[0xD6] = (parse_BMS_onboard_detailed_temperatures, "BMS_onboard_detailed_temperatures") 
 
 #done
@@ -136,13 +136,13 @@ def parse_BMS_onboard_temperatures(data, id = None, time=None):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
     cols = [vector[4] for vector in vectors]
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
-    return [(out, cols, units, directory)]
+    return [(arr, cols, units, directory)]
 MESSAGE_DICT[0xD5] = (parse_BMS_onboard_temperatures, "BMS_onboard_temperatures") 
 
 def parse_BMS_status(data, id = None, time=None):
@@ -170,13 +170,13 @@ def parse_BMS_status(data, id = None, time=None):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
     cols = [vector[4] for vector in vectors]
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
-    return [(out, cols, units, directory)]
+    return [(arr, cols, units, directory)]
 MESSAGE_DICT[0xDB] = (parse_BMS_status, "BMS_status") 
 
 #done
@@ -195,13 +195,13 @@ def parse_BMS_temperatures(data, id = None, time=None):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
     cols = [vector[4] for vector in vectors]
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
-    return [(out, cols, units, directory)]
+    return [(arr, cols, units, directory)]
 MESSAGE_DICT[0xD9] = (parse_BMS_temperatures, "BMS_temperatures") 
 
 #done
@@ -221,13 +221,13 @@ def parse_BMS_voltages(data, id = None, time=None):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
     cols = [vector[4] for vector in vectors]
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
-    return [(out, cols, units, directory)]
+    return [(arr, cols, units, directory)]
 MESSAGE_DICT[0xD7] = (parse_BMS_voltages, "BMS_voltages") 
 
 def parse_CCU_status(data, id = None, time=None):
@@ -241,13 +241,13 @@ def parse_CCU_status(data, id = None, time=None):
 
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
     cols = [vector[4] for vector in vectors]
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
-    return [(out, cols, units, directory)]
+    return [(arr, cols, units, directory)]
 MESSAGE_DICT[0xDD] = (parse_CCU_status, "CCU_status") 
 
 def parse_Charger_configure(data, id = None, time=None):
@@ -261,13 +261,13 @@ def parse_Charger_configure(data, id = None, time=None):
 
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
     cols = [vector[4] for vector in vectors]
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
-    return [(out, cols, units, directory)]
+    return [(arr, cols, units, directory)]
 MESSAGE_DICT[0x1806E0F4] = (parse_Charger_configure, "Charger_configure") 
 
 def parse_Charger_data(data, id = None, time=None):
@@ -281,13 +281,13 @@ def parse_Charger_data(data, id = None, time=None):
 
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
     cols = [vector[4] for vector in vectors]
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
-    return [(out, cols, units, directory)]
+    return [(arr, cols, units, directory)]
 MESSAGE_DICT[0x18FF50E0] = (parse_Charger_data, "Charger_data") 
 
 def parse_Dashboard_status(data, id = None, time=None):
@@ -326,13 +326,13 @@ def parse_Dashboard_status(data, id = None, time=None):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
     cols = [vector[4] for vector in vectors]
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
-    return [(out, cols, units, directory)]
+    return [(arr, cols, units, directory)]
 MESSAGE_DICT[0xEB] = (parse_Dashboard_status, "Dashboard_status") 
 
 def parse_MCU_GPS_readings(data, id = None, time=None):
@@ -346,13 +346,13 @@ def parse_MCU_GPS_readings(data, id = None, time=None):
 
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
     cols = [vector[4] for vector in vectors]
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
-    return [(out, cols, units, directory)]
+    return [(arr, cols, units, directory)]
 MESSAGE_DICT[0xE7] = (parse_MCU_GPS_readings, "MCU_GPS_readings") 
 
 def parse_MCU_pedal_readings(data, id = None, time=None):
@@ -366,13 +366,13 @@ def parse_MCU_pedal_readings(data, id = None, time=None):
 
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
     cols = [vector[4] for vector in vectors]
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
-    return [(out, cols, units, directory)]
+    return [(arr, cols, units, directory)]
 MESSAGE_DICT[0xC4] = (parse_MCU_pedal_readings, "MCU_pedal_readings") 
 
 def parse_MCU_status(data, id = None, time=None):
@@ -386,13 +386,13 @@ def parse_MCU_status(data, id = None, time=None):
 
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
     cols = [vector[4] for vector in vectors]
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
-    return [(out, cols, units, directory)]
+    return [(arr, cols, units, directory)]
 MESSAGE_DICT[0xC3] = (parse_MCU_status, "MCU_status") 
 
 def parse_MCU_analog_readings(data, id = None, time=None):
@@ -406,13 +406,13 @@ def parse_MCU_analog_readings(data, id = None, time=None):
 
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
     cols = [vector[4] for vector in vectors]
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
-    return [(out, cols, units, directory)]
+    return [(arr, cols, units, directory)]
 MESSAGE_DICT[0xCC] = (parse_MCU_analog_readings, "MCU_analog_readings") 
 
 def parse_MCU_load_cells(data, id = None, time=None):
@@ -436,13 +436,13 @@ def parse_MCU_load_cells(data, id = None, time=None):
     arr[:,3] = (data & 0xFFFF<<48)>>48'''
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
     cols = [vector[4] for vector in vectors]
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
-    return [(out, cols, units, directory)]
+    return [(arr, cols, units, directory)]
 MESSAGE_DICT[0xC5] = (parse_MCU_load_cells, "MCU_load_cells")
 
 #done
@@ -461,13 +461,13 @@ def parse_MC1_energy(data, id = None, time=None):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
     cols = [vector[4] for vector in vectors]
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
-    return [(out, cols, units, directory)]
+    return [(arr, cols, units, directory)]
 MESSAGE_DICT[0xA8] = (parse_MC1_energy, "MC1_energy") 
 
 #done
@@ -486,13 +486,13 @@ def parse_MC2_energy(data, id = None, time=None):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
     cols = [vector[4] for vector in vectors]
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
-    return [(out, cols, units, directory)]
+    return [(arr, cols, units, directory)]
 MESSAGE_DICT[0xA9] = (parse_MC2_energy, "MC2_energy") 
 
 #done
@@ -511,13 +511,13 @@ def parse_MC3_energy(data, id = None, time=None):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
     cols = [vector[4] for vector in vectors]
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
-    return [(out, cols, units, directory)]
+    return [(arr, cols, units, directory)]
 MESSAGE_DICT[0xAA] = (parse_MC3_energy, "MC3_energy") 
 
 #done
@@ -536,13 +536,13 @@ def parse_MC4_energy(data, id = None, time=None):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
     cols = [vector[4] for vector in vectors]
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
-    return [(out, cols, units, directory)]
+    return [(arr, cols, units, directory)]
 MESSAGE_DICT[0xAB] = (parse_MC4_energy, "MC4_energy") 
 
 #done
@@ -565,13 +565,13 @@ def parse_MC1_setpoints_command(data, id = None, time=None):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
     cols = [vector[4] for vector in vectors]
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
-    return [(out, cols, units, directory)]
+    return [(arr, cols, units, directory)]
 MESSAGE_DICT[0xB0] = (parse_MC1_setpoints_command, "MC1_setpoints_command") 
 
 #done
@@ -594,13 +594,13 @@ def parse_MC2_setpoints_command(data, id = None, time=None):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
     cols = [vector[4] for vector in vectors]
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
-    return [(out, cols, units, directory)]
+    return [(arr, cols, units, directory)]
 MESSAGE_DICT[0xB1] = (parse_MC2_setpoints_command, "MC2_setpoints_command") 
 
 #done
@@ -623,13 +623,13 @@ def parse_MC3_setpoints_command(data, id = None, time=None):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
     cols = [vector[4] for vector in vectors]
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
-    return [(out, cols, units, directory)]
+    return [(arr, cols, units, directory)]
 MESSAGE_DICT[0xB2] = (parse_MC3_setpoints_command, "MC3_setpoints_command") 
 
 #done
@@ -652,13 +652,13 @@ def parse_MC4_setpoints_command(data, id = None, time=None):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
     cols = [vector[4] for vector in vectors]
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
-    return [(out, cols, units, directory)]
+    return [(arr, cols, units, directory)]
 MESSAGE_DICT[0xB3] = (parse_MC4_setpoints_command, "MC4_setpoints_command") 
 
 #done
@@ -685,13 +685,13 @@ def parse_MC1_status(data, id = None, time=None):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
     cols = [vector[4] for vector in vectors]
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
-    return [(out, cols, units, directory)]
+    return [(arr, cols, units, directory)]
 MESSAGE_DICT[0xA0] = (parse_MC1_status, "MC1_status") 
 
 #done
@@ -718,13 +718,13 @@ def parse_MC2_status(data, id = None, time=None):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
     cols = [vector[4] for vector in vectors]
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
-    return [(out, cols, units, directory)]
+    return [(arr, cols, units, directory)]
 MESSAGE_DICT[0xA1] = (parse_MC2_status, "MC2_status") 
 
 #done
@@ -751,13 +751,13 @@ def parse_MC3_status(data, id = None, time=None):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
     cols = [vector[4] for vector in vectors]
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
-    return [(out, cols, units, directory)]
+    return [(arr, cols, units, directory)]
 MESSAGE_DICT[0xA2] = (parse_MC3_status, "MC3_status") 
 
 #done
@@ -784,13 +784,13 @@ def parse_MC4_status(data, id = None, time=None):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
     cols = [vector[4] for vector in vectors]
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
-    return [(out, cols, units, directory)]
+    return [(arr, cols, units, directory)]
 MESSAGE_DICT[0xA3] = (parse_MC4_status, "MC4_status") 
 
 #done
@@ -810,13 +810,13 @@ def parse_MC1_temps(data, id = None, time=None):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
     cols = [vector[4] for vector in vectors]
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
-    return [(out, cols, units, directory)]
+    return [(arr, cols, units, directory)]
 MESSAGE_DICT[0xA4] = (parse_MC1_temps, "MC1_temps") 
 
 #done
@@ -836,13 +836,13 @@ def parse_MC2_temps(data, id = None, time=None):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
     cols = [vector[4] for vector in vectors]
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
-    return [(out, cols, units, directory)]
+    return [(arr, cols, units, directory)]
 MESSAGE_DICT[0xA5] = (parse_MC2_temps, "MC2_temps") 
 
 #done
@@ -862,13 +862,13 @@ def parse_MC3_temps(data, id = None, time=None):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
     cols = [vector[4] for vector in vectors]
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
-    return [(out, cols, units, directory)]
+    return [(arr, cols, units, directory)]
 MESSAGE_DICT[0xA6] = (parse_MC3_temps, "MC3_temps") 
 
 #done
@@ -888,13 +888,13 @@ def parse_MC4_temps(data, id = None, time=None):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
     cols = [vector[4] for vector in vectors]
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
-    return [(out, cols, units, directory)]
+    return [(arr, cols, units, directory)]
 MESSAGE_DICT[0xA7] = (parse_MC4_temps, "MC4_temps") 
 
 def parse_SAB_readings_front(data, id = None, time=None):
@@ -908,13 +908,13 @@ def parse_SAB_readings_front(data, id = None, time=None):
 
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
     cols = [vector[4] for vector in vectors]
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
-    return [(out, cols, units, directory)]
+    return [(arr, cols, units, directory)]
 MESSAGE_DICT[0x92] = (parse_SAB_readings_front, "SAB_readings_front") 
 
 def parse_SAB_readings_rear(data, id = None, time=None):
@@ -928,13 +928,13 @@ def parse_SAB_readings_rear(data, id = None, time=None):
 
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
     cols = [vector[4] for vector in vectors]
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
-    return [(out, cols, units, directory)]
+    return [(arr, cols, units, directory)]
 MESSAGE_DICT[0x93] = (parse_SAB_readings_rear, "SAB_readings_rear") 
 
 def parse_SAB_readings_gps(data, id = None, time=None):
@@ -948,13 +948,13 @@ def parse_SAB_readings_gps(data, id = None, time=None):
 
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
     cols = [vector[4] for vector in vectors]
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
-    return [(out, cols, units, directory)]
+    return [(arr, cols, units, directory)]
 MESSAGE_DICT[0xEE] = (parse_SAB_readings_gps, "SAB_readings_gps") 
 
 def parse_EM_status(data, id = None, time=None):
@@ -974,13 +974,13 @@ def parse_EM_status(data, id = None, time=None):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
     cols = [vector[4] for vector in vectors]
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
-    return [(out, cols, units, directory)]
+    return [(arr, cols, units, directory)]
 MESSAGE_DICT[0x100] = (parse_EM_status, "EM_status") 
 
 def parse_EM_measurement(data, id = None, time=None):
@@ -997,13 +997,13 @@ def parse_EM_measurement(data, id = None, time=None):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
     cols = [vector[4] for vector in vectors]
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
-    return [(out, cols, units, directory)]
+    return [(arr, cols, units, directory)]
 MESSAGE_DICT[0x400] = (parse_EM_measurement, "EM_measurement") 
 
 def parse_IMU_accelerometer(data, id = None, time=None):
@@ -1017,13 +1017,13 @@ def parse_IMU_accelerometer(data, id = None, time=None):
 
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
     cols = [vector[4] for vector in vectors]
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
-    return [(out, cols, units, directory)]
+    return [(arr, cols, units, directory)]
 MESSAGE_DICT[0x90] = (parse_IMU_accelerometer, "IMU_accelerometer") 
 
 def parse_IMU_gryoscope(data, id = None, time=None):
@@ -1037,11 +1037,11 @@ def parse_IMU_gryoscope(data, id = None, time=None):
 
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
     cols = [vector[4] for vector in vectors]
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
-    return [(out, cols, units, directory)]
+    return [(arr, cols, units, directory)]
 MESSAGE_DICT[0x91] = (parse_IMU_gryoscope, "IMU_gryoscope") 
