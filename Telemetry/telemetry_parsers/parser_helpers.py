@@ -17,10 +17,17 @@ def get_offsets_masks(vectors):
             offsets[i] = 0
     return offsets, masks
 
-def parse_to_np(data, vectors, offsets, masks):
-    out = np.zeros((data.size, len(vectors)))
+def parse_to_np(data, vectors, offsets, masks, time = None):
+    if time is None:
+        out = np.zeros((data.size, len(vectors)))
+        offset = 0
+    else:
+        out = np.zeros((data.size, len(vectors)+1),dtype=np.float64)
+        out[:,0] = time
+        offset = 1
+    
     for i in range(len(vectors)):
-        out[:,i] = vectors[i][3](unsigned_to_signed(((data & (masks[i]<<offsets[i]))>>offsets[i]), vectors[i][0], convert = vectors[i][2]))
+        out[:,i+offset] = vectors[i][3](unsigned_to_signed(((data & (masks[i]<<offsets[i]))>>offsets[i]), vectors[i][0], convert = vectors[i][2]))
         #out[:,i] = vectors[i][2](((data & (masks[i]<<offsets[i]))>>offsets[i]))
     return out
 

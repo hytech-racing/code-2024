@@ -3,6 +3,7 @@ import sys
 import pandas as pd
 import numpy as np
 from datetime import datetime
+import re
 
 def parse_folder():
     '''
@@ -31,7 +32,9 @@ def parse_folder():
             continue
     return 
 
-def parse_file(filename):
+
+
+def read_csv(filename):
     '''
     @brief: Reads raw data file and creates parsed data CSV.
             Loops through lines to write to parsed datafile.
@@ -45,6 +48,7 @@ def parse_file(filename):
 
     #Cleans up data
     df = pd.read_csv(infile_name, on_bad_lines="skip")
+    
     df = df[df["time"].str.len() == 13]
     df = df[df['msg.len'].str.len() == 1]
     df = df[~df['msg.id'].isnull()]
@@ -58,6 +62,32 @@ def parse_file(filename):
     df = df[df['msg.len']*2 == df['data'].str.len()]
     df["data"] = df["data"].apply(int, base = 16)
     df["data"] = df['data'].to_numpy(dtype=np.uint64).byteswap()>>(8*(8-df["msg.len"])).to_numpy(dtype=np.uint16)
+    
+    return df
 
-def parse_message_vectorized(id, data):
+def parse_message_vectorized(data, msg_id, time, root):
     return
+
+def parse_file(filename):
+    df = read_csv(filename)
+    root = {}
+    parse_message_vectorized(data, msg_id, time, root)
+    return
+
+def add_outputs_to_dir(root, outputs):
+    for data in outputs:
+        for i, d in enumerate(data[0][3]):
+            add_to_dir(root, str_to_directory(d), data[0][0][:, (0,i+1)])
+
+def str_to_directory(s):
+    s=s.replace("]","")
+    l = re.split('[.]|[\/]|[\\]|[\[]', s)
+    return [int(x) if x.isdigit() else x for x in l]
+
+def add_to_dir(root, directory, data):
+    cwd = root
+    for index, i in enumerate(directory[:-1]):
+        if i not in cwd.keys():
+            cwd[i] = {}
+        cwd = cwd[i]
+    cwd[directory[-1]] = data

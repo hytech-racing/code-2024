@@ -6,60 +6,82 @@ MESSAGE_DICT = {}
 
 # (Size (bits), Position (bits), signed, lambda func, name, units)
 
-def parse_BMS_balancing_status(id, data):
+def parse_BMS_balancing_status(data, id = None, time=None):
     msg_id = 0xDE
-    mask = id==msg_id
-    data = data[mask]
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
     
 
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks)
+    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    #directory = [vector[6] for vector in vectors]
     return out
 MESSAGE_DICT[0xDE] = (parse_BMS_balancing_status, "BMS_balancing_status") 
 
-def parse_BMS_coulomb_counts(id, data):
+def parse_BMS_coulomb_counts(data, id = None, time=None):
     msg_id = 0xE2
-    mask = id==msg_id
-    data = data[mask]
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
     
 
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks)
+    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    #directory = [vector[6] for vector in vectors]
     return out
 MESSAGE_DICT[0xE2] = (parse_BMS_coulomb_counts, "BMS_coulomb_counts") 
 
 #done-ish
-def parse_BMS_detailed_temperatures(id, data):
+def parse_BMS_detailed_temperatures(data, id = None, time=None):
     msg_id = 0xDA
-    mask = id==msg_id
-    data = data[mask]
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
     
     vectors = [
-        (4 , -1, False, lambda x: x    , "id"    , ""),
-        (4 , -1, False, lambda x: x    , "group" , ""),
-        (16, -1,  True, lambda x: x/100, "temps" , ""),
-        (16, -1,  True, lambda x: x/100, "temps" , ""),
-        (16, -1,  True, lambda x: x/100, "temps" , "")
+        (4 , -1, False, lambda x: x    , "id"    , "", "BMS.detailed_temps.id"),
+        (4 , -1, False, lambda x: x    , "group" , "", "BMS.detailed_temps.group"),
+        (16, -1,  True, lambda x: x/100, "temps" , "", "BMS.detailed_temps.temps[0]"),
+        (16, -1,  True, lambda x: x/100, "temps" , "", "BMS.detailed_temps.temps[1]"),
+        (16, -1,  True, lambda x: x/100, "temps" , "", "BMS.detailed_temps.temps[2]")
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks)
+    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    directory = [vector[6] for vector in vectors]
+    return [(out, cols, units, directory)]
     return out
 MESSAGE_DICT[0xDA] = (parse_BMS_detailed_temperatures, "BMS_detailed_temperatures")
 
 #done-ish
-def parse_BMS_detailed_voltages(id, data):
+def parse_BMS_detailed_voltages(data, id = None, time=None):
     msg_id = 0xD8
-    mask = id==msg_id
-    data = data[mask]
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
     
     vectors = [
         (4 , -1, False, lambda x: x    , "id"    , ""),
@@ -70,31 +92,43 @@ def parse_BMS_detailed_voltages(id, data):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks)
+    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    #directory = [vector[6] for vector in vectors]
     return out
 MESSAGE_DICT[0xD8] = (parse_BMS_detailed_voltages, "BMS_detailed_voltages") 
 
-def parse_BMS_onboard_detailed_temperatures(id, data):
+def parse_BMS_onboard_detailed_temperatures(data, id = None, time=None):
     msg_id = 0xD6
-    mask = id==msg_id
-    data = data[mask]
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
     
 
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks)
+    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    #directory = [vector[6] for vector in vectors]
     return out
 MESSAGE_DICT[0xD6] = (parse_BMS_onboard_detailed_temperatures, "BMS_onboard_detailed_temperatures") 
 
 #done
-def parse_BMS_onboard_temperatures(id, data):
+def parse_BMS_onboard_temperatures(data, id = None, time=None):
     msg_id = 0xD5
-    mask = id==msg_id
-    data = data[mask]
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
     
     vectors = [
         (16, -1, True, lambda x: x/100, "average_temperature", "C"),
@@ -103,16 +137,22 @@ def parse_BMS_onboard_temperatures(id, data):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks)
+    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    #directory = [vector[6] for vector in vectors]
     return out
 MESSAGE_DICT[0xD5] = (parse_BMS_onboard_temperatures, "BMS_onboard_temperatures") 
 
-def parse_BMS_status(id, data):
+def parse_BMS_status(data, id = None, time=None):
     msg_id = 0xDB
-    mask = id==msg_id
-    data = data[mask]
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
     
     vectors = [
         (8, -1, False, lambda x: x, "state", ""),
@@ -125,23 +165,29 @@ def parse_BMS_status(id, data):
         (1, -1, False, lambda x: x, "charge_overtemp", ""),
         (1, -1, False, lambda x: x, "undertemp", ""),
         (1, -1, False, lambda x: x, "onboard_overtemp", ""),
-        (16, 24, True, lambda x: x/100, "current", ""),
+        (16, 24, True, lambda x: x/100, "current", "A"),
         (1, -1, False, lambda x: x, "shutdown_g_above_threshold", ""),
         (1, -1, False, lambda x: x, "shutdown_h_above_threshold", ""),
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks)
+    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    #directory = [vector[6] for vector in vectors]
     return out
 MESSAGE_DICT[0xDB] = (parse_BMS_status, "BMS_status") 
 
 #done
-def parse_BMS_temperatures(id, data):
+def parse_BMS_temperatures(data, id = None, time=None):
     msg_id = 0xD9
-    mask = id==msg_id
-    data = data[mask]
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
     
     vectors = [
         (16, -1, True, lambda x: x/100, "average_temperature", "C"),
@@ -150,17 +196,23 @@ def parse_BMS_temperatures(id, data):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks)
+    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    #directory = [vector[6] for vector in vectors]
     return out
 MESSAGE_DICT[0xD9] = (parse_BMS_temperatures, "BMS_temperatures") 
 
 #done
-def parse_BMS_voltages(id, data):
+def parse_BMS_voltages(data, id = None, time=None):
     msg_id = 0xD7
-    mask = id==msg_id
-    data = data[mask]
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
     
     vectors = [
         (16, -1, False, lambda x: x/10000 , "average voltage" , "V"),
@@ -170,58 +222,82 @@ def parse_BMS_voltages(id, data):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks)
+    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    #directory = [vector[6] for vector in vectors]
     return out
 MESSAGE_DICT[0xD7] = (parse_BMS_voltages, "BMS_voltages") 
 
-def parse_CCU_status(id, data):
+def parse_CCU_status(data, id = None, time=None):
     msg_id = 0xDD
-    mask = id==msg_id
-    data = data[mask]
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
     
 
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks)
+    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    #directory = [vector[6] for vector in vectors]
     return out
 MESSAGE_DICT[0xDD] = (parse_CCU_status, "CCU_status") 
 
-def parse_Charger_configure(id, data):
+def parse_Charger_configure(data, id = None, time=None):
     msg_id = 0x1806E0F4
-    mask = id==msg_id
-    data = data[mask]
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
     
 
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks)
+    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    #directory = [vector[6] for vector in vectors]
     return out
 MESSAGE_DICT[0x1806E0F4] = (parse_Charger_configure, "Charger_configure") 
 
-def parse_Charger_data(id, data):
+def parse_Charger_data(data, id = None, time=None):
     msg_id = 0x18FF50E0
-    mask = id==msg_id
-    data = data[mask]
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
     
 
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks)
+    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    #directory = [vector[6] for vector in vectors]
     return out
 MESSAGE_DICT[0x18FF50E0] = (parse_Charger_data, "Charger_data") 
 
-def parse_Dashboard_status(id, data):
+def parse_Dashboard_status(data, id = None, time=None):
     msg_id = 0xEB
-    mask = id==msg_id
-    data = data[mask]
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
     
     vectors = [
         (1, -1, False, lambda x: x, "start_btn", ""),
@@ -254,72 +330,102 @@ def parse_Dashboard_status(id, data):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks)
+    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    #directory = [vector[6] for vector in vectors]
     return out
 MESSAGE_DICT[0xEB] = (parse_Dashboard_status, "Dashboard_status") 
 
-def parse_MCU_GPS_readings(id, data):
+def parse_MCU_GPS_readings(data, id = None, time=None):
     msg_id = 0xE7
-    mask = id==msg_id
-    data = data[mask]
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
     
 
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks)
+    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    #directory = [vector[6] for vector in vectors]
     return out
 MESSAGE_DICT[0xE7] = (parse_MCU_GPS_readings, "MCU_GPS_readings") 
 
-def parse_MCU_pedal_readings(id, data):
+def parse_MCU_pedal_readings(data, id = None, time=None):
     msg_id = 0xC4
-    mask = id==msg_id
-    data = data[mask]
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
     
 
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks)
+    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    #directory = [vector[6] for vector in vectors]
     return out
 MESSAGE_DICT[0xC4] = (parse_MCU_pedal_readings, "MCU_pedal_readings") 
 
-def parse_MCU_status(id, data):
+def parse_MCU_status(data, id = None, time=None):
     msg_id = 0xC3
-    mask = id==msg_id
-    data = data[mask]
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
     
 
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks)
+    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    #directory = [vector[6] for vector in vectors]
     return out
 MESSAGE_DICT[0xC3] = (parse_MCU_status, "MCU_status") 
 
-def parse_MCU_analog_readings(id, data):
+def parse_MCU_analog_readings(data, id = None, time=None):
     msg_id = 0xCC
-    mask = id==msg_id
-    data = data[mask]
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
     
 
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks)
+    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    #directory = [vector[6] for vector in vectors]
     return out
 MESSAGE_DICT[0xCC] = (parse_MCU_analog_readings, "MCU_analog_readings") 
 
-def parse_MCU_load_cells(id, data):
+def parse_MCU_load_cells(data, id = None, time=None):
     msg_id = 0xC5
-    mask = id==msg_id
-    data = data[mask]
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
     
     vectors = [
         (16, -1, False, lambda x: x , "" , "lb"),
@@ -334,17 +440,23 @@ def parse_MCU_load_cells(id, data):
     arr[:,3] = (data & 0xFFFF<<48)>>48'''
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks)
+    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    #directory = [vector[6] for vector in vectors]
     return out
 MESSAGE_DICT[0xC5] = (parse_MCU_load_cells, "MCU_load_cells")
 
 #done
-def parse_MC1_energy(id, data):
+def parse_MC1_energy(data, id = None, time=None):
     msg_id = 0xA8
-    mask = id==msg_id
-    data = data[mask]
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
     
     vectors = [
         (16, -1, False, lambda x: x, "dc_bus_voltage", "V"),
@@ -353,17 +465,23 @@ def parse_MC1_energy(id, data):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks)
+    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    #directory = [vector[6] for vector in vectors]
     return out
 MESSAGE_DICT[0xA8] = (parse_MC1_energy, "MC1_energy") 
 
 #done
-def parse_MC2_energy(id, data):
+def parse_MC2_energy(data, id = None, time=None):
     msg_id = 0xA9
-    mask = id==msg_id
-    data = data[mask]
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
     
     vectors = [
         (16, -1, False, lambda x: x, "dc_bus_voltage", "V"),
@@ -372,17 +490,23 @@ def parse_MC2_energy(id, data):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks)
+    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    #directory = [vector[6] for vector in vectors]
     return out
 MESSAGE_DICT[0xA9] = (parse_MC2_energy, "MC2_energy") 
 
 #done
-def parse_MC3_energy(id, data):
+def parse_MC3_energy(data, id = None, time=None):
     msg_id = 0xAA
-    mask = id==msg_id
-    data = data[mask]
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
     
     vectors = [
         (16, -1, False, lambda x: x, "dc_bus_voltage", "V"),
@@ -391,17 +515,23 @@ def parse_MC3_energy(id, data):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks)
+    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    #directory = [vector[6] for vector in vectors]
     return out
 MESSAGE_DICT[0xAA] = (parse_MC3_energy, "MC3_energy") 
 
 #done
-def parse_MC4_energy(id, data):
+def parse_MC4_energy(data, id = None, time=None):
     msg_id = 0xAB
-    mask = id==msg_id
-    data = data[mask]
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
     
     vectors = [
         (16, -1, False, lambda x: x, "dc_bus_voltage", "V"),
@@ -410,17 +540,23 @@ def parse_MC4_energy(id, data):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks)
+    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    #directory = [vector[6] for vector in vectors]
     return out
 MESSAGE_DICT[0xAB] = (parse_MC4_energy, "MC4_energy") 
 
 #done
-def parse_MC1_setpoints_command(id, data):
+def parse_MC1_setpoints_command(data, id = None, time=None):
     msg_id = 0xB0
-    mask = id==msg_id
-    data = data[mask]
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
     
     vectors = [
         (1, 8, False, lambda x: x, "inverter_enable", ""),
@@ -433,17 +569,23 @@ def parse_MC1_setpoints_command(id, data):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks)
+    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    #directory = [vector[6] for vector in vectors]
     return out
 MESSAGE_DICT[0xB0] = (parse_MC1_setpoints_command, "MC1_setpoints_command") 
 
 #done
-def parse_MC2_setpoints_command(id, data):
+def parse_MC2_setpoints_command(data, id = None, time=None):
     msg_id = 0xB1
-    mask = id==msg_id
-    data = data[mask]
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
     
     vectors = [
         (1, 8, False, lambda x: x, "inverter_enable", ""),
@@ -456,17 +598,23 @@ def parse_MC2_setpoints_command(id, data):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks)
+    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    #directory = [vector[6] for vector in vectors]
     return out
 MESSAGE_DICT[0xB1] = (parse_MC2_setpoints_command, "MC2_setpoints_command") 
 
 #done
-def parse_MC3_setpoints_command(id, data):
+def parse_MC3_setpoints_command(data, id = None, time=None):
     msg_id = 0xB2
-    mask = id==msg_id
-    data = data[mask]
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
     
     vectors = [
         (1, 8, False, lambda x: x, "inverter_enable", ""),
@@ -479,17 +627,23 @@ def parse_MC3_setpoints_command(id, data):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks)
+    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    #directory = [vector[6] for vector in vectors]
     return out
 MESSAGE_DICT[0xB2] = (parse_MC3_setpoints_command, "MC3_setpoints_command") 
 
 #done
-def parse_MC4_setpoints_command(id, data):
+def parse_MC4_setpoints_command(data, id = None, time=None):
     msg_id = 0xB3
-    mask = id==msg_id
-    data = data[mask]
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
     
     vectors = [
         (1, 8, False, lambda x: x, "inverter_enable", ""),
@@ -502,17 +656,23 @@ def parse_MC4_setpoints_command(id, data):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks)
+    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    #directory = [vector[6] for vector in vectors]
     return out
 MESSAGE_DICT[0xB3] = (parse_MC4_setpoints_command, "MC4_setpoints_command") 
 
 #done
-def parse_MC1_status(id, data):
+def parse_MC1_status(data, id = None, time=None):
     msg_id = 0xA0
-    mask = id==msg_id
-    data = data[mask]
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
     
     vectors = [
         (1,  8, False, lambda x: x, "system_ready", ""),
@@ -529,17 +689,23 @@ def parse_MC1_status(id, data):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks)
+    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    #directory = [vector[6] for vector in vectors]
     return out
 MESSAGE_DICT[0xA0] = (parse_MC1_status, "MC1_status") 
 
 #done
-def parse_MC2_status(id, data):
+def parse_MC2_status(data, id = None, time=None):
     msg_id = 0xA1
-    mask = id==msg_id
-    data = data[mask]
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
     
     vectors = [
         (1,  8, False, lambda x: x, "system_ready", ""),
@@ -556,17 +722,23 @@ def parse_MC2_status(id, data):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks)
+    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    #directory = [vector[6] for vector in vectors]
     return out
 MESSAGE_DICT[0xA1] = (parse_MC2_status, "MC2_status") 
 
 #done
-def parse_MC3_status(id, data):
+def parse_MC3_status(data, id = None, time=None):
     msg_id = 0xA2
-    mask = id==msg_id
-    data = data[mask]
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
     
     vectors = [
         (1,  8, False, lambda x: x, "system_ready", ""),
@@ -583,17 +755,23 @@ def parse_MC3_status(id, data):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks)
+    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    #directory = [vector[6] for vector in vectors]
     return out
 MESSAGE_DICT[0xA2] = (parse_MC3_status, "MC3_status") 
 
 #done
-def parse_MC4_status(id, data):
+def parse_MC4_status(data, id = None, time=None):
     msg_id = 0xA3
-    mask = id==msg_id
-    data = data[mask]
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
     
     vectors = [
         (1,  8, False, lambda x: x, "system_ready", ""),
@@ -610,17 +788,23 @@ def parse_MC4_status(id, data):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks)
+    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    #directory = [vector[6] for vector in vectors]
     return out
 MESSAGE_DICT[0xA3] = (parse_MC4_status, "MC4_status") 
 
 #done
-def parse_MC1_temps(id, data):
+def parse_MC1_temps(data, id = None, time=None):
     msg_id = 0xA4
-    mask = id==msg_id
-    data = data[mask]
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
     
     vectors = [
         (16, -1, True, lambda x: x/10, "motor_temp", "C"),
@@ -630,17 +814,23 @@ def parse_MC1_temps(id, data):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks)
+    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    #directory = [vector[6] for vector in vectors]
     return out
 MESSAGE_DICT[0xA4] = (parse_MC1_temps, "MC1_temps") 
 
 #done
-def parse_MC2_temps(id, data):
+def parse_MC2_temps(data, id = None, time=None):
     msg_id = 0xA5
-    mask = id==msg_id
-    data = data[mask]
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
     
     vectors = [
         (16, -1, True, lambda x: x/10, "motor_temp", "C"),
@@ -650,17 +840,23 @@ def parse_MC2_temps(id, data):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks)
+    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    #directory = [vector[6] for vector in vectors]
     return out
 MESSAGE_DICT[0xA5] = (parse_MC2_temps, "MC2_temps") 
 
 #done
-def parse_MC3_temps(id, data):
+def parse_MC3_temps(data, id = None, time=None):
     msg_id = 0xA6
-    mask = id==msg_id
-    data = data[mask]
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
     
     vectors = [
         (16, -1, True, lambda x: x/10, "motor_temp", "C"),
@@ -670,17 +866,23 @@ def parse_MC3_temps(id, data):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks)
+    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    #directory = [vector[6] for vector in vectors]
     return out
 MESSAGE_DICT[0xA6] = (parse_MC3_temps, "MC3_temps") 
 
 #done
-def parse_MC4_temps(id, data):
+def parse_MC4_temps(data, id = None, time=None):
     msg_id = 0xA7
-    mask = id==msg_id
-    data = data[mask]
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
     
     vectors = [
         (16, -1, True, lambda x: x/10, "motor_temp", "C"),
@@ -690,58 +892,82 @@ def parse_MC4_temps(id, data):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks)
+    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    #directory = [vector[6] for vector in vectors]
     return out
 MESSAGE_DICT[0xA7] = (parse_MC4_temps, "MC4_temps") 
 
-def parse_SAB_readings_front(id, data):
+def parse_SAB_readings_front(data, id = None, time=None):
     msg_id = 0x92
-    mask = id==msg_id
-    data = data[mask]
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
     
 
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks)
+    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    #directory = [vector[6] for vector in vectors]
     return out
 MESSAGE_DICT[0x92] = (parse_SAB_readings_front, "SAB_readings_front") 
 
-def parse_SAB_readings_rear(id, data):
+def parse_SAB_readings_rear(data, id = None, time=None):
     msg_id = 0x93
-    mask = id==msg_id
-    data = data[mask]
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
     
 
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks)
+    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    #directory = [vector[6] for vector in vectors]
     return out
 MESSAGE_DICT[0x93] = (parse_SAB_readings_rear, "SAB_readings_rear") 
 
-def parse_SAB_readings_gps(id, data):
+def parse_SAB_readings_gps(data, id = None, time=None):
     msg_id = 0xEE
-    mask = id==msg_id
-    data = data[mask]
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
     
 
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks)
+    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    #directory = [vector[6] for vector in vectors]
     return out
 MESSAGE_DICT[0xEE] = (parse_SAB_readings_gps, "SAB_readings_gps") 
 
-def parse_EM_status(id, data):
+def parse_EM_status(data, id = None, time=None):
     msg_id = 0x100
-    mask = id==msg_id
-    data = data[mask]
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
     
     vectors = [
         (4, -1, False, lambda x: x, "voltage_gain", "V"),
@@ -753,16 +979,22 @@ def parse_EM_status(id, data):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks)
+    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    #directory = [vector[6] for vector in vectors]
     return out
 MESSAGE_DICT[0x100] = (parse_EM_status, "EM_status") 
 
-def parse_EM_measurement(id, data):
+def parse_EM_measurement(data, id = None, time=None):
     msg_id = 0x400
-    mask = id==msg_id
-    data = data[mask]
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
     
     vectors = [
         (32, -1, False, lambda x: x/(2**16), "voltage", ""),
@@ -770,36 +1002,51 @@ def parse_EM_measurement(id, data):
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks)
+    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    #directory = [vector[6] for vector in vectors]
     return out
 MESSAGE_DICT[0x400] = (parse_EM_measurement, "EM_measurement") 
 
-def parse_IMU_accelerometer(id, data):
+def parse_IMU_accelerometer(data, id = None, time=None):
     msg_id = 0x90
-    mask = id==msg_id
-    data = data[mask]
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
     
 
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks)
+    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    #directory = [vector[6] for vector in vectors]
     return out
 MESSAGE_DICT[0x90] = (parse_IMU_accelerometer, "IMU_accelerometer") 
 
-def parse_IMU_gryoscope(id, data):
+def parse_IMU_gryoscope(data, id = None, time=None):
     msg_id = 0x91
-    mask = id==msg_id
-    data = data[mask]
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
     
 
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
-    out = parse_to_np(data, vectors, bitoffsets, bitmasks)
+    out = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    #directory = [vector[6] for vector in vectors]
     return out
 MESSAGE_DICT[0x91] = (parse_IMU_gryoscope, "IMU_gryoscope") 
