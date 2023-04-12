@@ -222,7 +222,34 @@ def parse_Dashboard_status(id, data):
     mask = id==msg_id
     data = data[mask]
     
+    vectors = [
+        (1, -1, True, lambda x: x, "start_btn", ""),
+        (1, -1, True, lambda x: x, "buzzer_active", ""),
+        (1, -1, True, lambda x: x, "ssok_above_threshold", ""),
+        (1, -1, True, lambda x: x, "shutdown_h_above_threshold", ""),
+        
+        (1, 8, True, lambda x: x, "mark_btn", ""),
+        (1, -1, True, lambda x: x, "mode_btn", ""),
+        (1, -1, True, lambda x: x, "mc_cycle_btn", ""),
+        (1, -1, True, lambda x: x, "launch_ctrl_btn", ""),
+        (1, -1, True, lambda x: x, "torque_mode_btn", ""),
+        (1, -1, True, lambda x: x, "led_dimmer_btn", ""),
 
+        (8, 16, True, lambda x: x, "dial_state", ""),
+
+        (2, -1, True, lambda x: x, "ams_led", ""),
+        (2, -1, True, lambda x: x, "imd_led", ""),
+        (2, -1, True, lambda x: x, "mode_led", ""),
+        (2, -1, True, lambda x: x, "mc_error_led", ""),
+        (2, -1, True, lambda x: x, "inertia_led", ""),
+        (2, -1, True, lambda x: x, "mech_brake_led", ""),
+        (2, -1, True, lambda x: x, "gen_purp_led", ""),
+        (2, -1, True, lambda x: x, "bots_led", ""),
+        (2, -1, True, lambda x: x, "cockpit_brb_led", ""),
+        (2, -1, True, lambda x: x, "crit_charge_led", ""),
+        (2, -1, True, lambda x: x, "glv_led", ""),
+        (2, -1, True, lambda x: x, "launch_control_led", ""),
+    ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
     out = parse_to_np(data, vectors, bitoffsets, bitmasks)
