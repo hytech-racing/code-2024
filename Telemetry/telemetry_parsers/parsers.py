@@ -741,7 +741,14 @@ def parse_EM_status(id, data):
     mask = id==msg_id
     data = data[mask]
     
+    vectors = [
+        (4, -1, True, lambda x: x, "voltage_gain", "V"),
+        (4, -1, True, lambda x: x, "current_gain", "A"),
 
+        (1, -1, True, lambda x: x, "overvoltage", "")
+        (1, -1, True, lambda x: x, "overpower", "")
+        (1, -1, True, lambda x: x, "logging", "")
+    ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
     out = parse_to_np(data, vectors, bitoffsets, bitmasks)
