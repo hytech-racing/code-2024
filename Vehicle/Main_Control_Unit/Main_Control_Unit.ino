@@ -25,10 +25,10 @@
 // constants to define for different operation
 
 #define DRIVER DEFAULT_DRIVER
-#define TORQUE_1 6
-#define TORQUE_2 6
-#define TORQUE_3 6
-
+#define TORQUE_1 10
+#define TORQUE_2 15
+#define TORQUE_3 19
+#define MAX_ALLOWED_SPEED 20000
 
 // set to true or false for debugging
 #define DEBUG false
@@ -126,12 +126,12 @@ void setup() {
   set_all_inverters_disabled();
 
   // IMU set up
-//  IMU.regWrite(MSC_CTRL, 0xC1);  // Enable Data Ready, set polarity
-//  delay(20);
-//  IMU.regWrite(FLTR_CTRL, 0x500); // Set digital filter
-//  delay(20);
-//  IMU.regWrite(DEC_RATE, 0), // Disable decimation
-               delay(20);
+  //  IMU.regWrite(MSC_CTRL, 0xC1);  // Enable Data Ready, set polarity
+  //  delay(20);
+  //  IMU.regWrite(FLTR_CTRL, 0x500); // Set digital filter
+  //  delay(20);
+  //  IMU.regWrite(DEC_RATE, 0), // Disable decimation
+  delay(20);
 
   pinMode(BRAKE_LIGHT_CTRL, OUTPUT);
 
@@ -204,9 +204,10 @@ void loop() {
   //read_steering_spi_values();
   read_status_values();
   read_imu();
-  
+
   send_CAN_mcu_status();
-  //    send_CAN_mcu_pedal_readings();
+  send_CAN_mcu_pedal_readings();
+  send_CAN_mcu_load_cells();
   //
   //
   send_CAN_inverter_setpoints();
@@ -274,46 +275,48 @@ void loop() {
     //    }
     uint16_t arr[8];
     Serial.println("PEDAL OUTPUT");
-//    SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3));
-//    digitalWrite(ADC1_CS, LOW);
-//    for (uint16_t i = 0; i < 8; i++) {
-//      digitalWrite(ECU_CLK, HIGH);
-//      arr[i] = 0;
-//      uint16_t shiftout = (6-i) << 11;
-//      for (int j = 0; j < 16; j++) {
-//        // read outputs on the falling edge
-//        digitalWrite(ECU_CLK, LOW);
-//        arr[i] |= digitalRead(ECU_SDI) << (15 - j);
-//        delayMicroseconds(1);
-//        // write channel on the rising edge
-//        digitalWrite(ECU_SDO, shiftout & (0b1000000000000000 >> j) ? LOW : HIGH);
-//        digitalWrite(ECU_CLK, HIGH);
-//        delayMicroseconds(1);
-//      }
-//    }
-//    digitalWrite(ADC1_CS, HIGH);
-//    SPI.endTransaction();
+    //    SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3));
+    //    digitalWrite(ADC1_CS, LOW);
+    //    for (uint16_t i = 0; i < 8; i++) {
+    //      digitalWrite(ECU_CLK, HIGH);
+    //      arr[i] = 0;
+    //      uint16_t shiftout = (6-i) << 11;
+    //      for (int j = 0; j < 16; j++) {
+    //        // read outputs on the falling edge
+    //        digitalWrite(ECU_CLK, LOW);
+    //        arr[i] |= digitalRead(ECU_SDI) << (15 - j);
+    //        delayMicroseconds(1);
+    //        // write channel on the rising edge
+    //        digitalWrite(ECU_SDO, shiftout & (0b1000000000000000 >> j) ? LOW : HIGH);
+    //        digitalWrite(ECU_CLK, HIGH);
+    //        delayMicroseconds(1);
+    //      }
+    //    }
+    //    digitalWrite(ADC1_CS, HIGH);
+    //    SPI.endTransaction();
     Serial.println(mcu_pedal_readings.get_accelerator_pedal_1());
     Serial.println(mcu_pedal_readings.get_accelerator_pedal_2());
     Serial.println(mcu_pedal_readings.get_brake_pedal_1());
     Serial.println(mcu_pedal_readings.get_brake_pedal_2());
-//    Serial.println(arr[0]);
-//    Serial.println(arr[1]);
-//    Serial.println(arr[2]);
-//    Serial.println(arr[3]);
+    //    Serial.println(arr[0]);
+    //    Serial.println(arr[1]);
+    //    Serial.println(arr[2]);
+    //    Serial.println(arr[3]);
     Serial.println();
     Serial.println("LOAD CELLS");
     Serial.println(mcu_load_cells.get_FL_load_cell());
-     Serial.println(mcu_load_cells.get_FR_load_cell());
-      Serial.println(mcu_load_cells.get_RL_load_cell());
-       Serial.println(mcu_load_cells.get_RR_load_cell());
-       
+    Serial.println(mcu_load_cells.get_FR_load_cell());
+    Serial.println(mcu_load_cells.get_RL_load_cell());
+    Serial.println(mcu_load_cells.get_RR_load_cell());
+
     Serial.println("MOTOR TEMPS");
     Serial.println(mc_temps[0].get_motor_temp());
     Serial.println(mc_temps[1].get_motor_temp());
     Serial.println(mc_temps[2].get_motor_temp());
     Serial.println(mc_temps[3].get_motor_temp());
     Serial.println(mc_temps[3].get_igbt_temp());
+    Serial.println("MODE");
+    Serial.println(mcu_status.get_max_torque());
   }
 
 }
@@ -573,7 +576,7 @@ void parse_telem_can_message(const CAN_message_t &RX_msg) {
     case ID_DASHBOARD_STATUS:
       dashboard_status.load(rx_msg.buf);
       /* process dashboard buttons */
-      if (dashboard_status.get_mode_btn()) {
+      if (dashboard_status.get_torque_mode_btn()) {
         switch (mcu_status.get_torque_mode()) {
           case 1:
             mcu_status.set_max_torque(TORQUE_2);
@@ -697,9 +700,9 @@ void set_state(MCU_STATE new_state) {
 
 inline void set_inverter_torques() {
 
-  float max_torque = 6 / 0.0098; // max possible value for torque multiplier, unit in 0.1% nominal torque
-  int accel1 = map(round(mcu_pedal_readings.get_accelerator_pedal_1()), START_ACCELERATOR_PEDAL_1, END_ACCELERATOR_PEDAL_1, 0, 1000);
-  int accel2 = map(round(mcu_pedal_readings.get_accelerator_pedal_2()), START_ACCELERATOR_PEDAL_2, END_ACCELERATOR_PEDAL_2, 0, 1000);
+  float max_torque = mcu_status.get_max_torque() / 0.0098; // max possible value for torque multiplier, unit in 0.1% nominal torque
+  int accel1 = map(round(mcu_pedal_readings.get_accelerator_pedal_1()), START_ACCELERATOR_PEDAL_1, END_ACCELERATOR_PEDAL_1, 0, 2000);
+  int accel2 = map(round(mcu_pedal_readings.get_accelerator_pedal_2()), START_ACCELERATOR_PEDAL_2, END_ACCELERATOR_PEDAL_2, 0, 2000);
 
   int brake1 = map(round(mcu_pedal_readings.get_brake_pedal_1()), START_BRAKE_PEDAL_1, END_BRAKE_PEDAL_1, 0, 1100);
   int brake2 = map(round(mcu_pedal_readings.get_brake_pedal_2()), START_BRAKE_PEDAL_2, END_BRAKE_PEDAL_2, 0, 1100);
@@ -726,8 +729,8 @@ inline void set_inverter_torques() {
   if (avg_accel < 0) {
     avg_accel = 0;
   }
-  if (avg_brake > 1000) {
-    avg_brake = 1000;
+  if (avg_brake > 1500) {
+    avg_brake = 1500;
   }
   if (avg_brake < 0) {
     avg_brake = 0;
@@ -737,7 +740,9 @@ inline void set_inverter_torques() {
 
   } else {
     //currently in debug mode, no torque vectoring
-
+    //float load_cell_avg = 0.25*(mcu_load_cells.get_FL_load_cell() + mcu_load_cells.get_FR_load_cell() + mcu_load_cells.get_RL_load_cell() + mcu_load_cells.get_RR_load_cell());`   
+    
+    
     torque_setpoint_array[0] = avg_accel -  avg_brake;
     torque_setpoint_array[1] = avg_accel -  avg_brake;
     torque_setpoint_array[2] = avg_accel - avg_brake;
@@ -803,12 +808,18 @@ inline void set_inverter_torques() {
   //    max_speed_regen = (max_speed_regen < mc_status[i].get_speed()) ? mc_status[i].get_speed() : max_speed_regen;
   //
   //  }
-
+  float front_rear_balance = 0.5;
   for (int i = 0; i < 4; i++) {
     if (torque_setpoint_array[i] >= 0) {
-      mc_setpoints_command[i].set_speed_setpoint(8000);
-      mc_setpoints_command[i].set_pos_torque_limit(torque_setpoint_array[i]);
-      mc_setpoints_command[i].set_neg_torque_limit(0);
+      mc_setpoints_command[i].set_speed_setpoint(MAX_ALLOWED_SPEED);
+      if (i < 2) { //if front motors
+        mc_setpoints_command[i].set_pos_torque_limit((int16_t)(torque_setpoint_array[i] * front_rear_balance));
+        mc_setpoints_command[i].set_neg_torque_limit(0);
+      } else {
+        mc_setpoints_command[i].set_pos_torque_limit((int16_t)(torque_setpoint_array[i] * (1 + front_rear_balance)));
+        mc_setpoints_command[i].set_neg_torque_limit(0);
+      }
+
     }
     else {
 
@@ -820,11 +831,16 @@ inline void set_inverter_torques() {
       //      } else {
       //        scale_down = map(max_speed_regen, 770, REGEN_OFF_START_THRESHOLD, 0, 1);
       //      }
-
-
       mc_setpoints_command[i].set_speed_setpoint(0);
-      mc_setpoints_command[i].set_pos_torque_limit(0);
-      mc_setpoints_command[i].set_neg_torque_limit((int16_t)((torque_setpoint_array[i]) * scale_down));
+      if (i < 2) {
+        mc_setpoints_command[i].set_pos_torque_limit(0);
+        mc_setpoints_command[i].set_neg_torque_limit((int16_t)((torque_setpoint_array[i]) * scale_down * (1 + front_rear_balance)) );
+      } else {
+        mc_setpoints_command[i].set_pos_torque_limit(0);
+        mc_setpoints_command[i].set_neg_torque_limit((int16_t)((torque_setpoint_array[i]) * scale_down *  front_rear_balance) );
+      }
+
+
     }
   }
 
@@ -1015,47 +1031,47 @@ inline void read_status_values() {
 
 // IMU functions
 inline void read_imu() {
-//  if (timer_read_imu.check()) {
-//    double sinAngle = sin(VEHICLE_TILT_ANGLE_X);
-//    double cosAngle = cos(VEHICLE_TILT_ANGLE_X);
-//    double accel_x = IMU.regRead(X_ACCL_OUT) * 0.00245; // 0.00245 is the scale
-//    double accel_y = IMU.regRead(Y_ACCL_OUT) * 0.00245; // 0.00245 is the scale
-//    double accel_z = IMU.regRead(Z_ACCL_OUT) * 0.00245; // 0.00245 is the scale
-//    double x_gyro = IMU.regRead(X_GYRO_OUT) * 0.005; // 0.005 is the scale
-//    double y_gyro = IMU.regRead(Y_GYRO_OUT) * 0.005; // 0.005 is the scale
-//    double z_gyro = IMU.regRead(Z_GYRO_OUT) * 0.005; // 0.005 is the scale
-//    double long_accel = ((-accel_y) * cosAngle) + (accel_z * sinAngle);
-//    double lat_accel = accel_x;
-//    double vert_accel = -((accel_z * cosAngle) - (-accel_y * sinAngle));
-//    double pitch = (y_gyro * cosAngle) + (z_gyro * sinAngle);
-//    double roll = y_gyro;
-//    double yaw = (z_gyro * cosAngle) - (x_gyro * sinAngle);
-//    imu_accelerometer.set_lat_accel((int16_t)(lat_accel * 102)); // * 0.00245); // 0.00245 is the scale
-//    imu_accelerometer.set_long_accel((int16_t)(long_accel * 102)); // * 0.00245); // 0.00245 is the scale
-//    imu_accelerometer.set_vert_accel((int16_t)(vert_accel * 102)); // * 0.00245); // 0.00245 is the scale
-//    // question about yaw, pitch and roll rates?
-//    imu_gyroscope.set_pitch((int16_t)(pitch * 102)); // * 0.005); // 0.005 is the scale,
-//    imu_gyroscope.set_yaw((int16_t)(yaw * 102)); // * 0.005);  // 0.005 is the scale
-//    imu_gyroscope.set_roll((int16_t)(roll * 102)); // * 0.005); // 0.005 is the scale
-//  }
+  //  if (timer_read_imu.check()) {
+  //    double sinAngle = sin(VEHICLE_TILT_ANGLE_X);
+  //    double cosAngle = cos(VEHICLE_TILT_ANGLE_X);
+  //    double accel_x = IMU.regRead(X_ACCL_OUT) * 0.00245; // 0.00245 is the scale
+  //    double accel_y = IMU.regRead(Y_ACCL_OUT) * 0.00245; // 0.00245 is the scale
+  //    double accel_z = IMU.regRead(Z_ACCL_OUT) * 0.00245; // 0.00245 is the scale
+  //    double x_gyro = IMU.regRead(X_GYRO_OUT) * 0.005; // 0.005 is the scale
+  //    double y_gyro = IMU.regRead(Y_GYRO_OUT) * 0.005; // 0.005 is the scale
+  //    double z_gyro = IMU.regRead(Z_GYRO_OUT) * 0.005; // 0.005 is the scale
+  //    double long_accel = ((-accel_y) * cosAngle) + (accel_z * sinAngle);
+  //    double lat_accel = accel_x;
+  //    double vert_accel = -((accel_z * cosAngle) - (-accel_y * sinAngle));
+  //    double pitch = (y_gyro * cosAngle) + (z_gyro * sinAngle);
+  //    double roll = y_gyro;
+  //    double yaw = (z_gyro * cosAngle) - (x_gyro * sinAngle);
+  //    imu_accelerometer.set_lat_accel((int16_t)(lat_accel * 102)); // * 0.00245); // 0.00245 is the scale
+  //    imu_accelerometer.set_long_accel((int16_t)(long_accel * 102)); // * 0.00245); // 0.00245 is the scale
+  //    imu_accelerometer.set_vert_accel((int16_t)(vert_accel * 102)); // * 0.00245); // 0.00245 is the scale
+  //    // question about yaw, pitch and roll rates?
+  //    imu_gyroscope.set_pitch((int16_t)(pitch * 102)); // * 0.005); // 0.005 is the scale,
+  //    imu_gyroscope.set_yaw((int16_t)(yaw * 102)); // * 0.005);  // 0.005 is the scale
+  //    imu_gyroscope.set_roll((int16_t)(roll * 102)); // * 0.005); // 0.005 is the scale
+  //  }
 }
 
 inline void send_CAN_IMU_accelerometer() {
-//  if (timer_CAN_imu_accelerometer_send.check()) {
-//    imu_accelerometer.write(msg.buf);
-//    msg.id = ID_IMU_ACCELEROMETER;
-//    msg.len = sizeof(imu_accelerometer);
-//    TELEM_CAN.write(msg);
-//  }
+  //  if (timer_CAN_imu_accelerometer_send.check()) {
+  //    imu_accelerometer.write(msg.buf);
+  //    msg.id = ID_IMU_ACCELEROMETER;
+  //    msg.len = sizeof(imu_accelerometer);
+  //    TELEM_CAN.write(msg);
+  //  }
 }
 
 inline void send_CAN_IMU_gyroscope() {
-//  if (timer_CAN_imu_gyroscope_send.check()) {
-//    imu_gyroscope.write(msg.buf);
-//    msg.id = ID_IMU_GYROSCOPE;
-//    msg.len = sizeof(imu_gyroscope);
-//    TELEM_CAN.write(msg);
-//  }
+  //  if (timer_CAN_imu_gyroscope_send.check()) {
+  //    imu_gyroscope.write(msg.buf);
+  //    msg.id = ID_IMU_GYROSCOPE;
+  //    msg.len = sizeof(imu_gyroscope);
+  //    TELEM_CAN.write(msg);
+  //  }
 }
 
 inline void calibrate_imu_velocity(double calibrate_to) {
@@ -1063,23 +1079,23 @@ inline void calibrate_imu_velocity(double calibrate_to) {
 }
 
 inline void pitch_angle_calibration() {
-//  double z_accl_sum = 0.0;
-//  int ctr = 0;
-//  time_t start_time, current_time;
-//  double elapsed_time;
-//  start_time = time(NULL);
-//  // Serial.println("Calibration Starts Now"); FOR DEBUGING PURPOSES
-//  while (1) {
-//    delay(50);
-//    z_accl_sum += ((IMU.regRead(Z_ACCL_OUT) * 0.00245));
-//    ctr++;
-//    current_time = time(NULL);
-//    elapsed_time = difftime(current_time, start_time);
-//    if (elapsed_time >= 5) break; // Code runs for 5 seconds. Change for desired duration.
-//  }
-//  // Serial.println("Calibration Has Ended");
-//  double avg_z_accl = z_accl_sum / ctr;
-//  pitch_calibration_angle = std::acos(avg_z_accl / ACCL_DUE_TO_GRAVITY);
+  //  double z_accl_sum = 0.0;
+  //  int ctr = 0;
+  //  time_t start_time, current_time;
+  //  double elapsed_time;
+  //  start_time = time(NULL);
+  //  // Serial.println("Calibration Starts Now"); FOR DEBUGING PURPOSES
+  //  while (1) {
+  //    delay(50);
+  //    z_accl_sum += ((IMU.regRead(Z_ACCL_OUT) * 0.00245));
+  //    ctr++;
+  //    current_time = time(NULL);
+  //    elapsed_time = difftime(current_time, start_time);
+  //    if (elapsed_time >= 5) break; // Code runs for 5 seconds. Change for desired duration.
+  //  }
+  //  // Serial.println("Calibration Has Ended");
+  //  double avg_z_accl = z_accl_sum / ctr;
+  //  pitch_calibration_angle = std::acos(avg_z_accl / ACCL_DUE_TO_GRAVITY);
 }
 
 inline void calculate_pedal_implausibilities() {
