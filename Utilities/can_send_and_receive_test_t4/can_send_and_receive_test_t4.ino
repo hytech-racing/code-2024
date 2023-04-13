@@ -40,7 +40,7 @@ void loop() {
         Serial.println();
     }
 
-    while (CAN.read(msg)) { // Receive a message on CAN
+      while (CAN.read(msg)) { // Receive a message on CAN
         Serial.print("Received 0x");
         Serial.print(msg.id, HEX);
         Serial.print(": ");
