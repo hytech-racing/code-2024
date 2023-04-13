@@ -1,4 +1,4 @@
-#include <circular_buffer.h>
+1#include <circular_buffer.h>
 #include <FlexCAN_T4.h>
 #include <imxrt_flexcan.h>
 #include <kinetis_flexcan.h>
@@ -31,7 +31,7 @@
 #define WATCHDOG_OUT 7
 #define TEENSY_OK 6
 #define STATUS 5
-#define AC_CURRENT 12
+#define AC_CURRENT 15
 
 #define LED A8
 
@@ -215,8 +215,8 @@ void check_shutdown_signals() {
 void configure_charging() {
   if (charge_enable) {
     //maxChargingVoltage is 529.0V, with .1V/Bit. Hex Value: 14AA
-    charger_configure.set_max_charging_voltage_high(0x13);
-    charger_configure.set_max_charging_voltage_low(0xEC);
+    charger_configure.set_max_charging_voltage_high(0x14); //1450 is 520.0 V
+    charger_configure.set_max_charging_voltage_low(0x50);
     charger_configure.set_max_charging_current_low(set_charge_current());
     charger_configure.set_control(0);
   } else {
