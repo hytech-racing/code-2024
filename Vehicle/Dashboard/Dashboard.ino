@@ -338,19 +338,19 @@ inline void mcu_status_received() {
       dashboard_status.set_start_led(static_cast<uint8_t>(LED_MODES::OFF));
       break;
     case MCU_STATE::TRACTIVE_SYSTEM_NOT_ACTIVE:
-      dashboard_neopixels.setPixelColor(LED_LIST::RDY_DRIVE, LED_RED);
+      dashboard_neopixels.setPixelColor(LED_LIST::RDY_DRIVE, LED_OFF);
       dashboard_status.set_start_led(static_cast<uint8_t>(LED_MODES::RED));
       break;
     case MCU_STATE::TRACTIVE_SYSTEM_ACTIVE:
 
-      dashboard_neopixels.setPixelColor(LED_LIST::RDY_DRIVE, LED_YELLOW);
+      dashboard_neopixels.setPixelColor(LED_LIST::RDY_DRIVE, LED_ON_GREEN);
       dashboard_status.set_start_led(static_cast<uint8_t>(LED_MODES::YELLOW));
       break;
     case MCU_STATE::ENABLING_INVERTER:
     case MCU_STATE::WAITING_READY_TO_DRIVE_SOUND:
     case MCU_STATE::READY_TO_DRIVE:
 
-      dashboard_neopixels.setPixelColor(LED_LIST::RDY_DRIVE, LED_ON_GREEN);
+      dashboard_neopixels.setPixelColor(LED_LIST::RDY_DRIVE, LED_BLUE);
       dashboard_status.set_start_led(static_cast<uint8_t>(LED_MODES::ON));
       break;
     default:
