@@ -2,11 +2,21 @@ import os
 import sys
 import pandas as pd
 import numpy as np
+from pathlib import Path
+import scipy.io
 from datetime import datetime
+import multiprocessing
 import parsers as p
+import json
 import re
 
-def parse_folder():
+def parse_csv_folder_save_mat(path):
+    data_dict, csv_paths = parse_csv_folder("../telemetry_exe/Raw_Data/")
+    mat_paths = [os.path.splitext(csv_path)[0] + '.mat' for csv_path in csv_paths]
+    for i in range(len(mat_paths)):
+        scipy.io.savemat(mat_paths[i], {"data": data_dict[csv_paths[i]]})
+
+def parse_csv_folder(path):
     '''
     @brief: Locates Raw_Data directory or else throws errors. Created Parsed_Data directory if not created.
             Calls the parse_file() function on each raw CSV and alerts the user of parsing progress.
@@ -14,25 +24,31 @@ def parse_folder():
     @return: N/A
     '''
 
-    # Stop attempting to parse if Raw_Data is not there.
-    if not os.path.exists("Raw_Data"):
-        print("FATAL ERROR: Raw_Data folder does not exist. Please move parser.py or create Raw_Data folder.")
-        sys.exit(0)
+    csv_paths = []
+    for p in Path(path).rglob( '*.csv' ):
+        csv_paths.append(str(p))
 
-    # Creates Parsed_Data folder if not there.
-    if not os.path.exists("Parsed_Data"):
-        os.makedirs("Parsed_Data")
+    # Create a shared dictionary object using the multiprocessing.Manager class
+    manager = multiprocessing.Manager()
+    results_dict = manager.dict()
 
-    # Loops through files and call parse_file on each raw CSV.
-    for file in os.listdir("Raw_Data"):
-        filename = os.fsdecode(file)
-        if filename.endswith(".CSV") or filename.endswith(".csv"):
-            parse_file(filename)
-            print("Successfully parsed: " + filename)
-        else:
-            continue
-    return 
+    # Define the number of worker processes to use (you can adjust this as needed)
+    num_workers = multiprocessing.cpu_count()
 
+    # Create a pool of worker processes
+    pool = multiprocessing.Pool(processes=num_workers)
+
+    # Apply the `process_csv` function to each CSV file path in parallel
+    for csv_path, result in zip(csv_paths, pool.map(parse_file, csv_paths)):
+        results_dict[csv_path] = result
+
+    # Close the pool of worker processes
+    pool.close()
+
+    # Wait for all worker processes to finish
+    pool.join()
+
+    return (results_dict, csv_paths)
 
 
 def read_csv(filename):
@@ -45,7 +61,7 @@ def read_csv(filename):
     '''
 
     #Cleans up data
-    df = pd.read_csv(filename, on_bad_lines="skip")
+    df = pd.read_csv(filename, dtype = str, on_bad_lines="skip")
     
     df = df[df["time"].str.len() == 13]
     df = df[df['msg.len'].str.len() == 1]
@@ -55,7 +71,8 @@ def read_csv(filename):
     df["msg.id"] = df["msg.id"].apply(int, base=16)
     df["msg.len"] = pd.to_numeric(df['msg.len'])
     df = df[df['msg.len']*2 == df['data'].str.len()]
-    df['time'] = pd.to_datetime(df['time'], unit='ms')
+    #df['time'] = pd.to_datetime(df['time'], unit='ms')
+    df['time'] = pd.to_numeric(df['time'])
 
     df = df[df['msg.len']*2 == df['data'].str.len()]
     df["data"] = df["data"].apply(int, base = 16)
@@ -76,7 +93,7 @@ def parse_file(filename):
     df = read_csv(filename)
     msg_id = df['msg.id'].to_numpy().astype(np.uint16)
     msg_data = df['data'].to_numpy()
-    msg_time = df['time'].to_numpy()
+    msg_time = (df['time'].to_numpy()-df['time'].to_numpy()[0])/1000
     root = {}
     parse_message_vectorized(msg_data, msg_id, msg_time, root)
     return root
@@ -89,7 +106,7 @@ def add_outputs_to_dir(root, outputs):
 def str_to_directory(s):
     s=s.replace("]","")
     l = re.split('[.]|[\/]|[\\]|[\[]', s)
-    return [int(x) if x.isdigit() else x for x in l]
+    return l#[int(x) if x.isdigit() else x for x in l]
 
 def add_to_dir(root, directory, data):
     cwd = root
@@ -98,3 +115,6 @@ def add_to_dir(root, directory, data):
             cwd[i] = {}
         cwd = cwd[i]
     cwd[directory[-1]] = data
+
+def print_nested_dict(root):
+    print(json.dumps(root, sort_keys=True, indent=4, default=str))

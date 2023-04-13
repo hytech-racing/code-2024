@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 from parser_helpers import get_offsets_masks, parse_to_np
 
+NOMINAL_TORQUE = 9.8
+
 MESSAGE_DICT = {}
 
 # (Size (bits), Position (bits), signed, lambda func, name, units)
@@ -46,7 +48,7 @@ def parse_BMS_coulomb_counts(data, id = None, time=None):
     return [(arr, cols, units, directory)]
 MESSAGE_DICT[0xE2] = (parse_BMS_coulomb_counts, "BMS_coulomb_counts") 
 
-#done-ish
+#done
 def parse_BMS_detailed_temperatures(data, id = None, time=None):
     msg_id = 0xDA
     if id is not None:
@@ -56,24 +58,32 @@ def parse_BMS_detailed_temperatures(data, id = None, time=None):
             time = time[mask]
     
     vectors = [
-        (4 , -1, False, lambda x: x    , "id"    , "", "BMS.detailed_temps.id"),
+        (4 , -1, False, lambda x: x    , "ic"    , "", "BMS.detailed_temps.ic"),
         (4 , -1, False, lambda x: x    , "group" , "", "BMS.detailed_temps.group"),
-        (16, -1,  True, lambda x: x/100, "temps" , "", "BMS.detailed_temps.temps[0]"),
-        (16, -1,  True, lambda x: x/100, "temps" , "", "BMS.detailed_temps.temps[1]"),
-        (16, -1,  True, lambda x: x/100, "temps" , "", "BMS.detailed_temps.temps[2]"),
+        (16, -1,  True, lambda x: x/100, "temps" , "C", "BMS.detailed_temps.temps[0]"),
+        (16, -1,  True, lambda x: x/100, "temps" , "C", "BMS.detailed_temps.temps[1]"),
+        (16, -1,  True, lambda x: x/100, "temps" , "C", "BMS.detailed_temps.temps[2]"),
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
     arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
+    root_dir = "BMS.detailed_temps.ic_{ic:02}.temp_{cell}"
+    ic_group_list = np.unique(arr[:,(1, 2)], axis = 0)
+    dirs_list = [
+        [root_dir.format(ic = int(ic_group[0]), cell = int(3*ic_group[1]+1)), \
+         root_dir.format(ic = int(ic_group[0]), cell = int(3*ic_group[1]+2)), \
+         root_dir.format(ic = int(ic_group[0]), cell = int(3*ic_group[1]+3))]
+                  for ic_group in ic_group_list]
+    cells_list = [arr[:,(0,3,4,5)][(arr[:,(1,2)]==ic_group).all(axis=1)] for ic_group in ic_group_list]
+
     #df = pd.DataFrame(arr, columns='cols')
-    cols = [vector[4] for vector in vectors]
-    units = [vector[5] for vector in vectors]
-    directory = [vector[6] for vector in vectors]
-    return [(arr, cols, units, directory)]
+    cols = [vectors[i+2][4] for i in range(3)]
+    units = [vectors[i+2][5] for i in range(3)]
+    return [(cells_list[ic_group_index], cols, units, dirs_list[ic_group_index]) for ic_group_index in range(len(ic_group_list))]
 MESSAGE_DICT[0xDA] = (parse_BMS_detailed_temperatures, "BMS_detailed_temperatures")
 
-#done-ish
+#done
 def parse_BMS_detailed_voltages(data, id = None, time=None):
     msg_id = 0xD8
     if id is not None:
@@ -83,21 +93,32 @@ def parse_BMS_detailed_voltages(data, id = None, time=None):
             time = time[mask]
     
     vectors = [
-        (4 , -1, False, lambda x: x    , "id"    , "", "BMS.detailed_voltage.id"),
+        (4 , -1, False, lambda x: x    , "ic"    , "", "BMS.detailed_voltage.ic"),
         (4 , -1, False, lambda x: x    , "group" , "", "BMS.detailed_voltage.group"),
-        (16, -1, False, lambda x: x/10000, "voltage" , "", "BMS.detailed_voltage.voltage[0]"),
-        (16, -1, False, lambda x: x/10000, "voltage" , "", "BMS.detailed_voltage.voltage[0]"),
-        (16, -1, False, lambda x: x/10000, "voltage" , "", "BMS.detailed_voltage.voltage[0]"),
+        (16, -1, False, lambda x: x/10000, "voltage" , "V", "BMS.detailed_voltage.voltage[0]"),
+        (16, -1, False, lambda x: x/10000, "voltage" , "V", "BMS.detailed_voltage.voltage[1]"),
+        (16, -1, False, lambda x: x/10000, "voltage" , "V", "BMS.detailed_voltage.voltage[2]"),
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
     arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
+    root_dir = "BMS.detailed_voltage.ic_{ic:02}.cell_{cell:02}"
+    ic_dir = ".ic_{ic}"
+    cell_dir = ".cell_{cell}"
+    ic_group_list = np.unique(arr[:,(1, 2)], axis = 0)
+    dirs_list = [
+        [root_dir.format(ic = int(ic_group[0]), cell = int(3*ic_group[1]+1)), \
+         root_dir.format(ic = int(ic_group[0]), cell = int(3*ic_group[1]+2)), \
+         root_dir.format(ic = int(ic_group[0]), cell = int(3*ic_group[1]+3))]
+                  for ic_group in ic_group_list]
+    cells_list = [arr[:,(0,3,4,5)][(arr[:,(1,2)]==ic_group).all(axis=1)] for ic_group in ic_group_list]
+    
+
     #df = pd.DataFrame(arr, columns='cols')
-    cols = [vector[4] for vector in vectors]
-    units = [vector[5] for vector in vectors]
-    directory = [vector[6] for vector in vectors]
-    return [(arr, cols, units, directory)]
+    cols = [vectors[i+2][4] for i in range(3)]
+    units = [vectors[i+2][5] for i in range(3)]
+    return [(cells_list[ic_group_index], cols, units, dirs_list[ic_group_index]) for ic_group_index in range(len(ic_group_list))]
 MESSAGE_DICT[0xD8] = (parse_BMS_detailed_voltages, "BMS_detailed_voltages") 
 
 def parse_BMS_onboard_detailed_temperatures(data, id = None, time=None):
@@ -131,8 +152,8 @@ def parse_BMS_onboard_temperatures(data, id = None, time=None):
     
     vectors = [
         (16, -1, True, lambda x: x/100, "average_temperature", "C", "BMS.onboard_temperatures.average_temperature"),
-        (16, -1, True, lambda x: x/100, "low_temperature", "C", "BMS.onboard_temperatures.average_temperature"),
-        (16, -1, True, lambda x: x/100, "high_temperature", "C", "BMS.onboard_temperatures.average_temperature"),
+        (16, -1, True, lambda x: x/100, "low_temperature", "C", "BMS.onboard_temperatures.low_temperature"),
+        (16, -1, True, lambda x: x/100, "high_temperature", "C", "BMS.onboard_temperatures.high_temperature"),
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
@@ -145,6 +166,7 @@ def parse_BMS_onboard_temperatures(data, id = None, time=None):
     return [(arr, cols, units, directory)]
 MESSAGE_DICT[0xD5] = (parse_BMS_onboard_temperatures, "BMS_onboard_temperatures") 
 
+#done
 def parse_BMS_status(data, id = None, time=None):
     msg_id = 0xDB
     if id is not None:
@@ -290,6 +312,7 @@ def parse_Charger_data(data, id = None, time=None):
     return [(arr, cols, units, directory)]
 MESSAGE_DICT[0x18FF50E0] = (parse_Charger_data, "Charger_data") 
 
+#done
 def parse_Dashboard_status(data, id = None, time=None):
     msg_id = 0xEB
     if id is not None:
@@ -415,6 +438,7 @@ def parse_MCU_analog_readings(data, id = None, time=None):
     return [(arr, cols, units, directory)]
 MESSAGE_DICT[0xCC] = (parse_MCU_analog_readings, "MCU_analog_readings") 
 
+#done
 def parse_MCU_load_cells(data, id = None, time=None):
     msg_id = 0xC5
     if id is not None:
@@ -455,9 +479,9 @@ def parse_MC1_energy(data, id = None, time=None):
             time = time[mask]
     
     vectors = [
-        (16, -1, False, lambda x: x, "dc_bus_voltage", "V", "MOTOR_CONTROLLER[1].dc_bus_voltage"),
-        (32, -1, False, lambda x: x, "actual_power", "W", "MOTOR_CONTROLLER[1].actual_power"),
-        (16, -1,  True, lambda x: x*.1*(9.8/100), "feedback_torque", "Nm", "MOTOR_CONTROLLER[1].feedback_torque"),
+        (16, -1, False, lambda x: x, "dc_bus_voltage", "V", "MOTOR_CONTROLLER.mc1.dc_bus_voltage"),
+        (32, -1, False, lambda x: x, "actual_power", "W", "MOTOR_CONTROLLER.mc1.actual_power"),
+        (16, -1,  True, lambda x: x*(NOMINAL_TORQUE/1000), "feedback_torque", "Nm", "MOTOR_CONTROLLER.mc1.feedback_torque"),
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
@@ -480,9 +504,9 @@ def parse_MC2_energy(data, id = None, time=None):
             time = time[mask]
     
     vectors = [
-        (16, -1, False, lambda x: x, "dc_bus_voltage", "V", "MOTOR_CONTROLLER[2].dc_bus_voltage"),
-        (32, -1, False, lambda x: x, "actual_power", "W", "MOTOR_CONTROLLER[2].actual_power"),
-        (16, -1,  True, lambda x: x*.1*(9.8/100), "feedback_torque", "Nm", "MOTOR_CONTROLLER[2].feedback_torque"),
+        (16, -1, False, lambda x: x, "dc_bus_voltage", "V", "MOTOR_CONTROLLER.mc2.dc_bus_voltage"),
+        (32, -1, False, lambda x: x, "actual_power", "W", "MOTOR_CONTROLLER.mc2.actual_power"),
+        (16, -1,  True, lambda x: x*(NOMINAL_TORQUE/1000), "feedback_torque", "Nm", "MOTOR_CONTROLLER.mc2.feedback_torque"),
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
@@ -505,9 +529,9 @@ def parse_MC3_energy(data, id = None, time=None):
             time = time[mask]
     
     vectors = [
-        (16, -1, False, lambda x: x, "dc_bus_voltage", "V", "MOTOR_CONTROLLER[3].dc_bus_voltage"),
-        (32, -1, False, lambda x: x, "actual_power", "W", "MOTOR_CONTROLLER[3].actual_power"),
-        (16, -1,  True, lambda x: x*.1*(9.8/100), "feedback_torque", "Nm", "MOTOR_CONTROLLER[3].feedback_torque"),
+        (16, -1, False, lambda x: x, "dc_bus_voltage", "V", "MOTOR_CONTROLLER.mc3.dc_bus_voltage"),
+        (32, -1, False, lambda x: x, "actual_power", "W", "MOTOR_CONTROLLER.mc3.actual_power"),
+        (16, -1,  True, lambda x: x*(NOMINAL_TORQUE/1000), "feedback_torque", "Nm", "MOTOR_CONTROLLER.mc3.feedback_torque"),
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
@@ -530,9 +554,9 @@ def parse_MC4_energy(data, id = None, time=None):
             time = time[mask]
     
     vectors = [
-        (16, -1, False, lambda x: x, "dc_bus_voltage", "V", "MOTOR_CONTROLLER[4].dc_bus_voltage"),
-        (32, -1, False, lambda x: x, "actual_power", "W", "MOTOR_CONTROLLER[4].actual_power"),
-        (16, -1,  True, lambda x: x*.1*(9.8/100), "feedback_torque", "Nm", "MOTOR_CONTROLLER[4].feedback_torque"),
+        (16, -1, False, lambda x: x, "dc_bus_voltage", "V", "MOTOR_CONTROLLER.mc4.dc_bus_voltage"),
+        (32, -1, False, lambda x: x, "actual_power", "W", "MOTOR_CONTROLLER.mc4.actual_power"),
+        (16, -1,  True, lambda x: x*(NOMINAL_TORQUE/1000), "feedback_torque", "Nm", "MOTOR_CONTROLLER.mc4.feedback_torque"),
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
@@ -555,13 +579,13 @@ def parse_MC1_setpoints_command(data, id = None, time=None):
             time = time[mask]
     
     vectors = [
-        (1, 8, False, lambda x: x, "inverter_enable", "", "MOTOR_CONTROLLER[1].inverter_enable"),
-        (1, -1, False, lambda x: x, "hv_enable", "", "MOTOR_CONTROLLER[1].hv_enable"),
-        (1, -1, False, lambda x: x, "driver_enable", "", "MOTOR_CONTROLLER[1].driver_enable"),
-        (1, -1, False, lambda x: x, "remove_error", "", "MOTOR_CONTROLLER[1].remove_error"),
-        (16, 16, True, lambda x: x, "speed_setpoint", "rpm", "MOTOR_CONTROLLER[1].speed_setpoint"),
-        (16, -1, True, lambda x: x/10, "pos_torque_limit", "% Mn", "MOTOR_CONTROLLER[1].pos_torque_limit"),
-        (16, -1, True, lambda x: x/10, "neg_torque_limit", "% Mn", "MOTOR_CONTROLLER[1].neg_torque_limit"),
+        (1, 8, False, lambda x: x, "inverter_enable", "", "MOTOR_CONTROLLER.mc1.inverter_enable"),
+        (1, -1, False, lambda x: x, "hv_enable", "", "MOTOR_CONTROLLER.mc1.hv_enable"),
+        (1, -1, False, lambda x: x, "driver_enable", "", "MOTOR_CONTROLLER.mc1.driver_enable"),
+        (1, -1, False, lambda x: x, "remove_error", "", "MOTOR_CONTROLLER.mc1.remove_error"),
+        (16, 16, True, lambda x: x, "speed_setpoint", "rpm", "MOTOR_CONTROLLER.mc1.speed_setpoint"),
+        (16, -1, True, lambda x: x*(NOMINAL_TORQUE/1000), "pos_torque_limit", "Nm", "MOTOR_CONTROLLER.mc1.pos_torque_limit"),
+        (16, -1, True, lambda x: x*(NOMINAL_TORQUE/1000), "neg_torque_limit", "Nm", "MOTOR_CONTROLLER.mc1.neg_torque_limit"),
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
@@ -584,13 +608,13 @@ def parse_MC2_setpoints_command(data, id = None, time=None):
             time = time[mask]
     
     vectors = [
-        (1, 8, False, lambda x: x, "inverter_enable", "", "MOTOR_CONTROLLER[2].inverter_enable"),
-        (1, -1, False, lambda x: x, "hv_enable", "", "MOTOR_CONTROLLER[2].hv_enable"),
-        (1, -1, False, lambda x: x, "driver_enable", "", "MOTOR_CONTROLLER[2].driver_enable"),
-        (1, -1, False, lambda x: x, "remove_error", "", "MOTOR_CONTROLLER[2].remove_error"),
-        (16, 16, True, lambda x: x, "speed_setpoint", "rpm", "MOTOR_CONTROLLER[2].speed_setpoint"),
-        (16, -1, True, lambda x: x/10, "pos_torque_limit", "% Mn", "MOTOR_CONTROLLER[2].pos_torque_limit"),
-        (16, -1, True, lambda x: x/10, "neg_torque_limit", "% Mn", "MOTOR_CONTROLLER[2].neg_torque_limit"),
+        (1, 8, False, lambda x: x, "inverter_enable", "", "MOTOR_CONTROLLER.mc2.inverter_enable"),
+        (1, -1, False, lambda x: x, "hv_enable", "", "MOTOR_CONTROLLER.mc2.hv_enable"),
+        (1, -1, False, lambda x: x, "driver_enable", "", "MOTOR_CONTROLLER.mc2.driver_enable"),
+        (1, -1, False, lambda x: x, "remove_error", "", "MOTOR_CONTROLLER.mc2.remove_error"),
+        (16, 16, True, lambda x: x, "speed_setpoint", "rpm", "MOTOR_CONTROLLER.mc2.speed_setpoint"),
+        (16, -1, True, lambda x: x*(NOMINAL_TORQUE/1000), "pos_torque_limit", "Nm", "MOTOR_CONTROLLER.mc2.pos_torque_limit"),
+        (16, -1, True, lambda x: x*(NOMINAL_TORQUE/1000), "neg_torque_limit", "Nm", "MOTOR_CONTROLLER.mc2.neg_torque_limit"),
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
@@ -613,13 +637,13 @@ def parse_MC3_setpoints_command(data, id = None, time=None):
             time = time[mask]
     
     vectors = [
-        (1, 8, False, lambda x: x, "inverter_enable", "", "MOTOR_CONTROLLER[3].inverter_enable"),
-        (1, -1, False, lambda x: x, "hv_enable", "", "MOTOR_CONTROLLER[3].hv_enable"),
-        (1, -1, False, lambda x: x, "driver_enable", "", "MOTOR_CONTROLLER[3].driver_enable"),
-        (1, -1, False, lambda x: x, "remove_error", "", "MOTOR_CONTROLLER[3].remove_error"),
-        (16, 16, True, lambda x: x, "speed_setpoint", "rpm", "MOTOR_CONTROLLER[3].speed_setpoint"),
-        (16, -1, True, lambda x: x/10, "pos_torque_limit", "% Mn", "MOTOR_CONTROLLER[3].pos_torque_limit"),
-        (16, -1, True, lambda x: x/10, "neg_torque_limit", "% Mn", "MOTOR_CONTROLLER[3].neg_torque_limit"),
+        (1, 8, False, lambda x: x, "inverter_enable", "", "MOTOR_CONTROLLER.mc3.inverter_enable"),
+        (1, -1, False, lambda x: x, "hv_enable", "", "MOTOR_CONTROLLER.mc3.hv_enable"),
+        (1, -1, False, lambda x: x, "driver_enable", "", "MOTOR_CONTROLLER.mc3.driver_enable"),
+        (1, -1, False, lambda x: x, "remove_error", "", "MOTOR_CONTROLLER.mc3.remove_error"),
+        (16, 16, True, lambda x: x, "speed_setpoint", "rpm", "MOTOR_CONTROLLER.mc3.speed_setpoint"),
+        (16, -1, True, lambda x: x*(NOMINAL_TORQUE/1000), "pos_torque_limit", "Nm", "MOTOR_CONTROLLER.mc3.pos_torque_limit"),
+        (16, -1, True, lambda x: x*(NOMINAL_TORQUE/1000), "neg_torque_limit", "Nm", "MOTOR_CONTROLLER.mc3.neg_torque_limit"),
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
@@ -642,13 +666,13 @@ def parse_MC4_setpoints_command(data, id = None, time=None):
             time = time[mask]
     
     vectors = [
-        (1, 8, False, lambda x: x, "inverter_enable", "", "MOTOR_CONTROLLER[4].inverter_enable"),
-        (1, -1, False, lambda x: x, "hv_enable", "", "MOTOR_CONTROLLER[4].hv_enable"),
-        (1, -1, False, lambda x: x, "driver_enable", "", "MOTOR_CONTROLLER[4].driver_enable"),
-        (1, -1, False, lambda x: x, "remove_error", "", "MOTOR_CONTROLLER[4].remove_error"),
-        (16, 16, True, lambda x: x, "speed_setpoint", "rpm", "MOTOR_CONTROLLER[4].speed_setpoint"),
-        (16, -1, True, lambda x: x/10, "pos_torque_limit", "% Mn", "MOTOR_CONTROLLER[4].pos_torque_limit"),
-        (16, -1, True, lambda x: x/10, "neg_torque_limit", "% Mn", "MOTOR_CONTROLLER[4].neg_torque_limit"),
+        (1, 8, False, lambda x: x, "inverter_enable", "", "MOTOR_CONTROLLER.mc4.inverter_enable"),
+        (1, -1, False, lambda x: x, "hv_enable", "", "MOTOR_CONTROLLER.mc4.hv_enable"),
+        (1, -1, False, lambda x: x, "driver_enable", "", "MOTOR_CONTROLLER.mc4.driver_enable"),
+        (1, -1, False, lambda x: x, "remove_error", "", "MOTOR_CONTROLLER.mc4.remove_error"),
+        (16, 16, True, lambda x: x, "speed_setpoint", "rpm", "MOTOR_CONTROLLER.mc4.speed_setpoint"),
+        (16, -1, True, lambda x: x*(NOMINAL_TORQUE/1000), "pos_torque_limit", "Nm", "MOTOR_CONTROLLER.mc4.pos_torque_limit"),
+        (16, -1, True, lambda x: x*(NOMINAL_TORQUE/1000), "neg_torque_limit", "Nm", "MOTOR_CONTROLLER.mc4.neg_torque_limit"),
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
@@ -671,17 +695,17 @@ def parse_MC1_status(data, id = None, time=None):
             time = time[mask]
     
     vectors = [
-        (1,  8, False, lambda x: x, "system_ready", "", "MOTOR_CONTROLLER[1].system_ready"),
-        (1, -1, False, lambda x: x, "error", "", "MOTOR_CONTROLLER[1].error"),
-        (1, -1, False, lambda x: x, "warning", "", "MOTOR_CONTROLLER[1].warning"),
-        (1, -1, False, lambda x: x, "quit_dc_on", "", "MOTOR_CONTROLLER[1].quit_dc_on"),
-        (1, -1, False, lambda x: x, "dc_on", "", "MOTOR_CONTROLLER[1].dc_on"),
-        (1, -1, False, lambda x: x, "quit_inverter_on", "", "MOTOR_CONTROLLER[1].quit_inverter_on"),
-        (1, -1, False, lambda x: x, "inverter_on", "", "MOTOR_CONTROLLER[1].inverter_on"),
-        (1, -1, False, lambda x: x, "derating_on", "", "MOTOR_CONTROLLER[1].derating_on"),
-        (16, 16, True, lambda x: x, "speed", "rpm", "MOTOR_CONTROLLER[1].speed"),
-        (16, -1, True, lambda x: x/10, "torque_current", "% mn", "MOTOR_CONTROLLER[1].torque_current"),
-        (16, -1, True, lambda x: x/10, "magnetizing_current", "A", "MOTOR_CONTROLLER[1].magnetizing_current"),
+        (1,  8, False, lambda x: x, "system_ready", "", "MOTOR_CONTROLLER.mc1.system_ready"),
+        (1, -1, False, lambda x: x, "error", "", "MOTOR_CONTROLLER.mc1.error"),
+        (1, -1, False, lambda x: x, "warning", "", "MOTOR_CONTROLLER.mc1.warning"),
+        (1, -1, False, lambda x: x, "quit_dc_on", "", "MOTOR_CONTROLLER.mc1.quit_dc_on"),
+        (1, -1, False, lambda x: x, "dc_on", "", "MOTOR_CONTROLLER.mc1.dc_on"),
+        (1, -1, False, lambda x: x, "quit_inverter_on", "", "MOTOR_CONTROLLER.mc1.quit_inverter_on"),
+        (1, -1, False, lambda x: x, "inverter_on", "", "MOTOR_CONTROLLER.mc1.inverter_on"),
+        (1, -1, False, lambda x: x, "derating_on", "", "MOTOR_CONTROLLER.mc1.derating_on"),
+        (16, 16, True, lambda x: x, "speed", "rpm", "MOTOR_CONTROLLER.mc1.speed"),
+        (16, -1, True, lambda x: x*(NOMINAL_TORQUE/1000), "torque_current", "Nm", "MOTOR_CONTROLLER.mc1.torque_current"),
+        (16, -1, True, lambda x: x/10, "magnetizing_current", "A", "MOTOR_CONTROLLER.mc1.magnetizing_current"),
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
@@ -704,17 +728,17 @@ def parse_MC2_status(data, id = None, time=None):
             time = time[mask]
     
     vectors = [
-        (1,  8, False, lambda x: x, "system_ready", "", "MOTOR_CONTROLLER[2].system_ready"),
-        (1, -1, False, lambda x: x, "error", "", "MOTOR_CONTROLLER[2].error"),
-        (1, -1, False, lambda x: x, "warning", "", "MOTOR_CONTROLLER[2].warning"),
-        (1, -1, False, lambda x: x, "quit_dc_on", "", "MOTOR_CONTROLLER[2].quit_dc_on"),
-        (1, -1, False, lambda x: x, "dc_on", "", "MOTOR_CONTROLLER[2].dc_on"),
-        (1, -1, False, lambda x: x, "quit_inverter_on", "", "MOTOR_CONTROLLER[2].quit_inverter_on"),
-        (1, -1, False, lambda x: x, "inverter_on", "", "MOTOR_CONTROLLER[2].inverter_on"),
-        (1, -1, False, lambda x: x, "derating_on", "", "MOTOR_CONTROLLER[2].derating_on"),
-        (16, 16, True, lambda x: x, "speed", "rpm", "MOTOR_CONTROLLER[2].speed"),
-        (16, -1, True, lambda x: x/10, "torque_current", "% mn", "MOTOR_CONTROLLER[2].torque_current"),
-        (16, -1, True, lambda x: x/10, "magnetizing_current", "A", "MOTOR_CONTROLLER[2].magnetizing_current"),
+        (1,  8, False, lambda x: x, "system_ready", "", "MOTOR_CONTROLLER.mc2.system_ready"),
+        (1, -1, False, lambda x: x, "error", "", "MOTOR_CONTROLLER.mc2.error"),
+        (1, -1, False, lambda x: x, "warning", "", "MOTOR_CONTROLLER.mc2.warning"),
+        (1, -1, False, lambda x: x, "quit_dc_on", "", "MOTOR_CONTROLLER.mc2.quit_dc_on"),
+        (1, -1, False, lambda x: x, "dc_on", "", "MOTOR_CONTROLLER.mc2.dc_on"),
+        (1, -1, False, lambda x: x, "quit_inverter_on", "", "MOTOR_CONTROLLER.mc2.quit_inverter_on"),
+        (1, -1, False, lambda x: x, "inverter_on", "", "MOTOR_CONTROLLER.mc2.inverter_on"),
+        (1, -1, False, lambda x: x, "derating_on", "", "MOTOR_CONTROLLER.mc2.derating_on"),
+        (16, 16, True, lambda x: x, "speed", "rpm", "MOTOR_CONTROLLER.mc2.speed"),
+        (16, -1, True, lambda x: x*(NOMINAL_TORQUE/1000), "torque_current", "Nm", "MOTOR_CONTROLLER.mc2.torque_current"),
+        (16, -1, True, lambda x: x/10, "magnetizing_current", "A", "MOTOR_CONTROLLER.mc2.magnetizing_current"),
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
@@ -737,17 +761,17 @@ def parse_MC3_status(data, id = None, time=None):
             time = time[mask]
     
     vectors = [
-        (1,  8, False, lambda x: x, "system_ready", "", "MOTOR_CONTROLLER[3].system_ready"),
-        (1, -1, False, lambda x: x, "error", "", "MOTOR_CONTROLLER[3].error"),
-        (1, -1, False, lambda x: x, "warning", "", "MOTOR_CONTROLLER[3].warning"),
-        (1, -1, False, lambda x: x, "quit_dc_on", "", "MOTOR_CONTROLLER[3].quit_dc_on"),
-        (1, -1, False, lambda x: x, "dc_on", "", "MOTOR_CONTROLLER[3].dc_on"),
-        (1, -1, False, lambda x: x, "quit_inverter_on", "", "MOTOR_CONTROLLER[3].quit_inverter_on"),
-        (1, -1, False, lambda x: x, "inverter_on", "", "MOTOR_CONTROLLER[3].inverter_on"),
-        (1, -1, False, lambda x: x, "derating_on", "", "MOTOR_CONTROLLER[3].derating_on"),
-        (16, 16, True, lambda x: x, "speed", "rpm", "MOTOR_CONTROLLER[3].speed"),
-        (16, -1, True, lambda x: x/10, "torque_current", "% mn", "MOTOR_CONTROLLER[3].torque_current"),
-        (16, -1, True, lambda x: x/10, "magnetizing_current", "A", "MOTOR_CONTROLLER[3].magnetizing_current"),
+        (1,  8, False, lambda x: x, "system_ready", "", "MOTOR_CONTROLLER.mc3.system_ready"),
+        (1, -1, False, lambda x: x, "error", "", "MOTOR_CONTROLLER.mc3.error"),
+        (1, -1, False, lambda x: x, "warning", "", "MOTOR_CONTROLLER.mc3.warning"),
+        (1, -1, False, lambda x: x, "quit_dc_on", "", "MOTOR_CONTROLLER.mc3.quit_dc_on"),
+        (1, -1, False, lambda x: x, "dc_on", "", "MOTOR_CONTROLLER.mc3.dc_on"),
+        (1, -1, False, lambda x: x, "quit_inverter_on", "", "MOTOR_CONTROLLER.mc3.quit_inverter_on"),
+        (1, -1, False, lambda x: x, "inverter_on", "", "MOTOR_CONTROLLER.mc3.inverter_on"),
+        (1, -1, False, lambda x: x, "derating_on", "", "MOTOR_CONTROLLER.mc3.derating_on"),
+        (16, 16, True, lambda x: x, "speed", "rpm", "MOTOR_CONTROLLER.mc3.speed"),
+        (16, -1, True, lambda x: x*(NOMINAL_TORQUE/1000), "torque_current", "Nm", "MOTOR_CONTROLLER.mc3.torque_current"),
+        (16, -1, True, lambda x: x/10, "magnetizing_current", "A", "MOTOR_CONTROLLER.mc3.magnetizing_current"),
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
@@ -770,17 +794,17 @@ def parse_MC4_status(data, id = None, time=None):
             time = time[mask]
     
     vectors = [
-        (1,  8, False, lambda x: x, "system_ready", "", "MOTOR_CONTROLLER[4].system_ready"),
-        (1, -1, False, lambda x: x, "error", "", "MOTOR_CONTROLLER[4].error"),
-        (1, -1, False, lambda x: x, "warning", "", "MOTOR_CONTROLLER[4].warning"),
-        (1, -1, False, lambda x: x, "quit_dc_on", "", "MOTOR_CONTROLLER[4].quit_dc_on"),
-        (1, -1, False, lambda x: x, "dc_on", "", "MOTOR_CONTROLLER[4].dc_on"),
-        (1, -1, False, lambda x: x, "quit_inverter_on", "", "MOTOR_CONTROLLER[4].quit_inverter_on"),
-        (1, -1, False, lambda x: x, "inverter_on", "", "MOTOR_CONTROLLER[4].inverter_on"),
-        (1, -1, False, lambda x: x, "derating_on", "", "MOTOR_CONTROLLER[4].derating_on"),
-        (16, 16, True, lambda x: x, "speed", "rpm", "MOTOR_CONTROLLER[4].speed"),
-        (16, -1, True, lambda x: x/10, "torque_current", "% mn", "MOTOR_CONTROLLER[4].torque_current"),
-        (16, -1, True, lambda x: x/10, "magnetizing_current", "A", "MOTOR_CONTROLLER[4].magnetizing_current"),
+        (1,  8, False, lambda x: x, "system_ready", "", "MOTOR_CONTROLLER.mc4.system_ready"),
+        (1, -1, False, lambda x: x, "error", "", "MOTOR_CONTROLLER.mc4.error"),
+        (1, -1, False, lambda x: x, "warning", "", "MOTOR_CONTROLLER.mc4.warning"),
+        (1, -1, False, lambda x: x, "quit_dc_on", "", "MOTOR_CONTROLLER.mc4.quit_dc_on"),
+        (1, -1, False, lambda x: x, "dc_on", "", "MOTOR_CONTROLLER.mc4.dc_on"),
+        (1, -1, False, lambda x: x, "quit_inverter_on", "", "MOTOR_CONTROLLER.mc4.quit_inverter_on"),
+        (1, -1, False, lambda x: x, "inverter_on", "", "MOTOR_CONTROLLER.mc4.inverter_on"),
+        (1, -1, False, lambda x: x, "derating_on", "", "MOTOR_CONTROLLER.mc4.derating_on"),
+        (16, 16, True, lambda x: x, "speed", "rpm", "MOTOR_CONTROLLER.mc4.speed"),
+        (16, -1, True, lambda x: x*(NOMINAL_TORQUE/1000), "torque_current", "Nm", "MOTOR_CONTROLLER.mc4.torque_current"),
+        (16, -1, True, lambda x: x/10, "magnetizing_current", "A", "MOTOR_CONTROLLER.mc4.magnetizing_current"),
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
@@ -803,10 +827,10 @@ def parse_MC1_temps(data, id = None, time=None):
             time = time[mask]
     
     vectors = [
-        (16, -1, True, lambda x: x/10, "motor_temp", "C", "MOTOR_CONTROLLER[1].motor_temp"),
-        (16, -1, True, lambda x: x/10, "inverter_temp", "C", "MOTOR_CONTROLLER[1].inverter_temp"),
-        (16, -1, False, lambda x: x, "diagnostic_number", "", "MOTOR_CONTROLLER[1].diagnostic_number"),
-        (16, -1, True, lambda x: x/10, "igbt_temp", "C", "MOTOR_CONTROLLER[1].igbt_temp"),
+        (16, -1, True, lambda x: x/10, "motor_temp", "C", "MOTOR_CONTROLLER.mc1.motor_temp"),
+        (16, -1, True, lambda x: x/10, "inverter_temp", "C", "MOTOR_CONTROLLER.mc1.inverter_temp"),
+        (16, -1, False, lambda x: x, "diagnostic_number", "", "MOTOR_CONTROLLER.mc1.diagnostic_number"),
+        (16, -1, True, lambda x: x/10, "igbt_temp", "C", "MOTOR_CONTROLLER.mc1.igbt_temp"),
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
@@ -829,10 +853,10 @@ def parse_MC2_temps(data, id = None, time=None):
             time = time[mask]
     
     vectors = [
-        (16, -1, True, lambda x: x/10, "motor_temp", "C", "MOTOR_CONTROLLER[2].motor_temp"),
-        (16, -1, True, lambda x: x/10, "inverter_temp", "C", "MOTOR_CONTROLLER[2].inverter_temp"),
-        (16, -1, False, lambda x: x, "diagnostic_number", "", "MOTOR_CONTROLLER[2].diagnostic_number"),
-        (16, -1, True, lambda x: x/10, "igbt_temp", "C", "MOTOR_CONTROLLER[2].igbt_temp"),
+        (16, -1, True, lambda x: x/10, "motor_temp", "C", "MOTOR_CONTROLLER.mc2.motor_temp"),
+        (16, -1, True, lambda x: x/10, "inverter_temp", "C", "MOTOR_CONTROLLER.mc2.inverter_temp"),
+        (16, -1, False, lambda x: x, "diagnostic_number", "", "MOTOR_CONTROLLER.mc2.diagnostic_number"),
+        (16, -1, True, lambda x: x/10, "igbt_temp", "C", "MOTOR_CONTROLLER.mc2.igbt_temp"),
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
@@ -855,10 +879,10 @@ def parse_MC3_temps(data, id = None, time=None):
             time = time[mask]
     
     vectors = [
-        (16, -1, True, lambda x: x/10, "motor_temp", "C", "MOTOR_CONTROLLER[3].motor_temp"),
-        (16, -1, True, lambda x: x/10, "inverter_temp", "C", "MOTOR_CONTROLLER[3].inverter_temp"),
-        (16, -1, False, lambda x: x, "diagnostic_number", "", "MOTOR_CONTROLLER[3].diagnostic_number"),
-        (16, -1, True, lambda x: x/10, "igbt_temp", "C", "MOTOR_CONTROLLER[3].igbt_temp"),
+        (16, -1, True, lambda x: x/10, "motor_temp", "C", "MOTOR_CONTROLLER.mc3.motor_temp"),
+        (16, -1, True, lambda x: x/10, "inverter_temp", "C", "MOTOR_CONTROLLER.mc3.inverter_temp"),
+        (16, -1, False, lambda x: x, "diagnostic_number", "", "MOTOR_CONTROLLER.mc3.diagnostic_number"),
+        (16, -1, True, lambda x: x/10, "igbt_temp", "C", "MOTOR_CONTROLLER.mc3.igbt_temp"),
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
@@ -881,10 +905,10 @@ def parse_MC4_temps(data, id = None, time=None):
             time = time[mask]
     
     vectors = [
-        (16, -1, True, lambda x: x/10, "motor_temp", "C", "MOTOR_CONTROLLER[4].motor_temp"),
-        (16, -1, True, lambda x: x/10, "inverter_temp", "C", "MOTOR_CONTROLLER[4].inverter_temp"),
-        (16, -1, False, lambda x: x, "diagnostic_number", "", "MOTOR_CONTROLLER[4].diagnostic_number"),
-        (16, -1, True, lambda x: x/10, "igbt_temp", "C", "MOTOR_CONTROLLER[4].igbt_temp"),
+        (16, -1, True, lambda x: x/10, "motor_temp", "C", "MOTOR_CONTROLLER.mc4.motor_temp"),
+        (16, -1, True, lambda x: x/10, "inverter_temp", "C", "MOTOR_CONTROLLER.mc4.inverter_temp"),
+        (16, -1, False, lambda x: x, "diagnostic_number", "", "MOTOR_CONTROLLER.mc4.diagnostic_number"),
+        (16, -1, True, lambda x: x/10, "igbt_temp", "C", "MOTOR_CONTROLLER.mc4.igbt_temp"),
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
@@ -957,6 +981,7 @@ def parse_SAB_readings_gps(data, id = None, time=None):
     return [(arr, cols, units, directory)]
 MESSAGE_DICT[0xEE] = (parse_SAB_readings_gps, "SAB_readings_gps") 
 
+#done
 def parse_EM_status(data, id = None, time=None):
     msg_id = 0x100
     if id is not None:
@@ -983,6 +1008,7 @@ def parse_EM_status(data, id = None, time=None):
     return [(arr, cols, units, directory)]
 MESSAGE_DICT[0x100] = (parse_EM_status, "EM_status") 
 
+#done
 def parse_EM_measurement(data, id = None, time=None):
     msg_id = 0x400
     if id is not None:
