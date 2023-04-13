@@ -7,7 +7,7 @@
 #include <Metro.h>
 
 // FlexCAN CAN(500000);
-FlexCAN_T4<CAN1> CAN;
+FlexCAN_T4<CAN3> CAN;
 CAN_message_t msg;
 Metro timer_can = Metro(1000);
 Metro timer_light = Metro(3);
@@ -15,7 +15,7 @@ Metro timer_light = Metro(3);
 void setup() {
     Serial.begin(115200); // Initialize serial for PC communication
     CAN.begin();
-    CAN.setBaudRate(500000);
+    CAN.setBaudRate(1000000);
     delay(200);
     Serial.println("CAN transceiver initialized");
     Serial.println("CAN TEST SENDER/RECEIVER");
@@ -26,7 +26,7 @@ void setup() {
 void loop() {
     if (timer_can.check()) { // Send a message on CAN
         uint32_t t = millis();
-        msg.id = 0x2;
+        msg.id = 0x1;
         msg.len = sizeof(uint32_t);
         memcpy(msg.buf, &t, sizeof(uint32_t));
         CAN.write(msg);

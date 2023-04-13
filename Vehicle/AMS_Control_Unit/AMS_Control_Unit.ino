@@ -7,6 +7,7 @@
    Since: 05/29/2022
 */
 
+
 #include <Arduino.h>
 #include <SPI.h>
 #include <FlexCAN_T4.h>
@@ -15,14 +16,14 @@
 #include <Metro.h>
 
 // CONSTANT DEFINITIONS: define important values, such as IC count and cells per IC
-#define TOTAL_IC 8                 // Number of LTC6811-2 ICs that are used in the accumulator
+#define TOTAL_IC 12                 // Number of LTC6811-2 ICs that are used in the accumulator
 #define EVEN_IC_CELLS 12           // Number of cells monitored by ICs with even addresses
 #define ODD_IC_CELLS 9             // Number of cells monitored by ICS with odd addresses
-#define THERMISTORS_PER_IC 4       // Number of cell temperature monitoring thermistors connected to each IC 
-#define MAX_SUCCESSIVE_FAULTS 20   // Number of successive faults permitted before AMS fault is broadcast over CAN 
+#define THERMISTORS_PER_IC 4       // Number of cell temperature monitoring thermistors connected to each IC
+#define MAX_SUCCESSIVE_FAULTS 20   // Number of successive faults permitted before AMS fault is broadcast over CAN
 #define MIN_VOLTAGE 30000          // Minimum allowable single cell voltage in units of 100μV
 #define MAX_VOLTAGE 42000          // Maxiumum allowable single cell voltage in units of 100μV
-#define MAX_TOTAL_VOLTAGE 3550000  // Maximum allowable pack total voltage in units of 100μV
+#define MAX_TOTAL_VOLTAGE 5330000  // Maximum allowable pack total voltage in units of 100μV
 #define MAX_THERMISTOR_VOLTAGE 26225   // Maximum allowable pack temperature corresponding to 60C in units 100μV
 #define BALANCE_ON true
 #define BALANCE_COOL 6000             // Sets balancing duty cycle as 33.3%
@@ -61,7 +62,8 @@ float total_thermistor_temps = 0;
 Metro charging_timer = Metro(5000); // Timer to check if charger is still talking to ACU
 Metro CAN_timer = Metro(2); // Timer that spaces apart writes for CAN messages so as to not saturate CAN bus
 Metro print_timer = Metro(500);
-Metro balance_timer(BALANCE_HOT);
+Metro balance_timer(BALANCE_STANDARD);
+Metro timer_CAN_em_forward(100);
 IntervalTimer pulse_timer;    //AMS ok pulse timer
 bool next_pulse = true; //AMS ok pulse
 uint8_t can_voltage_ic = 0; //counter for the current IC data to send for detailed voltage CAN message
@@ -86,10 +88,15 @@ bool ov_fault_state = false;      // enter fault state if 20 successive faults o
 bool pack_ov_fault_state = false; // enter fault state if 20 successive faults occur
 
 // LTC6811_2 OBJECT DECLARATIONS
-LTC6811_2 ic[8];
+LTC6811_2 ic[TOTAL_IC];
+
+// OUTBOUND CAN MESSAGES
+EM_measurement em_measurement;
+EM_status em_status;
 
 // CAN OBJECT AND VARIABLE DECLARATIONS
-FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> CAN;
+FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> ENERGY_METER_CAN;
+FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> TELEM_CAN;
 CAN_message_t msg;
 
 // BMS CAN MESSAGE AND STATE MACHINE OBJECT DECLARATIONS
@@ -110,16 +117,20 @@ void setup() {
   pulse_timer.begin(ams_ok_pulse, 50000); //timer to pulse pin 5 every 50 milliseconds
   Serial.begin(115200);
   SPI.begin();
-  CAN.begin();
-  CAN.setBaudRate(500000);
+  TELEM_CAN.begin();
+  TELEM_CAN.setBaudRate(500000);
+  ENERGY_METER_CAN.begin();
+  ENERGY_METER_CAN.setBaudRate(500000);
+  ENERGY_METER_CAN.enableMBInterrupts();
+  ENERGY_METER_CAN.onReceive(parse_energy_meter_can_message);
 
   for (int i = 0; i < 64; i++) { // Fill all filter slots with Charger Control Unit message filter
-    CAN.setMBFilter(static_cast<FLEXCAN_MAILBOX>(i), ID_CCU_STATUS); // Set CAN mailbox filtering to only watch for charger controller status CAN messages
+    TELEM_CAN.setMBFilter(static_cast<FLEXCAN_MAILBOX>(i), ID_CCU_STATUS); // Set CAN mailbox filtering to only watch for charger controller status CAN messages
   }
   // initialize the PEC table
   LTC6811_2::init_PEC15_Table();
-  // add 8 instances of LTC6811_2 to the object array, each addressed appropriately
-  for (int i = 0; i < 8; i++) {
+  // add 12 (TOTAL_IC) instances of LTC6811_2 to the object array, each addressed appropriately
+  for (int i = 0; i < TOTAL_IC; i++) {
     ic[i] = LTC6811_2(i);
   }
   bms_status.set_state(BMS_STATE_DISCHARGING);
@@ -128,6 +139,8 @@ void setup() {
 }
 void loop() {
   // put your main code here, to run repeatedly:
+  TELEM_CAN.events();
+  ENERGY_METER_CAN.events();
   parse_CAN_CCU_status();
   if (charging_timer.check() && bms_status.get_state() == BMS_STATE_CHARGING) {
     bms_status.set_state(BMS_STATE_DISCHARGING);
@@ -147,6 +160,22 @@ void loop() {
   else {
     currently_balancing = false;
   }
+
+  forward_CAN_em();
+}
+
+inline void forward_CAN_em() {
+  if (timer_CAN_em_forward.check()) {
+    em_measurement.write(msg.buf);
+    msg.id = ID_EM_MEASUREMENT;
+    msg.len = sizeof(em_measurement);
+    TELEM_CAN.write(msg);
+
+    em_status.write(msg.buf);
+    msg.id = ID_EM_STATUS;
+    msg.len = sizeof(em_status);
+    TELEM_CAN.write(msg);
+  }
 }
 
 // Check whether all LTC6811-2's are at the same state and ready to be read
@@ -159,12 +188,13 @@ bool check_ics(int state) {
   return true;
 }
 
+
 // READ functions to collect and read data from the LTC6811-2
-// Read cell voltages from all eight LTC6811-2; voltages are read in with units of 100μV
+// Read cell voltages from all twelve (TOTAL_IC) LTC6811-2; voltages are read in with units of 100μV
 void read_voltages() {
   if (check_ics(0)) {
     Reg_Group_Config configuration = Reg_Group_Config((uint8_t) 0x1F, false, false, vuv, vov, (uint16_t) 0x0, (uint8_t) 0x1); // base configuration for the configuration register group
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < TOTAL_IC; i++) {
       ic[i].wakeup();
       ic[i].wrcfga(configuration);
       ic[i].adcv(static_cast<CELL_SELECT>(0));
@@ -174,7 +204,7 @@ void read_voltages() {
     total_voltage = 0;
     max_voltage = 0;
     min_voltage = 65535;
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < TOTAL_IC; i++) {
       ic[i].wakeup();
       Reg_Group_Cell_A reg_group_a = ic[i].rdcva();
       Reg_Group_Cell_B reg_group_b = ic[i].rdcvb();
@@ -265,7 +295,7 @@ void voltage_fault_check() {
 void read_gpio() {
   if (check_ics(2)) {
     Reg_Group_Config configuration = Reg_Group_Config((uint8_t) 0x1F, false, false, vuv, vov, (uint16_t) 0x0, (uint8_t) 0x1); // base configuration for the configuration register group
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < TOTAL_IC; i++) {
       ic[i].wakeup();
       ic[i].wrcfga(configuration);
       ic[i].adax(static_cast<GPIO_SELECT>(0));
@@ -279,7 +309,7 @@ void read_gpio() {
     min_board_temp_voltage = 65535;
     total_board_temps = 0;
     total_thermistor_temps = 0;
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < TOTAL_IC; i++) {
       ic[i].wakeup();
       Reg_Group_Aux_A reg_group_a = ic[i].rdauxa();
       Reg_Group_Aux_B reg_group_b = ic[i].rdauxb();
@@ -356,6 +386,7 @@ void temp_fault_check() {
 void balance_cells() {
   if (balance_timer.check()) {
     balance_timer.reset();
+    
     if (min_voltage < 30000 || min_voltage > 42000) {
       Serial.print("BALANCE HALT: BALANCE VOLTAGE SET AS "); Serial.print(min_voltage / 10000.0, 4); Serial.println(", OUTSIDE OF SAFE BOUNDS.");
       return;
@@ -364,8 +395,9 @@ void balance_cells() {
       Serial.print("BALANCE HALT: CHECK PACK FAULTS");
       return;
     }
+    
     Serial.print("Balancing voltage: "); Serial.println(min_voltage / 10000.0, 4);
-    for (uint16_t i = 0; i < 8; i++) {
+    for (uint16_t i = 0; i < TOTAL_IC; i++) {
       uint16_t cell_balance_setting = 0x0;
       // determine which cells of the IC need balancing
       uint8_t cell_count;
@@ -403,7 +435,7 @@ void balance_cells() {
 
 // parse incoming CAN messages for CCU status message and changes the state of the BMS in software
 void parse_CAN_CCU_status() {
-  while (CAN.read(msg)) {
+  while (TELEM_CAN.read(msg)) {
     if (msg.id == ID_CCU_STATUS) {
       ccu_status.load(msg.buf);
       charging_timer.reset();
@@ -414,28 +446,36 @@ void parse_CAN_CCU_status() {
   }
 }
 
+void parse_energy_meter_can_message(const CAN_message_t& RX_msg) {
+  static CAN_message_t rx_msg = RX_msg;
+  switch (rx_msg.id) {
+    case ID_EM_MEASUREMENT:   em_measurement.load(rx_msg.buf);    break;
+    case ID_EM_STATUS:        em_status.load(rx_msg.buf);         break;
+  }         
+}
+
 //CAN message write handler
 void write_CAN_messages() {
   // set voltage message values
   bms_voltages.set_low(min_voltage);
   bms_voltages.set_high(max_voltage);
-  bms_voltages.set_average(total_voltage / 84);
+  bms_voltages.set_average(total_voltage / 126);
   bms_voltages.set_total(total_voltage / 100);
   // set temperature message values
   bms_temperatures.set_low_temperature(gpio_temps[min_thermistor_location[0]][min_thermistor_location[1]] * 100);
   bms_temperatures.set_high_temperature(gpio_temps[max_thermistor_location[0]][max_thermistor_location[1]] * 100);
-  bms_temperatures.set_average_temperature(total_thermistor_temps * 100 / 32);
+  bms_temperatures.set_average_temperature(total_thermistor_temps * 100 / 48);
   // set onboard temperature message values
   bms_onboard_temperatures.set_low_temperature(gpio_temps[min_board_temp_location[0]][min_board_temp_location[1]] * 100);
   bms_onboard_temperatures.set_high_temperature(gpio_temps[max_board_temp_location[0]][max_board_temp_location[1]] * 100);
-  bms_onboard_temperatures.set_average_temperature(total_board_temps * 100 / 4);
+  bms_onboard_temperatures.set_average_temperature(total_board_temps * 100 / 6);
 
   //Write BMS_status message
   if (can_bms_status_timer > 100) {
     msg.id = ID_BMS_STATUS;
     msg.len = sizeof(bms_status);
     bms_status.write(msg.buf);
-    CAN.write(msg);
+    TELEM_CAN.write(msg);
     can_bms_status_timer = 0;
   }
   // Write BMS_voltages message
@@ -443,7 +483,7 @@ void write_CAN_messages() {
     msg.id = ID_BMS_VOLTAGES;
     msg.len = sizeof(bms_voltages);
     bms_voltages.write(msg.buf);
-    CAN.write(msg);
+    TELEM_CAN.write(msg);
     can_bms_voltages_timer = 0;
   }
   // Write BMS_temperatures message
@@ -451,7 +491,7 @@ void write_CAN_messages() {
     msg.id = ID_BMS_TEMPERATURES;
     msg.len = sizeof(bms_temperatures);
     bms_temperatures.write(msg.buf);
-    CAN.write(msg);
+    TELEM_CAN.write(msg);
     can_bms_temps_timer = 0;
   }
   // Write BMS_onboard_temperatures message
@@ -459,7 +499,7 @@ void write_CAN_messages() {
     msg.id = ID_BMS_ONBOARD_TEMPERATURES;
     msg.len = sizeof(bms_onboard_temperatures);
     bms_onboard_temperatures.write(msg.buf);
-    CAN.write(msg);
+    TELEM_CAN.write(msg);
     can_bms_onboard_temps_timer = 0;
   }
   // write detailed voltages for one IC group
@@ -479,7 +519,7 @@ void write_CAN_detailed_voltages() {
     can_voltage_ic++;
     can_voltage_group = 0;
   }
-  if (can_voltage_ic > 7) {
+  if (can_voltage_ic > (TOTAL_IC-1)) {
     can_voltage_ic = 0;
     can_voltage_group = 0;
   }
@@ -492,7 +532,7 @@ void write_CAN_detailed_voltages() {
     msg.id = ID_BMS_DETAILED_VOLTAGES;
     msg.len = sizeof(bms_detailed_voltages);
     bms_detailed_voltages.write(msg.buf);
-    CAN.write(msg);
+    TELEM_CAN.write(msg);
   }
   can_voltage_group += 3;
 }
@@ -502,7 +542,7 @@ void write_CAN_detailed_temps() {
     can_gpio_ic++;
     can_gpio_group = 0;
   }
-  if (can_gpio_ic > 7) {
+  if (can_gpio_ic > (TOTAL_IC-1)) {
     can_gpio_ic = 0;
   }
   bms_detailed_temperatures.set_ic_id(can_gpio_ic);
@@ -513,7 +553,7 @@ void write_CAN_detailed_temps() {
   msg.id = ID_BMS_DETAILED_TEMPERATURES;
   msg.len = sizeof(bms_detailed_temperatures);
   bms_detailed_temperatures.write(msg.buf);
-  CAN.write(msg);
+  TELEM_CAN.write(msg);
   can_gpio_group += 3;
 }
 
@@ -549,27 +589,28 @@ void print_voltages() {
   Serial.println("------------------------------------------------------------------------------------------------------------------------------------------------------------");
   Serial.print("Max Voltage: "); Serial.print(cell_voltages[max_voltage_location[0]][max_voltage_location[1]] / 10000.0, 4); Serial.print("V \t ");
   Serial.print("Min Voltage: "); Serial.print(cell_voltages[min_voltage_location[0]][min_voltage_location[1]] / 10000.0, 4); Serial.print("V \t");
-  Serial.print("Avg Voltage: "); Serial.print(total_voltage / 840000.0, 4); Serial.println("V \t");
+  Serial.print("Avg Voltage: "); Serial.print(total_voltage / 1260000.0, 4); Serial.println("V \t");
   Serial.println("------------------------------------------------------------------------------------------------------------------------------------------------------------");
   Serial.println("Raw Cell Voltages\t\t\t\t\t\t\t\t\t\t\t\t\tBalancing Status");
-  Serial.print("\tC0\tC1\tC2\tC3\tC4\tC5\tC6\tC7\tC8\tC9\tC10\tC11\t\t");  
+  Serial.print("\tC0\tC1\tC2\tC3\tC4\tC5\tC6\tC7\tC8\tC9\tC10\tC11\t\t");
   if (currently_balancing) {
     Serial.println("\tC0\tC1\tC2\tC3\tC4\tC5\tC6\tC7\tC8\tC9\tC10\tC11");
-  }
-  Serial.println();
-  for (int ic = 0; ic < TOTAL_IC; ic++) {
-    Serial.print("IC"); Serial.print(ic); Serial.print("\t");
-    for (int cell = 0; cell < EVEN_IC_CELLS; cell++) {
-      Serial.print(cell_voltages[ic][cell] / 10000.0, 4); Serial.print("V\t");
-    }
-    if (currently_balancing) {
-      Serial.print("\t\t");
-      for (int cell = 0; cell < EVEN_IC_CELLS; cell++) {
-        Serial.print(cell_balance_status[ic][cell]); Serial.print("\t");
-      }
-    }
+  } else {
     Serial.println();
   }
+    for (int ic = 0; ic < TOTAL_IC; ic++) {
+      Serial.print("IC"); Serial.print(ic); Serial.print("\t");
+      for (int cell = 0; cell < EVEN_IC_CELLS; cell++) {
+        Serial.print(cell_voltages[ic][cell] / 10000.0, 4); Serial.print("V\t");
+      }
+      if (currently_balancing) {
+        Serial.print("\t\t");
+        for (int cell = 0; cell < EVEN_IC_CELLS; cell++) {
+          Serial.print(cell_balance_status[ic][cell]); Serial.print("\t");
+        }
+      }
+      Serial.println();
+    }
 }
 
 // Print values of temperature and humidity sensors in GPIOs
@@ -580,10 +621,10 @@ void print_gpios() {
   }
   Serial.print("Max Board Temp: "); Serial.print(gpio_temps[max_board_temp_location[0]][max_board_temp_location[1]], 3); Serial.print("C \t ");
   Serial.print("Min Board Temp: "); Serial.print(gpio_temps[min_board_temp_location[0]][min_board_temp_location[1]], 3); Serial.print("C \t");
-  Serial.print("Avg Board Temp: "); Serial.print(total_board_temps / 4, 3); Serial.println("C \t");
+  Serial.print("Avg Board Temp: "); Serial.print(total_board_temps / 6, 3); Serial.println("C \t");
   Serial.print("Max Thermistor Temp: "); Serial.print(gpio_temps[max_thermistor_location[0]][max_thermistor_location[1]], 3); Serial.print("C \t");
   Serial.print("Min Thermistor Temp: "); Serial.print(gpio_temps[min_thermistor_location[0]][min_thermistor_location[1]], 3); Serial.print("C \t");
-  Serial.print("Avg Thermistor Temp: "); Serial.print(total_thermistor_temps / 32, 3); Serial.println("C \t");
+  Serial.print("Avg Thermistor Temp: "); Serial.print(total_thermistor_temps / 48, 3); Serial.println("C \t");
   Serial.print("Max Humidity: "); Serial.print(gpio_temps[max_humidity_location[0]][max_humidity_location[1]], 3); Serial.println("% \t ");
   Serial.println("------------------------------------------------------------------------------------------------------------------------------------------------------------");
   Serial.println("Raw Segment Temperatures");
