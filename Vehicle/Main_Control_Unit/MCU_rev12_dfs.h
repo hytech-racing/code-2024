@@ -15,7 +15,7 @@
 #define ECU_SDO 11
 
 #define STEERING_CS 10
-#define STEERING_SPI_SPEED 2000000
+#define STEERING_SPI_SPEED 1000000
 
 #define IMU_DATAREADY 35
 #define IMU_SYNC 37
@@ -59,7 +59,7 @@
 #define ADC_ACCEL_1_CHANNEL 0
 #define ADC_ACCEL_2_CHANNEL 1
 
-#define ADC_STEERING_CHANNEL 4
+#define ADC_STEERING_2_CHANNEL 4
 
 #define ADC_GLV_READ_CHANNEL 4
 
@@ -84,7 +84,7 @@
 
 
 #define ALPHA 0.9772                     // parameter for the sowftware filter used on ADC pedal channels
-#define ADC_SPI_SPEED 2000000            
+#define ADC_SPI_SPEED 1000000            
 #define TORQUE_ADJUSTMENT_VOLTAGE 3.5242 
 
 #define LOAD_CELL1_OFFSET 0

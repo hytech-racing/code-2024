@@ -17,7 +17,7 @@ public:
 
   inline uint16_t get_dc_bus_voltage()      const { return dc_bus_voltage; }
   inline int32_t get_actual_power()      const { return actual_power; }
-  inline uint16_t get_feedback_torque()      const { return feedback_torque; }
+  inline int16_t get_feedback_torque()      const { return feedback_torque; }
 
 private:
   uint16_t dc_bus_voltage; //dc bus voltage in 1V

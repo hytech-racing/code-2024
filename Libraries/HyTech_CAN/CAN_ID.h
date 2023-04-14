@@ -50,8 +50,8 @@
 #define ID_GPS_OTHER                                                0xEF
 
 //#define ID_CHARGER_CONTROL
-#define ID_CHARGER_CONTROL                                          0x1806E0F4
-#define ID_CHARGER_DATA                                             0x18FF50E0
+#define ID_CHARGER_CONTROL                                          0x1806E5F4
+#define ID_CHARGER_DATA                                             0x18FF50E5
 
 #define ID_EM_STATUS                                                0x100
 #define ID_EM_MEASUREMENT                                           0x400

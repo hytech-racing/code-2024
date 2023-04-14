@@ -23,7 +23,7 @@
 #define MAX_SUCCESSIVE_FAULTS 20   // Number of successive faults permitted before AMS fault is broadcast over CAN
 #define MIN_VOLTAGE 30000          // Minimum allowable single cell voltage in units of 100μV
 #define MAX_VOLTAGE 42000          // Maxiumum allowable single cell voltage in units of 100μV
-#define MAX_TOTAL_VOLTAGE 3550000  // Maximum allowable pack total voltage in units of 100μV
+#define MAX_TOTAL_VOLTAGE 5330000  // Maximum allowable pack total voltage in units of 100μV
 #define MAX_THERMISTOR_VOLTAGE 26225   // Maximum allowable pack temperature corresponding to 60C in units 100μV
 #define BALANCE_ON true
 #define BALANCE_COOL 6000             // Sets balancing duty cycle as 33.3%
@@ -62,7 +62,7 @@ float total_thermistor_temps = 0;
 Metro charging_timer = Metro(5000); // Timer to check if charger is still talking to ACU
 Metro CAN_timer = Metro(2); // Timer that spaces apart writes for CAN messages so as to not saturate CAN bus
 Metro print_timer = Metro(500);
-Metro balance_timer(BALANCE_HOT);
+Metro balance_timer(BALANCE_STANDARD);
 Metro timer_CAN_em_forward(100);
 IntervalTimer pulse_timer;    //AMS ok pulse timer
 bool next_pulse = true; //AMS ok pulse
@@ -118,7 +118,7 @@ void setup() {
   Serial.begin(115200);
   SPI.begin();
   TELEM_CAN.begin();
-  TELEM_CAN.setBaudRate(1000000);
+  TELEM_CAN.setBaudRate(500000);
   ENERGY_METER_CAN.begin();
   ENERGY_METER_CAN.setBaudRate(500000);
   ENERGY_METER_CAN.enableMBInterrupts();
@@ -386,6 +386,7 @@ void temp_fault_check() {
 void balance_cells() {
   if (balance_timer.check()) {
     balance_timer.reset();
+    
     if (min_voltage < 30000 || min_voltage > 42000) {
       Serial.print("BALANCE HALT: BALANCE VOLTAGE SET AS "); Serial.print(min_voltage / 10000.0, 4); Serial.println(", OUTSIDE OF SAFE BOUNDS.");
       return;
@@ -394,6 +395,7 @@ void balance_cells() {
       Serial.print("BALANCE HALT: CHECK PACK FAULTS");
       return;
     }
+    
     Serial.print("Balancing voltage: "); Serial.println(min_voltage / 10000.0, 4);
     for (uint16_t i = 0; i < TOTAL_IC; i++) {
       uint16_t cell_balance_setting = 0x0;
@@ -457,16 +459,16 @@ void write_CAN_messages() {
   // set voltage message values
   bms_voltages.set_low(min_voltage);
   bms_voltages.set_high(max_voltage);
-  bms_voltages.set_average(total_voltage / 84);
+  bms_voltages.set_average(total_voltage / 126);
   bms_voltages.set_total(total_voltage / 100);
   // set temperature message values
   bms_temperatures.set_low_temperature(gpio_temps[min_thermistor_location[0]][min_thermistor_location[1]] * 100);
   bms_temperatures.set_high_temperature(gpio_temps[max_thermistor_location[0]][max_thermistor_location[1]] * 100);
-  bms_temperatures.set_average_temperature(total_thermistor_temps * 100 / 32);
+  bms_temperatures.set_average_temperature(total_thermistor_temps * 100 / 48);
   // set onboard temperature message values
   bms_onboard_temperatures.set_low_temperature(gpio_temps[min_board_temp_location[0]][min_board_temp_location[1]] * 100);
   bms_onboard_temperatures.set_high_temperature(gpio_temps[max_board_temp_location[0]][max_board_temp_location[1]] * 100);
-  bms_onboard_temperatures.set_average_temperature(total_board_temps * 100 / 4);
+  bms_onboard_temperatures.set_average_temperature(total_board_temps * 100 / 6);
 
   //Write BMS_status message
   if (can_bms_status_timer > 100) {
@@ -587,7 +589,7 @@ void print_voltages() {
   Serial.println("------------------------------------------------------------------------------------------------------------------------------------------------------------");
   Serial.print("Max Voltage: "); Serial.print(cell_voltages[max_voltage_location[0]][max_voltage_location[1]] / 10000.0, 4); Serial.print("V \t ");
   Serial.print("Min Voltage: "); Serial.print(cell_voltages[min_voltage_location[0]][min_voltage_location[1]] / 10000.0, 4); Serial.print("V \t");
-  Serial.print("Avg Voltage: "); Serial.print(total_voltage / 840000.0, 4); Serial.println("V \t");
+  Serial.print("Avg Voltage: "); Serial.print(total_voltage / 1260000.0, 4); Serial.println("V \t");
   Serial.println("------------------------------------------------------------------------------------------------------------------------------------------------------------");
   Serial.println("Raw Cell Voltages\t\t\t\t\t\t\t\t\t\t\t\t\tBalancing Status");
   Serial.print("\tC0\tC1\tC2\tC3\tC4\tC5\tC6\tC7\tC8\tC9\tC10\tC11\t\t");
@@ -619,10 +621,10 @@ void print_gpios() {
   }
   Serial.print("Max Board Temp: "); Serial.print(gpio_temps[max_board_temp_location[0]][max_board_temp_location[1]], 3); Serial.print("C \t ");
   Serial.print("Min Board Temp: "); Serial.print(gpio_temps[min_board_temp_location[0]][min_board_temp_location[1]], 3); Serial.print("C \t");
-  Serial.print("Avg Board Temp: "); Serial.print(total_board_temps / 4, 3); Serial.println("C \t");
+  Serial.print("Avg Board Temp: "); Serial.print(total_board_temps / 6, 3); Serial.println("C \t");
   Serial.print("Max Thermistor Temp: "); Serial.print(gpio_temps[max_thermistor_location[0]][max_thermistor_location[1]], 3); Serial.print("C \t");
   Serial.print("Min Thermistor Temp: "); Serial.print(gpio_temps[min_thermistor_location[0]][min_thermistor_location[1]], 3); Serial.print("C \t");
-  Serial.print("Avg Thermistor Temp: "); Serial.print(total_thermistor_temps / 32, 3); Serial.println("C \t");
+  Serial.print("Avg Thermistor Temp: "); Serial.print(total_thermistor_temps / 48, 3); Serial.println("C \t");
   Serial.print("Max Humidity: "); Serial.print(gpio_temps[max_humidity_location[0]][max_humidity_location[1]], 3); Serial.println("% \t ");
   Serial.println("------------------------------------------------------------------------------------------------------------------------------------------------------------");
   Serial.println("Raw Segment Temperatures");
