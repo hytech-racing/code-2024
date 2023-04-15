@@ -33,7 +33,6 @@
 
 #define ADIS16460_h
 #include "Arduino.h"
-#include <SPI.h>
 
 // User Register Memory Map from Table 6
 #define FLASH_CNT   0x00  //Flash memory write count
@@ -122,6 +121,8 @@ public:
 
   // Scale delta velocity
   float deltaVelocityScale(int16_t sensorData);
+
+  uint8_t transferWrapper(uint8_t);
 
 private:
   // Variables to store hardware pin assignments
