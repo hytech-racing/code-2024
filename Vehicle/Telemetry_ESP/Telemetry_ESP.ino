@@ -13,6 +13,8 @@
 typedef struct perf_counters {
   uint16_t recieved = 0;
   uint16_t positions = 0;
+  uint16_t send_attempts = 0;
+  uint16_t send_successes = 0;
 } perf_counters;
 perf_counters counters;
 Metro perf_timer = Metro(1000);
@@ -39,7 +41,7 @@ int frameIndex = 0;
 
 int zeroes = 0;
 
-uint8_t broadcastAddress[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+uint8_t broadcastAddress[] = {0x7C, 0xDF, 0xA1, 0x55, 0xB5, 0xA2};
 
 esp_now_peer_info_t peerInfo;
 
@@ -95,11 +97,14 @@ void setup() {
 void loop() {
   // put your main code here, to run repeatedly:
   GPSLoop();
-  //telemLoop();
+  telemLoop();
 
   if (perf_timer.check()) {
     Serial.printf("Recieved messages: %u Positions: %u\n", counters.recieved, counters.positions);
+    Serial.printf("Send attempts: %u Send successes: %u\n\n", counters.send_attempts, counters.send_successes);
     counters.recieved = 0;
     counters.positions = 0;
+    counters.send_attempts = 0;
+    counters.send_successes = 0;
   }
 }
