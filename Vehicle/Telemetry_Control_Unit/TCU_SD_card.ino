@@ -44,6 +44,13 @@ void createFile() {
     #endif
 }
 
+void write_buf_to_SD(SD_write_buf *buf) {
+  if (buf->size > 0) {
+    logger.write(buf->buffer, buf->size);
+    buf->size = 0;
+  }  
+}
+
 /* Writes a given CAN message to the SD card
   @param *msg pointer to a CAN message
   */

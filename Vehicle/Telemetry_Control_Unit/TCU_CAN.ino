@@ -54,6 +54,14 @@ void parse_can_message_macro(CAN_message_t& msg) {
 }
 */
 
+#pragma pack(push,1)
+typedef struct CAN_write_t {
+  uint64_t time;
+  uint16_t id;
+  uint64_t data;  
+} CAN_write_t;
+#pragma pack(pop)
+
 /* Parse all CAN lines */
 void parse_can_lines() {
   while (CAN_1.read(msg_rx)) {
@@ -81,11 +89,30 @@ void parse_can3_message(const CAN_message_t& rx_msg) {
 }
 
 void parse_can_q() {
-  uint8_t buf[256];
+  //CAN_write_t packed_msg;
+  SD_write_buf *thirdptr;
   while(!CAN_msg_q.isEmpty()) {
+    cli();
     CAN_msg_time msg_time = CAN_msg_q.pop();
-    
+    sei();
+    /*packed_msg.time = msg_time.time;
+    packed_msg.id = msg_time.msg.id;
+    packed_msg.data = msg_time.msg.data;*/    
+    incoming_buf->size += snprintf((char *)(incoming_buf->buffer)+(incoming_buf->size), SD_BUFF_SZ-incoming_buf->size, "%llu,%lx,%u,%llx", msg_time.time, msg_time.msg.id,  msg_time.msg.len, *((uint64_t *) msg_time.msg.buf));
+
+    if ((incoming_buf->size) > (.8*SD_BUFF_SZ)) {
+      cli();
+      thirdptr = incoming_buf;
+      incoming_buf = current_write_buf;
+      current_write_buf = thirdptr;  
+      incoming_buf->size = 0;    
+      sei();      
+    }
   }
+}
+
+bool allow_message(const CAN_message_t& rx_msg) {
+    
 }
 
 /* Parse a result of a CAN line 

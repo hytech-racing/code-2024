@@ -17,7 +17,7 @@
 #include "CircularBuffer.h"
 
 #include <SD.h>
-#include <MTP_Teensy.h>
+//#include <MTP_Teensy.h>
 #include <FlexCAN_T4.h>
 #include <HyTech_CAN.h>
 #include <kinetis_flexcan.h>
@@ -39,6 +39,9 @@
 #define SUPPLY_READ_CHANNEL 2
 #define COOLING_CURRENT_CHANNEL 3
 #define ALPHA 0.9772                     // parameter for the sowftware filter used on ADC pedal channels
+
+#define CAN_MSG_Q_SZ 512
+#define SD_BUFF_SZ 4096
 
 /*
  * Variables to store filtered values from ADC channels
@@ -62,15 +65,32 @@ typedef struct CAN_msg_time {
   CAN_message_t msg;
   uint64_t time = 0;
 } CAN_msg_time;
-CircularBuffer<CAN_msg_time, 128> CAN_msg_q;
+CircularBuffer<CAN_msg_time, CAN_MSG_Q_SZ> CAN_msg_q;
+
+typedef struct SD_write_buf {
+  unsigned int size = 0;
+  uint8_t buffer[SD_BUFF_SZ];
+} SD_write_buf;
+SD_write_buf SD_buf_1;
+SD_write_buf SD_buf_2;
+SD_write_buf *incoming_buf = &SD_buf_1;
+SD_write_buf *current_write_buf = &SD_buf_2;
+
+
 
 File logger;
 
+/*
+ * Perf counters and debug
+ */
 typedef struct perf_counters {
   uint16_t CAN_1_freq = 0;
   uint16_t CAN_2_freq = 0;
   uint16_t CAN_3_freq = 0;
   uint16_t GPS_freq = 0;
+  uint32_t loops = 0;
+  uint32_t bytes_written = 0;
+  uint16_t messages_queued = 0;
 } perf_counters;
 perf_counters counters;
 Metro timer_debug_RTC = Metro(1000);
@@ -165,9 +185,9 @@ void send_xbee();
 void sd_date_time(uint16_t* date, uint16_t* time);
 
 void setup() {
-    MTP.begin();
+    //MTP.begin();
     setupSD();
-    MTP.addFilesystem(SD, "SD Card");
+    //MTP.addFilesystem(SD, "SD Card");
     
     /* Set up Serial, XBee and CAN */
     Serial.begin(115200);
@@ -202,22 +222,33 @@ void loop() {
     CAN_1.events();
     CAN_2.events();
     CAN_3.events();
-    MTP.loop();
+    //MTP.loop();
     /* Process and log incoming CAN messages */
     //parse_can_lines();
-    read_analog_values();
+    //read_analog_values();
     readESP();
     /* Send messages over XBee */
     send_xbee();
+    parse_can_q();
+    write_buf_to_SD(current_write_buf);
     /* Flush data to SD card occasionally */
     if (timer_flush.check()) {
         logger.flush(); // Flush data to disk (data is also flushed whenever the 512 Byte buffer fills up, but this call ensures we don't lose more than a second of data when the car turns off)
     }
     /* Print timestamp to serial occasionally */
     if (timer_debug_RTC.check()) {
-        Serial.println(Teensy3Clock.get());
-        Serial.printf("CAN1: %u, CAN2: %u, CAN3: %u, GPS: %u\n",counters.CAN_1_freq, counters.CAN_2_freq, counters.CAN_3_freq, counters.GPS_freq);
-        counters = (perf_counters){.CAN_1_freq = 0, .CAN_2_freq = 0, .CAN_3_freq = 0, .GPS_freq = 0};
+        Serial.printf("Clock: %u\n", Teensy3Clock.get());
+        Serial.printf("CAN1: %u, CAN2: %u, CAN3: %u, GPS: %u, Loops: %lu\n",counters.CAN_1_freq, counters.CAN_2_freq, counters.CAN_3_freq, counters.GPS_freq, counters.loops);
+        Serial.printf("Bytes written: %lu Messages queued: %u\n", counters.bytes_written, counters.messages_queued);
+        Serial.println();
+        counters = (perf_counters){
+          .CAN_1_freq = 0, 
+          .CAN_2_freq = 0, 
+          .CAN_3_freq = 0, 
+          .GPS_freq = 0, 
+          .loops = 0,
+          .bytes_written = 0,
+          .messages_queued = 0};
     }
     /* Process MCU analog readings */
     if (timer_mcu_analog_readings.check()) {
@@ -229,6 +260,7 @@ void loop() {
         write_total_discharge();
     }
     #endif
+    counters.loops++;
 }
 
 
