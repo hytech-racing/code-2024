@@ -103,6 +103,17 @@ void setup()
   esp_now_register_recv_cb(OnDataRecv);
 }
 
+void setupMovingBase() {
+  bool response = myGNSS.newCfgValset(); // Create a new Configuration Item VALSET message
+  response &= myGNSS.addCfgValset8(UBLOX_CFG_MSGOUT_RTCM_3X_TYPE1005_I2C, 1); //Enable message 1005 to output through I2C port, message every second
+  response &= myGNSS.addCfgValset8(UBLOX_CFG_MSGOUT_RTCM_3X_TYPE1074_I2C, 1);
+  response &= myGNSS.addCfgValset8(UBLOX_CFG_MSGOUT_RTCM_3X_TYPE1084_I2C, 1);
+  response &= myGNSS.addCfgValset8(UBLOX_CFG_MSGOUT_RTCM_3X_TYPE1094_I2C, 1);
+  response &= myGNSS.addCfgValset8(UBLOX_CFG_MSGOUT_RTCM_3X_TYPE1124_I2C, 1);
+  response &= myGNSS.addCfgValset8(UBLOX_CFG_MSGOUT_RTCM_3X_TYPE1230_I2C, 10); // Enable message 1230 every 10 seconds
+  response &= myGNSS.sendCfgValset(); // Send the VALSET
+}
+
 void loop()
 {
   //Query module. The module only responds when a new position is available

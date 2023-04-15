@@ -49,6 +49,9 @@ void setup(){
   }
 
   Serial.begin(115200);
+  //while(!Serial) ;
+  Serial.print("ESP Board MAC Address:  ");
+  Serial.println(WiFi.macAddress());
   Serial1.begin(115200);
   WiFi.mode(WIFI_STA);
   WiFi.setTxPower(WIFI_POWER_19_5dBm);

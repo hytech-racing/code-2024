@@ -33,6 +33,7 @@ void telemLoop() {
 
       if (result == ESP_OK) {
         Serial.println("Sent with success");
+        digitalWrite(ESP_LED_OK, !digitalRead(ESP_LED_OK));
       } else {
         Serial.println("Error sending the data");
       }

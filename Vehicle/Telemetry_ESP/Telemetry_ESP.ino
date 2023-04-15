@@ -10,6 +10,12 @@
 #include <XBTools.h>
 
 #define DEBUG true
+typedef struct perf_counters {
+  uint16_t recieved = 0;
+  uint16_t positions = 0;
+} perf_counters;
+perf_counters counters;
+Metro perf_timer = Metro(1000);
 
 
 /* 
@@ -80,6 +86,7 @@ void setup() {
   pinMode(ESP_LED_OTHER_1, OUTPUT);
   pinMode(ESP_LED_OK, OUTPUT);
   pinMode(ESP_LED_OTHER_2, OUTPUT);
+  pinMode(LED_BUILTIN, OUTPUT);
 
   esp_now_setup();
   GPSSetup();
@@ -88,5 +95,11 @@ void setup() {
 void loop() {
   // put your main code here, to run repeatedly:
   GPSLoop();
-  telemLoop();
+  //telemLoop();
+
+  if (perf_timer.check()) {
+    Serial.printf("Recieved messages: %u Positions: %u\n", counters.recieved, counters.positions);
+    counters.recieved = 0;
+    counters.positions = 0;
+  }
 }

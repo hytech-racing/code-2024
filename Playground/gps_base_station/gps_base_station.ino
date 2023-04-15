@@ -25,12 +25,23 @@
 */
 
 #include <esp_now.h>
+#include <esp_wifi.h>
 #include <WiFi.h>
 #include <Wire.h> //Needed for I2C to GNSS
+#include "Metro.h"
 
 
 #include <SparkFun_u-blox_GNSS_v3.h> //http://librarymanager/All#SparkFun_u-blox_GNSS_v3
 SFE_UBLOX_GNSS myGNSS;
+
+typedef struct perf_counters {
+  uint16_t rtcm_bytes_count = 0;
+  uint16_t bytes_sent = 0;
+  uint16_t attempts = 0;
+  uint16_t successes = 0;
+} perf_counters;
+perf_counters counters;
+Metro perf_timer = Metro(1000);
 
 //#define SERIAL_OUTPUT // Uncomment this line to push the RTCM data to a Serial port
 
@@ -38,49 +49,51 @@ typedef struct rtcm_data {
   uint8_t len;
   uint8_t data[128];
 } rtcm_data;
-
 rtcm_data rtcm_message;
 
-uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+uint8_t broadcastAddress[] = {0x7C, 0xDF, 0xA1, 0x55, 0xB5, 0xA2};
+//{0x7C, 0xDF, 0xA1, 0x4D, 0xD0, 0x3E};
 
 uint8_t enable_broadcast = 0;
 
 esp_now_peer_info_t peerInfo;
 
-
-void setup()
-{
-  delay(1000);
-  
-  pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, LOW);
-
-
-  Serial.begin(115200);
-  //while (!Serial); //Wait for user to open terminal
-  Serial.println(F("u-blox Base Station example"));  
-
+void esp_now_setup() {
   WiFi.mode(WIFI_STA);
 
-  // Init ESP-NOW
+  if (!WiFi.setTxPower(WIFI_POWER_19_5dBm)) {
+    Serial.println("Error setting transmit power");
+  }
+
+  if (esp_wifi_set_protocol(WIFI_IF_STA, WIFI_PROTOCOL_LR) != ESP_OK) {
+    Serial.println("Error initializing WIFI LR");
+    while (1);
+  }
+
   if (esp_now_init() != ESP_OK) {
     Serial.println("Error initializing ESP-NOW");
-    return;
+    while(1);
   }
 
   memcpy(peerInfo.peer_addr, broadcastAddress, 6);
-  peerInfo.channel = 0;  
+  peerInfo.channel = 0;
   peerInfo.encrypt = false;
-  if (esp_now_add_peer(&peerInfo) != ESP_OK){
-    Serial.println("Failed to add peer");
-    return;
-  }  
 
-#ifdef SERIAL_OUTPUT
+  // Add peer
+  if (esp_now_add_peer(&peerInfo) != ESP_OK) {
+    Serial.println("Failed to add peer");
+    while(1);
+  }
+  // Register for a callback function that will be called when data is received
+}
+
+void gps_setup() {
+
+  #ifdef SERIAL_OUTPUT
   // If our board supports it, we can output the RTCM data automatically on (e.g.) Serial1
   Serial1.begin(115200);
   myGNSS.setRTCMOutputPort(Serial1);
-#endif
+  #endif
 
   Wire.begin();
   Wire.setClock(400000); //Increase I2C clock speed to 400kHz
@@ -97,9 +110,9 @@ void setup()
   myGNSS.setI2COutput(COM_TYPE_UBX | COM_TYPE_NMEA | COM_TYPE_RTCM3); // Ensure RTCM3 is enabled
   myGNSS.saveConfigSelective(VAL_CFG_SUBSEC_IOPORT); //Save the communications port settings to flash and BBR
 
-  while (Serial.available()) Serial.read(); //Clear any latent chars in serial buffer
-  Serial.println(F("Press any key to begin Survey-In"));
-  while (Serial.available() == 0) ; //Wait for user to press a key
+  //while (Serial.available()) Serial.read(); //Clear any latent chars in serial buffer
+  //Serial.println(F("Press any key to begin Survey-In"));
+  //while (Serial.available() == 0) ; //Wait for user to press a key
 
   bool response = myGNSS.newCfgValset(); // Create a new Configuration Item VALSET message
   response &= myGNSS.addCfgValset8(UBLOX_CFG_MSGOUT_RTCM_3X_TYPE1005_I2C, 1); //Enable message 1005 to output through I2C port, message every second
@@ -217,9 +230,24 @@ void setup()
 
   enable_broadcast = 1;
 
-  digitalWrite(LED_BUILTIN, HIGH);
-
   myGNSS.setI2COutput(COM_TYPE_UBX | COM_TYPE_RTCM3); //Set the I2C port to output UBX and RTCM sentences (not really an option, turns on NMEA as well)
+}
+
+void setup()
+{
+  
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, LOW);
+
+
+  Serial.begin(115200);
+  //while (!Serial); //Wait for user to open terminal
+  Serial.println(F("u-blox Base Station example"));  
+
+  esp_now_setup();
+  gps_setup();
+  digitalWrite(LED_BUILTIN, HIGH);
+  perf_timer.reset();
 }
 
 void loop()
@@ -227,19 +255,26 @@ void loop()
   myGNSS.checkUblox(); //See if new data is available. Process bytes as they come in.
 
   delay(250); //Don't pound too hard on the I2C bus
+
+  if (perf_timer.check()) {
+    Serial.printf("Send Successes: %u Send Attempts: %u\n", counters.successes, counters.attempts);
+    counters.successes = 0;
+    counters.attempts = 0;
+  }
 }
 
 void sendESP(rtcm_data *data) {
   if (data->len > 120) 
   {
-    esp_err_t result = esp_now_send(broadcastAddress, data, sizeof(rtcm_data));
+    esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) data, sizeof(rtcm_data));
 
     if (result == ESP_OK) {
-    Serial.println("Sent with success");
-  }
-  else {
-    Serial.println("Error sending the data");
-  }
+      counters.attempts++;
+      counters.successes++;
+    } else {
+      counters.attempts++;
+    }
+    data->len = 0;
   }
 }
 
@@ -248,6 +283,7 @@ void sendESP(rtcm_data *data) {
 //Useful for passing the RTCM correction data to a radio, Ntrip broadcaster, etc.
 void DevUBLOXGNSS::processRTCM(uint8_t incoming)
 {
+  /*
   static uint16_t byteCounter = 0;
 
   //Pretty-print the HEX values to Serial
@@ -264,6 +300,7 @@ void DevUBLOXGNSS::processRTCM(uint8_t incoming)
   Serial.print(F(" "));
   
   byteCounter++;
+  */
 
   if (enable_broadcast) 
   {

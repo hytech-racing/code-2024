@@ -43,7 +43,7 @@ void GPSSetup() {
   }
 
   myGNSS.setI2COutput(COM_TYPE_UBX); //Set the I2C port to output UBX only (turn off NMEA noise)
-  myGNSS.setNavigationFrequency(1, VAL_LAYER_RAM); //Set output to 5 times a second. Change the RAM layer only - not BBR
+  myGNSS.setNavigationFrequency(5, VAL_LAYER_RAM); //Set output to 5 times a second. Change the RAM layer only - not BBR
 
   byte rate;
   if(myGNSS.getNavigationFrequency(&rate)) //Get the update rate of this module
@@ -67,6 +67,8 @@ void GPSLoop() {
     uint8_t encoded_gps_data[sizeof(GPS_Data) + 2*sizeof(uint8_t) + sizeof(uint16_t)];
     encode_ser_data(encoded_gps_data, (uint8_t*) &gps_data, sizeof(GPS_Data));
     TCU.write(encoded_gps_data, sizeof(GPS_Data) + 2*sizeof(uint8_t) + sizeof(uint16_t));
+    counters.positions++;
+    digitalWrite(GPS_OK, !digitalRead(GPS_OK));
   }
   //int tail = rtcm_tail;
   //myGNSS.pushRawData(rtcm_buffer, rtcm_tail);
@@ -256,7 +258,9 @@ void printFractional(int32_t fractional, uint8_t places)
 
 void onDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
 
-  Serial.println("Recieved");
+  counters.recieved++;
+  digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+  digitalWrite(GPS_RTK_OK, !digitalRead(GPS_RTK_OK));
   memcpy(&rtcm_message, incomingData, len);
   myGNSS.pushRawData(rtcm_message.data, rtcm_message.len);
   //memcpy((rtcm_buffer + rtcm_tail), rtcm_message.data, rtcm_message.len);
