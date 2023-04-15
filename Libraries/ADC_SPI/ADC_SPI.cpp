@@ -90,6 +90,7 @@ void ADC_SPI::read_all_channels(uint16_t *arr)
 {
   SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3));
   digitalWrite(ADC_SPI_CS, LOW);
+  cli();
   for (uint16_t i = 0; i < 8; i++) {
     digitalWrite(ADC_SPI_CLK, HIGH);
     arr[i] = 0;
@@ -106,5 +107,6 @@ void ADC_SPI::read_all_channels(uint16_t *arr)
     }
   }
   digitalWrite(ADC_SPI_CS, HIGH);
+  sei();
   SPI.endTransaction();
 }
