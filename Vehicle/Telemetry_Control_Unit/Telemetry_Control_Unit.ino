@@ -29,8 +29,6 @@
 #include <Adafruit_GPS.h>
 #include <ADC_SPI.h>
 
-#define NRF Serial2
-#define ESP Serial8
 
 #define NUM_BMS_IC 12
 #define SER_PKT_LEN 13
@@ -42,6 +40,15 @@
 
 #define CAN_MSG_Q_SZ 512
 #define SD_BUFF_SZ 4096
+
+/*
+ * Serial larger buffer
+ */
+#define NRF Serial2
+#define ESP Serial8
+#define SER_BUF_SZ 4096
+uint8_t NRFbuffer[SER_BUF_SZ];
+uint8_t ESPbuffer[SER_BUF_SZ];
 
 /*
  * Variables to store filtered values from ADC channels
@@ -67,6 +74,10 @@ typedef struct CAN_msg_time {
 } CAN_msg_time;
 CircularBuffer<CAN_msg_time, CAN_MSG_Q_SZ> CAN_msg_q;
 
+
+/*
+ * SD Card Variables
+ */
 typedef struct SD_write_buf {
   unsigned int size = 0;
   uint8_t buffer[SD_BUFF_SZ];
@@ -75,8 +86,6 @@ SD_write_buf SD_buf_1;
 SD_write_buf SD_buf_2;
 SD_write_buf *incoming_buf = &SD_buf_1;
 SD_write_buf *current_write_buf = &SD_buf_2;
-
-
 
 File logger;
 
@@ -91,6 +100,7 @@ typedef struct perf_counters {
   uint32_t loops = 0;
   uint32_t bytes_written = 0;
   uint16_t messages_queued = 0;
+  unsigned long max_loop_latency = 0;
 } perf_counters;
 perf_counters counters;
 Metro timer_debug_RTC = Metro(1000);
@@ -191,8 +201,10 @@ void setup() {
     
     /* Set up Serial, XBee and CAN */
     Serial.begin(115200);
-    NRF.begin(115200);
-    ESP.begin(115200);
+    NRF.begin(1000000);
+    NRF.addMemoryForWrite(NRFbuffer, SER_BUF_SZ);
+    ESP.begin(1000000);
+    ESP.addMemoryForWrite(ESPbuffer, SER_BUF_SZ);
 
     setupClock();
 
@@ -213,12 +225,12 @@ void setup() {
     CAN_3.onReceive(parse_can3_message);
     
     Serial.println("TCU On");
-    
-    delay(5000); // Prevents suprious text files when turning the car on and off rapidly
-    
 }
 
+Metro telem = Metro(1000);
+
 void loop() {
+    unsigned long before = millis();
     CAN_1.events();
     CAN_2.events();
     CAN_3.events();
@@ -230,16 +242,22 @@ void loop() {
     /* Send messages over XBee */
     send_xbee();
     parse_can_q();
-    write_buf_to_SD(current_write_buf);
+    
+    //write_buf_to_SD(current_write_buf);
     /* Flush data to SD card occasionally */
-    if (timer_flush.check()) {
+    if (telem.check()) { //1000
+      print_voltages_temps();
+      print_temps();
+    }
+    if (timer_flush.check()) { //100 
         logger.flush(); // Flush data to disk (data is also flushed whenever the 512 Byte buffer fills up, but this call ensures we don't lose more than a second of data when the car turns off)
     }
     /* Print timestamp to serial occasionally */
-    if (timer_debug_RTC.check()) {
+    if (timer_debug_RTC.check()) { //1000
         Serial.printf("Clock: %u\n", Teensy3Clock.get());
         Serial.printf("CAN1: %u, CAN2: %u, CAN3: %u, GPS: %u, Loops: %lu\n",counters.CAN_1_freq, counters.CAN_2_freq, counters.CAN_3_freq, counters.GPS_freq, counters.loops);
-        Serial.printf("Bytes written: %lu Messages queued: %u\n", counters.bytes_written, counters.messages_queued);
+        Serial.printf("Messages written: %lu Messages queued: %u\n", counters.bytes_written, counters.messages_queued);
+        Serial.printf("Max loop latency: %lu\n", counters.max_loop_latency);
         Serial.println();
         counters = (perf_counters){
           .CAN_1_freq = 0, 
@@ -248,10 +266,12 @@ void loop() {
           .GPS_freq = 0, 
           .loops = 0,
           .bytes_written = 0,
-          .messages_queued = 0};
+          .messages_queued = 0,
+          .max_loop_latency = 0
+          };
     }
     /* Process MCU analog readings */
-    if (timer_mcu_analog_readings.check()) {
+    if (timer_mcu_analog_readings.check()) { //500
         process_mcu_analog_readings();
     }
     /* Couloumb counting */
@@ -261,6 +281,10 @@ void loop() {
     }
     #endif
     counters.loops++;
+    unsigned long after = millis();
+    if (after-before > counters.max_loop_latency) {
+      counters.max_loop_latency = after-before;
+    }
 }
 
 

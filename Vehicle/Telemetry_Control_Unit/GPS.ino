@@ -56,7 +56,6 @@ void decodeFromBuffer() {
 }
 
 void processGPS() {
-  Serial.printf("Recieved GPS\n");
   gps_high_precision.set_gps_latitudeHp(gps_data.latitudeHp);
   gps_high_precision.set_gps_longitudeHp(gps_data.longitudeHp);
   gps_high_precision.set_gps_ellipsoidHp(gps_data.ellipsoidHp);
@@ -66,19 +65,23 @@ void processGPS() {
   gps_lat_long.set_gps_longitude(gps_data.longitude);
   gps_other.set_gps_accuracy(gps_data.accuracy);
   gps_other.set_gps_msl(gps_data.msl);
-  CAN_message_t msg;
-  gps_high_precision.write(msg.buf);
-  msg.len = sizeof(GPS_high_precision);
-  msg.id = ID_GPS_HIGH_PRECISION;
-  write_to_SD(&msg);
-  gps_lat_long.write(msg.buf);
-  msg.len = sizeof(GPS_lat_long);
-  msg.id = ID_GPS_LAT_LONG;
-  write_to_SD(&msg);
-  gps_other.write(msg.buf);
-  msg.len = sizeof(GPS_other);
-  msg.id = ID_GPS_OTHER;
-  write_to_SD(&msg);
+  uint64_t time = getTime();
+  CAN_message_t rx_msg1;
+  gps_high_precision.write(rx_msg1.buf);
+  rx_msg1.len = sizeof(GPS_high_precision);
+  rx_msg1.id = ID_GPS_HIGH_PRECISION;
+  CAN_msg_q.unshift((CAN_msg_time){ .msg = rx_msg1, .time = time });  //unclear what were passing
+  CAN_message_t rx_msg2;
+  gps_lat_long.write(rx_msg2.buf);
+  rx_msg2.len = sizeof(GPS_lat_long);
+  rx_msg2.id = ID_GPS_LAT_LONG;
+  CAN_msg_q.unshift((CAN_msg_time){ .msg = rx_msg2, .time = time });  //unclear what were passing
+  CAN_message_t rx_msg3;
+  gps_other.write(rx_msg3.buf);
+  rx_msg3.len = sizeof(GPS_other);
+  rx_msg3.id = ID_GPS_OTHER;
+  CAN_msg_q.unshift((CAN_msg_time){ .msg = rx_msg3, .time = time });  //unclear what were passing
+  counters.GPS_freq++;
 }
 
 void setTime() {
