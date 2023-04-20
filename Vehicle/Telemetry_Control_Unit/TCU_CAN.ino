@@ -54,22 +54,22 @@ void parse_can_message_macro(CAN_message_t& msg) {
 }
 */
 
-Metro mc1_status_timer = Metro(40);
-Metro mc2_status_timer = Metro(40);
-Metro mc3_status_timer = Metro(40);
-Metro mc4_status_timer = Metro(40);
-Metro mc1_temps_timer = Metro(40);
-Metro mc2_temps_timer = Metro(40);
-Metro mc3_temps_timer = Metro(40);
-Metro mc4_temps_timer = Metro(40);
-Metro mc1_energy_timer = Metro(40);
-Metro mc2_energy_timer = Metro(40);
-Metro mc3_energy_timer = Metro(40);
-Metro mc4_energy_timer = Metro(40);
-Metro mc1_setpoints_command_timer = Metro(40);
-Metro mc2_setpoints_command_timer = Metro(40);
-Metro mc3_setpoints_command_timer = Metro(40);
-Metro mc4_setpoints_command_timer = Metro(40);
+Metro mc1_status_timer = Metro(20);
+Metro mc2_status_timer = Metro(20);
+Metro mc3_status_timer = Metro(20);
+Metro mc4_status_timer = Metro(20);
+Metro mc1_temps_timer = Metro(20);
+Metro mc2_temps_timer = Metro(20);
+Metro mc3_temps_timer = Metro(20);
+Metro mc4_temps_timer = Metro(20);
+Metro mc1_energy_timer = Metro(20);
+Metro mc2_energy_timer = Metro(20);
+Metro mc3_energy_timer = Metro(20);
+Metro mc4_energy_timer = Metro(20);
+Metro mc1_setpoints_command_timer = Metro(20);
+Metro mc2_setpoints_command_timer = Metro(20);
+Metro mc3_setpoints_command_timer = Metro(20);
+Metro mc4_setpoints_command_timer = Metro(20);
 
 #pragma pack(push,1)
 typedef struct CAN_write_t {
