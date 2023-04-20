@@ -230,6 +230,11 @@ void loop() {
     Serial.println("ERROR");
     Serial.println(check_all_inverters_error());
     Serial.println(mc_energy[0].get_dc_bus_voltage());
+    Serial.println(mc_temps[0].get_diagnostic_number());
+    Serial.println(mc_temps[1].get_diagnostic_number());
+    Serial.println(mc_temps[2].get_diagnostic_number());
+    Serial.println(mc_temps[3].get_diagnostic_number());
+    Serial.println();
     Serial.println(mcu_pedal_readings.get_accelerator_pedal_1());
     Serial.println(mcu_pedal_readings.get_accelerator_pedal_2());
     Serial.println(mcu_pedal_readings.get_brake_pedal_1());
@@ -240,7 +245,7 @@ void loop() {
     Serial.println(mcu_load_cells.get_FR_load_cell());
     Serial.println(mcu_load_cells.get_RL_load_cell());
     Serial.println(mcu_load_cells.get_RR_load_cell());
-
+    
     Serial.println("MOTOR TEMPS");
     Serial.println(mc_temps[0].get_motor_temp());
     Serial.println(mc_temps[1].get_motor_temp());
@@ -250,8 +255,8 @@ void loop() {
     Serial.println("IMU");
     Serial.println(imu_accelerometer.get_vert_accel());
     Serial.println(imu_gyroscope.get_yaw());
-    Serial.println("STEERING");
-    Serial.println(mcu_analog_readings.get_steering_2());
+    Serial.println("dial");
+    Serial.println(dashboard_status.get_dial_state());
   }
 
 }
@@ -688,7 +693,7 @@ inline void set_inverter_torques() {
 
   } else {
     //currently in debug mode, no torque vectoring
-    float front_rear_balance = 0.5;
+    float front_rear_balance = 0.66;
 
     torque_setpoint_array[0] = avg_accel -  avg_brake;
     torque_setpoint_array[1] = avg_accel -  avg_brake;
@@ -700,11 +705,11 @@ inline void set_inverter_torques() {
         if (i < 2) {
           torque_setpoint_array[i] = (int16_t)(torque_setpoint_array[i] * front_rear_balance);
         } else {
-          torque_setpoint_array[i] = (int16_t)(torque_setpoint_array[i] * (1 - front_rear_balance));
+          torque_setpoint_array[i] = (int16_t)(torque_setpoint_array[i] * (2 - front_rear_balance));
         }
       } else {
         if (i < 2) {
-          torque_setpoint_array[i] = (int16_t)(torque_setpoint_array[i] * (1 - front_rear_balance));
+          torque_setpoint_array[i] = (int16_t)(torque_setpoint_array[i] * (2 -  front_rear_balance));
         } else {
           torque_setpoint_array[i] = (int16_t)(torque_setpoint_array[i] * front_rear_balance);
         }
