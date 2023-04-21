@@ -81,7 +81,8 @@ void setup() {
   Serial.print("MAC Address: ");
   Serial.println(WiFi.macAddress());
 
-  TCU.begin(115200);
+  //TCU.begin(1000000);
+  TCU.begin(1000000, SERIAL_8N1, 34, 33);
   //TCU.begin(115200, SERIAL_8N1, ESP_RX, ESP_TX);
   pinMode(GPS_OK, OUTPUT);
   pinMode(GPS_RTK_OK, OUTPUT);

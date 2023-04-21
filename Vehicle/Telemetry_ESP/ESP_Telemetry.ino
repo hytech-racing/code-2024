@@ -12,24 +12,24 @@ void telemLoop() {
   while (TCU.available()) {
     uint8_t incomingByte = TCU.read();
 
-    if (incomingByte == '\n') {
+    /*if (incomingByte == '\n') {
       zeroes++;
     } else {
       zeroes = 0;
-    }
+    }*/
 
     incomingFrame[frameIndex] = incomingByte;
     frameIndex++;
     esp_err_t result;
-    if (frameIndex >= 225 || (zeros == 3)) {
+    if (frameIndex >= 225) {
 
       //Serial.println((char *) incomingFrame);
-      if (zeros == 3) {
-        result = esp_now_send(broadcastAddress, (uint8_t *) incomingFrame, frameIndex-2);
-      }
-      else {
+      //if (zeros == 3) {
+      //  result = esp_now_send(broadcastAddress, (uint8_t *) incomingFrame, frameIndex-2);
+      //}
+      //else {
         result = esp_now_send(broadcastAddress, (uint8_t *) incomingFrame, frameIndex);
-      }
+      //}
 
       if (result == ESP_OK) {
         Serial.println("Sent with success");
