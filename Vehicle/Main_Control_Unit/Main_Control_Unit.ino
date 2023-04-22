@@ -858,7 +858,7 @@ inline void read_all_adcs() {
     mcu_pedal_readings.set_brake_pedal_1(adc1_inputs[ADC_BRAKE_1_CHANNEL]);
     mcu_pedal_readings.set_brake_pedal_2(adc1_inputs[ADC_BRAKE_2_CHANNEL]);
     mcu_analog_readings.set_steering_2(adc1_inputs[ADC_STEERING_2_CHANNEL]);
-    mcu_load_cells.set_RL_load_cell(adc1_inputs[ADC_RL_LOAD_CELL_CHANNEL]);
+    mcu_load_cells.set_RL_load_cell((uint16_t)(adc1_inputs[ADC_RL_LOAD_CELL_CHANNEL]*LOAD_CELL3_SLOPE + LOAD_CELL3_OFFSET));
 
     mcu_status.set_brake_pedal_active(mcu_pedal_readings.get_brake_pedal_1() >= BRAKE_ACTIVE);
     digitalWrite(BRAKE_LIGHT_CTRL, mcu_status.get_brake_pedal_active());
@@ -867,9 +867,9 @@ inline void read_all_adcs() {
 
     uint16_t adc2_inputs[8];
     ADC2.read_all_channels(&adc2_inputs[0]);
-    mcu_load_cells.set_RR_load_cell(adc2_inputs[ADC_RR_LOAD_CELL_CHANNEL]);
-    mcu_load_cells.set_FL_load_cell(adc2_inputs[ADC_FL_LOAD_CELL_CHANNEL]);
-    mcu_load_cells.set_FR_load_cell(adc2_inputs[ADC_FR_LOAD_CELL_CHANNEL]);
+    mcu_load_cells.set_RR_load_cell((uint16_t)(adc2_inputs[ADC_RR_LOAD_CELL_CHANNEL]*LOAD_CELL4_SLOPE + LOAD_CELL4_OFFSET));
+    mcu_load_cells.set_FL_load_cell((uint16_t)(adc2_inputs[ADC_FL_LOAD_CELL_CHANNEL]*LOAD_CELL1_SLOPE + LOAD_CELL1_OFFSET));
+    mcu_load_cells.set_FR_load_cell((uint16_t)(adc2_inputs[ADC_FR_LOAD_CELL_CHANNEL]*LOAD_CELL2_SLOPE + LOAD_CELL2_OFFSET));
 
     uint16_t adc3_inputs[8];
     ADC3.read_all_channels(&adc3_inputs[0]);
