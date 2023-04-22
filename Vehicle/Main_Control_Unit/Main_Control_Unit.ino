@@ -245,7 +245,10 @@ void loop() {
     Serial.println(mcu_load_cells.get_FR_load_cell());
     Serial.println(mcu_load_cells.get_RL_load_cell());
     Serial.println(mcu_load_cells.get_RR_load_cell());
-    
+    Serial.println(torque_setpoint_array[0]);
+    Serial.println(torque_setpoint_array[1]);
+    Serial.println(torque_setpoint_array[2]);
+    Serial.println(torque_setpoint_array[3]);
     Serial.println("MOTOR TEMPS");
     Serial.println(mc_temps[0].get_motor_temp());
     Serial.println(mc_temps[1].get_motor_temp());
@@ -749,10 +752,10 @@ inline void set_inverter_torques() {
       // Load cell torque vectoring
       total_torque = 4 * (avg_accel - avg_brake) ;
       total_load_cells = mcu_load_cells.get_FL_load_cell() + mcu_load_cells.get_FR_load_cell() + mcu_load_cells.get_RL_load_cell() + mcu_load_cells.get_RR_load_cell();
-      torque_setpoint_array[0] = (int16_t)(mcu_load_cells.get_FL_load_cell() / total_load_cells * total_torque);
-      torque_setpoint_array[1] = (int16_t)(mcu_load_cells.get_FR_load_cell() / total_load_cells * total_torque);
-      torque_setpoint_array[2] = (int16_t)(mcu_load_cells.get_RL_load_cell() / total_load_cells * total_torque);
-      torque_setpoint_array[3] = (int16_t)(mcu_load_cells.get_RR_load_cell() / total_load_cells * total_torque);
+      torque_setpoint_array[0] = (int16_t)((float)mcu_load_cells.get_FL_load_cell() / (float)total_load_cells * (float)total_torque);
+      torque_setpoint_array[1] = (int16_t)((float)mcu_load_cells.get_FR_load_cell() / (float)total_load_cells * (float)total_torque);
+      torque_setpoint_array[2] = (int16_t)((float)mcu_load_cells.get_RL_load_cell() / (float)total_load_cells * (float)total_torque);
+      torque_setpoint_array[3] = (int16_t)((float)mcu_load_cells.get_RR_load_cell() / (float)total_load_cells * (float)total_torque);
       break;
     default:
       torque_setpoint_array[0] = 0;
