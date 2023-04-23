@@ -11,6 +11,7 @@
 #define _USE_MATH_DEFINES
 #include <cmath>
 #include <time.h>
+#include <deque>
 
 #include "ADC_SPI.h"
 #include "STEERING_SPI.h"
@@ -120,8 +121,13 @@ unsigned long previous_data_time;
 int16_t torque_setpoint_array[4];
 int16_t speed_setpoint_array[4];
 
+uint16_t prev_load_cell_readings[4] = {0, 0, 0, 0};
+float load_cell_alpha = 0.95;
+
 void setup() {
   // no torque can be provided on startup
+  
+  
   mcu_status.set_max_torque(0);
   mcu_status.set_torque_mode(0);
   mcu_status.set_software_is_ok(true);
@@ -771,8 +777,18 @@ inline void set_inverter_torques() {
       }
       break;
     case 4:
+    // Load cell torque vectoring
+      load_cell_alpha = 0.95;
+      total_torque = 4 * (avg_accel - avg_brake) ;
+      total_load_cells = mcu_load_cells.get_FL_load_cell() + mcu_load_cells.get_FR_load_cell() + mcu_load_cells.get_RL_load_cell() + mcu_load_cells.get_RR_load_cell();
+      torque_setpoint_array[0] = (int16_t)((float)mcu_load_cells.get_FL_load_cell() / (float)total_load_cells * (float)total_torque);
+      torque_setpoint_array[1] = (int16_t)((float)mcu_load_cells.get_FR_load_cell() / (float)total_load_cells * (float)total_torque);
+      torque_setpoint_array[2] = (int16_t)((float)mcu_load_cells.get_RL_load_cell() / (float)total_load_cells * (float)total_torque);
+      torque_setpoint_array[3] = (int16_t)((float)mcu_load_cells.get_RR_load_cell() / (float)total_load_cells * (float)total_torque);
+      break;
     case 5:
       // Load cell torque vectoring
+      load_cell_alpha = 0.98;
       total_torque = 4 * (avg_accel - avg_brake) ;
       total_load_cells = mcu_load_cells.get_FL_load_cell() + mcu_load_cells.get_FR_load_cell() + mcu_load_cells.get_RL_load_cell() + mcu_load_cells.get_RR_load_cell();
       torque_setpoint_array[0] = (int16_t)((float)mcu_load_cells.get_FL_load_cell() / (float)total_load_cells * (float)total_torque);
@@ -876,7 +892,12 @@ inline void set_inverter_torques() {
 
 inline void read_all_adcs() {
   if (timer_read_all_adcs.check()) {
-
+    
+    prev_load_cell_readings[0] = mcu_load_cells.get_FL_load_cell();
+    prev_load_cell_readings[1] = mcu_load_cells.get_FR_load_cell();
+    prev_load_cell_readings[2] = mcu_load_cells.get_RL_load_cell();
+    prev_load_cell_readings[3] = mcu_load_cells.get_RR_load_cell();
+    
     uint16_t adc1_inputs[8];
     ADC1.read_all_channels(&adc1_inputs[0]);
     mcu_pedal_readings.set_accelerator_pedal_1(adc1_inputs[ADC_ACCEL_1_CHANNEL]);
@@ -884,7 +905,7 @@ inline void read_all_adcs() {
     mcu_pedal_readings.set_brake_pedal_1(adc1_inputs[ADC_BRAKE_1_CHANNEL]);
     mcu_pedal_readings.set_brake_pedal_2(adc1_inputs[ADC_BRAKE_2_CHANNEL]);
     mcu_analog_readings.set_steering_2(adc1_inputs[ADC_STEERING_2_CHANNEL]);
-    mcu_load_cells.set_RL_load_cell((uint16_t)(adc1_inputs[ADC_RL_LOAD_CELL_CHANNEL]*LOAD_CELL3_SLOPE + LOAD_CELL3_OFFSET));
+    mcu_load_cells.set_RL_load_cell((uint16_t)((adc1_inputs[ADC_RL_LOAD_CELL_CHANNEL]*LOAD_CELL3_SLOPE + LOAD_CELL3_OFFSET)*(1-load_cell_alpha) + prev_load_cell_readings[2]*load_cell_alpha));
 
     mcu_status.set_brake_pedal_active(mcu_pedal_readings.get_brake_pedal_1() >= BRAKE_ACTIVE);
     digitalWrite(BRAKE_LIGHT_CTRL, mcu_status.get_brake_pedal_active());
@@ -893,9 +914,9 @@ inline void read_all_adcs() {
 
     uint16_t adc2_inputs[8];
     ADC2.read_all_channels(&adc2_inputs[0]);
-    mcu_load_cells.set_RR_load_cell((uint16_t)(adc2_inputs[ADC_RR_LOAD_CELL_CHANNEL]*LOAD_CELL4_SLOPE + LOAD_CELL4_OFFSET));
-    mcu_load_cells.set_FL_load_cell((uint16_t)(adc2_inputs[ADC_FL_LOAD_CELL_CHANNEL]*LOAD_CELL1_SLOPE + LOAD_CELL1_OFFSET));
-    mcu_load_cells.set_FR_load_cell((uint16_t)(adc2_inputs[ADC_FR_LOAD_CELL_CHANNEL]*LOAD_CELL2_SLOPE + LOAD_CELL2_OFFSET));
+    mcu_load_cells.set_RR_load_cell((uint16_t)((adc2_inputs[ADC_RR_LOAD_CELL_CHANNEL]*LOAD_CELL4_SLOPE + LOAD_CELL4_OFFSET)*(1-load_cell_alpha) + prev_load_cell_readings[3]*load_cell_alpha));
+    mcu_load_cells.set_FL_load_cell((uint16_t)((adc2_inputs[ADC_FL_LOAD_CELL_CHANNEL]*LOAD_CELL1_SLOPE + LOAD_CELL1_OFFSET)*(1-load_cell_alpha) + prev_load_cell_readings[3]*load_cell_alpha));
+    mcu_load_cells.set_FR_load_cell((uint16_t)((adc2_inputs[ADC_FR_LOAD_CELL_CHANNEL]*LOAD_CELL2_SLOPE + LOAD_CELL2_OFFSET)*(1-load_cell_alpha) + prev_load_cell_readings[3]*load_cell_alpha));
 
     uint16_t adc3_inputs[8];
     ADC3.read_all_channels(&adc3_inputs[0]);
