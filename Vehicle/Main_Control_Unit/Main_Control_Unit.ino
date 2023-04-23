@@ -693,6 +693,11 @@ inline void set_inverter_torques() {
   float attesa_alt_split = 0.5;
   float fr_slip_clamped;
   float fr_slip_factor = 2.5; // Factor of 5 causes 50/50 split at 20% r/f slip. Lower values allow more slip
+  float f_torque;
+  float r_torque;
+  float rear_lr_slip_clamped;
+  float lsd_right_split; // Fraction of rear axle torque going to rear right wheel
+  float lsd_slip_factor = 1.0;
 
   switch (dashboard_status.get_dial_state()) {
     case 0:
@@ -732,13 +737,31 @@ inline void set_inverter_torques() {
 
       if (avg_accel - avg_brake >= 0) {
         // Accelerating
-        fr_slip_clamped = (mc_status[2].get_speed() + mc_status[3].get_speed()) / (mc_status[0].get_speed() + mc_status[1].get_speed()) * fr_slip_clamped;
+        
+        fr_slip_clamped = ((mc_status[2].get_speed() + mc_status[3].get_speed()) / (mc_status[0].get_speed() + mc_status[1].get_speed()) - 1) * fr_slip_factor;
         fr_slip_clamped = min(1, max(0, fr_slip_clamped));
 
-        torque_setpoint_array[0] = 2 * ((1 - attesa_def_split) * (1 - fr_slip_clamped) + (1 - attesa_alt_split) * fr_slip_clamped) * (avg_accel -  avg_brake);
-        torque_setpoint_array[1] = 2 * ((1 - attesa_def_split) * (1 - fr_slip_clamped) + (1 - attesa_alt_split) * fr_slip_clamped) * (avg_accel -  avg_brake);
-        torque_setpoint_array[2] = 2 * ((attesa_def_split) * (1 - fr_slip_clamped) + (attesa_alt_split) * fr_slip_clamped) * (avg_accel -  avg_brake);
-        torque_setpoint_array[3] = 2 * ((attesa_def_split) * (1 - fr_slip_clamped) + (attesa_alt_split) * fr_slip_clamped) * (avg_accel -  avg_brake);
+        // set front torque
+        f_torque = 4 * ((1 - attesa_def_split) * (1 - fr_slip_clamped) + (1 - attesa_alt_split) * fr_slip_clamped) * (avg_accel -  avg_brake);
+        torque_setpoint_array[0] = f_torque / 2;
+        torque_setpoint_array[1] = f_torque / 2;
+
+        // set rear torques. eLSD
+        r_torque = 4 * ((attesa_def_split) * (1 - fr_slip_clamped) + (attesa_alt_split) * fr_slip_clamped) * (avg_accel -  avg_brake);
+        if (mc_status[2].get_speed() > mc_status[3].get_speed()) {
+          // Rear left is spinning faster than rear right, allocate torque more to rear right
+          rear_lr_slip_clamped = (mc_status[2].get_speed() / mc_status[3].get_speed() - 1) * lsd_slip_factor;
+          rear_lr_slip_clamped = min(0.5, max(0, rear_lr_slip_clamped));
+          lsd_right_split = 0.5 + rear_lr_slip_clamped;
+        } else {
+          // Rear right is spinning faster than rear left, allocate torque more to rear left
+          rear_lr_slip_clamped = (mc_status[3].get_speed() / mc_status[2].get_speed() - 1) * lsd_slip_factor;
+          rear_lr_slip_clamped = min(0.5, max(0, rear_lr_slip_clamped));
+          lsd_right_split = 0.5 - rear_lr_slip_clamped;
+        }
+
+        torque_setpoint_array[2] = r_torque * (1 - lsd_right_split);
+        torque_setpoint_array[3] = r_torque * lsd_right_split;
       } else {
         // Braking
         torque_setpoint_array[0] = 2 * (front_rear_balance) * (avg_accel - avg_brake);
