@@ -69,13 +69,18 @@ def parse_BMS_detailed_temperatures(data, id = None, time=None):
     arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
 
     root_dir = "BMS.detailed_temps.ic_{ic:02}.temp_{cell}"
-    ic_group_list = np.unique(arr[:,(1, 2)], axis = 0)
+
+    if time is not None:
+        ic_group_list = np.unique(arr[:,(1, 2)], axis = 0)
+        cells_list = [arr[:,(0,3,4,5)][(arr[:,(1,2)]==ic_group).all(axis=1)] for ic_group in ic_group_list]
+    else:
+        ic_group_list = np.unique(arr[:,(0, 1)], axis = 0)
+        cells_list = [arr[:,(2,3,4)][(arr[:,(0,1)]==ic_group).all(axis=1)] for ic_group in ic_group_list]
     dirs_list = [
         [root_dir.format(ic = int(ic_group[0]), cell = int(3*ic_group[1]+1)), \
          root_dir.format(ic = int(ic_group[0]), cell = int(3*ic_group[1]+2)), \
          root_dir.format(ic = int(ic_group[0]), cell = int(3*ic_group[1]+3))]
                   for ic_group in ic_group_list]
-    cells_list = [arr[:,(0,3,4,5)][(arr[:,(1,2)]==ic_group).all(axis=1)] for ic_group in ic_group_list]
 
     #df = pd.DataFrame(arr, columns='cols')
     cols = [vectors[i+2][4] for i in range(3)]
@@ -106,13 +111,19 @@ def parse_BMS_detailed_voltages(data, id = None, time=None):
     root_dir = "BMS.detailed_voltage.ic_{ic:02}.cell_{cell:02}"
     ic_dir = ".ic_{ic}"
     cell_dir = ".cell_{cell}"
-    ic_group_list = np.unique(arr[:,(1, 2)], axis = 0)
+
+    if time is not None:
+        ic_group_list = np.unique(arr[:,(1, 2)], axis = 0)
+        cells_list = [arr[:,(0,3,4,5)][(arr[:,(1,2)]==ic_group).all(axis=1)] for ic_group in ic_group_list]
+    else:
+        ic_group_list = np.unique(arr[:,(0, 1)], axis = 0)
+        cells_list = [arr[:,(2,3,4)][(arr[:,(0,1)]==ic_group).all(axis=1)] for ic_group in ic_group_list]
+
     dirs_list = [
         [root_dir.format(ic = int(ic_group[0]), cell = int(3*ic_group[1]+1)), \
          root_dir.format(ic = int(ic_group[0]), cell = int(3*ic_group[1]+2)), \
          root_dir.format(ic = int(ic_group[0]), cell = int(3*ic_group[1]+3))]
                   for ic_group in ic_group_list]
-    cells_list = [arr[:,(0,3,4,5)][(arr[:,(1,2)]==ic_group).all(axis=1)] for ic_group in ic_group_list]
     
 
     #df = pd.DataFrame(arr, columns='cols')
