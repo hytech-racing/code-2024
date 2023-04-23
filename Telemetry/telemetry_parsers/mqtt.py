@@ -1,6 +1,7 @@
 from parsers import MESSAGE_DICT
 import paho.mqtt.client as mqtt
 import struct
+import numpy as np
 
 MQTT_SERVER = ""
 MQTT_PORT   = 1883
@@ -15,6 +16,12 @@ def on_connect(client, userdata, flags, rc):
 
 def on_message(client, userdata, msg):
     print(msg.topic + " " + str(msg.payload))
+    message = msg.payload
+    msg_list = message.split(",")
+
+    l = MESSAGE_DICT[int(msg_list[1], base=16)][0] (np.uint64(int(msg_list[3], base=16)))
+    upload_parsed_data(l)
+
 
 def initialize_mqtt():
     client.on_connect = on_connect
@@ -22,8 +29,8 @@ def initialize_mqtt():
     client.connect(MQTT_SERVER, MQTT_PORT, 60)
     client.loop_forever()
 
-def upload_parsed_data(list):
-    for i in list:
+def upload_parsed_data(data_list):
+    for i in data_list:
         directory = i[3]
         for j in len(directory):
             topic = directory[j].replace(".", "/")
