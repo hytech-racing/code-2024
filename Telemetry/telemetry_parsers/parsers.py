@@ -3,6 +3,7 @@ import numpy as np
 from parser_helpers import get_offsets_masks, parse_to_np
 
 NOMINAL_TORQUE = 9.8
+GRAVITY = 9.80665
 
 MESSAGE_DICT = {}
 
@@ -389,6 +390,7 @@ def parse_MCU_GPS_readings(data, id = None, time=None):
     return [(arr, cols, units, directory)]
 MESSAGE_DICT[0xE7] = (parse_MCU_GPS_readings, "MCU_GPS_readings") 
 
+#done
 def parse_MCU_pedal_readings(data, id = None, time=None):
     msg_id = 0xC4
     if id is not None:
@@ -397,7 +399,12 @@ def parse_MCU_pedal_readings(data, id = None, time=None):
         if time is not None:
             time = time[mask]
     
-
+    vectors = [
+        (16, -1, False, lambda x: x*.001*NOMINAL_TORQUE, "accelerator_pedal_1", "", "MCU.pedals.accelerator_pedal_1"),
+        (16, -1, False, lambda x: x*.001*NOMINAL_TORQUE, "accelerator_pedal_2", "", "MCU.pedals.accelerator_pedal_2"),
+        (16, -1, False, lambda x: x*.001*NOMINAL_TORQUE, "brake_pedal_1", "", "MCU.pedals.brake_pedal_1"),
+        (16, -1, False, lambda x: x*.001*NOMINAL_TORQUE, "brake_pedal_2", "", "MCU.pedals.brake_pedal_2"),
+    ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
     arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
@@ -409,6 +416,7 @@ def parse_MCU_pedal_readings(data, id = None, time=None):
     return [(arr, cols, units, directory)]
 MESSAGE_DICT[0xC4] = (parse_MCU_pedal_readings, "MCU_pedal_readings") 
 
+#done
 def parse_MCU_status(data, id = None, time=None):
     msg_id = 0xC3
     if id is not None:
@@ -417,7 +425,34 @@ def parse_MCU_status(data, id = None, time=None):
         if time is not None:
             time = time[mask]
     
-
+    vectors = [
+        ( 1, -1, False, lambda x: x, "imd_ok_high"                    , "", "MCU.status.shutdown.imd_ok_high"),
+        ( 1, -1, False, lambda x: x, "shutdown_b_above_threshold"     , "", "MCU.status.shutdown.shutdown_b_above_threshold"),
+        ( 1, -1, False, lambda x: x, "bms_ok_high"                    , "", "MCU.status.shutdown.bms_ok_high"),
+        ( 1, -1, False, lambda x: x, "shutdown_c_above_threshold"     , "", "MCU.status.shutdown.shutdown_c_above_threshold"),
+        ( 1, -1, False, lambda x: x, "bspd_ok_high"                   , "", "MCU.status.shutdown.bspd_ok_high"),
+        ( 1, -1, False, lambda x: x, "shutdown_d_above_threshold"     , "", "MCU.status.shutdown.shutdown_d_above_threshold"),
+        ( 1, -1, False, lambda x: x, "software_ok_high"               , "", "MCU.status.shutdown.software_ok_high"),
+        ( 1, -1, False, lambda x: x, "shutdown_e_above_threshold"     , "", "MCU.status.shutdown.shutdown_e_above_threshold"),
+        ( 1, -1, False, lambda x: x, "mech_brake_active"              , "", "MCU.status.pedals.mech_brake_active"),
+        ( 1, 10, False, lambda x: x, "no_accel_implausability"        , "", "MCU.status.pedals.no_accel_implausability"),
+        ( 1, -1, False, lambda x: x, "no_brake_implausability"        , "", "MCU.status.pedals.no_brake_implausability"),
+        ( 1, -1, False, lambda x: x, "brake_pedal_active"             , "", "MCU.status.pedals.brake_pedal_active"),
+        ( 1, -1, False, lambda x: x, "bspd_current_high"              , "", "MCU.status.pedals.bspd_current_high"),
+        ( 1, -1, False, lambda x: x, "bspd_brake_high"                , "", "MCU.status.pedals.bspd_brake_high"),
+        ( 1, -1, False, lambda x: x, "no_accel_brake_implausability"  , "", "MCU.status.pedals.no_accel_brake_implausability"),
+        ( 3, -1, False, lambda x: x, "mcu_state"                      , "", "MCU.status.ecu.mcu_state"),
+        ( 1, -1, False, lambda x: x, "inverter_powered"               , "", "MCU.status.ecu.inverter_powered"),
+        ( 1, -1, False, lambda x: x, "energy_meter_present"           , "", "MCU.status.ecu.energy_meter_present"),
+        ( 1, -1, False, lambda x: x, "activate_buzzer"                , "", "MCU.status.ecu.activate_buzzer"),
+        ( 1, -1, False, lambda x: x, "software_is_ok"                 , "", "MCU.status.ecu.software_is_ok"),
+        ( 1, -1, False, lambda x: x, "launch_ctrl_active"             , "", "MCU.status.ecu.launch_ctrl_active"),
+        ( 2, -1, False, lambda x: x, "pack_charge_critical"           , "", "MCU.status.ecu.pack_charge_critical"),
+        ( 8, 32, False, lambda x: x, "max_torque"                    ,"Nm", "MCU.status.max_torque"),
+        ( 8, -1, False, lambda x: x, "torque_mode"                    , "", "MCU.status.torque_mode"),
+        (16, -1, False, lambda x: x/100, "distance_travelled"         ,"M", "MCU.status.distance_travelled"),
+        
+    ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
     arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
@@ -429,6 +464,7 @@ def parse_MCU_status(data, id = None, time=None):
     return [(arr, cols, units, directory)]
 MESSAGE_DICT[0xC3] = (parse_MCU_status, "MCU_status") 
 
+#TODO
 def parse_MCU_analog_readings(data, id = None, time=None):
     msg_id = 0xCC
     if id is not None:
@@ -437,7 +473,12 @@ def parse_MCU_analog_readings(data, id = None, time=None):
         if time is not None:
             time = time[mask]
     
-
+    vectors = [
+        (16, -1, True , lambda x: x     , "steering_1"          , "" , "MCU.analog.steering_1"),
+        (16, -1, False, lambda x: x     , "steering_2"          , "" , "MCU.analog.steering_2"),
+        (16, -1, True , lambda x: x/100 , "temperature"         , "C", "MCU.analog.temperature"),
+        (16, -1, False, lambda x: x/2500, "glv_battery_voltage" , "V", "MCU.analog.glv_battery_voltage"),
+    ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
     arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
@@ -1043,6 +1084,7 @@ def parse_EM_measurement(data, id = None, time=None):
     return [(arr, cols, units, directory)]
 MESSAGE_DICT[0x400] = (parse_EM_measurement, "EM_measurement") 
 
+#TODO
 def parse_IMU_accelerometer(data, id = None, time=None):
     msg_id = 0x90
     if id is not None:
@@ -1051,7 +1093,11 @@ def parse_IMU_accelerometer(data, id = None, time=None):
         if time is not None:
             time = time[mask]
     
-
+    vectors = [
+        (16, -1, True, lambda x: x*(.25/1000)*GRAVITY, "lat_accel"   , "m/s^2", "IMU.lat_accel"),
+        (16, -1, True, lambda x: x*(.25/1000)*GRAVITY, "long_accel"  , "m/s^2", "IMU.long_accel"),
+        (16, -1, True, lambda x: x*(.25/1000)*GRAVITY, "vert_accel"  , "m/s^2", "IMU.vert_accel"),
+    ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
     arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
@@ -1063,6 +1109,7 @@ def parse_IMU_accelerometer(data, id = None, time=None):
     return [(arr, cols, units, directory)]
 MESSAGE_DICT[0x90] = (parse_IMU_accelerometer, "IMU_accelerometer") 
 
+#TODO
 def parse_IMU_gryoscope(data, id = None, time=None):
     msg_id = 0x91
     if id is not None:
@@ -1071,7 +1118,11 @@ def parse_IMU_gryoscope(data, id = None, time=None):
         if time is not None:
             time = time[mask]
     
-
+    vectors = [
+        (16, -1, True, lambda x: x*.005, "yaw"    , "deg/s^2", "IMU.yaw"),
+        (16, -1, True, lambda x: x*.005, "pitch"  , "deg/s^2", "IMU.pitch"),
+        (16, -1, True, lambda x: x*.005, "roll"   , "deg/s^2", "IMU.roll"),
+    ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
     arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
