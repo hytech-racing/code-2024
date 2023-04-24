@@ -122,7 +122,7 @@ int16_t torque_setpoint_array[4];
 int16_t speed_setpoint_array[4];
 
 uint16_t prev_load_cell_readings[4] = {0, 0, 0, 0};
-float load_cell_alpha = 0.95;
+float load_cell_alpha = 0.9;
 
 void setup() {
   // no torque can be provided on startup
@@ -915,8 +915,8 @@ inline void read_all_adcs() {
     uint16_t adc2_inputs[8];
     ADC2.read_all_channels(&adc2_inputs[0]);
     mcu_load_cells.set_RR_load_cell((uint16_t)((adc2_inputs[ADC_RR_LOAD_CELL_CHANNEL]*LOAD_CELL4_SLOPE + LOAD_CELL4_OFFSET)*(1-load_cell_alpha) + prev_load_cell_readings[3]*load_cell_alpha));
-    mcu_load_cells.set_FL_load_cell((uint16_t)((adc2_inputs[ADC_FL_LOAD_CELL_CHANNEL]*LOAD_CELL1_SLOPE + LOAD_CELL1_OFFSET)*(1-load_cell_alpha) + prev_load_cell_readings[3]*load_cell_alpha));
-    mcu_load_cells.set_FR_load_cell((uint16_t)((adc2_inputs[ADC_FR_LOAD_CELL_CHANNEL]*LOAD_CELL2_SLOPE + LOAD_CELL2_OFFSET)*(1-load_cell_alpha) + prev_load_cell_readings[3]*load_cell_alpha));
+    mcu_load_cells.set_FL_load_cell((uint16_t)((adc2_inputs[ADC_FL_LOAD_CELL_CHANNEL]*LOAD_CELL1_SLOPE + LOAD_CELL1_OFFSET)*(1-load_cell_alpha) + prev_load_cell_readings[0]*load_cell_alpha));
+    mcu_load_cells.set_FR_load_cell((uint16_t)((adc2_inputs[ADC_FR_LOAD_CELL_CHANNEL]*LOAD_CELL2_SLOPE + LOAD_CELL2_OFFSET)*(1-load_cell_alpha) + prev_load_cell_readings[1]*load_cell_alpha));
 
     uint16_t adc3_inputs[8];
     ADC3.read_all_channels(&adc3_inputs[0]);
