@@ -474,10 +474,10 @@ def parse_MCU_analog_readings(data, id = None, time=None):
             time = time[mask]
     
     vectors = [
-        (16, -1, True , lambda x: x     , "steering_1"          , "" , "MCU.analog.steering_1"),
-        (16, -1, False, lambda x: x     , "steering_2"          , "" , "MCU.analog.steering_2"),
-        (16, -1, True , lambda x: x/100 , "temperature"         , "C", "MCU.analog.temperature"),
-        (16, -1, False, lambda x: x/2500, "glv_battery_voltage" , "V", "MCU.analog.glv_battery_voltage"),
+        (16, -1, True , lambda x: x*(180/(2**13)) , "steering_1"          , "" , "MCU.analog.steering_1"),
+        (16, -1, False, lambda x: x               , "steering_2"          , "" , "MCU.analog.steering_2"),
+        (16, -1, True , lambda x: x/100           , "temperature"         , "C", "MCU.analog.temperature"),
+        (16, -1, False, lambda x: x/2500          , "glv_battery_voltage" , "V", "MCU.analog.glv_battery_voltage"),
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
@@ -1094,9 +1094,9 @@ def parse_IMU_accelerometer(data, id = None, time=None):
             time = time[mask]
     
     vectors = [
-        (16, -1, True, lambda x: x*(.25/1000)*GRAVITY, "lat_accel"   , "m/s^2", "IMU.lat_accel"),
-        (16, -1, True, lambda x: x*(.25/1000)*GRAVITY, "long_accel"  , "m/s^2", "IMU.long_accel"),
-        (16, -1, True, lambda x: x*(.25/1000)*GRAVITY, "vert_accel"  , "m/s^2", "IMU.vert_accel"),
+        (16, -1, True, lambda x: x*.001, "lat_accel"   , "m/s^2", "IMU.lat_accel"),
+        (16, -1, True, lambda x: x*.001, "long_accel"  , "m/s^2", "IMU.long_accel"),
+        (16, -1, True, lambda x: x*.001, "vert_accel"  , "m/s^2", "IMU.vert_accel"),
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
@@ -1119,9 +1119,9 @@ def parse_IMU_gryoscope(data, id = None, time=None):
             time = time[mask]
     
     vectors = [
-        (16, -1, True, lambda x: x*.005, "yaw"    , "deg/s^2", "IMU.yaw"),
-        (16, -1, True, lambda x: x*.005, "pitch"  , "deg/s^2", "IMU.pitch"),
-        (16, -1, True, lambda x: x*.005, "roll"   , "deg/s^2", "IMU.roll"),
+        (16, -1, True, lambda x: x*.01, "yaw"    , "deg/s", "IMU.yaw"),
+        (16, -1, True, lambda x: x*.01, "pitch"  , "deg/s", "IMU.pitch"),
+        (16, -1, True, lambda x: x*.01, "roll"   , "deg/s", "IMU.roll"),
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
