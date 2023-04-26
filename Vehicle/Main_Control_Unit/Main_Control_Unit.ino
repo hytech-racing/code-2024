@@ -189,7 +189,7 @@ void setup() {
 
   digitalWrite(INVERTER_24V_EN, HIGH);
   digitalWrite(INVERTER_EN, HIGH);
-  mcu_status.set_inverter_powered(true);
+  mcu_status.set_inverters_error(false);
 
 
 
@@ -224,6 +224,7 @@ void loop() {
   send_CAN_inverter_setpoints();
 
   //  /* Finish restarting the inverter when timer expires */
+  check_all_inverters_error();
   reset_inverters();
   //
   //  /* handle state functionality */
@@ -584,7 +585,6 @@ void parse_rear_inv_can_message(const CAN_message_t &RX_msg) {
 //FIXME
 inline void power_off_inverter() {
   digitalWrite(INVERTER_24V_EN, LOW);
-  mcu_status.set_inverter_powered(false);
 
 #if DEBUG
   Serial.println("INVERTER POWER OFF");
@@ -978,6 +978,9 @@ uint8_t check_all_inverters_error() {
     if (mc_status[inv].get_error()) {
       error_list = error_list | (0x01 << inv);
     }
+  }
+  if(error_list){
+    mcu_status.set_inverters_error(true);
   }
   return error_list;
 }
