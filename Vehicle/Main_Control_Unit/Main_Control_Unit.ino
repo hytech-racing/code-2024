@@ -691,9 +691,15 @@ inline void set_inverter_torques() {
     avg_brake = 0;
   }
 
-  float front_rear_balance = 0.66;
+  float rear_power_balance = 0.66;
+  float front_power_balance = 1.0 - rear_power_balance;
+  float rear_brake_balance = 0.1;
+  float front_brake_balance = 1.0 - rear_brake_balance;
+
   int32_t total_torque = 0;
   int32_t total_load_cells = 0;
+  float front_load_total;
+  float rear_load_total;
 
   float attesa_def_split = 0.85;
   float attesa_alt_split = 0.5;
@@ -707,10 +713,11 @@ inline void set_inverter_torques() {
 
   switch (dashboard_status.get_dial_state()) {
     case 0:
+      // alt brake split
+      rear_brake_balance = 0.3;
+      front_brake_balance = 1.0 - rear_brake_balance;
     case 1:
-    case 2:
       // standard no torque vectoring
-      //currently in debug mode, no torque vectoring
 
       torque_setpoint_array[0] = avg_accel -  avg_brake;
       torque_setpoint_array[1] = avg_accel -  avg_brake;
@@ -720,19 +727,23 @@ inline void set_inverter_torques() {
       for (int i = 0; i < 4; i++) {
         if (torque_setpoint_array[i] >= 0) {
           if (i < 2) {
-            torque_setpoint_array[i] = (int16_t)(torque_setpoint_array[i] * front_rear_balance);
+            torque_setpoint_array[i] = (int16_t)(torque_setpoint_array[i] * front_power_balance);
           } else {
-            torque_setpoint_array[i] = (int16_t)(torque_setpoint_array[i] * (2 - front_rear_balance));
+            torque_setpoint_array[i] = (int16_t)(torque_setpoint_array[i] * rear_power_balance);
           }
         } else {
           if (i < 2) {
-            torque_setpoint_array[i] = (int16_t)(torque_setpoint_array[i] * (2 - front_rear_balance));
+            torque_setpoint_array[i] = (int16_t)(torque_setpoint_array[i] * front_brake_balance);
           } else {
-            torque_setpoint_array[i] = (int16_t)(torque_setpoint_array[i] * front_rear_balance);
+            torque_setpoint_array[i] = (int16_t)(torque_setpoint_array[i] * rear_brake_balance);
           }
         }
       }
       break;
+    case 2:
+      // alt brake split
+      rear_brake_balance = 0.3;
+      front_brake_balance = 1.0 - rear_brake_balance;
     case 3:
       // Based on Nissan ATTESA ET-S
       // 1. Determine F/R torque allocation. Default to rear bias, but increase front bias as rear begins to slip more than front.
@@ -744,57 +755,76 @@ inline void set_inverter_torques() {
       if (avg_accel - avg_brake >= 0) {
         // Accelerating
         
-        fr_slip_clamped = ((mc_status[2].get_speed() + mc_status[3].get_speed()) / (mc_status[0].get_speed() + mc_status[1].get_speed()) - 1) * fr_slip_factor;
+        fr_slip_clamped = (((float)mc_status[2].get_speed() + (float)mc_status[3].get_speed() + 100.0) / ((float)mc_status[0].get_speed() + (float)mc_status[1].get_speed() + 100.0) - 1.0) * fr_slip_factor;
         fr_slip_clamped = min(1, max(0, fr_slip_clamped));
 
         // set front torque
-        f_torque = 4 * ((1 - attesa_def_split) * (1 - fr_slip_clamped) + (1 - attesa_alt_split) * fr_slip_clamped) * (avg_accel -  avg_brake);
+        f_torque = 2 * ((1 - attesa_def_split) * (1 - fr_slip_clamped) + (1 - attesa_alt_split) * fr_slip_clamped) * (avg_accel -  avg_brake);
         torque_setpoint_array[0] = f_torque / 2;
         torque_setpoint_array[1] = f_torque / 2;
 
         // set rear torques. eLSD
-        r_torque = 4 * ((attesa_def_split) * (1 - fr_slip_clamped) + (attesa_alt_split) * fr_slip_clamped) * (avg_accel -  avg_brake);
+        r_torque = 2 * ((attesa_def_split) * (1 - fr_slip_clamped) + (attesa_alt_split) * fr_slip_clamped) * (avg_accel -  avg_brake);
         if (mc_status[2].get_speed() > mc_status[3].get_speed()) {
           // Rear left is spinning faster than rear right, allocate torque more to rear right
-          rear_lr_slip_clamped = (mc_status[2].get_speed() / mc_status[3].get_speed() - 1) * lsd_slip_factor;
+          rear_lr_slip_clamped = (((float)(mc_status[2].get_speed()) + 100.0) / ((float)(mc_status[3].get_speed()) + 100.0) - 1.0) * lsd_slip_factor;
           rear_lr_slip_clamped = min(0.5, max(0, rear_lr_slip_clamped));
           lsd_right_split = 0.5 + rear_lr_slip_clamped;
         } else {
           // Rear right is spinning faster than rear left, allocate torque more to rear left
-          rear_lr_slip_clamped = (mc_status[3].get_speed() / mc_status[2].get_speed() - 1) * lsd_slip_factor;
+          rear_lr_slip_clamped = (((float)(mc_status[3].get_speed()) + 100.0) / ((float)(mc_status[2].get_speed()) + 100.0) - 1.0) * lsd_slip_factor;
           rear_lr_slip_clamped = min(0.5, max(0, rear_lr_slip_clamped));
           lsd_right_split = 0.5 - rear_lr_slip_clamped;
         }
 
-        torque_setpoint_array[2] = min(r_torque * (1 - lsd_right_split), 2000);
-        torque_setpoint_array[3] = min(r_torque * lsd_right_split, 2000);
+        torque_setpoint_array[2] = r_torque * (1 - lsd_right_split);
+        torque_setpoint_array[3] = r_torque * lsd_right_split;
       } else {
         // Braking
-        torque_setpoint_array[0] = 2 * (front_rear_balance) * (avg_accel - avg_brake);
-        torque_setpoint_array[1] = 2 * (front_rear_balance) * (avg_accel - avg_brake);
-        torque_setpoint_array[2] = 2 * (1 - front_rear_balance) * (avg_accel - avg_brake);
-        torque_setpoint_array[3] = 2 * (1 - front_rear_balance) * (avg_accel - avg_brake);
+        torque_setpoint_array[0] = 2.0 * front_brake_balance * (avg_accel - avg_brake);
+        torque_setpoint_array[1] = 2.0 * front_brake_balance * (avg_accel - avg_brake);
+        torque_setpoint_array[2] = 2.0 * rear_brake_balance * (avg_accel - avg_brake);
+        torque_setpoint_array[3] = 2.0 * rear_brake_balance * (avg_accel - avg_brake);
       }
       break;
     case 4:
-    // Load cell torque vectoring
+      // Load cell torque vectoring
+      // Modified braking behavior. No left/right vectoring when braking
+      // More front bias when braking
+      load_cell_alpha = 0.9;
+      total_torque = 4.0 * (avg_accel - avg_brake) ;
+      total_load_cells = mcu_load_cells.get_FL_load_cell() + mcu_load_cells.get_FR_load_cell() + mcu_load_cells.get_RL_load_cell() + mcu_load_cells.get_RR_load_cell();
+      if (avg_accel >= avg_brake) {
+        torque_setpoint_array[0] = (int16_t)((float)mcu_load_cells.get_FL_load_cell() / (float)total_load_cells * (float)total_torque);
+        torque_setpoint_array[1] = (int16_t)((float)mcu_load_cells.get_FR_load_cell() / (float)total_load_cells * (float)total_torque);
+        torque_setpoint_array[2] = (int16_t)((float)mcu_load_cells.get_RL_load_cell() / (float)total_load_cells * (float)total_torque);
+        torque_setpoint_array[3] = (int16_t)((float)mcu_load_cells.get_RR_load_cell() / (float)total_load_cells * (float)total_torque);
+      } else {
+        front_load_total = (float)(mcu_load_cells.get_FL_load_cell() + mcu_load_cells.get_FR_load_cell());
+        rear_load_total = (float)(mcu_load_cells.get_RL_load_cell() + mcu_load_cells.get_RR_load_cell());
+
+        torque_setpoint_array[0] = front_brake_balance * front_load_total / total_load_cells * total_torque / 2.0;
+        torque_setpoint_array[1] = front_brake_balance * front_load_total / total_load_cells * total_torque / 2.0;
+        torque_setpoint_array[2] = rear_brake_balance * rear_load_total / total_load_cells * total_torque / 2.0;
+        torque_setpoint_array[3] = rear_brake_balance * rear_load_total / total_load_cells * total_torque / 2.0;
+      }
+      break;
+    case 5:
+      // Original load cell torque vectoring
       load_cell_alpha = 0.9;
       total_torque = 4 * (avg_accel - avg_brake) ;
       total_load_cells = mcu_load_cells.get_FL_load_cell() + mcu_load_cells.get_FR_load_cell() + mcu_load_cells.get_RL_load_cell() + mcu_load_cells.get_RR_load_cell();
-      torque_setpoint_array[0] = (int16_t)((float)mcu_load_cells.get_FL_load_cell() / (float)total_load_cells * (float)total_torque);
-      torque_setpoint_array[1] = (int16_t)((float)mcu_load_cells.get_FR_load_cell() / (float)total_load_cells * (float)total_torque);
-      torque_setpoint_array[2] = (int16_t)((float)mcu_load_cells.get_RL_load_cell() / (float)total_load_cells * (float)total_torque);
-      torque_setpoint_array[3] = (int16_t)((float)mcu_load_cells.get_RR_load_cell() / (float)total_load_cells * (float)total_torque);
-      break;
-    case 5:
-      // Load cell torque vectoring
-      load_cell_alpha = 0.95;
-      total_torque = 4 * (avg_accel - avg_brake) ;
-      total_load_cells = mcu_load_cells.get_FL_load_cell() + mcu_load_cells.get_FR_load_cell() + mcu_load_cells.get_RL_load_cell() + mcu_load_cells.get_RR_load_cell();
-      torque_setpoint_array[0] = (int16_t)((float)mcu_load_cells.get_FL_load_cell() / (float)total_load_cells * (float)total_torque);
-      torque_setpoint_array[1] = (int16_t)((float)mcu_load_cells.get_FR_load_cell() / (float)total_load_cells * (float)total_torque);
-      torque_setpoint_array[2] = (int16_t)((float)mcu_load_cells.get_RL_load_cell() / (float)total_load_cells * (float)total_torque);
-      torque_setpoint_array[3] = (int16_t)((float)mcu_load_cells.get_RR_load_cell() / (float)total_load_cells * (float)total_torque);
+      if (avg_accel >= avg_brake) {
+        torque_setpoint_array[0] = (int16_t)((float)mcu_load_cells.get_FL_load_cell() / (float)total_load_cells * (float)total_torque);
+        torque_setpoint_array[1] = (int16_t)((float)mcu_load_cells.get_FR_load_cell() / (float)total_load_cells * (float)total_torque);
+        torque_setpoint_array[2] = (int16_t)((float)mcu_load_cells.get_RL_load_cell() / (float)total_load_cells * (float)total_torque);
+        torque_setpoint_array[3] = (int16_t)((float)mcu_load_cells.get_RR_load_cell() / (float)total_load_cells * (float)total_torque);
+      } else {
+        torque_setpoint_array[0] = (int16_t)((float)mcu_load_cells.get_FL_load_cell() / (float)total_load_cells * (float)total_torque);
+        torque_setpoint_array[1] = (int16_t)((float)mcu_load_cells.get_FR_load_cell() / (float)total_load_cells * (float)total_torque);
+        torque_setpoint_array[2] = (int16_t)((float)mcu_load_cells.get_RL_load_cell() / (float)total_load_cells * (float)total_torque) / 2;
+        torque_setpoint_array[3] = (int16_t)((float)mcu_load_cells.get_RR_load_cell() / (float)total_load_cells * (float)total_torque) / 2;
+      }
       break;
     default:
       torque_setpoint_array[0] = 0;
@@ -802,6 +832,10 @@ inline void set_inverter_torques() {
       torque_setpoint_array[2] = 0;
       torque_setpoint_array[3] = 0;
       break;
+  }
+
+  for (int i = 0; i < 4; i++) {
+    torque_setpoint_array[i] = max(-2000.0, min(2000.0, torque_setpoint_array[i]));
   }
 
   /*
