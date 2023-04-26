@@ -138,7 +138,7 @@ void setup() {
 //   IMU set up
     IMU.regWrite(MSC_CTRL, 0xC1);  // Enable Data Ready, set polarity
     delay(20);
-    IMU.regWrite(FLTR_CTRL, 0x500); // Set digital filter
+    IMU.regWrite(FLTR_CTRL, 0x504); // Set digital filter
     delay(20);
     IMU.regWrite(DEC_RATE, 0), // Disable decimation
   delay(20);
