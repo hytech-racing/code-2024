@@ -108,8 +108,8 @@ void loop() {
   btn_update();
   dial_update();
   neopixel_update();
-  Serial.println(mcu_analog_readings.get_glv_battery_voltage());
-  //Serial.println(bms_voltages.get_low());
+  //Serial.println(mcu_analog_readings.get_glv_battery_voltage());
+  Serial.println(bms_voltages.get_low());
 
 
   static bool should_send = false;
@@ -203,12 +203,14 @@ inline void neopixel_update() {
   // checks display list for first available flag
 
   // if no flags set, display turns off (writes 10th entry; sets all IO exp pins high)
-  for (int i = 0; i < 11; i++) {
-    if (display_list[i] == 1) {
-      expander.digitalWrite(number_encodings[i]);
-      break;
-    }
-  }
+//  for (int i = 0; i < 11; i++) {
+//    if (display_list[i] == 1) {
+//      expander.digitalWrite(number_encodings[i]);
+//      break;
+//    }
+//  }
+
+
 }
 
 inline void dial_update() {
@@ -220,6 +222,9 @@ inline void dial_update() {
     dashboard_neopixels.setPixelColor(LED_LIST::LAUNCH_CTRL, LED_OFF);
     dashboard_status.set_launch_control_led(static_cast<uint8_t>(LED_MODES::OFF));
   }
+  //display dial state on 7 segment
+  expander.digitalWrite(number_encodings[dashboard_status.get_dial_state()]);
+  
 }
 ////inline void btn_toggle(void (Dashboard_status::*toggle)()) {
 ////  if (timer_toggle_button.check()) {
@@ -280,9 +285,10 @@ inline uint32_t color_wheel_glv(uint16_t voltage) {
   //Max voltage is 4.737 == 30 V
   //Threshold warning is 25 volts == 3.947
   //threshold warning is 24 volts = 3.789
-  uint8_t max_voltage = 30;
-  uint8_t mid_threshold = 30 - (30 - 25) / 2;
+  uint8_t max_voltage = 28;
   uint8_t min_threshold = 24;
+  uint8_t mid_threshold = max_voltage - (max_voltage - min_threshold) / 2;
+  
 
   uint8_t converted_voltage = voltage / 819 * 5.61; //make this a float
   int g = 255;
@@ -342,20 +348,21 @@ inline void mcu_analog_readings_received() {
 inline void bms_voltages_received() {
   //Read the lowest cell voltage. Max 4.2, min 3.3
   //voltages scaled by 10000
-  uint16_t max_voltage = 42000;
-  uint16_t mid_threshold = max_voltage - (max_voltage - PACK_THRESHOLD) / 2;
-  uint16_t min_threshold = PACK_THRESHOLD;
-
+  uint16_t max_voltage = 36000 / 10;
+  uint16_t min_threshold = PACK_THRESHOLD / 10;
+  uint16_t mid_threshold = max_voltage - (max_voltage - min_threshold) / 2;
+  
+  uint16_t bms_voltage = bms_voltages.get_low() / 10;
   int g = 255;
   int r = 255;
-  if (bms_voltages.get_low() > mid_threshold) {
+  if (bms_voltage > mid_threshold) {
     g = 255;
-    r = map(bms_voltages.get_low(), mid_threshold, max_voltage, 255, 0);
+    r = map(bms_voltage, mid_threshold, max_voltage, 255, 0);
 
 
-  } else if (bms_voltages.get_low() < mid_threshold) {
+  } else if (bms_voltage < mid_threshold) {
     r = 255;
-    g = map(bms_voltages.get_low(), min_threshold, mid_threshold, 0, 255);
+    g = map(bms_voltage, min_threshold, mid_threshold, 0, 255);
 
   } else {
     g = 255;
@@ -385,7 +392,7 @@ inline void mcu_status_received() {
   if (mcu_status.get_bms_ok_high()) {
     dashboard_neopixels.setPixelColor(LED_LIST::AMS, LED_ON_GREEN);
     dashboard_status.set_ams_led(static_cast<uint8_t>(LED_MODES::ON));
-    display_list[4] = 1;
+    //display_list[4] = 1;
     imd_ams_flags |= (1 << 1);
 
   }
@@ -398,7 +405,7 @@ inline void mcu_status_received() {
 
     dashboard_neopixels.setPixelColor(LED_LIST::AMS, LED_RED);
     dashboard_status.set_ams_led(static_cast<uint8_t>(LED_MODES::RED));
-    display_list[4] = 0;
+    //display_list[4] = 0;
 
   }
 
@@ -406,7 +413,7 @@ inline void mcu_status_received() {
   if (mcu_status.get_imd_ok_high()) {
     dashboard_neopixels.setPixelColor(LED_LIST::IMD, LED_ON_GREEN);
     dashboard_status.set_imd_led(static_cast<uint8_t>(LED_MODES::ON));
-    display_list[3] = 1;
+    //display_list[3] = 1;
     imd_ams_flags |= 1;
 
 
@@ -420,7 +427,7 @@ inline void mcu_status_received() {
 
     dashboard_neopixels.setPixelColor(LED_LIST::IMD, LED_RED);
     dashboard_status.set_imd_led(static_cast<uint8_t>(LED_MODES::RED));
-    display_list[3] = 0;
+    //display_list[3] = 0;
   }
 
   //Start LED
@@ -513,6 +520,14 @@ inline void mcu_status_received() {
     dashboard_neopixels.setPixelColor(LED_LIST::LAUNCH_CTRL, LED_ON_GREEN);
     dashboard_status.set_launch_control_led(static_cast<uint8_t>(LED_MODES::ON));
   }
+
+  if (!mcu_status.get_inverters_error()){
+    dashboard_neopixels.setPixelColor(LED_LIST::MC_ERR, LED_ON_GREEN);
+    dashboard_status.set_mc_error_led(0);
+  } else {
+    dashboard_neopixels.setPixelColor(LED_LIST::MC_ERR, LED_YELLOW);
+    dashboard_status.set_mc_error_led(1);
+  }
 }
 
 //inline void mc_fault_codes_received(){
@@ -579,10 +594,10 @@ inline void inertia_status() {
 
     dashboard_neopixels.setPixelColor(LED_LIST::INERTIA, LED_RED);
     dashboard_status.set_inertia_led(static_cast<uint8_t>(LED_MODES::ON));
-    display_list[1] = 1;
+//    display_list[1] = 1;
   } else {
     dashboard_neopixels.setPixelColor(LED_LIST::INERTIA, LED_ON_GREEN);
     dashboard_status.set_inertia_led(static_cast<uint8_t>(LED_MODES::OFF));
-    display_list[1] = 0;
+//    display_list[1] = 0;
   }
 }

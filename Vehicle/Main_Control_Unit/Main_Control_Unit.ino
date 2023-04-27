@@ -1015,6 +1015,8 @@ uint8_t check_all_inverters_error() {
   }
   if(error_list){
     mcu_status.set_inverters_error(true);
+  } else {
+    mcu_status.set_inverters_error(false);
   }
   return error_list;
 }
