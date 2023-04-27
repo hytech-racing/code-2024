@@ -43,12 +43,13 @@ CAN_message_t msg;
 Dashboard_status dashboard_status{};
 MCU_status mcu_status{};
 MCU_analog_readings mcu_analog_readings;
+BMS_voltages bms_voltages{};
 
 // IO Expander Variables
 MCP23S08 expander(IO_ADDR, IO_CS);
 uint8_t number_encodings[11] = {0b01000000, 0b01111001, 0b00100100, 0b00110000, 0b00011001, 0b00010010, 0b00000010, 0b01111000, 0b10000000, 0b00011000, 0b11111111};
 uint8_t display_list[11] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 };
-
+uint8_t imd_ams_flags = 0;
 Metro timer_mcu_heartbeat(0, 1);
 
 inline void neopixel_update();
@@ -90,9 +91,9 @@ void setup() {
   CAN.setBaudRate(500000);
   CAN.enableMBInterrupts();
   CAN.onReceive(read_can);
-
-  mcu_status.set_imd_ok_high(true);
-  mcu_status.set_bms_ok_high(true);
+  //
+  //  mcu_status.set_imd_ok_high(true);
+  //  mcu_status.set_bms_ok_high(true);
 
 
   neo_pixel_init();
@@ -107,7 +108,9 @@ void loop() {
   btn_update();
   dial_update();
   neopixel_update();
-  
+  Serial.println(mcu_analog_readings.get_glv_battery_voltage());
+  //Serial.println(bms_voltages.get_low());
+
 
   static bool should_send = false;
 
@@ -119,12 +122,12 @@ void loop() {
     should_send = true;
   }
 
-  
+
   prev_buttons = curr_buttons;
   curr_buttons = dashboard_status.get_button_flags();
   temp_buttons = curr_buttons & (curr_buttons ^ prev_buttons);
 
-  
+
 
 
   // Send CAN message
@@ -132,14 +135,14 @@ void loop() {
   // How does the check for button press work
   // the xor against previous buttons removes the button flags that were sent previously
   // the and enforces that only buttons that are currently pressed are allowed to be sent
-      if(should_send &&
-          (timer_can_update.check() || (temp_buttons) || (prev_start_state != dashboard_status.get_start_btn()))
-        ){
-//  if (timer_can_update.check()) {
+  if (should_send &&
+      (timer_can_update.check() || (temp_buttons) || (prev_start_state != dashboard_status.get_start_btn()))
+     ) {
+    //  if (timer_can_update.check()) {
 
     msg.id = ID_DASHBOARD_STATUS;
     dashboard_status.set_button_flags(temp_buttons);
-//    Serial.println(temp_buttons, BIN);
+    //    Serial.println(temp_buttons, BIN);
     msg.len = sizeof(dashboard_status);
     dashboard_status.write(msg.buf);
     CAN.write(msg);
@@ -156,10 +159,13 @@ inline void neo_pixel_init() {
   dashboard_neopixels.begin();
   dashboard_neopixels.setBrightness(curr_brightness);
   for (int i = 0; i < NEOPIXEL_COUNT - 1; i++) {
-    
+
     dashboard_neopixels.setPixelColor(i, LED_INIT);
     if (i == 3) {
       dashboard_neopixels.setPixelColor(i, 0);
+    }
+    if (i == 0 || i == 1) {
+      dashboard_neopixels.setPixelColor(i, LED_ON_GREEN);
     }
 
   }
@@ -170,39 +176,39 @@ inline void neo_pixel_init() {
 }
 
 inline void neopixel_update() {
-  
-  if(dashboard_status.get_led_dimmer_btn() == 1) {
+
+  if (dashboard_status.get_led_dimmer_btn() == 1) {
     if (prev_led_dimmer_state == 0) {
       //set brightnesses
       toggle_led_dimmer ^= 0x1;
     }
     prev_led_dimmer_state = 1;
-    
-    
-  }else {
+
+
+  } else {
     prev_led_dimmer_state = 0;
   }
 
-//
+  //
   if (toggle_led_dimmer) {
     curr_brightness = LOW_BRIGHTNESS;
   } else curr_brightness = OUTSIDE_BRIGHTNESS;
 
 
-//    if (brightness != prevBrightness)
-dashboard_neopixels.setBrightness(curr_brightness);
+  //    if (brightness != prevBrightness)
+  dashboard_neopixels.setBrightness(curr_brightness);
 
-shutdown_signals_read();
-dashboard_neopixels.show();
-// checks display list for first available flag
+  shutdown_signals_read();
+  dashboard_neopixels.show();
+  // checks display list for first available flag
 
-// if no flags set, display turns off (writes 10th entry; sets all IO exp pins high)
-for (int i = 0; i < 11; i++) {
-  if (display_list[i] == 1) {
-    expander.digitalWrite(number_encodings[i]);
-    break;
+  // if no flags set, display turns off (writes 10th entry; sets all IO exp pins high)
+  for (int i = 0; i < 11; i++) {
+    if (display_list[i] == 1) {
+      expander.digitalWrite(number_encodings[i]);
+      break;
+    }
   }
-}
 }
 
 inline void dial_update() {
@@ -251,15 +257,15 @@ inline void dial_update() {
 inline void btn_update() {
   // this sets the button to be high: it is set low in send can
   if (btn_safe_ctrl.isPressed())  {
-    
+
     dashboard_status.toggle_mode_btn();
   }
   if (btn_mc_cycle.isPressed())    {
-    
+
     dashboard_status.toggle_mc_cycle_btn();
   }
   if (btn_torque_mode.isPressed()) {
-    
+
     dashboard_status.toggle_torque_mode_btn();
   }
   if (btn_led_dimmer.isPressed())  {
@@ -268,6 +274,49 @@ inline void btn_update() {
 
   dashboard_status.set_start_btn(btn_start.isPressed());
 }
+
+inline uint32_t color_wheel_glv(uint16_t voltage) {
+  // 1V = 819 adc read, gain is 6.33 1v = 6.33V, max 4.737
+  //Max voltage is 4.737 == 30 V
+  //Threshold warning is 25 volts == 3.947
+  //threshold warning is 24 volts = 3.789
+  uint8_t max_voltage = 30;
+  uint8_t mid_threshold = 30 - (30 - 25) / 2;
+  uint8_t min_threshold = 24;
+
+  uint8_t converted_voltage = voltage / 819 * 5.61; //make this a float
+  int g = 255;
+  int r = 255;
+  if (converted_voltage > mid_threshold) {
+    g = 255;
+    r = map(voltage, mid_threshold * 819 / 5.61, max_voltage * 819 / 5.61, 255, 0);
+  } else if (converted_voltage < mid_threshold) {
+    r = 255;
+    g = map(voltage, min_threshold * 819 / 5.61, mid_threshold * 819 / 5.61, 0, 255);
+  } else {
+    g = 255;
+    r = 255;
+  }
+
+  if ( r < 0) {
+    r = 0;
+  } else if (r > 255) {
+    r = 255;
+  }
+
+  if (g < 0) {
+    g = 0;
+  } else if ( g > 255) {
+    g = 255;
+  }
+
+
+  return (r << 16) | (g << 8);
+
+
+}
+
+
 
 inline void shutdown_signals_read() { // if one trips al lwill go red, set the other ones orange
   dashboard_neopixels.setPixelColor(LED_LIST::BOTS, (digitalRead(BOTS_READ)) ? LED_ON_GREEN : LED_RED);
@@ -281,14 +330,53 @@ inline void shutdown_signals_read() { // if one trips al lwill go red, set the o
 inline void mcu_analog_readings_received() {
 
   if (mcu_analog_readings.get_glv_battery_voltage() < GLV_THRESHOLD) {
-    dashboard_neopixels.setPixelColor(LED_LIST::GLV, LED_RED);
+
     dashboard_status.set_glv_led(static_cast<uint8_t>(LED_MODES::RED));
   } else {
-    dashboard_neopixels.setPixelColor(LED_LIST::GLV, LED_ON_GREEN);
+
     dashboard_status.set_glv_led(static_cast<uint8_t>(LED_MODES::ON));
+  }
+  dashboard_neopixels.setPixelColor(LED_LIST::GLV, color_wheel_glv(mcu_analog_readings.get_glv_battery_voltage()));
+
+}
+inline void bms_voltages_received() {
+  //Read the lowest cell voltage. Max 4.2, min 3.3
+  //voltages scaled by 10000
+  uint16_t max_voltage = 42000;
+  uint16_t mid_threshold = max_voltage - (max_voltage - PACK_THRESHOLD) / 2;
+  uint16_t min_threshold = PACK_THRESHOLD;
+
+  int g = 255;
+  int r = 255;
+  if (bms_voltages.get_low() > mid_threshold) {
+    g = 255;
+    r = map(bms_voltages.get_low(), mid_threshold, max_voltage, 255, 0);
+
+
+  } else if (bms_voltages.get_low() < mid_threshold) {
+    r = 255;
+    g = map(bms_voltages.get_low(), min_threshold, mid_threshold, 0, 255);
+
+  } else {
+    g = 255;
+    r = 255;
+  }
+
+  if ( r < 0) {
+    r = 0;
+  } else if (r > 255) {
+    r = 255;
+  }
+
+  if (g < 0) {
+    g = 0;
+  } else if ( g > 255) {
+    g = 255;
   }
 
 
+
+  dashboard_neopixels.setPixelColor(LED_LIST::CRIT_CHARGE, (r << 16) | (g << 8));
 }
 inline void mcu_status_received() {
   // control BUZZER_CTRL
@@ -298,6 +386,7 @@ inline void mcu_status_received() {
     dashboard_neopixels.setPixelColor(LED_LIST::AMS, LED_ON_GREEN);
     dashboard_status.set_ams_led(static_cast<uint8_t>(LED_MODES::ON));
     display_list[4] = 1;
+    imd_ams_flags |= (1 << 1);
 
   }
   // else if (init_ams){
@@ -305,11 +394,12 @@ inline void mcu_status_received() {
   //     dashboard_status.set_ams_led(static_cast<uint8_t>(LED_MODES::OFF));
   //     init_ams = false;
   // }
-  else if (dashboard_neopixels.getPixelColor(LED_LIST::AMS) != LED_OFF) {
+  else if ((imd_ams_flags >> 1) & 1 == 1) {
 
     dashboard_neopixels.setPixelColor(LED_LIST::AMS, LED_RED);
     dashboard_status.set_ams_led(static_cast<uint8_t>(LED_MODES::RED));
     display_list[4] = 0;
+
   }
 
   //IMD LED
@@ -317,6 +407,8 @@ inline void mcu_status_received() {
     dashboard_neopixels.setPixelColor(LED_LIST::IMD, LED_ON_GREEN);
     dashboard_status.set_imd_led(static_cast<uint8_t>(LED_MODES::ON));
     display_list[3] = 1;
+    imd_ams_flags |= 1;
+
 
   }
   // else if (init_imd){
@@ -324,7 +416,7 @@ inline void mcu_status_received() {
   //     dashboard_status.set_imd_led(static_cast<uint8_t>(LED_MODES::OFF));
   //     init_imd = false;
   // }
-  else if (dashboard_neopixels.getPixelColor(LED_LIST::IMD) != LED_OFF) {
+  else if (imd_ams_flags & 1 == 1) {
 
     dashboard_neopixels.setPixelColor(LED_LIST::IMD, LED_RED);
     dashboard_status.set_imd_led(static_cast<uint8_t>(LED_MODES::RED));
@@ -360,23 +452,23 @@ inline void mcu_status_received() {
       break;
   }
 
-  //Critical Charge LED
+  //Critical Charge LED // handled by reading BMS lowest value
 
   switch (mcu_status.get_pack_charge_critical()) {
     case 1: // GREEN, OK
-      dashboard_neopixels.setPixelColor(LED_LIST::CRIT_CHARGE, LED_ON_GREEN);
+
       dashboard_status.set_crit_charge_led(static_cast<uint8_t>(LED_MODES::ON));
       break;
     case 2: // YELLOW, WARNING
-      dashboard_neopixels.setPixelColor(LED_LIST::CRIT_CHARGE, LED_YELLOW);
+
       dashboard_status.set_crit_charge_led(static_cast<uint8_t>(LED_MODES::YELLOW));
       break;
     case 3: // RED, CRITICAL
-      dashboard_neopixels.setPixelColor(LED_LIST::CRIT_CHARGE, LED_RED);
+
       dashboard_status.set_crit_charge_led(static_cast<uint8_t>(LED_MODES::RED));
       break;
     default:
-      dashboard_neopixels.setPixelColor(LED_LIST::CRIT_CHARGE, LED_OFF);
+
       dashboard_status.set_crit_charge_led(static_cast<uint8_t>(LED_MODES::OFF));
       break;
   }
@@ -458,26 +550,29 @@ inline void mcu_status_received() {
 //    }*/
 //}
 void read_can(const CAN_message_t &msg) {
-    switch (msg.id) {
-      case ID_MCU_STATUS:
-//        Serial.println("mcu status received");
-        mcu_status.load(msg.buf);
-        timer_mcu_heartbeat.reset();
-        timer_mcu_heartbeat.interval(MCU_HEARTBEAT_TIMEOUT);
-        mcu_status_received();
-        break;
-      case ID_MCU_ANALOG_READINGS:
-//        Serial.println("mcu analog readings received");
-        mcu_analog_readings.load(msg.buf);
-        timer_mcu_heartbeat.reset();
-        timer_mcu_heartbeat.interval(MCU_HEARTBEAT_TIMEOUT);
-        mcu_analog_readings_received();
-        break;
-
-      default:
-        break;
-    }
+  switch (msg.id) {
+    case ID_MCU_STATUS:
+      //        Serial.println("mcu status received");
+      mcu_status.load(msg.buf);
+      timer_mcu_heartbeat.reset();
+      timer_mcu_heartbeat.interval(MCU_HEARTBEAT_TIMEOUT);
+      mcu_status_received();
+      break;
+    case ID_MCU_ANALOG_READINGS:
+      //        Serial.println("mcu analog readings received");
+      mcu_analog_readings.load(msg.buf);
+      timer_mcu_heartbeat.reset();
+      timer_mcu_heartbeat.interval(MCU_HEARTBEAT_TIMEOUT);
+      mcu_analog_readings_received();
+      break;
+    case ID_BMS_VOLTAGES:
+      bms_voltages.load(msg.buf);
+      //include bms timer
+      bms_voltages_received();
+    default:
+      break;
   }
+}
 
 inline void inertia_status() {
   if (digitalRead(INERTIA_READ) && !digitalRead(BRB_READ)) {
