@@ -1,0 +1,153 @@
+#
+# Copyright (c) 2019 Nordic Semiconductor
+#
+# SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
+#
+
+source "Kconfig.zephyr"
+
+menu "Nordic Serial LTE Modem"
+
+config SLM_CUSTOMIZED
+	bool "Flag for customized functionality"
+	help
+	  Enable this flag to include customized logic.
+
+config SLM_AT_MODE
+	bool "Serial LTE Modem by raw AT mode"
+	default y
+	select AT_CMD_PARSER
+
+config SLM_AT_MAX_PARAM
+	int "Maximum number of parameters in AT command"
+	default 42
+
+config SLM_NATIVE_TLS
+	bool "Use Zephyr mbedTLS"
+
+#
+# external XTAL for UART
+#
+config SLM_EXTERNAL_XTAL
+	bool "Use external XTAL for UARTE"
+	default y
+
+#
+# Inter-Connect
+#
+config SLM_UART_HWFC_RUNTIME
+	bool "Support of UART HWFC runtime configuration"
+	help
+		Selected if hw-flow-control is enabled in devicetree
+choice
+	prompt "UART for interconnect"
+	help
+		Selects which UART to use for interconnect:
+		-  UART 0
+		-  UART 2
+	config SLM_CONNECT_UART_0
+		bool "UART 0"
+		select SLM_UART_HWFC_RUNTIME if $(dt_nodelabel_bool_prop,uart0,hw-flow-control)
+
+	config SLM_CONNECT_UART_2
+		bool "UART 2"
+		select SLM_UART_HWFC_RUNTIME if $(dt_nodelabel_bool_prop,uart2,hw-flow-control)
+endchoice
+
+choice
+	prompt "Termination mode"
+	default SLM_CR_LF_TERMINATION
+	help
+		Sets the command terminator used by the serial terminal.
+		Available options are:
+		-  CR termination
+		-  LF termination
+		-  CR+LF termination
+	config SLM_CR_TERMINATION
+		bool "CR termination"
+	config SLM_LF_TERMINATION
+		bool "LF termination"
+	config SLM_CR_LF_TERMINATION
+		bool "CR+LF termination"
+endchoice
+
+#
+# GPIO wakeup
+#
+config SLM_START_SLEEP
+	bool "Enter sleep on startup"
+	help
+	  Put nRF9160 into deep sleep mode after startup.
+
+config SLM_WAKEUP_PIN
+	int "Wakeup pin"
+	default -1
+	help
+	  Interface GPIO to wake up from sleep or exit idle
+
+config SLM_INDICATE_PIN
+	int "Indicate pin"
+	default -1
+	help
+	  Interface GPIO pin used to indicate that data is available or an unexpected reset has occurred
+
+config SLM_INDICATE_TIME
+	int "Indication period"
+	default 100
+	help
+	  GPIO active indication time in milliseconds. This setting specify the period length for the pin to be active
+
+#
+# Socket
+#
+config SLM_SOCKET_RX_MAX
+	int "Maximum RX buffer size for receiving socket data"
+	range 576 708
+	default 576
+	help
+	  Default: NET_IPV4_MTU (576)
+	  Maximum: MSS setting in modem (708)
+
+#
+# TCP/TLS proxy
+#
+config SLM_TCP_POLL_TIME
+	int "Poll time-out in seconds for TCP connection"
+	default 10
+
+config SLM_UDP_POLL_TIME
+	int "Poll time-out in seconds for UDP connection"
+	default 10
+
+#
+# Data mode
+#
+config SLM_DATAMODE_TERMINATOR
+	string "Pattern string to terminate data mode"
+	default "+++"
+	help
+	  Use a pattern to terminate data mode
+
+#
+# Configurable services
+#
+config SLM_SMS
+	bool "SMS support in SLM"
+	default y
+	select SMS
+	help
+	  Support SMS send/receive in plain text
+
+rsource "src/gnss/Kconfig"
+rsource "src/ftp_c/Kconfig"
+rsource "src/mqtt_c/Kconfig"
+rsource "src/http_c/Kconfig"
+rsource "src/twi/Kconfig"
+rsource "src/gpio/Kconfig"
+rsource "src/dfu/Kconfig"
+
+module = SLM
+module-str = serial modem
+source "${ZEPHYR_BASE}/subsys/logging/Kconfig.template.log_config"
+
+endmenu
