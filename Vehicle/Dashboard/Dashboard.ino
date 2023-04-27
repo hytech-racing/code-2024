@@ -327,7 +327,7 @@ inline uint32_t color_wheel_glv(uint16_t voltage) {
 inline void shutdown_signals_read() { // if one trips al lwill go red, set the other ones orange
   dashboard_neopixels.setPixelColor(LED_LIST::BOTS, (digitalRead(BOTS_READ)) ? LED_ON_GREEN : LED_RED);
   dashboard_status.set_bots_led(digitalRead(BOTS_READ));
-  dashboard_neopixels.setPixelColor(LED_LIST::COCKPIT_BRB, (digitalRead(BRB_READ)) ? LED_ON_GREEN : LED_RED);
+  dashboard_neopixels.setPixelColor(LED_LIST::COCKPIT_BRB, (digitalRead(BRB_READ) || !digitalRead(BRB_READ) && !digitalRead(INERTIA_READ)) ? LED_ON_GREEN : LED_RED);
   dashboard_status.set_cockpit_brb_led(digitalRead(BRB_READ));
 
 }
@@ -507,7 +507,7 @@ inline void mcu_status_received() {
     dashboard_status.set_mech_brake_led(static_cast<uint8_t>(LED_MODES::OFF));
 
   } else {
-    dashboard_neopixels.setPixelColor(LED_LIST::BRAKE_ENGAGE, LED_ON_GREEN);
+    dashboard_neopixels.setPixelColor(LED_LIST::BRAKE_ENGAGE, LED_BLUE);
     dashboard_status.set_mech_brake_led(static_cast<uint8_t>(LED_MODES::ON));
 
 
@@ -590,7 +590,7 @@ void read_can(const CAN_message_t &msg) {
 }
 
 inline void inertia_status() {
-  if (digitalRead(INERTIA_READ) && !digitalRead(BRB_READ)) {
+  if (!digitalRead(INERTIA_READ)) {
 
     dashboard_neopixels.setPixelColor(LED_LIST::INERTIA, LED_RED);
     dashboard_status.set_inertia_led(static_cast<uint8_t>(LED_MODES::ON));
