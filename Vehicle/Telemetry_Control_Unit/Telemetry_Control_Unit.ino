@@ -208,6 +208,8 @@ void setup() {
 
     setupClock();
 
+    setupGPS();
+
     createFile();
 
     //FLEXCAN0_MCR &= 0xFFFDFFFF; // Enables CAN message self-reception
@@ -234,11 +236,12 @@ void loop() {
     CAN_1.events();
     CAN_2.events();
     CAN_3.events();
+    gpsLoop();
     //MTP.loop();
     /* Process and log incoming CAN messages */
     //parse_can_lines();
     //read_analog_values();
-    readESP();
+    //readESP();
     /* Send messages over XBee */
     send_xbee();
     parse_can_q();

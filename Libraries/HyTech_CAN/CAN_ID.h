@@ -45,9 +45,9 @@
 #define ID_MCU_GPS_READINGS											0xE7
 #define ID_MCU_WHEEL_SPEED									    	0xEA
 #define ID_DASHBOARD_STATUS                                         0xEB
-#define ID_GPS_HIGH_PRECISION                                       0xED
-#define ID_GPS_LAT_LONG                                             0xEE
-#define ID_GPS_OTHER                                                0xEF
+#define ID_GPS_LAT_LONG                                             0xED
+#define ID_GPS_OTHER                                                0xEE
+#define ID_GPS_HIGH_PRECISION                                       0xEF
 
 //#define ID_CHARGER_CONTROL
 #define ID_CHARGER_CONTROL                                          0x1806E5F4
