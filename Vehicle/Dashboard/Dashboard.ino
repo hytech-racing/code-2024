@@ -108,8 +108,8 @@ void loop() {
   btn_update();
   dial_update();
   neopixel_update();
-  //Serial.println(mcu_analog_readings.get_glv_battery_voltage());
-  Serial.println(bms_voltages.get_low());
+  Serial.println(mcu_analog_readings.get_glv_battery_voltage());
+  //Serial.println(bms_voltages.get_low());
 
 
   static bool should_send = false;
@@ -285,12 +285,12 @@ inline uint32_t color_wheel_glv(uint16_t voltage) {
   //Max voltage is 4.737 == 30 V
   //Threshold warning is 25 volts == 3.947
   //threshold warning is 24 volts = 3.789
-  uint8_t max_voltage = 28;
-  uint8_t min_threshold = 24;
-  uint8_t mid_threshold = max_voltage - (max_voltage - min_threshold) / 2;
+  uint8_t max_voltage = 25;
+  uint8_t min_threshold = 23;
+  uint8_t mid_threshold = max_voltage - (max_voltage - min_threshold) / (float) 2;
   
 
-  uint8_t converted_voltage = voltage / 819 * 5.61; //make this a float
+  uint8_t converted_voltage = (float) voltage / 819 * 5.61; //make this a float
   int g = 255;
   int r = 255;
   if (converted_voltage > mid_threshold) {
@@ -350,7 +350,7 @@ inline void bms_voltages_received() {
   //voltages scaled by 10000
   uint16_t max_voltage = 36000 / 10;
   uint16_t min_threshold = PACK_THRESHOLD / 10;
-  uint16_t mid_threshold = max_voltage - (max_voltage - min_threshold) / 2;
+  uint16_t mid_threshold = max_voltage - (max_voltage - min_threshold) / (float) 2;
   
   uint16_t bms_voltage = bms_voltages.get_low() / 10;
   int g = 255;
@@ -590,14 +590,15 @@ void read_can(const CAN_message_t &msg) {
 }
 
 inline void inertia_status() {
-  if (!digitalRead(INERTIA_READ)) {
+  if (digitalRead(INERTIA_READ) || !digitalRead(INERTIA_READ) && !digitalRead(BOTS_READ)) {
 
-    dashboard_neopixels.setPixelColor(LED_LIST::INERTIA, LED_RED);
-    dashboard_status.set_inertia_led(static_cast<uint8_t>(LED_MODES::ON));
-//    display_list[1] = 1;
-  } else {
     dashboard_neopixels.setPixelColor(LED_LIST::INERTIA, LED_ON_GREEN);
     dashboard_status.set_inertia_led(static_cast<uint8_t>(LED_MODES::OFF));
+//    display_list[1] = 1;
+  } else {
+    
+        dashboard_neopixels.setPixelColor(LED_LIST::INERTIA, LED_RED);
+    dashboard_status.set_inertia_led(static_cast<uint8_t>(LED_MODES::ON));
 //    display_list[1] = 0;
   }
 }
