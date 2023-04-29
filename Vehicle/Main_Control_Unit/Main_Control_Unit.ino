@@ -28,7 +28,7 @@
 #define DRIVER DEFAULT_DRIVER
 #define TORQUE_1 10
 #define TORQUE_2 15
-#define TORQUE_3 19
+#define TORQUE_3 21
 #define MAX_ALLOWED_SPEED 20000
 
 // set to true or false for debugging
@@ -81,7 +81,7 @@ Metro timer_ready_sound = Metro(2000); // Time to play RTD sound
 
 Metro timer_read_all_adcs = Metro(20);
 Metro timer_steering_spi_read = Metro(1000);
-Metro timer_read_imu = Metro(50);
+Metro timer_read_imu = Metro(20);
 
 Metro timer_inverter_enable = Metro(5000);
 Metro timer_reset_inverter = Metro(5000);
@@ -658,8 +658,8 @@ void set_state(MCU_STATE new_state) {
 inline void set_inverter_torques() {
 
   float max_torque = mcu_status.get_max_torque() / 0.0098; // max possible value for torque multiplier, unit in 0.1% nominal torque
-  int accel1 = map(round(mcu_pedal_readings.get_accelerator_pedal_1()), START_ACCELERATOR_PEDAL_1, END_ACCELERATOR_PEDAL_1, 0, 2000);
-  int accel2 = map(round(mcu_pedal_readings.get_accelerator_pedal_2()), START_ACCELERATOR_PEDAL_2, END_ACCELERATOR_PEDAL_2, 0, 2000);
+  int accel1 = map(round(mcu_pedal_readings.get_accelerator_pedal_1()), START_ACCELERATOR_PEDAL_1, END_ACCELERATOR_PEDAL_1, 0, 2140);
+  int accel2 = map(round(mcu_pedal_readings.get_accelerator_pedal_2()), START_ACCELERATOR_PEDAL_2, END_ACCELERATOR_PEDAL_2, 0, 2140);
 
   int brake1 = map(round(mcu_pedal_readings.get_brake_pedal_1()), START_BRAKE_PEDAL_1, END_BRAKE_PEDAL_1, 0, 1100);
   int brake2 = map(round(mcu_pedal_readings.get_brake_pedal_2()), START_BRAKE_PEDAL_2, END_BRAKE_PEDAL_2, 0, 1100);
@@ -961,20 +961,6 @@ inline void read_all_adcs() {
     mcu_analog_readings.set_glv_battery_voltage(adc3_inputs[ADC_GLV_READ_CHANNEL]);
   }
 }
-
-
-
-
-//inline void read_load_cell_values() {
-//  if (timer_load_cells_read.check()) {
-//    //load cell is 2mV/V, 10V excitation, 1000lb max
-//    //goes through 37.5x gain of INA823, 21x gain of OPA991, +0.314V offset, 0.1912x reduction on ECU and MAX7400 before reaching ADC
-//    mcu_load_cells.set_FL_load_cell((uint16_t) (((ADC2.read_channel(ADC_FL_LOAD_CELL_CHANNEL) / 0.1912) - 0.314) / 787.5 * 50));
-//    mcu_load_cells.set_FR_load_cell((uint16_t) (((ADC2.read_channel(ADC_FR_LOAD_CELL_CHANNEL) / 0.1912) - 0.314) / 787.5 * 50));
-//    mcu_load_cells.set_RL_load_cell((uint16_t) (((ADC1.read_channel(ADC_RL_LOAD_CELL_CHANNEL) / 0.1912) - 0.314) / 787.5 * 50));
-//    mcu_load_cells.set_RR_load_cell((uint16_t) (((ADC2.read_channel(ADC_RR_LOAD_CELL_CHANNEL) / 0.1912) - 0.314) / 787.5 * 50));
-//  }
-//}
 
 inline void read_steering_spi_values() {
   if (timer_steering_spi_read.check()) {
