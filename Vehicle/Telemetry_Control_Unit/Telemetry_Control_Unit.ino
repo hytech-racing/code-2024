@@ -101,6 +101,8 @@ typedef struct perf_counters {
   uint32_t bytes_written = 0;
   uint16_t messages_queued = 0;
   unsigned long max_loop_latency = 0;
+  uint16_t slow_loops = 0;
+  uint16_t slow_loop_time = 0;
 } perf_counters;
 perf_counters counters;
 Metro timer_debug_RTC = Metro(1000);
@@ -261,6 +263,7 @@ void loop() {
         Serial.printf("CAN1: %u, CAN2: %u, CAN3: %u, GPS: %u, Loops: %lu\n",counters.CAN_1_freq, counters.CAN_2_freq, counters.CAN_3_freq, counters.GPS_freq, counters.loops);
         Serial.printf("Messages written: %lu Messages queued: %u\n", counters.bytes_written, counters.messages_queued);
         Serial.printf("Max loop latency: %lu\n", counters.max_loop_latency);
+        Serial.printf("Slow loops: %u Slow loop time: %u\n", counters.slow_loops, counters.slow_loop_time);
         Serial.println();
         counters = (perf_counters){
           .CAN_1_freq = 0, 
@@ -270,7 +273,9 @@ void loop() {
           .loops = 0,
           .bytes_written = 0,
           .messages_queued = 0,
-          .max_loop_latency = 0
+          .max_loop_latency = 0,
+          .slow_loops = 0,
+          .slow_loop_time = 0
           };
     }
     /* Process MCU analog readings */
@@ -287,6 +292,10 @@ void loop() {
     unsigned long after = millis();
     if (after-before > counters.max_loop_latency) {
       counters.max_loop_latency = after-before;
+    }
+    if (after-before > 1) {
+      counters.slow_loops++;
+      counters.slow_loop_time += after-before;
     }
 }
 

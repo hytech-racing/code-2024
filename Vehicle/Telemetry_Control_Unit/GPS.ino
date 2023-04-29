@@ -29,7 +29,7 @@
 */
 
 #define noPush // Uncomment this line to disable pushing the correction data over I2C. Useful for the combo board which uses UART2 instead.
-
+//#define printGPS
 #include "secrets.h" // <- Copy and paste the Current Key and Next Key into secrets.h
 
 #include <SparkFun_u-blox_GNSS_v3.h> //http://librarymanager/All#SparkFun_u-blox_GNSS_v3
@@ -83,7 +83,7 @@ void setupGPS() {
 
   myGNSS.setAutoPVTcallbackPtr(&printPVTdata); // Enable automatic NAV PVT messages with callback to printPVTdata so we can watch the carrier solution go to fixed
 
-  myGNSS.setRXMCORcallbackPtr(&printRXMCOR); // Print the contents of UBX-RXM-COR messages so we can check if the PMP data is being decrypted successfully
+  //myGNSS.setRXMCORcallbackPtr(&printRXMCOR); // Print the contents of UBX-RXM-COR messages so we can check if the PMP data is being decrypted successfully
 
   //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
   // Begin and configure the NEO-D9S L-Band receiver
@@ -120,12 +120,13 @@ void setupGPS() {
 
   myLBand.softwareResetGNSSOnly(); // Do a restart
 
-  myLBand.setRXMPMPmessageCallbackPtr(&pushRXMPMP); // Call pushRXMPMP when new PMP data arrives. Push it to the GNSS  
+  //myLBand.setRXMPMPmessageCallbackPtr(&pushRXMPMP); // Call pushRXMPMP when new PMP data arrives. Push it to the GNSS  
+  myGNSS.setI2CpollingWait(100);
 }
 
 void gpsLoop() {
   myGNSS.checkUblox(); // Check for the arrival of new GNSS data and process it.
   myGNSS.checkCallbacks(); // Check if any GNSS callbacks are waiting to be processed.
-  myLBand.checkUblox(); // Check for the arrival of new PMP data and process it.
-  myLBand.checkCallbacks(); // Check if any LBand callbacks are waiting to be processed.
+  //myLBand.checkUblox(); // Check for the arrival of new PMP data and process it.
+  //myLBand.checkCallbacks(); // Check if any LBand callbacks are waiting to be processed.
 }
