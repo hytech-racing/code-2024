@@ -364,7 +364,7 @@ inline void state_machine() {
         set_all_inverters_dc_on(true);
         inverter_startup_state = INVERTER_STARTUP_STATE::WAIT_QUIT_DC_ON;
       }
-      if (dashboard_status.get_start_btn() && mcu_status.get_brake_pedal_active()) {
+      if (dashboard_status.get_start_btn() && mcu_status.get_mech_brake_active()) {
 #if DEBUG
         Serial.println("Setting state to Enabling Inverter");
 #endif
@@ -886,17 +886,14 @@ inline void set_inverter_torques() {
       torque_setpoint_array[1] = (uint16_t) torque_setpoint_array[1] * diff;
       torque_setpoint_array[2] = (uint16_t) torque_setpoint_array[2] * diff;
       torque_setpoint_array[3] = (uint16_t) torque_setpoint_array[3] * diff;
-      //get current - reference, go backwards by the constant
-      //get rid of adc conversion, divide by voltage divider gain and divide by op amp gain
-      //relate to current to voltage relationship of 300 amp sensor
     }
   */
-  //  uint16_t max_speed_regen = 0;
-  //  for (int i = 0; i < sizeof(torque_setpoint_array); i++) {
-  //
-  //    max_speed_regen = (max_speed_regen < mc_status[i].get_speed()) ? mc_status[i].get_speed() : max_speed_regen;
-  //
-  //  }
+    uint16_t max_speed_regen = 0;
+    for (int i = 0; i < sizeof(torque_setpoint_array); i++) {
+  
+      max_speed_regen = (max_speed_regen < mc_status[i].get_speed()) ? mc_status[i].get_speed() : max_speed_regen;
+  
+    }
 
   for (int i = 0; i < 4; i++) {
     if (torque_setpoint_array[i] >= 0) {
@@ -908,13 +905,13 @@ inline void set_inverter_torques() {
     else {
 
       float scale_down = 1;
-      //      if (max_speed_regen < 770) {
-      //        scale_down = 0;
-      //      } else if (max_speed_regen > REGEN_OFF_START_THRESHOLD) {
-      //        scale_down = 1;
-      //      } else {
-      //        scale_down = map(max_speed_regen, 770, REGEN_OFF_START_THRESHOLD, 0, 1);
-      //      }
+            if (max_speed_regen < 770) {
+              scale_down = 0;
+            } else if (max_speed_regen > REGEN_OFF_START_THRESHOLD) {
+              scale_down = 1;
+            } else {
+              scale_down = map(max_speed_regen, 770, REGEN_OFF_START_THRESHOLD, 0, 1);
+            }
       mc_setpoints_command[i].set_speed_setpoint(0);
       mc_setpoints_command[i].set_pos_torque_limit(0);
       mc_setpoints_command[i].set_neg_torque_limit(max(((int16_t)(torque_setpoint_array[i]) * scale_down) , -2000) );
