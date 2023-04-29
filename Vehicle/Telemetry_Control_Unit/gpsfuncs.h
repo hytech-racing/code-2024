@@ -68,8 +68,13 @@ void printPVTdata(UBX_NAV_PVT_data_t *ubxDataStruct)
   rx_msg3.len = sizeof(GPS_other);
   rx_msg3.id = ID_GPS_OTHER;
   uint64_t time = getTime();
+  while (buffer_lock.try_lock() == 0) {
+    threads.yield();
+  }
   CAN_msg_q.unshift((CAN_msg_time){ .msg = rx_msg2, .time = time });  //unclear what were passing
   CAN_msg_q.unshift((CAN_msg_time){ .msg = rx_msg3, .time = time });  //unclear what were passing
+  buffer_lock.unlock();
+
   counters.GPS_freq++;
 
 #ifdef printGPS

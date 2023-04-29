@@ -121,7 +121,7 @@ void setupGPS() {
   myLBand.softwareResetGNSSOnly(); // Do a restart
 
   //myLBand.setRXMPMPmessageCallbackPtr(&pushRXMPMP); // Call pushRXMPMP when new PMP data arrives. Push it to the GNSS  
-  myGNSS.setI2CpollingWait(100);
+  //myGNSS.setI2CpollingWait(100);
 }
 
 void gpsLoop() {

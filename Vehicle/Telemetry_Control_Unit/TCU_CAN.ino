@@ -95,21 +95,33 @@ void parse_can_lines() {
 void parse_can1_message(const CAN_message_t& rx_msg) {
   if(allow_message(rx_msg))
   {
+    while (buffer_lock.try_lock() == 0) {
+      threads.yield();
+    }
     CAN_msg_q.unshift((CAN_msg_time){ .msg = rx_msg, .time = getTime() });  //unclear what were passing
+    buffer_lock.unlock();
     counters.CAN_1_freq++;
   }
 }
 void parse_can2_message(const CAN_message_t& rx_msg) {
   if(allow_message(rx_msg))
   {
+    while (buffer_lock.try_lock() == 0) {
+      threads.yield();
+    }
     CAN_msg_q.unshift((CAN_msg_time){ .msg = rx_msg, .time = getTime() });  //unclear what were passing
+    buffer_lock.unlock();
     counters.CAN_2_freq++;
   }
 }
 void parse_can3_message(const CAN_message_t& rx_msg) {
   if(allow_message(rx_msg))
   {
+    while (buffer_lock.try_lock() == 0) {
+      threads.yield();
+    }
     CAN_msg_q.unshift((CAN_msg_time){ .msg = rx_msg, .time = getTime() });  //unclear what were passing
+    buffer_lock.unlock();
     counters.CAN_3_freq++;
   }
 }
@@ -118,9 +130,13 @@ void parse_can_q() {
   //CAN_write_t packed_msg;
   SD_write_buf *thirdptr;
   while(!CAN_msg_q.isEmpty()) {
+    while (buffer_lock.try_lock() == 0) {
+      threads.yield();
+    }
     cli();
     CAN_msg_time msg_time = CAN_msg_q.pop();
     sei();
+    buffer_lock.unlock();
     CAN_message_t msg = msg_time.msg;
     logger.print(msg_time.time);
     logger.print(",");

@@ -16,8 +16,9 @@
 #define CIRCULAR_BUFFER_INT_SAFE
 #include "CircularBuffer.h"
 
+#include <TeensyThreads.h>
+
 #include <SD.h>
-//#include <MTP_Teensy.h>
 #include <FlexCAN_T4.h>
 #include <HyTech_CAN.h>
 #include <kinetis_flexcan.h>
@@ -26,7 +27,6 @@
 #include <Time.h>
 #include <Metro.h>
 #include <XBTools.h>
-#include <Adafruit_GPS.h>
 #include <ADC_SPI.h>
 
 
@@ -73,6 +73,7 @@ typedef struct CAN_msg_time {
   uint64_t time = 0;
 } CAN_msg_time;
 CircularBuffer<CAN_msg_time, CAN_MSG_Q_SZ> CAN_msg_q;
+Threads::Mutex buffer_lock;
 
 
 /*
@@ -229,16 +230,33 @@ void setup() {
     CAN_3.onReceive(parse_can3_message);
     
     Serial.println("TCU On");
+
+    threads.setSliceMicros(10);
+    threads.setDefaultTimeSlice(1);
+    int id1 = threads.addThread(gpsthread);
+    threads.setTimeSlice(0, 19);    
 }
 
 Metro telem = Metro(1000);
+
+
+Metro gps_check = Metro(100);
+void gpsthread() {
+  while (1) {
+    if (gps_check.check()) {
+      gpsLoop();
+    } else {
+      threads.yield();      
+    }
+  }
+}
 
 void loop() {
     unsigned long before = millis();
     CAN_1.events();
     CAN_2.events();
     CAN_3.events();
-    gpsLoop();
+    //gpsLoop();
     //MTP.loop();
     /* Process and log incoming CAN messages */
     //parse_can_lines();
@@ -257,13 +275,23 @@ void loop() {
     if (timer_flush.check()) { //100 
         logger.flush(); // Flush data to disk (data is also flushed whenever the 512 Byte buffer fills up, but this call ensures we don't lose more than a second of data when the car turns off)
     }
+    /* Process MCU analog readings */
+    if (timer_mcu_analog_readings.check()) { //500
+        process_mcu_analog_readings();
+    }
+    /* Couloumb counting */
+    #if COULOUMB_COUNTING_EN
+    if (timer_total_discharge.check()) {
+        write_total_discharge();
+    }
+    #endif
+
     /* Print timestamp to serial occasionally */
     if (timer_debug_RTC.check()) { //1000
         Serial.printf("Clock: %u\n", Teensy3Clock.get());
         Serial.printf("CAN1: %u, CAN2: %u, CAN3: %u, GPS: %u, Loops: %lu\n",counters.CAN_1_freq, counters.CAN_2_freq, counters.CAN_3_freq, counters.GPS_freq, counters.loops);
         Serial.printf("Messages written: %lu Messages queued: %u\n", counters.bytes_written, counters.messages_queued);
-        Serial.printf("Max loop latency: %lu\n", counters.max_loop_latency);
-        Serial.printf("Slow loops: %u Slow loop time: %u\n", counters.slow_loops, counters.slow_loop_time);
+        Serial.printf("Max loop latency: %lu Slow loops: %u Slow loop time: %u\n", counters.max_loop_latency, counters.slow_loops, counters.slow_loop_time);
         Serial.println();
         counters = (perf_counters){
           .CAN_1_freq = 0, 
@@ -278,16 +306,6 @@ void loop() {
           .slow_loop_time = 0
           };
     }
-    /* Process MCU analog readings */
-    if (timer_mcu_analog_readings.check()) { //500
-        process_mcu_analog_readings();
-    }
-    /* Couloumb counting */
-    #if COULOUMB_COUNTING_EN
-    if (timer_total_discharge.check()) {
-        write_total_discharge();
-    }
-    #endif
     counters.loops++;
     unsigned long after = millis();
     if (after-before > counters.max_loop_latency) {
