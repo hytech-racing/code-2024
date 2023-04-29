@@ -28,7 +28,7 @@
 #define DRIVER DEFAULT_DRIVER
 #define TORQUE_1 10
 #define TORQUE_2 15
-#define TORQUE_3 19
+#define TORQUE_3 21
 #define MAX_ALLOWED_SPEED 20000
 
 // set to true or false for debugging
@@ -83,7 +83,7 @@ Metro timer_ready_sound = Metro(2000); // Time to play RTD sound
 
 Metro timer_read_all_adcs = Metro(20);
 Metro timer_steering_spi_read = Metro(1000);
-Metro timer_read_imu = Metro(50);
+Metro timer_read_imu = Metro(20);
 
 Metro timer_inverter_enable = Metro(5000);
 Metro timer_reset_inverter = Metro(5000);
@@ -126,6 +126,8 @@ int16_t speed_setpoint_array[4];
 uint16_t prev_load_cell_readings[4] = {0, 0, 0, 0};
 float load_cell_alpha = 0.9;
 
+uint16_t current_read = 0;
+uint16_t reference_read = 0;
 void setup() {
   // no torque can be provided on startup
   
@@ -672,8 +674,8 @@ void set_state(MCU_STATE new_state) {
 inline void set_inverter_torques() {
 
   float max_torque = mcu_status.get_max_torque() / 0.0098; // max possible value for torque multiplier, unit in 0.1% nominal torque
-  int accel1 = map(round(mcu_pedal_readings.get_accelerator_pedal_1()), START_ACCELERATOR_PEDAL_1, END_ACCELERATOR_PEDAL_1, 0, 2000);
-  int accel2 = map(round(mcu_pedal_readings.get_accelerator_pedal_2()), START_ACCELERATOR_PEDAL_2, END_ACCELERATOR_PEDAL_2, 0, 2000);
+  int accel1 = map(round(mcu_pedal_readings.get_accelerator_pedal_1()), START_ACCELERATOR_PEDAL_1, END_ACCELERATOR_PEDAL_1, 0, 2140);
+  int accel2 = map(round(mcu_pedal_readings.get_accelerator_pedal_2()), START_ACCELERATOR_PEDAL_2, END_ACCELERATOR_PEDAL_2, 0, 2140);
 
   int brake1 = map(round(mcu_pedal_readings.get_brake_pedal_1()), START_BRAKE_PEDAL_1, END_BRAKE_PEDAL_1, 0, 1100);
   int brake2 = map(round(mcu_pedal_readings.get_brake_pedal_2()), START_BRAKE_PEDAL_2, END_BRAKE_PEDAL_2, 0, 1100);
@@ -854,7 +856,7 @@ inline void set_inverter_torques() {
     torque_setpoint_array[i] = max(-2000.0, min(2000.0, torque_setpoint_array[i]));
   }
 
-  /*
+
      //very start check if mc_energy.get_feedback_torque > 0
       //power limit to 80kW
       //look at all torques
@@ -867,18 +869,18 @@ inline void set_inverter_torques() {
     && mc_energy[0].get_feedback_torque() > 0 && mc_energy[0].get_feedback_torque() > 0) {
       float mech_power = 0;
       float mdiff = 1;
-      float ediff = 1;
+      //float ediff = 1;
       float diff = 1;
 
       for(int i = 0; i < 4; i++) {
         mech_power += mc_energy[i].get_actual_power();
       }
-      mech_power /= 1000;
+      mech_power /= 1000.0;
 
-      float current = (ADC1.read_channel(ADC_CURRENT_CHANNEL) - ADC1.read_channel(ADC_REFERENCE_CHANNEL));
-      current = ((((current / 819.0) / .1912) / 4.832 )  * 1000) / 6.67;
-
-      float dc_power = (mc_energy[0].get_dc_bus_voltage() * current) / 1000; //mc dc bus voltage
+//      float current = (ADC1.read_channel(ADC_CURRENT_CHANNEL) - ADC1.read_channel(ADC_REFERENCE_CHANNEL));
+//      current = ((((current / 819.0) / .1912) / 4.832 )  * 1000) / 6.67;
+//
+//      float dc_power = (mc_energy[0].get_dc_bus_voltage() * current) / 1000; //mc dc bus voltage
 
       //sum up kilowatts to align
       //if mech_power is at 63 kW, it's requesting 80 kW from the motor
@@ -890,20 +892,22 @@ inline void set_inverter_torques() {
       //if HV DC bus is over 80 kW, it's a violation!
       // 1 kW as a second safety factor.
       if (mech_power > MECH_POWER_LIMIT) {
-        mdiff = MECH_POWER_LIMIT / mech_power;
+       // mdiff = MECH_POWER_LIMIT / mech_power;
+       diff = MECH_POWER_LIMIT / mech_power;
       }
-      if (dc_power > DC_POWER_LIMIT) {
-        ediff = DC_POWER_LIMIT / dc_power;
-      }
-      if (mech_power > MECH_POWER_LIMIT && dc_power > DC_POWER_LIMIT) {
-        diff = (ediff <= mdiff) ? ediff : mdiff;
-      }
+//      if (dc_power > DC_POWER_LIMIT) {
+//        ediff = DC_POWER_LIMIT / dc_power;
+//      }
+//      if (mech_power > MECH_POWER_LIMIT && dc_power > DC_POWER_LIMIT) {
+//        diff = (ediff <= mdiff) ? ediff : mdiff;
+//      }
       torque_setpoint_array[0] = (uint16_t) torque_setpoint_array[0] * diff;
       torque_setpoint_array[1] = (uint16_t) torque_setpoint_array[1] * diff;
       torque_setpoint_array[2] = (uint16_t) torque_setpoint_array[2] * diff;
       torque_setpoint_array[3] = (uint16_t) torque_setpoint_array[3] * diff;
     }
-  */
+  
+  
     uint16_t max_speed_regen = 0;
     for (int i = 0; i < sizeof(torque_setpoint_array); i++) {
   
@@ -952,6 +956,9 @@ inline void read_all_adcs() {
     mcu_pedal_readings.set_brake_pedal_1(adc1_inputs[ADC_BRAKE_1_CHANNEL]);
     mcu_pedal_readings.set_brake_pedal_2(adc1_inputs[ADC_BRAKE_2_CHANNEL]);
     mcu_analog_readings.set_steering_2(adc1_inputs[ADC_STEERING_2_CHANNEL]);
+    current_read = adc1_inputs[ADC_CURRENT_CHANNEL];
+    reference_read = adc1_inputs[ADC_REFERENCE_CHANNEL];
+    
     mcu_load_cells.set_RL_load_cell((uint16_t)((adc1_inputs[ADC_RL_LOAD_CELL_CHANNEL]*LOAD_CELL3_SLOPE + LOAD_CELL3_OFFSET)*(1-load_cell_alpha) + prev_load_cell_readings[2]*load_cell_alpha));
 
     mcu_status.set_brake_pedal_active(mcu_pedal_readings.get_brake_pedal_1() >= BRAKE_ACTIVE);
@@ -974,20 +981,6 @@ inline void read_all_adcs() {
     mcu_front_potentiometers.set_pot3(adc3_inputs[SUS_POT_FR]);
   }
 }
-
-
-
-
-//inline void read_load_cell_values() {
-//  if (timer_load_cells_read.check()) {
-//    //load cell is 2mV/V, 10V excitation, 1000lb max
-//    //goes through 37.5x gain of INA823, 21x gain of OPA991, +0.314V offset, 0.1912x reduction on ECU and MAX7400 before reaching ADC
-//    mcu_load_cells.set_FL_load_cell((uint16_t) (((ADC2.read_channel(ADC_FL_LOAD_CELL_CHANNEL) / 0.1912) - 0.314) / 787.5 * 50));
-//    mcu_load_cells.set_FR_load_cell((uint16_t) (((ADC2.read_channel(ADC_FR_LOAD_CELL_CHANNEL) / 0.1912) - 0.314) / 787.5 * 50));
-//    mcu_load_cells.set_RL_load_cell((uint16_t) (((ADC1.read_channel(ADC_RL_LOAD_CELL_CHANNEL) / 0.1912) - 0.314) / 787.5 * 50));
-//    mcu_load_cells.set_RR_load_cell((uint16_t) (((ADC2.read_channel(ADC_RR_LOAD_CELL_CHANNEL) / 0.1912) - 0.314) / 787.5 * 50));
-//  }
-//}
 
 inline void read_steering_spi_values() {
   if (timer_steering_spi_read.check()) {

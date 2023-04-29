@@ -390,10 +390,13 @@ inline void mcu_status_received() {
   digitalWrite(BUZZER_CTRL, mcu_status.get_activate_buzzer());
 
   if (mcu_status.get_bms_ok_high()) {
-    dashboard_neopixels.setPixelColor(LED_LIST::AMS, LED_ON_GREEN);
-    dashboard_status.set_ams_led(static_cast<uint8_t>(LED_MODES::ON));
+
+    if ((imd_ams_flags >> 1) & 1 == 0) {
+      dashboard_neopixels.setPixelColor(LED_LIST::AMS, LED_ON_GREEN);
+      dashboard_status.set_ams_led(static_cast<uint8_t>(LED_MODES::ON));
     //display_list[4] = 1;
-    imd_ams_flags |= (1 << 1);
+      imd_ams_flags |= (1 << 1);
+    }
 
   }
   // else if (init_ams){
@@ -411,10 +414,13 @@ inline void mcu_status_received() {
 
   //IMD LED
   if (mcu_status.get_imd_ok_high()) {
-    dashboard_neopixels.setPixelColor(LED_LIST::IMD, LED_ON_GREEN);
-    dashboard_status.set_imd_led(static_cast<uint8_t>(LED_MODES::ON));
+    if (imd_ams_flags & 1 == 0) {
+      dashboard_neopixels.setPixelColor(LED_LIST::IMD, LED_ON_GREEN);
+      dashboard_status.set_imd_led(static_cast<uint8_t>(LED_MODES::ON));
     //display_list[3] = 1;
-    imd_ams_flags |= 1;
+      imd_ams_flags |= 1;
+    }
+    
 
 
   }
