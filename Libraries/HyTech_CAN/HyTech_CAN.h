@@ -27,6 +27,8 @@
 #include "MCU_status.h"
 #include "MCU_analog_readings.h"
 #include "MCU_load_cells.h"
+#include "MCU_front_potentiometers.h"
+#include "MCU_rear_potentiometers.h"
 
 #include "MC_energy.h"
 #include "MC_setpoints_command.h"

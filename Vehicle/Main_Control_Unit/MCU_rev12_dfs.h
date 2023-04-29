@@ -70,6 +70,11 @@
 
 #define ADC_CURRENT_CHANNEL 5
 #define ADC_REFERENCE_CHANNEL 6
+
+#define SUS_POT_FL 6
+#define SUS_POT_FR 7
+#define SUS_POT_RL 0
+#define SUS_POT_RR 2
 /*
  * Shutdown read thresholds
  */

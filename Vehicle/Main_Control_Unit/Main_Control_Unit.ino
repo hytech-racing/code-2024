@@ -46,6 +46,8 @@ ADIS16460 IMU(IMU_CS, IMU_DATAREADY, IMU_RESET); // Chip Select, Data Ready, Res
 MCU_pedal_readings mcu_pedal_readings;
 MCU_status mcu_status{};
 MCU_load_cells mcu_load_cells{};
+MCU_front_potentiometers mcu_front_potentiometers;
+MCU_rear_potentiometers mcu_rear_potentiometers;
 MCU_analog_readings mcu_analog_readings{};
 
 // IMU
@@ -218,6 +220,7 @@ void loop() {
   send_CAN_mcu_status();
   send_CAN_mcu_pedal_readings();
   send_CAN_mcu_load_cells();
+  send_CAN_mcu_potentiometers();
   send_CAN_mcu_analog_readings();
   send_CAN_imu_accelerometer();
   send_CAN_imu_gyroscope();
@@ -320,6 +323,19 @@ inline void send_CAN_mcu_load_cells() {
     mcu_load_cells.write(msg.buf);
     msg.id = ID_MCU_LOAD_CELLS;
     msg.len = sizeof(mcu_load_cells);
+    TELEM_CAN.write(msg);
+  }
+}
+
+inline void send_CAN_mcu_potentiometers() {
+  if (timer_CAN_mcu_load_cells_send.check()) {
+    mcu_front_potentiometers.write(msg.buf);
+    msg.id = ID_MCU_FRONT_POTS;
+    msg.len = sizeof(mcu_front_potentiometers);
+    TELEM_CAN.write(msg);
+    mcu_rear_potentiometers.write(msg.buf);
+    msg.id = ID_MCU_REAR_POTS;
+    msg.len = sizeof(mcu_rear_potentiometers);
     TELEM_CAN.write(msg);
   }
 }
@@ -948,10 +964,14 @@ inline void read_all_adcs() {
     mcu_load_cells.set_RR_load_cell((uint16_t)((adc2_inputs[ADC_RR_LOAD_CELL_CHANNEL]*LOAD_CELL4_SLOPE + LOAD_CELL4_OFFSET)*(1-load_cell_alpha) + prev_load_cell_readings[3]*load_cell_alpha));
     mcu_load_cells.set_FL_load_cell((uint16_t)((adc2_inputs[ADC_FL_LOAD_CELL_CHANNEL]*LOAD_CELL1_SLOPE + LOAD_CELL1_OFFSET)*(1-load_cell_alpha) + prev_load_cell_readings[0]*load_cell_alpha));
     mcu_load_cells.set_FR_load_cell((uint16_t)((adc2_inputs[ADC_FR_LOAD_CELL_CHANNEL]*LOAD_CELL2_SLOPE + LOAD_CELL2_OFFSET)*(1-load_cell_alpha) + prev_load_cell_readings[1]*load_cell_alpha));
+    mcu_rear_potentiometers.set_pot4(adc2_inputs[SUS_POT_RL]);
+    mcu_rear_potentiometers.set_pot6(adc2_inputs[SUS_POT_RR]);
+    mcu_front_potentiometers.set_pot1(adc2_inputs[SUS_POT_FL]);
 
     uint16_t adc3_inputs[8];
     ADC3.read_all_channels(&adc3_inputs[0]);
     mcu_analog_readings.set_glv_battery_voltage(adc3_inputs[ADC_GLV_READ_CHANNEL]);
+    mcu_front_potentiometers.set_pot3(adc3_inputs[SUS_POT_FR]);
   }
 }
 

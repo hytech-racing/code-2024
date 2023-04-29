@@ -24,7 +24,9 @@
 
 #define ID_MCU_STATUS												0xC3
 #define ID_MCU_PEDAL_READINGS										0xC4
-#define ID_MCU_LOAD_CELLS                           0xC5
+#define ID_MCU_LOAD_CELLS                                           0xC5
+#define ID_MCU_FRONT_POTS                                           0xC6
+#define ID_MCU_REAR_POTS                                            0xC7
 #define ID_MCU_ANALOG_READINGS										0xCC
 
 
