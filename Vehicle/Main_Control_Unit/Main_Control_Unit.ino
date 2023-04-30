@@ -124,7 +124,7 @@ int16_t torque_setpoint_array[4];
 int16_t speed_setpoint_array[4];
 
 uint16_t prev_load_cell_readings[4] = {0, 0, 0, 0};
-float load_cell_alpha = 0.9;
+float load_cell_alpha = 0.95;
 
 uint16_t current_read = 0;
 uint16_t reference_read = 0;
@@ -727,7 +727,7 @@ inline void set_inverter_torques() {
   float r_torque;
   float rear_lr_slip_clamped;
   float lsd_right_split; // Fraction of rear axle torque going to rear right wheel
-  float lsd_slip_factor = 1.0;
+  float lsd_slip_factor = 0.5;
 
   switch (dashboard_status.get_dial_state()) {
     case 0:
@@ -773,7 +773,7 @@ inline void set_inverter_torques() {
       if (avg_accel - avg_brake >= 0) {
         // Accelerating
         
-        fr_slip_clamped = (((float)mc_status[2].get_speed() + (float)mc_status[3].get_speed() + 100.0) / ((float)mc_status[0].get_speed() + (float)mc_status[1].get_speed() + 100.0) - 1.0) * fr_slip_factor;
+        fr_slip_clamped = (((float)mc_status[2].get_speed() + (float)mc_status[3].get_speed() + 250.0) / ((float)mc_status[0].get_speed() + (float)mc_status[1].get_speed() + 250.0) - 1.0) * fr_slip_factor;
         fr_slip_clamped = min(1, max(0, fr_slip_clamped));
 
         // set front torque
@@ -785,12 +785,12 @@ inline void set_inverter_torques() {
         r_torque = 2 * ((attesa_def_split) * (1 - fr_slip_clamped) + (attesa_alt_split) * fr_slip_clamped) * (avg_accel -  avg_brake);
         if (mc_status[2].get_speed() > mc_status[3].get_speed()) {
           // Rear left is spinning faster than rear right, allocate torque more to rear right
-          rear_lr_slip_clamped = (((float)(mc_status[2].get_speed()) + 100.0) / ((float)(mc_status[3].get_speed()) + 100.0) - 1.0) * lsd_slip_factor;
+          rear_lr_slip_clamped = (((float)(mc_status[2].get_speed()) + 250.0) / ((float)(mc_status[3].get_speed()) + 250.0) - 1.0) * lsd_slip_factor;
           rear_lr_slip_clamped = min(0.5, max(0, rear_lr_slip_clamped));
           lsd_right_split = 0.5 + rear_lr_slip_clamped;
         } else {
           // Rear right is spinning faster than rear left, allocate torque more to rear left
-          rear_lr_slip_clamped = (((float)(mc_status[3].get_speed()) + 100.0) / ((float)(mc_status[2].get_speed()) + 100.0) - 1.0) * lsd_slip_factor;
+          rear_lr_slip_clamped = (((float)(mc_status[3].get_speed()) + 250.0) / ((float)(mc_status[2].get_speed()) + 250.0) - 1.0) * lsd_slip_factor;
           rear_lr_slip_clamped = min(0.5, max(0, rear_lr_slip_clamped));
           lsd_right_split = 0.5 - rear_lr_slip_clamped;
         }
@@ -809,7 +809,7 @@ inline void set_inverter_torques() {
       // Load cell torque vectoring
       // Modified braking behavior. No left/right vectoring when braking
       // More front bias when braking
-      load_cell_alpha = 0.9;
+      load_cell_alpha = 0.95;
       total_torque = 4.0 * (avg_accel - avg_brake) ;
       total_load_cells = mcu_load_cells.get_FL_load_cell() + mcu_load_cells.get_FR_load_cell() + mcu_load_cells.get_RL_load_cell() + mcu_load_cells.get_RR_load_cell();
       if (avg_accel >= avg_brake) {
@@ -829,7 +829,7 @@ inline void set_inverter_torques() {
       break;
     case 5:
       // Original load cell torque vectoring
-      load_cell_alpha = 0.9;
+      load_cell_alpha = 0.95;
       total_torque = 4 * (avg_accel - avg_brake) ;
       total_load_cells = mcu_load_cells.get_FL_load_cell() + mcu_load_cells.get_FR_load_cell() + mcu_load_cells.get_RL_load_cell() + mcu_load_cells.get_RR_load_cell();
       if (avg_accel >= avg_brake) {
