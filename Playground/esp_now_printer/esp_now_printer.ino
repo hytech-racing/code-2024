@@ -23,6 +23,8 @@ typedef struct test_struct {
 //Create a struct_message called myData
 test_struct myData;
 
+uint8_t newMac[] = {0x7C, 0xDF, 0xA1, 0x55, 0xB5, 0xA2};
+
 //callback function that will be executed when data is received
 void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
   Serial.write(incomingData, len);
@@ -36,7 +38,7 @@ void esp_now_setup() {
   Serial.print("ESP Board MAC Address:  ");
   Serial.println(WiFi.macAddress());
   WiFi.mode(WIFI_STA);
-
+  esp_wifi_set_mac(WIFI_IF_STA, &newMac[0]);
   if (!WiFi.setTxPower(WIFI_POWER_19_5dBm)) {
     Serial.println("Error setting transmit power");
   }

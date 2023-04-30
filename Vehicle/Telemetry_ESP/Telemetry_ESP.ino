@@ -92,12 +92,12 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
 
   esp_now_setup();
-  GPSSetup();
+  //sGPSSetup();
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  GPSLoop();
+  //GPSLoop();
   telemLoop();
 
   if (perf_timer.check()) {
