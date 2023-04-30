@@ -840,8 +840,8 @@ inline void set_inverter_torques() {
       } else {
         torque_setpoint_array[0] = (int16_t)((float)mcu_load_cells.get_FL_load_cell() / (float)total_load_cells * (float)total_torque);
         torque_setpoint_array[1] = (int16_t)((float)mcu_load_cells.get_FR_load_cell() / (float)total_load_cells * (float)total_torque);
-        torque_setpoint_array[2] = (int16_t)((float)mcu_load_cells.get_RL_load_cell() / (float)total_load_cells * (float)total_torque) / 2;
-        torque_setpoint_array[3] = (int16_t)((float)mcu_load_cells.get_RR_load_cell() / (float)total_load_cells * (float)total_torque) / 2;
+        torque_setpoint_array[2] = (int16_t)((float)mcu_load_cells.get_RL_load_cell() / (float)total_load_cells * (float)total_torque / 2.0);
+        torque_setpoint_array[3] = (int16_t)((float)mcu_load_cells.get_RR_load_cell() / (float)total_load_cells * (float)total_torque / 2.0);
       }
       break;
     default:
@@ -852,9 +852,7 @@ inline void set_inverter_torques() {
       break;
   }
 
-  for (int i = 0; i < 4; i++) {
-    torque_setpoint_array[i] = max(-2000.0, min(2000.0, torque_setpoint_array[i]));
-  }
+  
 
 
      //very start check if mc_energy.get_feedback_torque > 0
@@ -916,9 +914,13 @@ inline void set_inverter_torques() {
     }
 
   for (int i = 0; i < 4; i++) {
+    torque_setpoint_array[i] = max(-2140, min(2140, torque_setpoint_array[i]));
+  }
+
+  for (int i = 0; i < 4; i++) {
     if (torque_setpoint_array[i] >= 0) {
       mc_setpoints_command[i].set_speed_setpoint(MAX_ALLOWED_SPEED);
-      mc_setpoints_command[i].set_pos_torque_limit(min(torque_setpoint_array[i] , 2000));
+      mc_setpoints_command[i].set_pos_torque_limit(min(torque_setpoint_array[i] , 2140));
       mc_setpoints_command[i].set_neg_torque_limit(0);
 
     }
@@ -934,7 +936,7 @@ inline void set_inverter_torques() {
             }
       mc_setpoints_command[i].set_speed_setpoint(0);
       mc_setpoints_command[i].set_pos_torque_limit(0);
-      mc_setpoints_command[i].set_neg_torque_limit(max(((int16_t)(torque_setpoint_array[i]) * scale_down) , -2000) );
+      mc_setpoints_command[i].set_neg_torque_limit(max(((int16_t)(torque_setpoint_array[i]) * scale_down) , -2140) );
 
     }
   }
