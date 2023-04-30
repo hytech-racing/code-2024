@@ -1,5 +1,5 @@
 # MQTT_SERVER = "hytech-virtual-machine"
-# MQTT_PORT   = 1883
+MQTT_PORT   = 1883
 # MQTT_TOPIC  = 'hytech_car/telemetry'
 
 import paho.mqtt.client as mqtt 
@@ -7,10 +7,10 @@ from random import randrange, uniform
 import numpy as np
 import time
 
-mqttBroker = "test.mosquitto.org"    #"hytech-virtual-machine" 
+mqttBroker = "3.134.2.166"    #"hytech-virtual-machine" 
 
 client = mqtt.Client("I dont think it really matters")
-client.connect(mqttBroker)
+client.connect(mqttBroker, MQTT_PORT)
 cnt = 0
 
 
@@ -39,6 +39,9 @@ while True:
     client.publish("BMS/detailed_voltage/ic_10", randNumber - 2.6)
 #    client.publish("BMS/detailed_voltage/ic_02", randNumber - 1.6)
 
+
+    client.publish("BMS/voltages/high_voltage", 1)
+    client.publish("BMS/voltages/low_voltage", -1)
 
     print("Just published " + str(randNumber) + " to topic")
     time.sleep(.1)
