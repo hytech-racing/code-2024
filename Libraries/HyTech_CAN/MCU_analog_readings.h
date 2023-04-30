@@ -17,13 +17,13 @@ public:
     // Getters
     inline uint16_t get_steering_1()         const { return steering_1; }
     inline uint16_t get_steering_2()     const { return steering_2; }
-    inline int16_t  get_temperature()         const { return temperature; }
+    inline int16_t  get_hall_effect_current()         const { return hall_effect_current; }
     inline uint16_t get_glv_battery_voltage() const { return glv_battery_voltage; }
 
     // Setters
     inline void set_steering_1(const int16_t steering_1)                { this->steering_1 = steering_1; }
     inline void set_steering_2(const uint16_t steering_2)        { this->steering_2 = steering_2; }
-    inline void set_temperature(const int16_t temperature)                  { this->temperature = temperature; }
+    inline void set_hall_effect_current(const int16_t hall_effect_current)                  { this->hall_effect_current = hall_effect_current; }
     inline void set_glv_battery_voltage(const uint16_t glv_battery_voltage) { this->glv_battery_voltage = glv_battery_voltage; }
 
 private:
@@ -33,7 +33,7 @@ private:
 	// @Parse @Unit(A) @Scale(5000)
     uint16_t steering_2; // unsigned int, 0-5V out of analog steering wheel sensor
     // @Parse @Unit(C) @Scale(100)
-    int16_t temperature;
+    int16_t hall_effect_current;
     // @Parse @Unit(V) @Scale(2500)
     uint16_t glv_battery_voltage;
 };

@@ -876,7 +876,8 @@ inline void set_inverter_torques() {
       mech_power /= 1000.0;
 
 //      float current = (ADC1.read_channel(ADC_CURRENT_CHANNEL) - ADC1.read_channel(ADC_REFERENCE_CHANNEL));
-//      current = ((((current / 819.0) / .1912) / 4.832 )  * 1000) / 6.67;
+//      current = ((((current / 819.0) / .1912) / 4.832) - 2.5) * 1000) / 6.67;
+        
 //
 //      float dc_power = (mc_energy[0].get_dc_bus_voltage() * current) / 1000; //mc dc bus voltage
 
@@ -958,8 +959,16 @@ inline void read_all_adcs() {
     mcu_pedal_readings.set_brake_pedal_1(adc1_inputs[ADC_BRAKE_1_CHANNEL]);
     mcu_pedal_readings.set_brake_pedal_2(adc1_inputs[ADC_BRAKE_2_CHANNEL]);
     mcu_analog_readings.set_steering_2(adc1_inputs[ADC_STEERING_2_CHANNEL]);
-    current_read = adc1_inputs[ADC_CURRENT_CHANNEL];
-    reference_read = adc1_inputs[ADC_REFERENCE_CHANNEL];
+    current_read = adc1_inputs[ADC_CURRENT_CHANNEL] - adc1_inputs[ADC_REFERENCE_CHANNEL];
+    float current = (((((current_read / 819.0) / .1912) / 4.832) - 2.5) * 1000) / 6.67;
+    if (current > 300) {
+      current = 300; 
+    } else if (current < -300) {
+      current = -300;
+    }
+    mcu_analog_readings.set_hall_effect_current((uint16_t)current*100);
+    
+    
     
     mcu_load_cells.set_RL_load_cell((uint16_t)((adc1_inputs[ADC_RL_LOAD_CELL_CHANNEL]*LOAD_CELL3_SLOPE + LOAD_CELL3_OFFSET)*(1-load_cell_alpha) + prev_load_cell_readings[2]*load_cell_alpha));
 
