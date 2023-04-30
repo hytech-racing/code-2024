@@ -13,10 +13,10 @@ LOG_MODULE_DECLARE(mqtt_simple, CONFIG_MQTT_SIMPLE_LOG_LEVEL);
  * Serial Stuff
  */
 /* change this to any other UART peripheral if desired */
-//#define UART_DEVICE_NODE DT_CHOSEN(zephyr_shell_uart)
-#define UART_DEVICE_NODE DT_NODELABEL(uart1)
+#define UART_DEVICE_NODE DT_CHOSEN(zephyr_shell_uart)
+//#define UART_DEVICE_NODE DT_NODELABEL(uart1)
 
-#define MSG_SIZE 32
+#define MSG_SIZE 1024
 
 /* queue to store up to 10 messages (aligned to 4-byte boundary) */
 K_MSGQ_DEFINE(uart_msgq, MSG_SIZE, 10, 4);
@@ -77,7 +77,7 @@ void print_uart(char *buf)
 
 void uart_thread(void) {
 	const struct uart_config cfg = {
-		.baudrate = 115200, 
+		.baudrate = 1000000, 
 		.parity = UART_CFG_PARITY_NONE, 
 		.stop_bits = UART_CFG_STOP_BITS_1,
 		.data_bits = UART_CFG_DATA_BITS_8,
