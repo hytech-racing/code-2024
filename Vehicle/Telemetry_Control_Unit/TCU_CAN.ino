@@ -138,6 +138,9 @@ void parse_can_q() {
     sei();
     buffer_lock.unlock();
     CAN_message_t msg = msg_time.msg;
+
+    message_cbs(msg);
+    
     logger.print(msg_time.time);
     logger.print(",");
     logger.print(msg.id, HEX);
@@ -152,6 +155,7 @@ void parse_can_q() {
     }
     logger.println();
     counters.bytes_written++;
+    
     /*packed_msg.time = msg_time.time;
     packed_msg.id = msg_time.msg.id;
     packed_msg.data = msg_time.msg.data;*/    
