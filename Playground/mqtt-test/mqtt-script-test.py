@@ -19,10 +19,26 @@ while True:
     cnt = (cnt+1)%100
     print(randNumber)
     client.publish("BMS/detailed_voltage/ic_00", randNumber)
-    client.publish("BMS/detailed_voltage/ic_02", randNumber + 1)
-    client.publish("BMS/detailed_voltage/ic_04", randNumber + 2)
-    client.publish("BMS/detailed_voltage/ic_06", randNumber + 3)
-    client.publish("BMS/detailed_voltage/ic_08", randNumber - 1)
-    client.publish("BMS/detailed_voltage/ic_10", randNumber - 2)
+#    client.publish("BMS/detailed_voltage/ic_01", randNumber - 1)
+
+    client.publish("BMS/detailed_voltage/ic_02", randNumber + 1.1)
+#   client.publish("BMS/detailed_voltage/ic_03", randNumber)
+
+    client.publish("BMS/detailed_voltage/ic_04", randNumber + 2.2)
+#    client.publish("BMS/detailed_voltage/ic_05", randNumber + 1.2)
+    
+
+    client.publish("BMS/detailed_voltage/ic_06", randNumber + 3.3)
+#    client.publish("BMS/detailed_voltage/ic_07", randNumber + 2.3)
+
+
+    client.publish("BMS/detailed_voltage/ic_08", randNumber - 1.5)
+#    client.publish("BMS/detailed_voltage/ic_09", randNumber - .5)
+
+
+    client.publish("BMS/detailed_voltage/ic_10", randNumber - 2.6)
+#    client.publish("BMS/detailed_voltage/ic_02", randNumber - 1.6)
+
+
     print("Just published " + str(randNumber) + " to topic")
     time.sleep(.1)
