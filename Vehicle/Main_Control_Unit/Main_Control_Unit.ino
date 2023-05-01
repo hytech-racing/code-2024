@@ -960,7 +960,7 @@ inline void read_all_adcs() {
     mcu_pedal_readings.set_brake_pedal_2(adc1_inputs[ADC_BRAKE_2_CHANNEL]);
     mcu_analog_readings.set_steering_2(adc1_inputs[ADC_STEERING_2_CHANNEL]);
     current_read = adc1_inputs[ADC_CURRENT_CHANNEL] - adc1_inputs[ADC_REFERENCE_CHANNEL];
-    float current = (((((current_read / 819.0) / .1912) / 4.832) - 2.5) * 1000) / 6.67;
+    float current = ((((current_read / 819.0) / .1912) / 4.832) * 1000) / 6.67;
     if (current > 300) {
       current = 300; 
     } else if (current < -300) {
