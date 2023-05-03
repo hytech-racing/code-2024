@@ -522,6 +522,56 @@ def parse_MCU_load_cells(data, id = None, time=None):
 MESSAGE_DICT[0xC5] = (parse_MCU_load_cells, "MCU_load_cells")
 
 #done
+def parse_MCU_front_pots(data, id = None, time=None):
+    msg_id = 0xC6
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
+    
+    vectors = [
+        (16, -1, False, lambda x: x * 0.059312 + 3.0 , "pot1" , "lb", "MCU.pots.pot1"),
+        (16, -1, False, lambda x: x * 0.059312 + 3.0 , "pot2" , "lb", "MCU.pots.pot2"),
+        (16, -1, False, lambda x: x * 0.059312 + 3.0 , "pot3" , "lb", "MCU.pots.pot3"),
+    ]
+
+    bitoffsets, bitmasks = get_offsets_masks(vectors)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+
+    #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    directory = [vector[6] for vector in vectors]
+    return [(arr, cols, units, directory)]
+MESSAGE_DICT[0xC6] = (parse_MCU_front_pots, "MCU_front_potentiometers")
+
+#done
+def parse_MCU_rear_pots(data, id = None, time=None):
+    msg_id = 0xC7
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
+    
+    vectors = [
+        (16, -1, False, lambda x: x * 0.059312 + 3.0 , "pot4" , "lb", "MCU.pots.pot4"),
+        (16, -1, False, lambda x: x * 0.059312 + 3.0 , "pot5" , "lb", "MCU.pots.pot5"),
+        (16, -1, False, lambda x: x * 0.059312 + 3.0 , "pot6" , "lb", "MCU.pots.pot6"),
+    ]
+
+    bitoffsets, bitmasks = get_offsets_masks(vectors)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+
+    #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    directory = [vector[6] for vector in vectors]
+    return [(arr, cols, units, directory)]
+MESSAGE_DICT[0xC7] = (parse_MCU_rear_pots, "MCU_rear_potentiometers")
+
+#done
 def parse_MC1_energy(data, id = None, time=None):
     msg_id = 0xA8
     if id is not None:
