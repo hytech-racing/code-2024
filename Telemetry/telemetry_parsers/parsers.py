@@ -399,8 +399,8 @@ def parse_GPS_lat_long(data, id = None, time=None):
             time = time[mask]
     
     vectors = [
-        (32, -1, False, lambda x: x/10000000.0 , "lat" , "deg", "MCU.GPS.latitude"),
-        (32, -1, False, lambda x: x/10000000.0 , "lon" , "deg", "MCU.GPS.longitude"),
+        (32, -1, True, lambda x: x/10000000.0 , "lat" , "deg", "MCU.GPS.latitude"),
+        (32, -1, True, lambda x: x/10000000.0 , "lon" , "deg", "MCU.GPS.longitude"),
     ]
 
     bitoffsets, bitmasks = get_offsets_masks(vectors)
@@ -1108,26 +1108,6 @@ def parse_SAB_readings_rear(data, id = None, time=None):
     directory = [vector[6] for vector in vectors]
     return [(arr, cols, units, directory)]
 MESSAGE_DICT[0x93] = (parse_SAB_readings_rear, "SAB_readings_rear") 
-
-def parse_SAB_readings_gps(data, id = None, time=None):
-    msg_id = 0xEE
-    if id is not None:
-        mask = id==msg_id
-        data = data[mask]
-        if time is not None:
-            time = time[mask]
-    
-
-
-    bitoffsets, bitmasks = get_offsets_masks(vectors)
-    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
-
-    #df = pd.DataFrame(arr, columns='cols')
-    cols = [vector[4] for vector in vectors]
-    units = [vector[5] for vector in vectors]
-    directory = [vector[6] for vector in vectors]
-    return [(arr, cols, units, directory)]
-MESSAGE_DICT[0xEE] = (parse_SAB_readings_gps, "SAB_readings_gps") 
 
 #done
 def parse_EM_status(data, id = None, time=None):
