@@ -390,6 +390,52 @@ def parse_MCU_GPS_readings(data, id = None, time=None):
     return [(arr, cols, units, directory)]
 MESSAGE_DICT[0xE7] = (parse_MCU_GPS_readings, "MCU_GPS_readings") 
 
+def parse_GPS_lat_long(data, id = None, time=None):
+    msg_id = 0xED
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
+    
+    vectors = [
+        (32, -1, False, lambda x: x/10000000.0 , "lat" , "deg", "MCU.GPS.latitude"),
+        (32, -1, False, lambda x: x/10000000.0 , "lon" , "deg", "MCU.GPS.longitude"),
+    ]
+
+    bitoffsets, bitmasks = get_offsets_masks(vectors)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+
+    #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    directory = [vector[6] for vector in vectors]
+    return [(arr, cols, units, directory)]
+MESSAGE_DICT[0xED] = (parse_GPS_lat_long, "GPS_lat_long") 
+
+def parse_GPS_other(data, id = None, time=None):
+    msg_id = 0xEE
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
+    
+    vectors = [
+        (32, -1, False, lambda x: x/1000.0 , "msl" , "m", "MCU.GPS.msl"),
+        (32, -1, False, lambda x: x/1000.0 , "acc" , "m", "MCU.GPS.accuracy"),
+    ]
+
+    bitoffsets, bitmasks = get_offsets_masks(vectors)
+    arr = parse_to_np(data, vectors, bitoffsets, bitmasks, time = time)
+
+    #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    directory = [vector[6] for vector in vectors]
+    return [(arr, cols, units, directory)]
+MESSAGE_DICT[0xEE] = (parse_GPS_other, "GPS_other") 
+
 #done
 def parse_MCU_pedal_readings(data, id = None, time=None):
     msg_id = 0xC4
