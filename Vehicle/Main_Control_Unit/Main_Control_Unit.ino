@@ -121,13 +121,25 @@ uint32_t total_discharge;
 unsigned long previous_data_time;
 
 int16_t torque_setpoint_array[4];
-int16_t speed_setpoint_array[4];
+int16_t speed_setpoint_array[4] = {0, 0, 0, 0};
 
 uint16_t prev_load_cell_readings[4] = {0, 0, 0, 0};
 float load_cell_alpha = 0.95;
 
 uint16_t current_read = 0;
 uint16_t reference_read = 0;
+
+enum launch_states {launch_not_ready, launch_ready, launching};
+launch_states launch_state = launch_not_ready;
+int16_t launch_speed_target = 0;
+elapsedMillis time_since_launch;
+const uint16_t LAUNCH_READY_ACCEL_THRESHOLD = 100;
+const uint16_t LAUNCH_READY_BRAKE_THRESHOLD = 300;
+const int16_t LAUNCH_READY_SPEED_THRESHOLD = 500;
+const uint16_t LAUNCH_GO_THRESHOLD = 1800;
+const uint16_t LAUNCH_STOP_THRESHOLD = 1000;
+float launch_rate_target = 0.0;
+
 void setup() {
   // no torque can be provided on startup
   
@@ -729,12 +741,14 @@ inline void set_inverter_torques() {
   float lsd_right_split; // Fraction of rear axle torque going to rear right wheel
   float lsd_slip_factor = 0.5;
 
+  int16_t max_speed;
+
   switch (dashboard_status.get_dial_state()) {
     case 0:
-      // alt brake split
-      rear_brake_balance = 0.3;
-      front_brake_balance = 1.0 - rear_brake_balance;
-    case 1:
+      for (int i = 0; i < 4; i++) {
+        speed_setpoint_array[i] = MAX_ALLOWED_SPEED;
+      }
+      launch_state = launch_not_ready;
       // standard no torque vectoring
 
       torque_setpoint_array[0] = avg_accel -  avg_brake;
@@ -758,11 +772,11 @@ inline void set_inverter_torques() {
         }
       }
       break;
-    case 2:
-      // alt brake split
-      rear_brake_balance = 0.3;
-      front_brake_balance = 1.0 - rear_brake_balance;
-    case 3:
+    case 1:
+      for (int i = 0; i < 4; i++) {
+        speed_setpoint_array[i] = MAX_ALLOWED_SPEED;
+      }
+      launch_state = launch_not_ready;
       // Based on Nissan ATTESA ET-S
       // 1. Determine F/R torque allocation. Default to rear bias, but increase front bias as rear begins to slip more than front.
       // Send up to 50% of torque to the front.
@@ -805,29 +819,11 @@ inline void set_inverter_torques() {
         torque_setpoint_array[3] = 2.0 * rear_brake_balance * (avg_accel - avg_brake);
       }
       break;
-    case 4:
-      // Load cell torque vectoring
-      // Modified braking behavior. No left/right vectoring when braking
-      // More front bias when braking
-      load_cell_alpha = 0.95;
-      total_torque = 4.0 * (avg_accel - avg_brake) ;
-      total_load_cells = mcu_load_cells.get_FL_load_cell() + mcu_load_cells.get_FR_load_cell() + mcu_load_cells.get_RL_load_cell() + mcu_load_cells.get_RR_load_cell();
-      if (avg_accel >= avg_brake) {
-        torque_setpoint_array[0] = (int16_t)((float)mcu_load_cells.get_FL_load_cell() / (float)total_load_cells * (float)total_torque);
-        torque_setpoint_array[1] = (int16_t)((float)mcu_load_cells.get_FR_load_cell() / (float)total_load_cells * (float)total_torque);
-        torque_setpoint_array[2] = (int16_t)((float)mcu_load_cells.get_RL_load_cell() / (float)total_load_cells * (float)total_torque);
-        torque_setpoint_array[3] = (int16_t)((float)mcu_load_cells.get_RR_load_cell() / (float)total_load_cells * (float)total_torque);
-      } else {
-        front_load_total = (float)(mcu_load_cells.get_FL_load_cell() + mcu_load_cells.get_FR_load_cell());
-        rear_load_total = (float)(mcu_load_cells.get_RL_load_cell() + mcu_load_cells.get_RR_load_cell());
-
-        torque_setpoint_array[0] = front_brake_balance * front_load_total / total_load_cells * total_torque / 2.0;
-        torque_setpoint_array[1] = front_brake_balance * front_load_total / total_load_cells * total_torque / 2.0;
-        torque_setpoint_array[2] = rear_brake_balance * rear_load_total / total_load_cells * total_torque / 2.0;
-        torque_setpoint_array[3] = rear_brake_balance * rear_load_total / total_load_cells * total_torque / 2.0;
+    case 2:
+      for (int i = 0; i < 4; i++) {
+        speed_setpoint_array[i] = MAX_ALLOWED_SPEED;
       }
-      break;
-    case 5:
+      launch_state = launch_not_ready;
       // Original load cell torque vectoring
       load_cell_alpha = 0.95;
       total_torque = 4 * (avg_accel - avg_brake) ;
@@ -844,11 +840,86 @@ inline void set_inverter_torques() {
         torque_setpoint_array[3] = (int16_t)((float)mcu_load_cells.get_RR_load_cell() / (float)total_load_cells * (float)total_torque / 2.0);
       }
       break;
+    case 3:
+      max_speed = 0;
+      launch_rate_target = 8.24;
+      for (int i = 0; i < 4; i++) {
+        max_speed = max(max_speed, mc_status[i].get_speed());
+      }
+
+      switch (launch_state) {
+        case launch_not_ready:
+          for (int i = 0; i < 4; i++) {
+            torque_setpoint_array[i] = (int16_t)(-1 * avg_brake);
+            speed_setpoint_array[i] = 0;
+          }
+          time_since_launch = 0;
+          launch_speed_target = 0;
+
+          // To enter launch_ready, the following conditions must be true:
+          // 1. Pedals are not pressed
+          // 2. Speed is zero
+          if (avg_accel < LAUNCH_READY_ACCEL_THRESHOLD && avg_brake < LAUNCH_READY_BRAKE_THRESHOLD && max_speed < LAUNCH_READY_SPEED_THRESHOLD) {
+            launch_state = launch_ready;
+          }
+          break;
+        case launch_ready:
+          for (int i = 0; i < 4; i++) {
+            torque_setpoint_array[i] = 0;
+            speed_setpoint_array[i] = 0;
+          }
+          time_since_launch = 0;
+          launch_speed_target = 0;
+
+          // Revert to launch_not_ready if brake is pressed or speed is too high
+          if (avg_brake >= LAUNCH_READY_BRAKE_THRESHOLD || max_speed >= LAUNCH_READY_SPEED_THRESHOLD) {
+            launch_state = launch_not_ready;
+          } else {
+            // Otherwise, check if launch should begin
+            if (avg_accel >= LAUNCH_GO_THRESHOLD) {
+              launch_state = launching;
+            }
+          }
+
+          break;
+        case launching:
+          // Exit launch if accel pedal goes past STOP threshold or brake pedal is pressed
+          if (avg_accel <= LAUNCH_STOP_THRESHOLD || avg_brake >= LAUNCH_READY_BRAKE_THRESHOLD) {
+            launch_state = launch_not_ready;
+            break;
+          }
+
+          launch_speed_target = (int16_t)((float) time_since_launch / 1000.0 * launch_rate_target * 60.0 / 1.2767432544 * 11.86);
+          launch_speed_target += 1500;
+          launch_speed_target = min(20000, max(0, launch_speed_target));
+
+          for (int i = 0; i < 4; i++) {
+            torque_setpoint_array[i] = 2142;
+            speed_setpoint_array[i] = launch_speed_target;
+          }
+
+          break;
+        default:
+          break;
+      }
+
+      break;
+    case 4:
+      for (int i = 0; i < 4; i++) {
+        speed_setpoint_array[i] = 0;
+      }
+      launch_state = launch_not_ready;
+    case 5:
+      for (int i = 0; i < 4; i++) {
+        speed_setpoint_array[i] = 0;
+      }
+      launch_state = launch_not_ready;
     default:
-      torque_setpoint_array[0] = 0;
-      torque_setpoint_array[1] = 0;
-      torque_setpoint_array[2] = 0;
-      torque_setpoint_array[3] = 0;
+      for (int i = 0; i < 4; i++) {
+        speed_setpoint_array[i] = 0;
+        torque_setpoint_array[i] = 0;
+      }
+      launch_state = launch_not_ready;
       break;
   }
 
@@ -907,7 +978,7 @@ inline void set_inverter_torques() {
     }
   
   
-    uint16_t max_speed_regen = 0;
+    int16_t max_speed_regen = 0;
     for (int i = 0; i < sizeof(torque_setpoint_array); i++) {
   
       max_speed_regen = (max_speed_regen < mc_status[i].get_speed()) ? mc_status[i].get_speed() : max_speed_regen;
@@ -920,7 +991,7 @@ inline void set_inverter_torques() {
 
   for (int i = 0; i < 4; i++) {
     if (torque_setpoint_array[i] >= 0) {
-      mc_setpoints_command[i].set_speed_setpoint(MAX_ALLOWED_SPEED);
+      mc_setpoints_command[i].set_speed_setpoint(speed_setpoint_array[i]);
       mc_setpoints_command[i].set_pos_torque_limit(min(torque_setpoint_array[i] , 2140));
       mc_setpoints_command[i].set_neg_torque_limit(0);
 
