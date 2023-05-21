@@ -4,10 +4,10 @@
 #include <zephyr/drivers/uart.h>
 #include <drivers/gpio.h>
 #include <zephyr/net/mqtt.h>
-#include "mqtt.h"
 #include <string.h>
+#include "mqtt.c"
 
-LOG_MODULE_DECLARE(mqtt_simple, CONFIG_MQTT_SIMPLE_LOG_LEVEL);
+//LOG_MODULE_DECLARE(mqtt_simple, CONFIG_MQTT_SIMPLE_LOG_LEVEL);
 
 /* 
  * Serial Stuff
@@ -16,7 +16,7 @@ LOG_MODULE_DECLARE(mqtt_simple, CONFIG_MQTT_SIMPLE_LOG_LEVEL);
 #define UART_DEVICE_NODE DT_CHOSEN(zephyr_shell_uart)
 //#define UART_DEVICE_NODE DT_NODELABEL(uart1)
 
-#define MSG_SIZE 1024
+#define MSG_SIZE 64
 
 /* queue to store up to 10 messages (aligned to 4-byte boundary) */
 K_MSGQ_DEFINE(uart_msgq, MSG_SIZE, 10, 4);
@@ -77,7 +77,7 @@ void print_uart(char *buf)
 
 void uart_thread(void) {
 	const struct uart_config cfg = {
-		.baudrate = 1000000, 
+		.baudrate = 115200, 
 		.parity = UART_CFG_PARITY_NONE, 
 		.stop_bits = UART_CFG_STOP_BITS_1,
 		.data_bits = UART_CFG_DATA_BITS_8,
@@ -103,22 +103,49 @@ void uart_thread(void) {
 
 	LOG_INF("UART device ready");
 
+	//uint8_t c;
+
 	while (1) {
 		if (k_msgq_get(&uart_msgq, &tx_buf, K_FOREVER) == 0) {
-			// print_uart("Echo: ");
-			// print_uart(tx_buf);
-			// print_uart("\r\n");
-
-			LOG_INF("Echo: %s", tx_buf);
-			LOG_INF("%d",strlen(tx_buf)+1);
-
+			print_uart("Echo: ");
+			print_uart(tx_buf);
+			print_uart("\r\n");
 			
-			data_publish(&client,
-				   MQTT_QOS_1_AT_LEAST_ONCE,
-				   tx_buf,
-				   strlen(tx_buf)+1);
+			int ret;
+
+			ret = data_publish(&client,
+					MQTT_QOS_1_AT_LEAST_ONCE,
+					CONFIG_BUTTON_EVENT_PUBLISH_MSG,
+					sizeof(CONFIG_BUTTON_EVENT_PUBLISH_MSG));
 			
+			ret = data_publish(&client,
+					MQTT_QOS_1_AT_LEAST_ONCE,
+					tx_buf,
+					strlen(tx_buf)+1);
+			if (ret) {
+				LOG_ERR("Publish failed: %d", ret);
+			}
 
 		}
+		/*
+		if (!uart_poll_in(uart_dev, &c))
+		{
+			if ((c == '\n' || c == '\r') && rx_buf_pos > 0) {
+				// terminate string
+				rx_buf[rx_buf_pos] = '\0';
+				//data_publish(&client, MQTT_QOS_1_AT_LEAST_ONCE,
+				//	rx_buf, strlen(rx_buf) + 1);
+				// if queue is full, message is silently dropped
+				k_msgq_put(&uart_msgq, &rx_buf, K_NO_WAIT);
+				// reset the buffer (it was copied to the msgq)
+				rx_buf_pos = 0;
+			} else if (rx_buf_pos < (sizeof(rx_buf) - 1)) {
+				rx_buf[rx_buf_pos++] = c;
+			}
+			// else: characters beyond buffer size are dropped
+		}
+		*/
 	}
+
+
 }

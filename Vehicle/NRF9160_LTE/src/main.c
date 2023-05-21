@@ -6,10 +6,10 @@
 
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
-#include "mqtt.h"
-#include "uart.h"
-
 LOG_MODULE_REGISTER(mqtt_simple, CONFIG_MQTT_SIMPLE_LOG_LEVEL);
+//#include "uart.c"
+#include "mqtt.h"
+
 
 #define THREAD_PRIORITY 7
 
