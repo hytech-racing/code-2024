@@ -211,7 +211,7 @@ void setup() {
 
     setupClock();
 
-    setupGPS();
+    int gps_setup = setupGPS();
 
     createFile();
 
@@ -233,7 +233,9 @@ void setup() {
 
     threads.setSliceMicros(10);
     threads.setDefaultTimeSlice(1);
-    int id1 = threads.addThread(gpsthread);
+    if (gps_setup == 0) {
+      int id1 = threads.addThread(gpsthread);
+    }
     threads.setTimeSlice(0, 19);    
 }
 
