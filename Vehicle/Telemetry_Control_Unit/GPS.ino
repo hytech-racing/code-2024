@@ -33,6 +33,7 @@
 #include "secrets.h" // <- Copy and paste the Current Key and Next Key into secrets.h
 
 #include <SparkFun_u-blox_GNSS_v3.h> //http://librarymanager/All#SparkFun_u-blox_GNSS_v3
+
 SFE_UBLOX_GNSS myGNSS; // ZED-F9x
 SFE_UBLOX_GNSS myLBand; // NEO-D9S
 
@@ -46,19 +47,30 @@ GPS_other gps_other;
 
 #include "gpsfuncs.h"
 
-void setupGPS() {
+int setupGPS() {
   Wire.begin(); //Start I2C
 
   //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
   // Begin and configure the ZED-F9x
 
   //myGNSS.enableDebugging(); // Uncomment this line to enable helpful debug messages on Serial
-
-  while (myGNSS.begin() == false) //Connect to the u-blox module using Wire port
-  {
-    Serial.println(F("u-blox GNSS module not detected at default I2C address. Please check wiring."));
-    delay(2000);
+  uint8_t attempts = 3;
+  int gps_init_ok = 0;
+  for(int i = 0; i < attempts; i++) {
+    if (myGNSS.begin() == false) //Connect to the u-blox module using Wire port
+    {
+      Serial.println(F("u-blox GNSS module not detected at default I2C address. Please check wiring."));
+      gps_init_ok = -1;
+      delay(1000);
+    } else {
+      gps_init_ok = 0;
+      break;
+    }
   }
+  if (gps_init_ok != 0) {
+    return gps_init_ok;
+  }
+
   Serial.println(F("u-blox GNSS module connected"));
 
   uint8_t ok = myGNSS.setI2COutput(COM_TYPE_UBX); //Turn off NMEA noise
@@ -90,10 +102,20 @@ void setupGPS() {
 
   //myLBand.enableDebugging(); // Uncomment this line to enable helpful debug messages on Serial
 
-  while (myLBand.begin(Wire, 0x43) == false) //Connect to the u-blox NEO-D9S using Wire port. The D9S default I2C address is 0x43 (not 0x42)
-  {
-    Serial.println(F("u-blox NEO-D9S not detected at default I2C address. Please check wiring."));
-    delay(2000);
+  int neo_init_ok = 0;
+  for(int i = 0; i < attempts; i++) {
+    if (myLBand.begin(Wire, 0x43) == false) //Connect to the u-blox module using Wire port
+    {
+      Serial.println(F("u-blox NEO-D9S not detected at default I2C address. Please check wiring."));
+      neo_init_ok = -1;
+      delay(1000);
+    } else {
+      neo_init_ok = 0;
+      break;
+    }
+  }
+  if (neo_init_ok != 0) {
+    return neo_init_ok;
   }
   Serial.println(F("u-blox NEO-D9S connected"));
 
