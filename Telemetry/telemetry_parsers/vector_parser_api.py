@@ -10,6 +10,24 @@ import parsers as p
 import json
 import re
 
+def find_relative_paths(path, extension):
+    return [os.path.relpath(f, path) for f in Path(path).rglob(extension)]
+
+def find_new_paths(relativepaths, newpath):
+    return [os.path.join(newpath, relativepath) for relativepath in relativepaths]
+
+def find_csv_dst_paths(path, newpath):
+    paths = find_relative_paths(path, "*.csv")
+    new_paths = find_new_paths(paths, newpath)
+    csv_paths = [os.path.join(path, p) for p in paths]
+    return (csv_paths, new_paths)
+
+def find_paths_and_dst(path, ext, newpath, newext):
+    relative_paths = [os.path.relpath(f, path) for f in Path(path).rglob(ext)]
+    full_paths = [os.path.join(path, f) for f in relative_paths]
+    new_paths = [os.path.join(newpath, os.path.splitext(f)[0]+newext) for f in relative_paths]
+    return full_paths, new_paths
+
 def parse_csv_folder_save_mat(path):
     data_dict, csv_paths = parse_csv_folder("../telemetry_exe/Raw_Data/")
     mat_paths = [os.path.splitext(csv_path)[0] + '.mat' for csv_path in csv_paths]
@@ -49,7 +67,6 @@ def parse_csv_folder(path):
     pool.join()
 
     return (results_dict, csv_paths)
-
 
 def read_csv(filename):
     '''
