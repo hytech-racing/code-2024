@@ -101,6 +101,7 @@ size_t decode_ser_data(uint8_t* output, const uint8_t *cobs_buf, size_t len) {
 }
 
 void send_xbee() {
+  #ifdef OLDCODE
     if (timer_debug_bms_voltages.check()) {
         bms_voltages.write(xb_msg.buf);
         xb_msg.len = sizeof(BMS_voltages);
@@ -113,7 +114,7 @@ void send_xbee() {
         NRF.print("BMS VOLTAGE HIGH: ");
         NRF.println(bms_voltages.get_high() / (double) 10000, 4);
         NRF.print("BMS VOLTAGE TOTAL: ");
-        NRF.println(bms_voltages.get_total() / (double) 100, 2);*/
+        NRF.println(bms_voltages.get_total() / (double) 100, 2);
     }
     if (timer_debug_bms_detailed_voltages.check()) {
         for (int ic = 0; ic < NUM_BMS_IC; ic++) {
@@ -303,6 +304,7 @@ void send_xbee() {
         xb_msg.id = ID_SAB_READINGS_REAR;
         write_xbee_data();
     }
+  #endif
 }
 
 size_t readNRF() {

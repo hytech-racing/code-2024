@@ -31,19 +31,17 @@
 #define noPush // Uncomment this line to disable pushing the correction data over I2C. Useful for the combo board which uses UART2 instead.
 //#define printGPS
 #include "secrets.h" // <- Copy and paste the Current Key and Next Key into secrets.h
-
 #include <SparkFun_u-blox_GNSS_v3.h> //http://librarymanager/All#SparkFun_u-blox_GNSS_v3
+#define OK(ok) (ok ? F("  ->  OK") : F("  ->  ERROR!")) // Convert uint8_t into OK/ERROR
 
 SFE_UBLOX_GNSS myGNSS; // ZED-F9x
 SFE_UBLOX_GNSS myLBand; // NEO-D9S
-
 const uint32_t myLBandFreq = 1556290000; // Uncomment this line to use the US SPARTN 1.8 service
 //const uint32_t myLBandFreq = 1545260000; // Uncomment this line to use the EU SPARTN 1.8 service
 
-#define OK(ok) (ok ? F("  ->  OK") : F("  ->  ERROR!")) // Convert uint8_t into OK/ERROR
-
 GPS_lat_long gps_lat_long;
 GPS_other gps_other;
+Metro gps_check = Metro(100);
 
 #include "gpsfuncs.h"
 
@@ -142,6 +140,7 @@ int setupGPS() {
 
   myLBand.softwareResetGNSSOnly(); // Do a restart
 
+
   //myLBand.setRXMPMPmessageCallbackPtr(&pushRXMPMP); // Call pushRXMPMP when new PMP data arrives. Push it to the GNSS  
   //myGNSS.setI2CpollingWait(100);
   return 0;
@@ -152,4 +151,14 @@ void gpsLoop() {
   myGNSS.checkCallbacks(); // Check if any GNSS callbacks are waiting to be processed.
   //myLBand.checkUblox(); // Check for the arrival of new PMP data and process it.
   //myLBand.checkCallbacks(); // Check if any LBand callbacks are waiting to be processed.
+}
+
+void gpsthread() {
+  while (1) {
+    if (gps_check.check()) {
+      gpsLoop();
+    } else {
+      threads.yield();      
+    }
+  }
 }

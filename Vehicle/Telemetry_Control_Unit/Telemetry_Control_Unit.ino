@@ -87,7 +87,6 @@ SD_write_buf SD_buf_1;
 SD_write_buf SD_buf_2;
 SD_write_buf *incoming_buf = &SD_buf_1;
 SD_write_buf *current_write_buf = &SD_buf_2;
-
 File logger;
 
 /*
@@ -109,12 +108,13 @@ perf_counters counters;
 Metro timer_debug_RTC = Metro(1000);
 
 
-
+Metro timer_flush = Metro(100);
+Metro timer_mcu_analog_readings = Metro(500);
+/*
 Metro timer_mcu_status = Metro(2000);
 Metro timer_debug_dashboard = Metro(2000);
 Metro timer_debug_mcu_pedal_readings = Metro(200);
 Metro timer_debug_bms_balancing_status = Metro(3000);
-Metro timer_mcu_analog_readings = Metro(500);
 Metro timer_debug_bms_status = Metro(1000);
 Metro timer_debug_bms_temperatures = Metro(3000);
 Metro timer_debug_bms_detailed_temperatures = Metro(3000);
@@ -128,7 +128,6 @@ Metro timer_detailed_voltages = Metro(1000);
 Metro timer_status_send = Metro(100);
 Metro timer_status_send_xbee = Metro(2000);
 Metro timer_gps = Metro(100);
-Metro timer_flush = Metro(100);
 #if COULOUMB_COUNTING_EN
 Metro timer_total_discharge = Metro(1000);
 Metro timer_debug_bms_coulomb_counts = Metro(1000);
@@ -140,10 +139,16 @@ Metro timer_imu_gyroscope = Metro(200);
 Metro timer_sab_readings_front = Metro(200);
 Metro timer_sab_readings_rear = Metro(200);
 Metro timer_sab_readings_gps = Metro(200);
+*/
 
+BMS_detailed_voltages bms_detailed_voltages[4][NUM_BMS_IC];
+MCU_analog_readings mcu_analog_readings;
+BMS_coulomb_counts bms_coulomb_counts;                                                
+uint32_t total_discharge;
+unsigned long previous_data_time;
+/*
 MCU_status mcu_status;
 MCU_pedal_readings mcu_pedal_readings;
-MCU_analog_readings mcu_analog_readings;
 MCU_GPS_readings mcu_gps_readings;
 
 MC_energy mc1_energy;
@@ -164,18 +169,14 @@ MC_temps mc3_temps;
 MC_temps mc4_temps;
 
 BMS_voltages bms_voltages;
-BMS_detailed_voltages bms_detailed_voltages[4][NUM_BMS_IC];
 BMS_temperatures bms_temperatures;
 BMS_detailed_temperatures bms_detailed_temperatures[2][NUM_BMS_IC];
 BMS_onboard_temperatures bms_onboard_temperatures;
 BMS_onboard_detailed_temperatures bms_onboard_detailed_temperatures[NUM_BMS_IC]; // Not used
 BMS_status bms_status;
 BMS_balancing_status bms_balancing_status[2];
-BMS_coulomb_counts bms_coulomb_counts;                                                
 CCU_status ccu_status;
 Dashboard_status dashboard_status;
-uint32_t total_discharge;
-unsigned long previous_data_time;
 EM_status em_status;
 EM_measurement em_measurement;
 IMU_accelerometer imu_accelerometer;
@@ -183,19 +184,7 @@ IMU_gyroscope imu_gyroscope;
 SAB_readings_front sab_readings_front;
 SAB_readings_rear sab_readings_rear;
 SAB_readings_gps sab_readings_gps;
-
-void parse_can_lines();
-void parse_can_message(int can_read_result);
-void write_to_SD(CAN_message_t *msg);
-time_t getTeensy3Time();
-void process_current();
-void process_glv_voltage();
-void setup_total_discharge();
-void process_total_discharge();
-void write_total_discharge();
-int write_xbee_data();
-void send_xbee();
-void sd_date_time(uint16_t* date, uint16_t* time);
+*/
 
 void setup() {
     //MTP.begin();
@@ -204,7 +193,7 @@ void setup() {
     
     /* Set up Serial, XBee and CAN */
     Serial.begin(115200);
-    NRF.begin(1000000);
+    NRF.begin(115200);
     NRF.addMemoryForWrite(NRFbuffer, SER_BUF_SZ);
     ESP.begin(1000000);
     ESP.addMemoryForWrite(ESPbuffer, SER_BUF_SZ);
@@ -240,18 +229,6 @@ void setup() {
 }
 
 Metro telem = Metro(1000);
-
-
-Metro gps_check = Metro(100);
-void gpsthread() {
-  while (1) {
-    if (gps_check.check()) {
-      gpsLoop();
-    } else {
-      threads.yield();      
-    }
-  }
-}
 
 void loop() {
     unsigned long before = millis();

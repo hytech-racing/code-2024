@@ -79,19 +79,6 @@ typedef struct CAN_write_t {
 } CAN_write_t;
 #pragma pack(pop)
 
-/* Parse all CAN lines */
-void parse_can_lines() {
-  while (CAN_1.read(msg_rx)) {
-    parse_can_message(msg_rx);
-  }
-  while (CAN_2.read(msg_rx)) {
-    parse_can_message(msg_rx);
-  }
-  while (CAN_3.read(msg_rx)) {
-    parse_can_message(msg_rx);
-  }
-}
-
 void parse_can1_message(const CAN_message_t& rx_msg) {
   if(allow_message(rx_msg))
   {
@@ -174,22 +161,22 @@ void parse_can_q() {
 
 bool allow_message(const CAN_message_t& rx_msg) {
   switch(rx_msg.id) {
-    case ID_MC1_STATUS: return mc1_status_timer.check(); break;
-    case ID_MC2_STATUS: return mc2_status_timer.check(); break;
-    case ID_MC3_STATUS: return mc3_status_timer.check(); break;
-    case ID_MC4_STATUS: return mc4_status_timer.check(); break;
-    case ID_MC1_TEMPS: return mc1_temps_timer.check(); break;
-    case ID_MC2_TEMPS: return mc2_temps_timer.check(); break;
-    case ID_MC3_TEMPS: return mc3_temps_timer.check(); break;
-    case ID_MC4_TEMPS: return mc4_temps_timer.check(); break;
-    case ID_MC1_ENERGY: return mc1_energy_timer.check(); break;
-    case ID_MC2_ENERGY: return mc2_energy_timer.check(); break;
-    case ID_MC3_ENERGY: return mc3_energy_timer.check(); break;
-    case ID_MC4_ENERGY: return mc4_energy_timer.check(); break;
-    case ID_MC1_SETPOINTS_COMMAND: return mc1_setpoints_command_timer.check(); break;
-    case ID_MC2_SETPOINTS_COMMAND: return mc2_setpoints_command_timer.check(); break;
-    case ID_MC3_SETPOINTS_COMMAND: return mc3_setpoints_command_timer.check(); break;
-    case ID_MC4_SETPOINTS_COMMAND: return mc4_setpoints_command_timer.check(); break;
+    //case ID_MC1_STATUS: return mc1_status_timer.check(); break;
+    //case ID_MC2_STATUS: return mc2_status_timer.check(); break;
+    //case ID_MC3_STATUS: return mc3_status_timer.check(); break;
+    //case ID_MC4_STATUS: return mc4_status_timer.check(); break;
+    //case ID_MC1_TEMPS: return mc1_temps_timer.check(); break;
+    //case ID_MC2_TEMPS: return mc2_temps_timer.check(); break;
+    //case ID_MC3_TEMPS: return mc3_temps_timer.check(); break;
+    //case ID_MC4_TEMPS: return mc4_temps_timer.check(); break;
+    //case ID_MC1_ENERGY: return mc1_energy_timer.check(); break;
+    //case ID_MC2_ENERGY: return mc2_energy_timer.check(); break;
+    //case ID_MC3_ENERGY: return mc3_energy_timer.check(); break;
+    //case ID_MC4_ENERGY: return mc4_energy_timer.check(); break;
+    //case ID_MC1_SETPOINTS_COMMAND: return mc1_setpoints_command_timer.check(); break;
+    //case ID_MC2_SETPOINTS_COMMAND: return mc2_setpoints_command_timer.check(); break;
+    //case ID_MC3_SETPOINTS_COMMAND: return mc3_setpoints_command_timer.check(); break;
+    //case ID_MC4_SETPOINTS_COMMAND: return mc4_setpoints_command_timer.check(); break;
     default: return true; break;
   }
   return true;
@@ -210,6 +197,7 @@ void message_cbs(const CAN_message_t& rx_msg) {
 /* Parse a result of a CAN line 
   @param msg     Result of reading from a can line 
   */
+#ifdef OLDCODE
 void parse_can_message(CAN_message_t& msg) {
   //CAN_message_t msg = rx_msg;
   write_to_SD(&msg);  // Write to SD card buffer (if the buffer fills up, triggering a flush to disk, this will take 8ms)
@@ -264,3 +252,4 @@ void parse_can_message(CAN_message_t& msg) {
       case ID_SAB_READINGS_REAR: sab_readings_rear.load(msg.buf); break;
     }
 }
+#endif
