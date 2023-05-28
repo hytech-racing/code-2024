@@ -60,3 +60,34 @@
 #define ID_IMU_GYROSCOPE                                            0x91
 #define ID_SAB_READINGS_FRONT                                       0x92
 #define ID_SAB_READINGS_REAR                                        0x93
+
+
+//TireTempSensors
+#define ID_TPMS_LF                                                  0x424
+#define ID_TEMP1_LF                                                 0x425
+#define ID_TEMP2_LF                                                 0x426
+#define ID_TEMP3_LF                                                 0x427
+#define ID_TEMP4_LF                                                 0x428
+#define ID_TEMP5_LF                                                 0x429
+
+#define ID_TPMS_RF                                                  0x42A
+#define ID_TEMP1_RF                                                 0x42B
+#define ID_TEMP2_RF                                                 0x42C
+#define ID_TEMP3_RF                                                 0x42D
+#define ID_TEMP4_RF                                                 0x42E
+#define ID_TEMP5_RF                                                 0x42F
+
+#define ID_TPMS_LR                                                  0x430
+#define ID_TEMP1_LR                                                 0x431
+#define ID_TEMP2_LR                                                 0x432
+#define ID_TEMP3_LR                                                 0x433
+#define ID_TEMP4_LR                                                 0x434
+#define ID_TEMP5_LR                                                 0x435
+
+#define ID_TPMS_RR                                                  0x436
+#define ID_TEMP1_RR                                                 0x437
+#define ID_TEMP2_RR                                                 0x438
+#define ID_TEMP3_RR                                                 0x439
+#define ID_TEMP4_RR                                                 0x43A
+#define ID_TEMP5_RR                                                 0x43B
+   
