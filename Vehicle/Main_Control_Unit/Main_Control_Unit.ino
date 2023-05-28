@@ -745,6 +745,7 @@ inline void set_inverter_torques() {
   float lsd_right_split; // Fraction of rear axle torque going to rear right wheel
   float lsd_slip_factor = 0.5;
 
+  float avg_speed;
   int16_t start_derating_rpm = 2000;
   int16_t end_derating_rpm = 20000;
 
@@ -920,25 +921,24 @@ inline void set_inverter_torques() {
       load_cell_alpha = 0.95;
       total_torque = 4 * (avg_accel - avg_brake) ;
       total_load_cells = mcu_load_cells.get_FL_load_cell() + mcu_load_cells.get_FR_load_cell() + mcu_load_cells.get_RL_load_cell() + mcu_load_cells.get_RR_load_cell();
+      
+      // Derating
+      avg_speed = 0.0;
+      for (int i = 0; i < 4; i++)
+        avg_speed += ((float) mc_status[i].get_speed()) / 4.0;
+      float derating_factor = float_map(avg_speed, start_derating_rpm, end_derating_rpm, 1, 0);
+      derating_factor = min(1.0, max(0.0, derating_factor));
+
       if (avg_accel >= avg_brake) {
-        torque_setpoint_array[0] = (int16_t)((float)mcu_load_cells.get_FL_load_cell() / (float)total_load_cells * (float)total_torque);
-        torque_setpoint_array[1] = (int16_t)((float)mcu_load_cells.get_FR_load_cell() / (float)total_load_cells * (float)total_torque);
-        torque_setpoint_array[2] = (int16_t)((float)mcu_load_cells.get_RL_load_cell() / (float)total_load_cells * (float)total_torque);
-        torque_setpoint_array[3] = (int16_t)((float)mcu_load_cells.get_RR_load_cell() / (float)total_load_cells * (float)total_torque);
+        torque_setpoint_array[0] = (int16_t)((float)mcu_load_cells.get_FL_load_cell() / (float)total_load_cells * (float)total_torque * derating_factor);
+        torque_setpoint_array[1] = (int16_t)((float)mcu_load_cells.get_FR_load_cell() / (float)total_load_cells * (float)total_torque * derating_factor);
+        torque_setpoint_array[2] = (int16_t)((float)mcu_load_cells.get_RL_load_cell() / (float)total_load_cells * (float)total_torque * derating_factor);
+        torque_setpoint_array[3] = (int16_t)((float)mcu_load_cells.get_RR_load_cell() / (float)total_load_cells * (float)total_torque * derating_factor);
       } else {
         torque_setpoint_array[0] = (int16_t)((float)mcu_load_cells.get_FL_load_cell() / (float)total_load_cells * (float)total_torque);
         torque_setpoint_array[1] = (int16_t)((float)mcu_load_cells.get_FR_load_cell() / (float)total_load_cells * (float)total_torque);
         torque_setpoint_array[2] = (int16_t)((float)mcu_load_cells.get_RL_load_cell() / (float)total_load_cells * (float)total_torque / 2.0);
         torque_setpoint_array[3] = (int16_t)((float)mcu_load_cells.get_RR_load_cell() / (float)total_load_cells * (float)total_torque / 2.0);
-      }
-      float avg_speed = 0;
-      for (int i = 0; i < 4; i++)
-        avg_speed += (float) mc_status[i].get_speed() / 4.0;
-      // Derating
-      float derating_factor = float_map(avg_speed, start_derating_rpm, end_derating_rpm, 1, 0);
-      derating_factor = min(1.0, max(0.0, derating_factor));
-      for (int i = 0; i < 4; i++) {
-        torque_setpoint_array[i] = (int16_t) derating_factor * torque_setpoint_array[i];
       }
       break;
     case 5:
