@@ -146,7 +146,7 @@ int16_t wheel_ground_speed[4] = {0, 0, 0, 0};
 int16_t wheel_inst_speed[4] = {0, 0, 0, 0};
 int16_t speed_diff[4] = {0, 0, 0, 0};
 int16_t torque_adjustment[4] = {0, 0, 0, 0};
-const float track = 1.215;
+const float track = 1.2;
 const float half_track = 0.6;
 const float vehicle_mass = 273;
 const float front_axle_distance = 0.75;
@@ -773,7 +773,7 @@ inline void set_inverter_torques() {
   uint16_t steering_angle = mcu_analog_readings.get_steering_2();
   float diff_threshold = 0.05;  
   float pid_control = 0;
-  float max_torque_diff = 0.25;  
+  float max_torque_diff = 0.25;
 
   switch (dashboard_status.get_dial_state()) {
     case 0:
@@ -946,7 +946,7 @@ inline void set_inverter_torques() {
       // Set yaw rate target
       // Convert wheel speed to vehicle velocity
       for (int i = o; i < 4; i++) {
-        wheel_ground_speed[i] = mc_status[i].get_speed() * 0.1 * 0.1047198 / 11.86;
+        wheel_ground_speed[i] = mc_status[i].get_speed() * tire_radius * 0.1047198 / gear_ratio;  // rpm -> radian/s: 0.1047198
       }
       // Adjust each wheel speed to vehicle center speed
       wheel_inst_speed[0] = wheel_ground_speed[0] + inst_imu_yaw_rate * half_track;
@@ -982,16 +982,16 @@ inline void set_inverter_torques() {
       // Convert control signal to torque adjustment
       // Control signal is defined as the yaw moment added to the car as a result
       // of left/right torque distribution
-      torque_adjustment[0] = -pid_control / (gear_ratio * track / 2) * tire_radius;
-      torque_adjustment[1] = pid_control / (gear_ratio * track / 2) * tire_radius;
-      torque_adjustment[2] = -pid_control / (gear_ratio * track / 2) * tire_radius;
-      torque_adjustment[3] = pid_control / (gear_ratio * track / 2) * tire_radius;
+      torque_adjustment[0] = -pid_control / (gear_ratio * track * tire_radius);
+      torque_adjustment[1] = pid_control / (gear_ratio * track * tire_radius);
+      torque_adjustment[2] = -pid_control / (gear_ratio * track * tire_radius);
+      torque_adjustment[3] = pid_control / (gear_ratio * track * tire_radius);
       // Limit torque adjustment
       for (int i = 0; i < 4; i++) {
-        if (torque_adjustment[i] > max_torque_diff * gear_ratio) {
-          torque_adjustment[i] = max_torque_diff * gear_ratio;
-        } else if (torque_adjustment[i] < -max_torque_diff * gear_ratio) {
-          torque_adjustment[i] = -max_torque_diff * gear_ratio;
+        if (torque_adjustment[i] > max_torque_diff * 2142) {
+          torque_adjustment[i] = max_torque_diff * 2142;
+        } else if (torque_adjustment[i] < -max_torque_diff * 2142) {
+          torque_adjustment[i] = -max_torque_diff * 2142;
         }
       }
       
