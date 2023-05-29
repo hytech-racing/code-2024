@@ -136,8 +136,8 @@ elapsedMillis time_since_launch;
 const uint16_t LAUNCH_READY_ACCEL_THRESHOLD = 100;
 const uint16_t LAUNCH_READY_BRAKE_THRESHOLD = 300;
 const int16_t LAUNCH_READY_SPEED_THRESHOLD = 500;
-const uint16_t LAUNCH_GO_THRESHOLD = 1800;
-const uint16_t LAUNCH_STOP_THRESHOLD = 1000;
+const uint16_t LAUNCH_GO_THRESHOLD = 900;
+const uint16_t LAUNCH_STOP_THRESHOLD = 600;
 float launch_rate_target = 0.0;
 
 void setup() {
