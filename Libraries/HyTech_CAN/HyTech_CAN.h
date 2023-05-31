@@ -42,4 +42,8 @@
 #include "EM_measurement.h"
 #include "IMU_accelerometer.h"
 #include "IMU_gryoscope.h"
+
+#include <Tire_infared_temps.h>
+#include <Tire_sensor_info.h>
+#include <Tire_SVPP.h>
 #endif

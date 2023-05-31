@@ -1,3 +1,5 @@
+
+
 /*
    Teensy 4.1 Main Control Unit code
    Written by Liwei Sun which is why the code is so bad
@@ -17,7 +19,6 @@
 #include "STEERING_SPI.h"
 #include "kinetis_flexcan.h"
 #include "Metro.h"
-
 // IMU
 #include <ADIS16460.h>
 
@@ -67,6 +68,12 @@ BMS_status bms_status{};
 BMS_temperatures bms_temperatures{};
 BMS_voltages bms_voltages{};
 Dashboard_status dashboard_status{};
+
+
+//Tire sensors inbound messages
+Tire_SVPP tire_svpp[4];
+Tire_temps tire_temps[4];
+Tire_sensor_info tire_sensor_info[4];
 
 //Timers
 Metro timer_imu_integration = Metro(50);
@@ -284,6 +291,73 @@ void loop() {
     Serial.println(imu_gyroscope.get_yaw());
     Serial.println("dial");
     Serial.println(dashboard_status.get_dial_state());
+
+    //Tire Sensors
+    Serial.println("Tire Temp Sensors");
+    Serial.println("LF");
+    Serial.println("Battery Voltage:");
+    Serial.println(tire_svpp[0].get_battery_voltage());
+    Serial.println("HS Pressure");
+    Serial.println(tire_svpp[0].get_hs_pressure() * .1 + 3000);
+    Serial.println("Gauge Pressure");
+    Serial.println(tire_svpp[0].get_gauge_pressure());
+    Serial.println("Sensor Temperature");
+    Serial.println(tire_sensor_info[0].get_sensor_temp());
+    Serial.println("Infared Temps:");
+    for (int i = 0; i < 16; i++) {
+      Serial.printf("Infared Temp %d: ", i);
+      int j = i / 4;
+      int k = i % 4;
+      Serial.println(tire_temps[0].get_tire_infared_temps(j).get_infared_temps()[k] * .1 - 100);
+    }
+    Serial.println("RF");
+    Serial.println("Battery Voltage:");
+    Serial.println(tire_svpp[1].get_battery_voltage());
+    Serial.println("HS Pressure");
+    Serial.println(tire_svpp[1].get_hs_pressure() * .1 + 3000);
+    Serial.println("Gauge Pressure");
+    Serial.println(tire_svpp[1].get_gauge_pressure());
+    Serial.println("Sensor Temperature");
+    Serial.println(tire_sensor_info[1].get_sensor_temp());
+    Serial.println("Infared Temps:");
+    for (int i = 0; i < 16; i++) {
+      Serial.printf("Infared Temp %d: ", i);
+      int j = i / 4;
+      int k = i % 4;
+      Serial.println(tire_temps[1].get_tire_infared_temps(j).get_infared_temps()[k] * .1 - 100);
+    }
+    Serial.println("LR");
+    Serial.println("Battery Voltage:");
+    Serial.println(tire_svpp[2].get_battery_voltage());
+    Serial.println("HS Pressure");
+    Serial.println(tire_svpp[2].get_hs_pressure() * .1 + 3000);
+    Serial.println("Gauge Pressure");
+    Serial.println(tire_svpp[2].get_gauge_pressure());
+    Serial.println("Sensor Temperature");
+    Serial.println(tire_sensor_info[2].get_sensor_temp());
+    Serial.println("Infared Temps:");
+    for (int i = 0; i < 16; i++) {
+      Serial.printf("Infared Temp %d: ", i);
+      int j = i / 4;
+      int k = i % 4;
+      Serial.println(tire_temps[2].get_tire_infared_temps(j).get_infared_temps()[k] * .1 - 100);
+    }
+    Serial.println("RR");
+    Serial.println("Battery Voltage:");
+    Serial.println(tire_svpp[3].get_battery_voltage());
+    Serial.println("HS Pressure");
+    Serial.println(tire_svpp[3].get_hs_pressure() * .1 + 3000);
+    Serial.println("Gauge Pressure");
+    Serial.println(tire_svpp[3].get_gauge_pressure());
+    Serial.println("Sensor Temperature");
+    Serial.println(tire_sensor_info[3].get_sensor_temp());
+    Serial.println("Infared Temps:");
+    for (int i = 0; i < 16; i++) {
+      Serial.printf("Infared Temp %d: ", i);
+      int j = i / 4;
+      int k = i % 4;
+      Serial.println(tire_temps[3].get_tire_infared_temps(j).get_infared_temps()[k] * .1 - 100);
+    }
   }
 
 }
@@ -584,6 +658,81 @@ void parse_telem_can_message(const CAN_message_t &RX_msg) {
       }
       // eliminate all action buttons to not process twice
       dashboard_status.set_button_flags(0);
+      break;
+    case ID_TPMS_LF:
+      tire_svpp[0].load(rx_msg.buf);
+      break;
+    case ID_TEMP1_LF:
+      tire_temps[0].set_tire_infared_temps_group_1(rx_msg.buf);
+      break;
+    case ID_TEMP2_LF:
+      tire_temps[0].set_tire_infared_temps_group_2(rx_msg.buf);
+      break;
+    case ID_TEMP3_LF:
+      tire_temps[0].set_tire_infared_temps_group_3(rx_msg.buf);
+      break;
+    case ID_TEMP4_LF:
+      tire_temps[0].set_tire_infared_temps_group_4(rx_msg.buf);
+      break;
+    case ID_TEMP5_LF:
+      tire_sensor_info[0].load(rx_msg.buf);
+      break;
+
+    case ID_TPMS_RF:
+      tire_svpp[1].load(rx_msg.buf);
+      break;
+    case ID_TEMP1_RF:
+      tire_temps[1].set_tire_infared_temps_group_1(rx_msg.buf);
+      break;
+    case ID_TEMP2_RF:
+      tire_temps[1].set_tire_infared_temps_group_2(rx_msg.buf);
+      break;
+    case ID_TEMP3_RF:
+      tire_temps[1].set_tire_infared_temps_group_3(rx_msg.buf);
+      break;
+    case ID_TEMP4_RF:
+      tire_temps[1].set_tire_infared_temps_group_4(rx_msg.buf);
+      break;
+    case ID_TEMP5_RF:
+      tire_sensor_info[1].load(rx_msg.buf);
+      break;
+
+    case ID_TPMS_LR:
+      tire_svpp[2].load(rx_msg.buf);
+      break;
+    case ID_TEMP1_LR:
+      tire_temps[2].set_tire_infared_temps_group_1(rx_msg.buf);
+      break;
+    case ID_TEMP2_LR:
+      tire_temps[2].set_tire_infared_temps_group_2(rx_msg.buf);
+      break;
+    case ID_TEMP3_LR:
+      tire_temps[2].set_tire_infared_temps_group_3(rx_msg.buf);
+      break;
+    case ID_TEMP4_LR:
+      tire_temps[2].set_tire_infared_temps_group_4(rx_msg.buf);
+      break;
+    case ID_TEMP5_LR:
+      tire_sensor_info[2].load(rx_msg.buf);
+      break;
+
+    case ID_TPMS_RR:
+      tire_svpp[3].load(rx_msg.buf);
+      break;
+    case ID_TEMP1_RR:
+      tire_temps[3].set_tire_infared_temps_group_1(rx_msg.buf);
+      break;
+    case ID_TEMP2_RR:
+      tire_temps[3].set_tire_infared_temps_group_2(rx_msg.buf);
+      break;
+    case ID_TEMP3_RR:
+      tire_temps[3].set_tire_infared_temps_group_3(rx_msg.buf);
+      break;
+    case ID_TEMP4_RR:
+      tire_temps[3].set_tire_infared_temps_group_4(rx_msg.buf);
+      break;
+    case ID_TEMP5_RR:
+      tire_sensor_info[3].load(rx_msg.buf);
       break;
   }
 }
