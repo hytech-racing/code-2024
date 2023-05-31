@@ -967,14 +967,14 @@ inline void set_inverter_torques() {
       //lots of variables for documentation purposes
       //since torque unit to nominal torque and power conversion are linear, the diff can be applied directly to the torque setpoint value.
     if (mc_energy[0].get_feedback_torque() > 0 && mc_energy[1].get_feedback_torque() > 0
-    && mc_energy[0].get_feedback_torque() > 0 && mc_energy[0].get_feedback_torque() > 0) {
+    && mc_energy[2].get_feedback_torque() > 0 && mc_energy[3].get_feedback_torque() > 0) {
       float mech_power = 0;
       float mdiff = 1;
       //float ediff = 1;
       float diff = 1;
 
       for(int i = 0; i < 4; i++) {
-        mech_power += mc_energy[i].get_actual_power();
+        mech_power += mc_setpoints_command[i].get_pos_torque_limit() / 1000 * 9.8 * mc_status[i].get_speed() / 60 * 3.14;
       }
       mech_power /= 1000.0;
 
