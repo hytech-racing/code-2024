@@ -30,6 +30,7 @@
 #define TORQUE_2 15
 #define TORQUE_3 21
 #define MAX_ALLOWED_SPEED 20000
+#define MAX_ALLOWED_TORQUE 2142
 
 // set to true or false for debugging
 #define DEBUG false
@@ -142,8 +143,6 @@ float launch_rate_target = 0.0;
 
 void setup() {
   // no torque can be provided on startup
-  
-  
   mcu_status.set_max_torque(0);
   mcu_status.set_torque_mode(0);
   mcu_status.set_software_is_ok(true);
@@ -198,7 +197,6 @@ void setup() {
   Serial.println("CAN system and serial communication initialized");
 #endif
 
-
   // these are false by default
   mcu_status.set_bms_ok_high(false);
   mcu_status.set_imd_ok_high(false);
@@ -206,8 +204,6 @@ void setup() {
   digitalWrite(INVERTER_24V_EN, HIGH);
   digitalWrite(INVERTER_EN, HIGH);
   mcu_status.set_inverters_error(false);
-
-
 
   // present action for 5s
   delay(5000);
@@ -218,7 +214,6 @@ void setup() {
 
   /* Set up total discharge readings */
   //setup_total_discharge();
-
 }
 
 void loop() {
@@ -247,8 +242,6 @@ void loop() {
   //  /* handle state functionality */
   state_machine();
   software_shutdown();
-
-
 
   if (timer_debug.check()) {
     Serial.println("ERROR");
@@ -487,8 +480,6 @@ inline void state_machine() {
 }
 
 /* Shared state functinality */
-
-
 bool check_TS_over_HV_threshold() {
   for (uint8_t inv = 0; inv < 4; inv++) {
     if (mc_energy[inv].get_dc_bus_voltage() < MIN_HV_VOLTAGE) {
@@ -1376,5 +1367,154 @@ inline void calculate_pedal_implausibilities() {
   }
   if(mcu_status.get_no_accel_implausability() && mcu_status.get_no_brake_implausability() && mcu_status.get_no_accel_brake_implausability()){
     pedal_implausability_duration = 0;
+  }
+}
+
+inline void calculate_pedal_requests (float* accel, float* brake) {
+  // Accelerator calculations
+  float accel_1_request = float_map(mcu_pedal_readings.get_accelerator_pedal_1, 
+                                    START_ACCELERATOR_PEDAL_1,
+                                    END_ACCELERATOR_PEDAL_1,
+                                    0.0,
+                                    1.0);
+  float accel_2_request = float_map(mcu_pedal_readings.get_accelerator_pedal_2, 
+                                    START_ACCELERATOR_PEDAL_2,
+                                    END_ACCELERATOR_PEDAL_2,
+                                    0.0,
+                                    1.0);
+  float avg_accel_request = (accel_1_request + accel_2_request) / 2.0;
+  
+  // Brake pedal calculations
+  float brake_1_request = float_map(mcu_pedal_readings.get_brake_pedal_1, 
+                                    START_BRAKE_PEDAL_1,
+                                    END_BRAKE_PEDAL_1,
+                                    0.0,
+                                    1.0);
+  float brake_2_request = float_map(mcu_pedal_readings.get_brake_pedal_2, 
+                                    START_BRAKE_PEDAL_2,
+                                    END_BRAKE_PEDAL_2,
+                                    0.0,
+                                    1.0);
+  float avg_brake_request = (brake_1_request + brake_2_request) / 2.0;
+  
+  *accel = min(1.0, max(0.0, avg_accel_request))
+  *brake = min(1.0, max(0.0, avg_brake_request))
+}
+
+inline void calculate_traction_requests () {
+  float accel_request = 0.0;
+  float brake_request = 0.0;
+  calculate_pedal_requests(*accel_request, *brake_request);
+
+  int_16_t torques[4] = {0, 0, 0, 0};
+  int_16_t speeds[4] = {0, 0, 0, 0};
+
+  switch(dashboard_status.get_dial_state()) {
+    case 0:
+      // No vectoring. Equal torque to all wheels
+      standard_torque_strategy(accel_request, brake_request, *torques, *speeds);
+      break;
+    case 1:
+      // Nissan mode.
+      attesa_torque_strategy(accel_request, brake_request, *torques, *speeds);
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    default:
+      break;
+  }
+}
+
+inline void standard_torque_strategy(float accel_request, float brake_request, int16_t* torques, int16_t* speeds) {
+  const float rear_brake_scaledown = 0.5; // multiply rear torque by this value when regenerating
+
+  int16_t per_wheel_accel_request = (int16_t) float_map(accel,
+                                                        0.0,
+                                                        1.0,
+                                                        0.0,
+                                                        (float) MAX_ALLOWED_TORQUE);
+  int16_t per_wheel_brake_request = (int16_t) float_map(brake,
+                                                        0.0,
+                                                        1.0,
+                                                        0.0,
+                                                        (float) MAX_ALLOWED_TORQUE);
+
+  // Accelerating
+  if (per_wheel_accel_request - per_wheel_brake_request >= 0) {
+    torques[0] = per_wheel_accel_request - per_wheel_brake_request;
+    torques[1] = per_wheel_accel_request - per_wheel_brake_request;
+    torques[2] = per_wheel_accel_request - per_wheel_brake_request;
+    torques[3] = per_wheel_accel_request - per_wheel_brake_request;
+
+    speeds[0] = MAX_ALLOWED_SPEED;
+    speeds[1] = MAX_ALLOWED_SPEED;
+    speeds[2] = MAX_ALLOWED_SPEED;
+    speeds[3] = MAX_ALLOWED_SPEED;
+  } else {
+  // Braking
+    torques[0] = per_wheel_accel_request - per_wheel_brake_request;
+    torques[1] = per_wheel_accel_request - per_wheel_brake_request;
+    torques[2] = (int16_t) ((per_wheel_accel_request - per_wheel_brake_request) * rear_brake_scaledown);
+    torques[3] = (int16_t) ((per_wheel_accel_request - per_wheel_brake_request) * rear_brake_scaledown);
+
+    speeds[0] = 0;
+    speeds[1] = 0;
+    speeds[2] = 0;
+    speeds[3] = 0;
+  }
+}
+
+// Based on Nissan ATTESA-ETS
+inline void attesa_torque_strategy(float accel_request, float brake_request, int16_t* torques, int16_t* speeds) {
+  const float default_rear_split = 0.85; // Fraction of torque request which should go to the rear
+  const float default_front_split = 1.0 - attesa_default_rear_split; // Fraction of torque request which should go to the rear
+  const float alt_rear_split = 0.5; // Fraction of torque request which should go to the rear
+  const float alt_front_split = 1.0 - attesa_alt_rear_split; // Fraction of torque request which should go to the rear
+  const float fr_max_diff = 1000; // In RPM, difference between rear and front required to shift 50% torque to the front
+  const float lsd_max_diff = 1000; // In RPM, difference between left and required to fully bias the differential
+
+  // TODO
+  // At higher speeds where cornering is less important, blend into 50/50 for max power
+
+  float front_axle_avg = ((float) mc_status[0].get_speed() + (float) mc_status[1].get_speed()) / 2.0;
+  float rear_axle_avg = ((float) mc_status[2].get_speed() + (float) mc_status[3].get_speed()) / 2.0;
+  // Map slip to number between 0.0 and 1.0. 0 when front >= rear. 1 when rear-front == fr_max_diff
+  float r_slip = min(1.0, max(0.0, float_map(rear_axle_avg - front_axle_avg,
+                                    0.0,
+                                    fr_max_diff,
+                                    0.0,
+                                    1.0)));
+  // Map slip to number between -1.0 and 1.0. Negative when left wheel is faster. Positive when right wheel is faster.
+  float rear_lr_slip = min(1.0, max(-1.0, float_map((float) mc_status[2].get_speed() - (float) mc_status[3].get_speed(),
+                                  -1.0 * lsd_max_diff,
+                                  lsd_max_diff,
+                                  -1.0,
+                                  1.0)));
+
+  // Accelerating
+  if (per_wheel_accel_request - per_wheel_brake_request >= 0) {
+    // Each wheel allocation is multiplied by 2 to account for the scaledown due to torque splitting
+    // For example, the rear may be multiplied by 0.85 and the front by 0.15. On average, all wheels have had their torques multiplied by 0.5
+    // Divide by 0.5, (multiply by 2) to account for this
+    float front_allocation_per_wheel = 2 * accel_request * MAX_ALLOWED_TORQUE * (r_slip * alt_front_split + (1.0 - r_slip) * default_front_split);
+    float rear_allocation_per_wheel = 2 * accel_request * MAX_ALLOWED_TORQUE * (r_slip * alt_rear_split + (1.0 - r_slip) * default_rear_split);
+    // Shift rear torque allocations between left and right according to LSD slip
+    float rl_wheel_allocation = (1.0 + rear_lr_slip) * rear_allocation_per_wheel;
+    float rr_wheel_allocation = (1.0 - rear_lr_slip) * rear_allocation_per_wheel;
+
+    torques[0] = front_allocation_per_wheel;
+    torques[1] = front_allocation_per_wheel;
+    torques[2] = rl_wheel_allocation;
+    torques[3] = rr_wheel_allocation;
+
+    speeds[0] = MAX_ALLOWED_SPEED;
+    speeds[1] = MAX_ALLOWED_SPEED;
+    speeds[2] = MAX_ALLOWED_SPEED;
+    speeds[3] = MAX_ALLOWED_SPEED;
+  } else {
+  // Braking
+    // Use standard torque strategy
+    standard_torque_strategy(accel_request, brake_request, torques, speeds);
   }
 }
