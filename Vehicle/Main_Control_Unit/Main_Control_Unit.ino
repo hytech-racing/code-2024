@@ -302,7 +302,7 @@ void loop() {
     Serial.println("Gauge Pressure");
     Serial.println(tire_svpp[0].get_gauge_pressure());
     Serial.println("Sensor Temperature");
-    Serial.println(tire_sensor_info[0].get_sensor_temp());
+    Serial.println(tire_sensor_info[0].get_sensor_temp() * .1 - 100);
     Serial.println("Infared Temps:");
     for (int i = 0; i < 16; i++) {
       Serial.printf("Infared Temp %d: ", i);
@@ -318,7 +318,7 @@ void loop() {
     Serial.println("Gauge Pressure");
     Serial.println(tire_svpp[1].get_gauge_pressure());
     Serial.println("Sensor Temperature");
-    Serial.println(tire_sensor_info[1].get_sensor_temp());
+    Serial.println(tire_sensor_info[1].get_sensor_temp() * .1 - 100);
     Serial.println("Infared Temps:");
     for (int i = 0; i < 16; i++) {
       Serial.printf("Infared Temp %d: ", i);
@@ -334,7 +334,7 @@ void loop() {
     Serial.println("Gauge Pressure");
     Serial.println(tire_svpp[2].get_gauge_pressure());
     Serial.println("Sensor Temperature");
-    Serial.println(tire_sensor_info[2].get_sensor_temp());
+    Serial.println(tire_sensor_info[2].get_sensor_temp() * .1 - 100);
     Serial.println("Infared Temps:");
     for (int i = 0; i < 16; i++) {
       Serial.printf("Infared Temp %d: ", i);
@@ -350,7 +350,7 @@ void loop() {
     Serial.println("Gauge Pressure");
     Serial.println(tire_svpp[3].get_gauge_pressure());
     Serial.println("Sensor Temperature");
-    Serial.println(tire_sensor_info[3].get_sensor_temp());
+    Serial.println(tire_sensor_info[3].get_sensor_temp() * .1 - 100);
     Serial.println("Infared Temps:");
     for (int i = 0; i < 16; i++) {
       Serial.printf("Infared Temp %d: ", i);
