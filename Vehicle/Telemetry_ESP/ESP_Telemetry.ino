@@ -1,35 +1,34 @@
+uint8_t incomingFrame[256];
+int frameIndex = 0;
+int zeroes = 0;
+#define DELIMITER ((uint8_t) 0)
+//#define DELIMITER ('\n')
 /* 
  * Setup functions for live telemetry
  */
 void telemSetup() {
 }
 
-int zeros = 0;
 /* 
  * Loop for live telemetry
  */
 void telemLoop() {
   while (TCU.available()) {
     uint8_t incomingByte = TCU.read();
+    incomingFrame[frameIndex] = incomingByte;
+    frameIndex++;
 
-    /*if (incomingByte == '\n') {
+    if (incomingByte == DELIMITER) {
       zeroes++;
     } else {
       zeroes = 0;
-    }*/
+    }
 
-    incomingFrame[frameIndex] = incomingByte;
-    frameIndex++;
     esp_err_t result;
-    if (frameIndex >= 225) {
+    if (((frameIndex >= 225) && (incomingByte == DELIMITER)) || (zeroes >= 2) || (frameIndex >= 250)) {
 
-      //Serial.println((char *) incomingFrame);
-      //if (zeros == 3) {
-      //  result = esp_now_send(broadcastAddress, (uint8_t *) incomingFrame, frameIndex-2);
-      //}
-      //else {
-        result = esp_now_send(broadcastAddress, (uint8_t *) incomingFrame, frameIndex);
-      //}
+      //Serial.write((uint8_t *) incomingFrame, frameIndex);
+      result = esp_now_send(broadcastAddress, (uint8_t *) incomingFrame, frameIndex);
 
       if (result == ESP_OK) {
         Serial.println("Sent with success");
@@ -43,9 +42,10 @@ void telemLoop() {
       }
 
       frameIndex = 0;
-      zeros = 0;
+      zeroes = 0;
     }
 
+    // If shit really hits the fan, just reset it all
     if (frameIndex == 256) {
       frameIndex = 0;
     }

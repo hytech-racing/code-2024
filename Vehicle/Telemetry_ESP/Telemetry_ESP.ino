@@ -35,12 +35,6 @@ Metro perf_timer = Metro(1000);
 
 SFE_UBLOX_GNSS myGNSS;
 
-
-uint8_t incomingFrame[256];
-int frameIndex = 0;
-
-int zeroes = 0;
-
 uint8_t broadcastAddress[] = {0x7C, 0xDF, 0xA1, 0x55, 0xB5, 0xA2};
 
 esp_now_peer_info_t peerInfo;
@@ -81,9 +75,16 @@ void setup() {
   Serial.print("MAC Address: ");
   Serial.println(WiFi.macAddress());
 
-  //TCU.begin(1000000);
-  TCU.begin(1000000, SERIAL_8N1, 34, 33);
   //TCU.begin(115200, SERIAL_8N1, ESP_RX, ESP_TX);
+  //Teensy Serial8
+  //TCU.begin(115200, SERIAL_8N1, 34, 33);
+  //Teensy Serial8 with transmit basically disabled
+  TCU.begin(115200, SERIAL_8N1, 34, 9);
+  //Teensy Serial2 Not working rn?
+  //TCU.begin(115200, SERIAL_8N1, 10, 9);
+
+  TCU.setRxBufferSize(1024);
+
   pinMode(GPS_OK, OUTPUT);
   pinMode(GPS_RTK_OK, OUTPUT);
   pinMode(ESP_LED_OTHER_1, OUTPUT);
@@ -92,7 +93,7 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
 
   esp_now_setup();
-  //sGPSSetup();
+  //GPSSetup();
 }
 
 void loop() {
