@@ -308,7 +308,7 @@ void loop() {
       Serial.printf("Infared Temp %d: ", i);
       int j = i / 4;
       int k = i % 4;
-      Serial.println(tire_temps[0].get_tire_infared_temps(j).get_infared_temps()[k] * .1 - 100);
+      Serial.println(tire_temps[0].get_tire_infared_temps(j+1).get_infared_temps()[k] * .1 - 100);
     }
     Serial.println("RF");
     Serial.println("Battery Voltage:");
@@ -324,7 +324,7 @@ void loop() {
       Serial.printf("Infared Temp %d: ", i);
       int j = i / 4;
       int k = i % 4;
-      Serial.println(tire_temps[1].get_tire_infared_temps(j).get_infared_temps()[k] * .1 - 100);
+      Serial.println(tire_temps[1].get_tire_infared_temps(j+1).get_infared_temps()[k] * .1 - 100);
     }
     Serial.println("LR");
     Serial.println("Battery Voltage:");
@@ -340,7 +340,7 @@ void loop() {
       Serial.printf("Infared Temp %d: ", i);
       int j = i / 4;
       int k = i % 4;
-      Serial.println(tire_temps[2].get_tire_infared_temps(j).get_infared_temps()[k] * .1 - 100);
+      Serial.println(tire_temps[2].get_tire_infared_temps(j+1).get_infared_temps()[k] * .1 - 100);
     }
     Serial.println("RR");
     Serial.println("Battery Voltage:");
@@ -356,7 +356,7 @@ void loop() {
       Serial.printf("Infared Temp %d: ", i);
       int j = i / 4;
       int k = i % 4;
-      Serial.println(tire_temps[3].get_tire_infared_temps(j).get_infared_temps()[k] * .1 - 100);
+      Serial.println(tire_temps[3].get_tire_infared_temps(j+1).get_infared_temps()[k] * .1 - 100);
     }
   }
 

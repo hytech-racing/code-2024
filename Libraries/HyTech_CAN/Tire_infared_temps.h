@@ -18,12 +18,12 @@ public:
 
 
   inline const uint16_t* get_infared_temps() const { return infared_temps; }
-  inline float get_infared_temp_1() const { return infared_temps[1] * .1 + 100; }
-  inline float get_infared_temp_2() const { return infared_temps[0] * .1 + 100; }
-  inline float get_infared_temp_3() const { return infared_temps[2] * .1 + 100; }
-  inline float get_infared_temp_4() const { return infared_temps[3] * .1 + 100; }
+  inline float get_infared_temp_1() const { return infared_temps[1] * .1 - 100; }
+  inline float get_infared_temp_2() const { return infared_temps[0] * .1 - 100; }
+  inline float get_infared_temp_3() const { return infared_temps[2] * .1 - 100; }
+  inline float get_infared_temp_4() const { return infared_temps[3] * .1 - 100; }
 
-private: // all temps in 0.1C with -100C offset
+private: // all temps in 0.1C with -100C offset / bit
     uint16_t infared_temps[4];
     
 };
@@ -56,7 +56,7 @@ class Tire_temps {
   }
 
 
-private: // all temps in 0.1C with -100C offset
+private:
     Tire_infared_temps tire_infared_temps_group_1; //1 - 4
     Tire_infared_temps tire_infared_temps_group_2; //5 - 8
     Tire_infared_temps tire_infared_temps_group_3; //9 - 12
