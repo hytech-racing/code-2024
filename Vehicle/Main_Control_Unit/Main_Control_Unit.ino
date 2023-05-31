@@ -1372,12 +1372,12 @@ inline void calculate_pedal_implausibilities() {
 
 inline void calculate_pedal_requests (float* accel, float* brake) {
   // Accelerator calculations
-  float accel_1_request = float_map(mcu_pedal_readings.get_accelerator_pedal_1, 
+  float accel_1_request = float_map((float)mcu_pedal_readings.get_accelerator_pedal_1(), 
                                     START_ACCELERATOR_PEDAL_1,
                                     END_ACCELERATOR_PEDAL_1,
                                     0.0,
                                     1.0);
-  float accel_2_request = float_map(mcu_pedal_readings.get_accelerator_pedal_2, 
+  float accel_2_request = float_map((float)mcu_pedal_readings.get_accelerator_pedal_2(), 
                                     START_ACCELERATOR_PEDAL_2,
                                     END_ACCELERATOR_PEDAL_2,
                                     0.0,
@@ -1385,12 +1385,12 @@ inline void calculate_pedal_requests (float* accel, float* brake) {
   float avg_accel_request = (accel_1_request + accel_2_request) / 2.0;
   
   // Brake pedal calculations
-  float brake_1_request = float_map(mcu_pedal_readings.get_brake_pedal_1, 
+  float brake_1_request = float_map((float)mcu_pedal_readings.get_brake_pedal_1(), 
                                     START_BRAKE_PEDAL_1,
                                     END_BRAKE_PEDAL_1,
                                     0.0,
                                     1.0);
-  float brake_2_request = float_map(mcu_pedal_readings.get_brake_pedal_2, 
+  float brake_2_request = float_map((float)mcu_pedal_readings.get_brake_pedal_2(), 
                                     START_BRAKE_PEDAL_2,
                                     END_BRAKE_PEDAL_2,
                                     0.0,
