@@ -141,6 +141,8 @@ const uint16_t LAUNCH_STOP_THRESHOLD = 1000;
 float launch_rate_target = 0.0;
 
 // PID
+enum pid_states {pid_not_entered, pid_entered};
+pid_states pid_state = pid_not_entered;
 elapsedMillis pid_time_span = 0;
 int16_t wheel_ground_speed[4] = {0, 0, 0, 0};
 int16_t wheel_inst_speed[4] = {0, 0, 0, 0};
@@ -945,60 +947,81 @@ inline void set_inverter_torques() {
       // PID control torque vectoring
       // Set yaw rate target
       // Convert wheel speed to vehicle velocity
-      for (int i = o; i < 4; i++) {
-        wheel_ground_speed[i] = (int16_t) ((float) mc_status[i].get_speed() * tire_radius * 0.1047198 / gear_ratio);  // rpm -> radian/s: 0.1047198
-      }
-      // Adjust each wheel speed to vehicle center speed
-      wheel_inst_speed[0] = (int16_t) ((float) wheel_ground_speed[0] + (float) inst_imu_yaw_rate * half_track);
-      wheel_inst_speed[1] = (int16_t) ((float) wheel_ground_speed[1] - (float) inst_imu_yaw_rate * half_track);
-      wheel_inst_speed[2] = (int16_t) ((float) wheel_ground_speed[2] + (float) inst_imu_yaw_rate * half_track);
-      wheel_inst_speed[3] = (int16_t) ((float) wheel_ground_speed[3] - (float) inst_imu_yaw_rate * half_track);
-      // Calculate average speed
-      avg_speed = (wheel_inst_speed[0] + wheel_inst_speed[1] + wheel_inst_speed[2] + wheel_inst_speed[3]) / 4;
-      // Calculate speed difference for each wheel
-      for (int i = 0; i < 4; i++) {
-        speed_diff[i] = (int16_t) (((float) wheel_inst_speed[i] - (float) avg_speed) / (float) avg_speed);
-      }
-      // Calculate vehicle velocity
-      if ((float) speed_diff[0] < diff_threshold && (float) speed_diff[1] < diff_threshold 
-      && (float) speed_diff[2] < diff_threshold && (float) speed_diff[3] < diff_threshold) {
-        vehicle_speed = avg_speed;
-      } else {
-        vehicle_speed = vehicle_speed + (int16_t) ((float) inst_imu_accel_x * ((float) pid_time_span / 1000.0));
-      }
-      // Calculate understeer-gradient
-      understeer_grad = vehicle_mass * (front_axle_distance / (track * tire_stiffness) - rear_axle_distance / (track * tire_stiffness));
-      // Calculate yaw rate target
-      yaw_rate_target = (float) vehicle_speed * steering_angle / (track + understeer_grad * (float) vehicle_speed * (float) vehicle_speed);
-      
-      // Calculate yaw rate error
-      yaw_rate_error = yaw_rate_target - (float) inst_imu_yaw_rate;
-      // Calculate PID control signal
-      pid_integral = pid_integral + yaw_rate_error * ((float) pid_time_span / 1000.0);      
-      pid_control = proportional_gain * yaw_rate_error + integral_gain * pid_integral + derivative_gain * (yaw_rate_error - prev_yaw_rate_error) / ((float) pid_time_span / 1000.0);
-      prev_yaw_rate_error = yaw_rate_error;
-      pid_time_span = 0;
-      
-      // Convert control signal to torque adjustment
-      // Control signal is defined as the yaw moment added to the car as a result
-      // of left/right torque distribution
-      torque_adjustment[0] = (int16_t) -pid_control / (gear_ratio * track * tire_radius);
-      torque_adjustment[1] = (int16_t) pid_control / (gear_ratio * track * tire_radius);
-      torque_adjustment[2] = (int16_t) -pid_control / (gear_ratio * track * tire_radius);
-      torque_adjustment[3] = (int16_t) pid_control / (gear_ratio * track * tire_radius);
-      // Limit torque adjustment
-      for (int i = 0; i < 4; i++) {
-        if (torque_adjustment[i] > max_torque_diff * 2142) {
-          torque_adjustment[i] = (int16_t) (max_torque_diff * 2142);
-        } else if (torque_adjustment[i] < -max_torque_diff * 2142) {
-          torque_adjustment[i] = (int16_t) -max_torque_diff * 2142;
-        }
-      }
-      
-      // Allocate torque distribution
-      for (int i = 0; i < 4; i++) {
-        torque_setpoint_array[i] = torque_adjustment[i] + (avg_accel - avg_brake);
-      }
+      switch (pid_state) {
+        case pid_not_entered:
+          if (pid_time_span >= 10) {
+            pid_state = pid_entered;
+            break;
+          }
+          for (int i = 0; i < 4; i++) {
+            torque_setpoint_array[i] = avg_accel - avg_brake;
+          }
+          break;
+          
+        case pid_entered:
+          if (pid_time_span < 10) {
+            break;
+          }
+          for (int i = o; i < 4; i++) {
+            wheel_ground_speed[i] = (int16_t) ((float) mc_status[i].get_speed() * tire_radius * 0.1047198 / gear_ratio);  // rpm -> radian/s: 0.1047198
+          }
+          // Adjust each wheel speed to vehicle center speed
+          wheel_inst_speed[0] = (int16_t) ((float) wheel_ground_speed[0] + (float) inst_imu_yaw_rate * half_track);
+          wheel_inst_speed[1] = (int16_t) ((float) wheel_ground_speed[1] - (float) inst_imu_yaw_rate * half_track);
+          wheel_inst_speed[2] = (int16_t) ((float) wheel_ground_speed[2] + (float) inst_imu_yaw_rate * half_track);
+          wheel_inst_speed[3] = (int16_t) ((float) wheel_ground_speed[3] - (float) inst_imu_yaw_rate * half_track);
+          // Calculate average speed
+          avg_speed = (wheel_inst_speed[0] + wheel_inst_speed[1] + wheel_inst_speed[2] + wheel_inst_speed[3]) / 4;
+          // Calculate speed difference for each wheel
+          for (int i = 0; i < 4; i++) {
+            speed_diff[i] = (int16_t) (((float) wheel_inst_speed[i] - (float) avg_speed) / (float) avg_speed);
+          }
+          // Calculate vehicle velocity
+          if ((float) speed_diff[0] < diff_threshold && (float) speed_diff[1] < diff_threshold 
+          && (float) speed_diff[2] < diff_threshold && (float) speed_diff[3] < diff_threshold) {
+            vehicle_speed = avg_speed;
+          } else {
+            vehicle_speed = vehicle_speed + (int16_t) ((float) inst_imu_accel_x * ((float) pid_time_span / 1000.0));
+          }
+          // Calculate understeer-gradient
+          understeer_grad = vehicle_mass * (front_axle_distance / (track * tire_stiffness) - rear_axle_distance / (track * tire_stiffness));
+          // Calculate yaw rate target
+          yaw_rate_target = (float) vehicle_speed * steering_angle / (track + understeer_grad * (float) vehicle_speed * (float) vehicle_speed);
+          
+          // Calculate yaw rate error
+          yaw_rate_error = yaw_rate_target - (float) inst_imu_yaw_rate;
+          // Calculate PID control signal
+          pid_integral = pid_integral + yaw_rate_error * ((float) pid_time_span / 1000.0);      
+          pid_control = proportional_gain * yaw_rate_error + integral_gain * pid_integral + derivative_gain * (yaw_rate_error - prev_yaw_rate_error) / ((float) pid_time_span / 1000.0);
+          prev_yaw_rate_error = yaw_rate_error;
+          pid_time_span = 0;
+          
+          // Convert control signal to torque adjustment
+          // Control signal is defined as the yaw moment added to the car as a result
+          // of left/right torque distribution
+          torque_adjustment[0] = (int16_t) -pid_control / (gear_ratio * track * tire_radius);
+          torque_adjustment[1] = (int16_t) pid_control / (gear_ratio * track * tire_radius);
+          torque_adjustment[2] = (int16_t) -pid_control / (gear_ratio * track * tire_radius);
+          torque_adjustment[3] = (int16_t) pid_control / (gear_ratio * track * tire_radius);
+          // Limit torque adjustment
+          for (int i = 0; i < 4; i++) {
+            if (torque_adjustment[i] > max_torque_diff * 2142) {
+              torque_adjustment[i] = (int16_t) (max_torque_diff * 2142);
+            } else if (torque_adjustment[i] < -max_torque_diff * 2142) {
+              torque_adjustment[i] = (int16_t) -max_torque_diff * 2142;
+            }
+          }
+          
+          // Allocate torque distribution
+          for (int i = 0; i < 4; i++) {
+            torque_setpoint_array[i] = torque_adjustment[i] + (avg_accel - avg_brake);
+          }
+          break;
+        
+        default:
+          break;
+          
+        } // end of switch
       
       break;
 
