@@ -7,10 +7,10 @@
 FlexCAN_T4<CAN2> CAN;
 CAN_message_t msg;
 Metro timer_can = Metro(1000);
-Metro timer_st = Metro(10000);
-Metro timer_up = Metro(12000);
-bool startT = 0;
-bool timeUp = 0;
+//Metro timer_st = Metro(10000);
+//Metro timer_up = Metro(12000);
+//bool startT = 0;
+//bool timeUp = 0;
 
 void setup() {
   Serial.begin(115200); // Initialize serial for PC communication
@@ -25,13 +25,13 @@ void setup() {
 }
 
 void loop() {
-  if (timer_st.check()) {
-    startT = 1;
-    timer_up.reset();
-  }
+//  if (timer_st.check()) {
+//    startT = 1;
+//    timer_up.reset();
+//  }
 
 
-  if (timer_can.check() && startT && !timeUp) { // Send a message on CAN at 1 hz
+  if (timer_can.check()) { // Send a message on CAN at 1 hz
     msg.id = 0x424; // LF
     //msg.id = 0x42A; //RF
     //msg.id = 0x430; //LR
@@ -55,10 +55,10 @@ void loop() {
       Serial.print(" ");
     }
     Serial.println();
-    if (timer_up.check()) {
-      Serial.println("Done");
-      timer_up = 1;
-    }
+//    if (timer_up.check()) {
+//      Serial.println("Done");
+//      timer_up = 1;
+//    }
   }
 
 
