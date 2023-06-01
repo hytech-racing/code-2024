@@ -132,38 +132,57 @@ void send_mc_temps4() {
 void live_telem_loop() {
 
   if (millis() > 30000) {
+    uint8_t sent = 0;
     if (detailed_voltages_timer.check()) {
       send_detailed_voltages();
-      Serial8.write(0);
+      sent = 1;
+      detailed_voltages_timer.reset();
+      //Serial8.write(0);
     }
-    
     if (voltages_timer.check()) {
       send_voltages();
-    }
-    if (detailed_temperatures_timer.check()) {
-      send_detailed_temperatures();
-      Serial8.write(0);
+      sent = 1;
+      voltages_timer.reset();
     }
     /*
+    if (detailed_temperatures_timer.check()) {
+      send_detailed_temperatures();
+      sent = 1;
+      detailed_temperatures_timer.reset();
+    }
     if (onboard_temperatures_timer.check()) {
       send_onboard_temperatures();
+      sent = 1;
+      onboard_temperatures_timer.reset();
     }
+    */
     if (temperatures_timer.check()) {
       send_temperatures();
+      sent = 1;
+      temperatures_timer.reset();
     }
     if (mc_temps1_timer.check()) {
       send_mc_temps1();
+      sent = 1;
+      mc_temps1_timer.reset();
     }
     if (mc_temps2_timer.check()) {
       send_mc_temps2();
+      sent = 1;
+      mc_temps2_timer.reset();
     }
     if (mc_temps3_timer.check()) {
       send_mc_temps3();
+      sent = 1;
+      mc_temps3_timer.reset();
     }
     if (mc_temps4_timer.check()) {
       send_mc_temps4();
+      sent = 1;
+      mc_temps4_timer.reset();
     }
-    Serial8.write(0);
-    */
+    if (sent) {
+      Serial8.write(0);
+    }
   }
 }
