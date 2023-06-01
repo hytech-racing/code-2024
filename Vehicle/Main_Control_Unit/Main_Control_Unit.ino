@@ -771,7 +771,7 @@ inline void set_inverter_torques() {
   int16_t vehicle_speed;
   int16_t inst_imu_accel_x = imu_accelerometer.get_long_accel();
   int16_t inst_imu_yaw_rate = imu_gyroscope.get_yaw();
-  float steering_angle = (-0.1115 * (float) mcu_analog_readings.get_steering_2() + 263.285) * PI / 180.0;
+  float steering_angle;
   float diff_threshold = 0.05;  
   float pid_control = 0;
   float max_torque_diff = 0.25;
@@ -996,6 +996,11 @@ inline void set_inverter_torques() {
           // Calculate understeer-gradient
           understeer_grad = vehicle_mass * (front_axle_distance / (track * tire_stiffness) - rear_axle_distance / (track * tire_stiffness));
           // Calculate yaw rate target
+          if (mcu_analog_readings.get_steering_2() > 2320 && mcu_analog_readings.get_steering_2() < 2400) {
+            steering_angle = 0;
+          } else {
+            steering_angle = (-0.1115 * (float) mcu_analog_readings.get_steering_2() + 263.285) * PI / 180.0;
+          }
           yaw_rate_target = vehicle_speed * steering_angle / (track + understeer_grad * vehicle_speed * vehicle_speed);
           
           // Calculate yaw rate error
