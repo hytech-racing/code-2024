@@ -195,7 +195,7 @@ void setup() {
     Serial.begin(115200);
     NRF.begin(115200);
     NRF.addMemoryForWrite(NRFbuffer, SER_BUF_SZ);
-    ESP.begin(1000000);
+    ESP.begin(115200);
     ESP.addMemoryForWrite(ESPbuffer, SER_BUF_SZ);
 
     setupClock();
@@ -247,10 +247,14 @@ void loop() {
     
     //write_buf_to_SD(current_write_buf);
     /* Flush data to SD card occasionally */
-    if (telem.check()) { //1000
+
+    live_telem_loop();
+
+    /*if (telem.check()) { //1000
       print_voltages_temps();
       print_temps();
-    }
+    }*/
+    
     if (timer_flush.check()) { //100 
         logger.flush(); // Flush data to disk (data is also flushed whenever the 512 Byte buffer fills up, but this call ensures we don't lose more than a second of data when the car turns off)
     }
@@ -267,11 +271,11 @@ void loop() {
 
     /* Print timestamp to serial occasionally */
     if (timer_debug_RTC.check()) { //1000
-        Serial.printf("Clock: %u\n", Teensy3Clock.get());
-        Serial.printf("CAN1: %u, CAN2: %u, CAN3: %u, GPS: %u, Loops: %lu\n",counters.CAN_1_freq, counters.CAN_2_freq, counters.CAN_3_freq, counters.GPS_freq, counters.loops);
-        Serial.printf("Messages written: %lu Messages queued: %u\n", counters.bytes_written, counters.messages_queued);
-        Serial.printf("Max loop latency: %lu Slow loops: %u Slow loop time: %u\n", counters.max_loop_latency, counters.slow_loops, counters.slow_loop_time);
-        Serial.println();
+        //Serial.printf("Clock: %u\n", Teensy3Clock.get());
+        //Serial.printf("CAN1: %u, CAN2: %u, CAN3: %u, GPS: %u, Loops: %lu\n",counters.CAN_1_freq, counters.CAN_2_freq, counters.CAN_3_freq, counters.GPS_freq, counters.loops);
+        //Serial.printf("Messages written: %lu Messages queued: %u\n", counters.bytes_written, counters.messages_queued);
+        //Serial.printf("Max loop latency: %lu Slow loops: %u Slow loop time: %u\n", counters.max_loop_latency, counters.slow_loops, counters.slow_loop_time);
+        //Serial.println();
         counters = (perf_counters){
           .CAN_1_freq = 0, 
           .CAN_2_freq = 0, 
@@ -293,6 +297,9 @@ void loop() {
     if (after-before > 1) {
       counters.slow_loops++;
       counters.slow_loop_time += after-before;
+    }
+    if (Serial8.available()) {
+      Serial.write(Serial8.read());
     }
 }
 

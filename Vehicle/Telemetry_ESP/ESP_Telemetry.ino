@@ -25,7 +25,7 @@ void telemLoop() {
     }
 
     esp_err_t result;
-    if (((frameIndex >= 225) && (incomingByte == DELIMITER)) || (zeroes >= 2) || (frameIndex >= 250)) {
+    if (((frameIndex >= 225) && (incomingByte == DELIMITER)) || ((zeroes >= 2) && (frameIndex > 0)) || (frameIndex >= 250)) {
 
       //Serial.write((uint8_t *) incomingFrame, frameIndex);
       result = esp_now_send(broadcastAddress, (uint8_t *) incomingFrame, frameIndex);

@@ -1,3 +1,4 @@
+/*
 #define TOTAL_IC 12                   // Number of LTC6811-2 ICs that are used in the accumulator
 #define EVEN_IC_CELLS 12              // Number of cells monitored by ICs with even addresses
 #define ODD_IC_CELLS 9                // Number of cells monitored by ICS with odd addresses
@@ -150,3 +151,4 @@ void write_voltages() {
     ESP.printf("Motor 1: %u Motor 2: %u Motor 3: %u Motor 4: %u\n", mc_temps1.get_motor_temp() / 10., mc_temps2.get_motor_temp() / 10., mc_temps3.get_motor_temp() / 10., mc_temps4.get_motor_temp() / 10.);
     ESP.printf("Inverter 1: %u Inverter 2: %u Inverter 3: %u Inverter 4: %u\n", mc_temps1.get_inverter_temp() / 10., mc_temps2.get_inverter_temp() / 10., mc_temps3.get_inverter_temp() / 10., mc_temps4.get_inverter_temp() / 10.);
   }
+*/

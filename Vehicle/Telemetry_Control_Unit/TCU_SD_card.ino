@@ -8,7 +8,7 @@
 void setupSD() {
     #ifdef EN_SD
     /* Set up SD card */
-    Serial.println("Initializing SD card...");
+    //Serial.println("Initializing SD card...");
     SdFile::dateTimeCallback(sd_date_time); // Set date/time callback function
     if (!SD.begin(BUILTIN_SDCARD)) { // Begin Arduino SD API (Teensy 3.5)
         Serial.println("SD card failed or not present");
@@ -34,7 +34,7 @@ void createFile() {
     }
     
     if (logger) {
-        Serial.println("Successfully opened SD file");
+        //Serial.println("Successfully opened SD file");
     } else {
         Serial.println("Failed to open SD file");
     }

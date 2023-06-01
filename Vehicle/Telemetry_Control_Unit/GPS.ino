@@ -57,7 +57,7 @@ int setupGPS() {
   for(int i = 0; i < attempts; i++) {
     if (myGNSS.begin() == false) //Connect to the u-blox module using Wire port
     {
-      Serial.println(F("u-blox GNSS module not detected at default I2C address. Please check wiring."));
+      //Serial.println(F("u-blox GNSS module not detected at default I2C address. Please check wiring."));
       gps_init_ok = -1;
       delay(1000);
     } else {
@@ -69,7 +69,7 @@ int setupGPS() {
     return gps_init_ok;
   }
 
-  Serial.println(F("u-blox GNSS module connected"));
+  //Serial.println(F("u-blox GNSS module connected"));
 
   uint8_t ok = myGNSS.setI2COutput(COM_TYPE_UBX); //Turn off NMEA noise
   if (ok) ok = myGNSS.setI2CInput(COM_TYPE_UBX | COM_TYPE_NMEA | COM_TYPE_SPARTN); //Be sure SPARTN input is enabled
@@ -88,8 +88,8 @@ int setupGPS() {
 
   //if (ok) ok = myGNSS.saveConfiguration(VAL_CFG_SUBSEC_IOPORT | VAL_CFG_SUBSEC_MSGCONF); //Optional: Save the ioPort and message settings to NVM and BBR
   
-  Serial.print(F("GNSS: configuration "));
-  Serial.println(OK(ok));
+  //Serial.print(F("GNSS: configuration "));
+  //Serial.println(OK(ok));
 
   myGNSS.setAutoPVTcallbackPtr(&printPVTdata); // Enable automatic NAV PVT messages with callback to printPVTdata so we can watch the carrier solution go to fixed
 
@@ -104,7 +104,7 @@ int setupGPS() {
   for(int i = 0; i < attempts; i++) {
     if (myLBand.begin(Wire, 0x43) == false) //Connect to the u-blox module using Wire port
     {
-      Serial.println(F("u-blox NEO-D9S not detected at default I2C address. Please check wiring."));
+      //Serial.println(F("u-blox NEO-D9S not detected at default I2C address. Please check wiring."));
       neo_init_ok = -1;
       delay(1000);
     } else {
@@ -115,7 +115,7 @@ int setupGPS() {
   if (neo_init_ok != 0) {
     return neo_init_ok;
   }
-  Serial.println(F("u-blox NEO-D9S connected"));
+  //Serial.println(F("u-blox NEO-D9S connected"));
 
   myLBand.newCfgValset(); // Create a new Configuration Interface message - this defaults to VAL_LAYER_RAM_BBR (change in RAM and BBR)
   myLBand.addCfgValset32(UBLOX_CFG_PMP_CENTER_FREQUENCY,   myLBandFreq); // Default 1539812500 Hz

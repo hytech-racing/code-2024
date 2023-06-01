@@ -11,10 +11,20 @@
 int send_can_message(HardwareSerial& serial, CAN_message_t& can_msg) {  
     uint8_t cobs_buf[SER_PKT_LEN+2*sizeof(uint8_t)+sizeof(uint16_t)];
     encode_can_message(cobs_buf, can_msg);
+    /*int c = 0;
+    for (int i = 0; i < (SER_PKT_LEN+2*sizeof(uint8_t)+sizeof(uint16_t)); i++) {
+      if (cobs_buf[i] == 0) {
+        c++;
+      }
+    }
+    if (c>0) {
+      Serial.print("Shit: ");
+      Serial.println(c);
+    }*/
     if (serial.availableForWrite() >= (int) sizeof(cobs_buf)) {
       int written = serial.write(cobs_buf, sizeof(cobs_buf));
       return written;
-    }
+    }    
     return 0;
 }
 
