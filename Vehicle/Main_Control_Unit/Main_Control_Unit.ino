@@ -974,7 +974,9 @@ inline void set_inverter_torques() {
       float diff = 1;
 
       for(int i = 0; i < 4; i++) {
-        mech_power += mc_setpoints_command[i].get_pos_torque_limit() / 1000 * 9.8 * mc_status[i].get_speed() / 60 * 3.14;
+        float torque_in_nm = 9.8 * ((float) mc_setpoints_command[i].get_pos_torque_limit()) / 1000.0;
+        float speed_in_rpm = (float) mc_status[i].get_speed();
+        mech_power += 2 * 3.1415 * torque_in_nm * speed_in_rpm / 60.0;
       }
       mech_power /= 1000.0;
 
@@ -1003,10 +1005,10 @@ inline void set_inverter_torques() {
 //      if (mech_power > MECH_POWER_LIMIT && dc_power > DC_POWER_LIMIT) {
 //        diff = (ediff <= mdiff) ? ediff : mdiff;
 //      }
-      torque_setpoint_array[0] = (uint16_t) torque_setpoint_array[0] * diff;
-      torque_setpoint_array[1] = (uint16_t) torque_setpoint_array[1] * diff;
-      torque_setpoint_array[2] = (uint16_t) torque_setpoint_array[2] * diff;
-      torque_setpoint_array[3] = (uint16_t) torque_setpoint_array[3] * diff;
+      torque_setpoint_array[0] = (uint16_t) (torque_setpoint_array[0] * diff);
+      torque_setpoint_array[1] = (uint16_t) (torque_setpoint_array[1] * diff);
+      torque_setpoint_array[2] = (uint16_t) (torque_setpoint_array[2] * diff);
+      torque_setpoint_array[3] = (uint16_t) (torque_setpoint_array[3] * diff);
     }
   
   
