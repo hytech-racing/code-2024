@@ -36,5 +36,6 @@ def unsigned_to_signed(uint_vals, bit_width, convert=True):
         return np.int64(uint_vals)
     mask = (1 << bit_width) - 1
     int_vals = np.int64(uint_vals & mask)
+    int_vals = np.array(np.int64(uint_vals & np.uint64(mask))).reshape((-1,))
     int_vals[int_vals >= (1 << (bit_width - 1))] -= (1 << bit_width)
     return int_vals
