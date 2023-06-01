@@ -771,7 +771,7 @@ inline void set_inverter_torques() {
   int16_t vehicle_speed;
   int16_t inst_imu_accel_x = imu_accelerometer.get_long_accel();
   int16_t inst_imu_yaw_rate = imu_gyroscope.get_yaw();
-  uint16_t steering_angle = mcu_analog_readings.get_steering_2();
+  float steering_angle = (-0.1115 * (float) mcu_analog_readings.get_steering_2() + 263.285) * PI / 180.0;
   float diff_threshold = 0.05;  
   float pid_control = 0;
   float max_torque_diff = 0.25;
