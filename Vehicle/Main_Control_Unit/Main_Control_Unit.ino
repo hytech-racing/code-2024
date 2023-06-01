@@ -776,6 +776,7 @@ inline void set_inverter_torques() {
   float pid_control = 0;
   float max_torque_diff = 0.25;
   float yaw_rate_target;
+  float understeer_grad;
 
   switch (dashboard_status.get_dial_state()) {
     case 0:
@@ -783,6 +784,7 @@ inline void set_inverter_torques() {
         speed_setpoint_array[i] = MAX_ALLOWED_SPEED;
       }
       launch_state = launch_not_ready;
+      pid_time_span = 0;
       // standard no torque vectoring
 
       torque_setpoint_array[0] = avg_accel -  avg_brake;
@@ -811,6 +813,7 @@ inline void set_inverter_torques() {
         speed_setpoint_array[i] = MAX_ALLOWED_SPEED;
       }
       launch_state = launch_not_ready;
+      pid_time_span = 0;
       // Based on Nissan ATTESA ET-S
       // 1. Determine F/R torque allocation. Default to rear bias, but increase front bias as rear begins to slip more than front.
       // Send up to 50% of torque to the front.
@@ -858,6 +861,7 @@ inline void set_inverter_torques() {
         speed_setpoint_array[i] = MAX_ALLOWED_SPEED;
       }
       launch_state = launch_not_ready;
+      pid_time_span = 0;
       // Original load cell torque vectoring
       load_cell_alpha = 0.95;
       total_torque = 4 * (avg_accel - avg_brake) ;
@@ -880,6 +884,7 @@ inline void set_inverter_torques() {
       for (int i = 0; i < 4; i++) {
         max_speed = max(max_speed, mc_status[i].get_speed());
       }
+      pid_time_span = 0;
 
       switch (launch_state) {
         case launch_not_ready:
@@ -967,7 +972,7 @@ inline void set_inverter_torques() {
           if (pid_time_span < 10) {
             break;
           }
-          for (int i = o; i < 4; i++) {
+          for (int i = 0; i < 4; i++) {
             wheel_ground_speed[i] = (float) mc_status[i].get_speed() * tire_radius * 0.1047198 / gear_ratio;  // rpm -> radian/s: 0.1047198
           }
           // Adjust each wheel speed to vehicle center speed
@@ -1004,10 +1009,10 @@ inline void set_inverter_torques() {
           // Convert control signal to torque adjustment
           // Control signal is defined as the yaw moment added to the car as a result
           // of left/right torque distribution
-          torque_adjustment[0] = -pid_control / (gear_ratio * track * tire_radius;
-          torque_adjustment[1] = pid_control / (gear_ratio * track * tire_radius;
-          torque_adjustment[2] = -pid_control / (gear_ratio * track * tire_radius;
-          torque_adjustment[3] = pid_control / (gear_ratio * track * tire_radius;
+          torque_adjustment[0] = -pid_control / (gear_ratio * track * tire_radius);
+          torque_adjustment[1] = pid_control / (gear_ratio * track * tire_radius);
+          torque_adjustment[2] = -pid_control / (gear_ratio * track * tire_radius);
+          torque_adjustment[3] = pid_control / (gear_ratio * track * tire_radius);
           // Limit torque adjustment
           for (int i = 0; i < 4; i++) {
             if (torque_adjustment[i] > max_torque_diff * 2142) {
@@ -1019,7 +1024,7 @@ inline void set_inverter_torques() {
           
           // Allocate torque distribution
           for (int i = 0; i < 4; i++) {
-            torque_setpoint_array[i] = (int16_t) ((torque_adjustment[i] + (float) (avg_accel - avg_brake));
+            torque_setpoint_array[i] = (int16_t) (torque_adjustment[i] + (float) (avg_accel - avg_brake));
           }
 //          break;
 //        
@@ -1036,12 +1041,14 @@ inline void set_inverter_torques() {
         speed_setpoint_array[i] = 0;
       }
       launch_state = launch_not_ready;
+      pid_time_span = 0;
     default:
       for (int i = 0; i < 4; i++) {
         speed_setpoint_array[i] = 0;
         torque_setpoint_array[i] = 0;
       }
       launch_state = launch_not_ready;
+      pid_time_span = 0;
       break;
   }
 
