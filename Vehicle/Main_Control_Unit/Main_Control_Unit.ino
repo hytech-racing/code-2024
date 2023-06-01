@@ -141,8 +141,8 @@ const uint16_t LAUNCH_STOP_THRESHOLD = 1000;
 float launch_rate_target = 0.0;
 
 // PID
-enum pid_states {pid_not_entered, pid_entered};
-pid_states pid_state = pid_not_entered;
+//enum pid_states {pid_not_entered, pid_entered};
+//pid_states pid_state = pid_not_entered;
 elapsedMillis pid_time_span = 0;
 int16_t wheel_ground_speed[4] = {0, 0, 0, 0};
 int16_t wheel_inst_speed[4] = {0, 0, 0, 0};
@@ -777,6 +777,10 @@ inline void set_inverter_torques() {
   float max_torque_diff = 0.25;
   float yaw_rate_target;
 
+  if (pid_time_span > 20) {
+    pid_time_span = 20;
+  }
+
   switch (dashboard_status.get_dial_state()) {
     case 0:
       for (int i = 0; i < 4; i++) {
@@ -947,18 +951,18 @@ inline void set_inverter_torques() {
       // PID control torque vectoring
       // Set yaw rate target
       // Convert wheel speed to vehicle velocity
-      switch (pid_state) {
-        case pid_not_entered:
-          if (pid_time_span >= 10) {
-            pid_state = pid_entered;
-            break;
-          }
-          for (int i = 0; i < 4; i++) {
-            torque_setpoint_array[i] = avg_accel - avg_brake;
-          }
-          break;
-          
-        case pid_entered:
+//      switch (pid_state) {
+//        case pid_not_entered:
+//          if (pid_time_span >= 10) {
+//            pid_state = pid_entered;
+//            break;
+//          }
+//          for (int i = 0; i < 4; i++) {
+//            torque_setpoint_array[i] = avg_accel - avg_brake;
+//          }
+//          break;
+//          
+//        case pid_entered:
           if (pid_time_span < 10) {
             break;
           }
@@ -1016,12 +1020,12 @@ inline void set_inverter_torques() {
           for (int i = 0; i < 4; i++) {
             torque_setpoint_array[i] = torque_adjustment[i] + (avg_accel - avg_brake);
           }
-          break;
-        
-        default:
-          break;
-          
-        } // end of switch
+//          break;
+//        
+//        default:
+//          break;
+//          
+//        } // end of switch
       
       break;
 
