@@ -36,7 +36,7 @@ void send_detailed_voltages() {
   live_telem_msg.id = ID_BMS_DETAILED_VOLTAGES;
   for (int ic = 0; ic < TOTAL_IC; ic++) {
     for (int group = 0; group < ((ic % 2 == 0) ? 4 : 3); group++) {
-      live_detailed_voltages[group][ic].write(live_telem_msg.buf);
+      live_detailed_voltages[ic][group].write(live_telem_msg.buf);
       send_can_message(Serial8, live_telem_msg);
     }
   }
@@ -62,7 +62,7 @@ void send_detailed_temperatures() {
   live_telem_msg.id = ID_BMS_DETAILED_TEMPERATURES;
   for (int ic = 0; ic < TOTAL_IC; ic++) {
     for (int group = 0; group < 2; group++) {
-      live_detailed_temperatures[group][ic].write(live_telem_msg.buf);
+      live_detailed_temperatures[ic][group].write(live_telem_msg.buf);
       send_can_message(Serial8, live_telem_msg);
     }
   }

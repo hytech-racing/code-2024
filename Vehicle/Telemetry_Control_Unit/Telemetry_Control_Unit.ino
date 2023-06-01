@@ -329,14 +329,14 @@ void process_mcu_analog_readings() {
     //mcu_analog_readings.set_cooling_current(current_cooling * 5000);
     //mcu_analog_readings.set_glv_battery_voltage(glv_voltage_value * 2500);
     //mcu_analog_readings.set_temperature(filtered_temp_reading);
-    mcu_analog_readings.write(msg_tx.buf);
-    msg_tx.id = ID_MCU_ANALOG_READINGS;
-    msg_tx.len = sizeof(mcu_analog_readings);
+    //mcu_analog_readings.write(msg_tx.buf);
+    //msg_tx.id = ID_MCU_ANALOG_READINGS;
+    //msg_tx.len = sizeof(mcu_analog_readings);
     //CAN_1.write(msg_tx);
-    mcu_analog_readings.write(xb_msg.buf);
-    xb_msg.id = ID_MCU_ANALOG_READINGS;
-    xb_msg.len = sizeof(mcu_analog_readings);
-    write_xbee_data();   
+    //mcu_analog_readings.write(xb_msg.buf);
+    //xb_msg.id = ID_MCU_ANALOG_READINGS;
+    //xb_msg.len = sizeof(mcu_analog_readings);
+    //write_xbee_data();   
 }
 void setup_total_discharge() {
   total_discharge = 0;
