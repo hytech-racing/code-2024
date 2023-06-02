@@ -294,7 +294,7 @@ void loop() {
 
     //Tire Sensors
     Serial.println("Tire Temp Sensors");
-    Serial.println("LF");
+    Serial.println("LF ");
     Serial.println("Battery Voltage:");
     Serial.println(tire_svpp[0].get_battery_voltage());
     Serial.println("HS Pressure");
