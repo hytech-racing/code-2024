@@ -126,6 +126,12 @@ int16_t speed_setpoint_array[4] = {0, 0, 0, 0};
 uint16_t prev_load_cell_readings[4] = {0, 0, 0, 0};
 float load_cell_alpha = 0.95;
 
+float filtered_min_cell_voltage = 3.5;
+float cell_voltage_alpha = 0.8;
+
+float filtered_max_cell_temp = 40.0;
+float cell_temp_alpha = 0.8;
+
 uint16_t current_read = 0;
 uint16_t reference_read = 0;
 
@@ -547,12 +553,16 @@ inline void software_shutdown() {
 void parse_telem_can_message(const CAN_message_t &RX_msg) {
   CAN_message_t rx_msg = RX_msg;
   switch (rx_msg.id) {
-    case ID_BMS_TEMPERATURES:              bms_temperatures.load(rx_msg.buf);              break;
+    case ID_BMS_TEMPERATURES:              
+      bms_temperatures.load(rx_msg.buf);
+      filtered_max_cell_temp  = filtered_max_cell_temp * cell_temp_alpha + (1.0 - cell_temp_alpha) * (bms_temperatures.get_high_temperature() / 100.0) ;              
+      break;
     case ID_BMS_VOLTAGES:
       bms_voltages.load(rx_msg.buf);
       if (bms_voltages.get_low() < PACK_CHARGE_CRIT_LOWEST_CELL_THRESHOLD || bms_voltages.get_total() < PACK_CHARGE_CRIT_TOTAL_THRESHOLD) {
         mcu_status.set_pack_charge_critical(true);
       } else mcu_status.set_pack_charge_critical(false);
+      filtered_min_cell_voltage = filtered_min_cell_voltage * cell_voltage_alpha + (1.0 - cell_voltage_alpha) * (bms_voltages.get_low() / 10000.0);
       break;
     case ID_BMS_COULOMB_COUNTS:            bms_coulomb_counts.load(rx_msg.buf);            break;
     case ID_BMS_STATUS:
@@ -1016,19 +1026,34 @@ inline void set_inverter_torques() {
   // scale down by m/e limits
   //lots of variables for documentation purposes
   //since torque unit to nominal torque and power conversion are linear, the diff can be applied directly to the torque setpoint value.
-  if (mc_energy[0].get_feedback_torque() > 0 && mc_energy[1].get_feedback_torque() > 0
-      && mc_energy[2].get_feedback_torque() > 0 && mc_energy[3].get_feedback_torque() > 0) {
+  if (mc_setpoints_command[0].get_pos_torque_limit() > 0 && mc_setpoints_command[1].get_pos_torque_limit() > 0
+      && mc_setpoints_command[2].get_pos_torque_limit() > 0 && mc_setpoints_command[3].get_pos_torque_limit() > 0) {
     float mech_power = 0;
     float mdiff = 1;
     //float ediff = 1;
-    float diff = 1;
+    float pw_lim_factor = 1.0;
+
+    float voltage_lim_factor = 1.0;
+    float temp_lim_factor = 1.0;
+    float accu_lim_factor = 1.0;
 
     for (int i = 0; i < 4; i++) {
       float torque_in_nm = 9.8 * ((float) mc_setpoints_command[i].get_pos_torque_limit()) / 1000.0;
       float speed_in_rpm = (float) mc_status[i].get_speed();
       mech_power += 2 * 3.1415 * torque_in_nm * speed_in_rpm / 60.0;
     }
-    mech_power /= 1000.0;
+
+    pw_lim_factor = float_map(mech_power, 40000.0, 55000.0, 1.0, 0);
+    pw_lim_factor = max(min(1.0, pw_lim_factor), 0.0);
+
+    voltage_lim_factor = float_map(filtered_min_cell_voltage, 3.5, 3.2, 1.0, 0.2);
+    voltage_lim_factor = max(min(1.0, voltage_lim_factor), 0.2);
+
+    temp_lim_factor = float_map(filtered_max_cell_temp, 55.0, 58.0, 1.0, 0.2);
+    temp_lim_factor = max(min(1.0, temp_lim_factor), 0.2);
+
+    accu_lim_factor = min(temp_lim_factor, voltage_lim_factor);
+    //mech_power /= 1000.0;
 
     //      float current = (ADC1.read_channel(ADC_CURRENT_CHANNEL) - ADC1.read_channel(ADC_REFERENCE_CHANNEL));
     //      current = ((((current / 819.0) / .1912) / 4.832) - 2.5) * 1000) / 6.67;
@@ -1045,20 +1070,20 @@ inline void set_inverter_torques() {
     //so if efficency is at 68 kW, 63 would be drawing less power, which is fine but wasted power.
     //if HV DC bus is over 80 kW, it's a violation!
     // 1 kW as a second safety factor.
-    if (mech_power > MECH_POWER_LIMIT) {
+    //if (mech_power > MECH_POWER_LIMIT) {
       // mdiff = MECH_POWER_LIMIT / mech_power;
-      diff = MECH_POWER_LIMIT / mech_power;
-    }
+      // diff = MECH_POWER_LIMIT / mech_power;
+    //}
     //      if (dc_power > DC_POWER_LIMIT) {
     //        ediff = DC_POWER_LIMIT / dc_power;
     //      }
     //      if (mech_power > MECH_POWER_LIMIT && dc_power > DC_POWER_LIMIT) {
     //        diff = (ediff <= mdiff) ? ediff : mdiff;
     //      }
-    torque_setpoint_array[0] = (uint16_t) (torque_setpoint_array[0] * diff);
-    torque_setpoint_array[1] = (uint16_t) (torque_setpoint_array[1] * diff);
-    torque_setpoint_array[2] = (uint16_t) (torque_setpoint_array[2] * diff);
-    torque_setpoint_array[3] = (uint16_t) (torque_setpoint_array[3] * diff);
+    torque_setpoint_array[0] = (uint16_t) (torque_setpoint_array[0] * pw_lim_factor * accu_lim_factor);
+    torque_setpoint_array[1] = (uint16_t) (torque_setpoint_array[1] * pw_lim_factor * accu_lim_factor);
+    torque_setpoint_array[2] = (uint16_t) (torque_setpoint_array[2] * pw_lim_factor * accu_lim_factor);
+    torque_setpoint_array[3] = (uint16_t) (torque_setpoint_array[3] * pw_lim_factor * accu_lim_factor);
   }
 
 
