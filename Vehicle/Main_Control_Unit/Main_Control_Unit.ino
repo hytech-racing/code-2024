@@ -811,11 +811,11 @@ inline void set_inverter_torques() {
   int16_t start_derating_rpm = 2000;
   int16_t end_derating_rpm = 20000;
 
-  float hairpin_rpm_limit = 5600;
-  float hairpin_rpm_full = 2800;
+  const float hairpin_rpm_limit = 5600.0;
+  const float hairpin_rpm_full = 2800.0;
   float hairpin_rpm_factor = 0.0;
-  float hairpin_steering_min = 80.0; // degrees
-  float hairpin_steering_max = 120.0; // degrees
+  const float hairpin_steering_min = 80.0; // degrees
+  const float hairpin_steering_max = 120.0; // degrees
   float steering_calibration_slope = -0.111;
   float steering_calibration_offset = 260.0;
   // positive steering angle is to the right
@@ -1031,8 +1031,8 @@ inline void set_inverter_torques() {
         // If speed is below a certain speed AND steering angle is above a certain threshold begin reallocating torque toward the outer wheel.
         if (avg_speed < hairpin_rpm_limit && abs(steering_angle) > hairpin_steering_min) {
           hairpin_rpm_factor = min(0.6, max(0.0, float_map(avg_speed,
-                                                            hairpin_rpm_full,
                                                             hairpin_rpm_limit,
+                                                            hairpin_rpm_full,
                                                             0,
                                                             0.6)));
           hairpin_steering_factor = min(0.6, max(0.0, float_map(abs(steering_angle),
