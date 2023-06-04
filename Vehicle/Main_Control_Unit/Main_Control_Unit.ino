@@ -811,19 +811,17 @@ inline void set_inverter_torques() {
   int16_t start_derating_rpm = 2000;
   int16_t end_derating_rpm = 20000;
 
-  float hairpin_rpm_limit = 5000;
-  float hairpin_rpm_full = 2000;
+  float hairpin_rpm_limit = 5600;
+  float hairpin_rpm_full = 2800;
   float hairpin_rpm_factor = 0.0;
-  float hairpin_steering_min = 45.0; // degrees
-  float hairpin_steering_max = 90.0; // degrees
-  float steering_calibration_slope = 0.0;
-  float steering_calibration_offset = 0.0;
+  float hairpin_steering_min = 80.0; // degrees
+  float hairpin_steering_max = 120.0; // degrees
+  float steering_calibration_slope = -0.111;
+  float steering_calibration_offset = 260.0;
   // positive steering angle is to the right
   float steering_angle = mcu_analog_readings.get_steering_2() * steering_calibration_slope + steering_calibration_offset;
-  float hairpin_reallocation = 0.0; // 0 means no redistribution. 1 means all torque from one side is going to the other
+  float hairpin_reallocation = 0.0; 
   float hairpin_steering_factor = 0.0;
-  int16_t total_left_torque;
-  int16_t total_right_torque;
 
   int16_t max_speed;
 
@@ -917,37 +915,6 @@ inline void set_inverter_torques() {
         torque_setpoint_array[1] = (int16_t)((float)mcu_load_cells.get_FR_load_cell() / (float)total_load_cells * (float)total_torque);
         torque_setpoint_array[2] = (int16_t)((float)mcu_load_cells.get_RL_load_cell() / (float)total_load_cells * (float)total_torque);
         torque_setpoint_array[3] = (int16_t)((float)mcu_load_cells.get_RR_load_cell() / (float)total_load_cells * (float)total_torque);
-
-        // Hairpin corner improvement
-        // If speed is below a certain speed AND steering angle is above a certain threshold begin reallocating torque toward the outer wheel.
-        if (avg_speed < hairpin_rpm_limit && abs(steering_angle) > hairpin_steering_min) {
-          hairpin_rpm_factor = min(1.0, max(0.0, float_map(avg_speed,
-                                                            hairpin_rpm_full,
-                                                            hairpin_rpm_limit,
-                                                            1.0,
-                                                            0.0)));
-          hairpin_steering_factor = min(1.0, max(0.0, float_map(abs(steering_angle),
-                                                                    hairpin_steering_min,
-                                                                    hairpin_steering_max,
-                                                                    0.0,
-                                                                    1.0)));
-          hairpin_reallocation = hairpin_rpm_factor * hairpin_steering_factor;
-          total_left_torque = torque_setpoint_array[0] + torque_setpoint_array[2];
-          total_right_torque = torque_setpoint_array[1] + torque_setpoint_array[3];
-          if (steering_angle > 0) {
-            // steering right
-            torque_setpoint_array[0] = (int16_t) (((float) torque_setpoint_array[0] / (float) total_left_torque) * (total_left_torque + total_torque * hairpin_reallocation));
-            torque_setpoint_array[1] = (int16_t) ((float) torque_setpoint_array[1] * hairpin_reallocation);
-            torque_setpoint_array[2] = (int16_t) (((float) torque_setpoint_array[2] / (float) total_left_torque) * (total_left_torque + total_torque * hairpin_reallocation));
-            torque_setpoint_array[3] = (int16_t) ((float) torque_setpoint_array[3] * hairpin_reallocation);
-          } else {
-            // steering left
-            torque_setpoint_array[0] = (int16_t) ((float) torque_setpoint_array[0] * hairpin_reallocation);
-            torque_setpoint_array[1] = (int16_t) (((float) torque_setpoint_array[1] / (float) total_right_torque) * (total_right_torque + total_torque * hairpin_reallocation));
-            torque_setpoint_array[2] = (int16_t) ((float) torque_setpoint_array[2] * hairpin_reallocation);
-            torque_setpoint_array[3] = (int16_t) (((float) torque_setpoint_array[3] / (float) total_right_torque) * (total_right_torque + total_torque * hairpin_reallocation));
-          }
-        }
       } else {
         torque_setpoint_array[0] = (int16_t)((float)mcu_load_cells.get_FL_load_cell() / (float)total_load_cells * (float)total_torque);
         torque_setpoint_array[1] = (int16_t)((float)mcu_load_cells.get_FR_load_cell() / (float)total_load_cells * (float)total_torque);
@@ -1050,6 +1017,51 @@ inline void set_inverter_torques() {
         speed_setpoint_array[i] = 0;
       }
       launch_state = launch_not_ready;
+      // Original load cell torque vectoring
+      load_cell_alpha = 0.95;
+      total_torque = 4 * (avg_accel - avg_brake) ;
+      total_load_cells = mcu_load_cells.get_FL_load_cell() + mcu_load_cells.get_FR_load_cell() + mcu_load_cells.get_RL_load_cell() + mcu_load_cells.get_RR_load_cell();
+      if (avg_accel >= avg_brake) {
+        torque_setpoint_array[0] = (int16_t)((float)mcu_load_cells.get_FL_load_cell() / (float)total_load_cells * (float)total_torque);
+        torque_setpoint_array[1] = (int16_t)((float)mcu_load_cells.get_FR_load_cell() / (float)total_load_cells * (float)total_torque);
+        torque_setpoint_array[2] = (int16_t)((float)mcu_load_cells.get_RL_load_cell() / (float)total_load_cells * (float)total_torque);
+        torque_setpoint_array[3] = (int16_t)((float)mcu_load_cells.get_RR_load_cell() / (float)total_load_cells * (float)total_torque);
+
+        // Hairpin corner improvement
+        // If speed is below a certain speed AND steering angle is above a certain threshold begin reallocating torque toward the outer wheel.
+        if (avg_speed < hairpin_rpm_limit && abs(steering_angle) > hairpin_steering_min) {
+          hairpin_rpm_factor = min(0.6, max(0.0, float_map(avg_speed,
+                                                            hairpin_rpm_full,
+                                                            hairpin_rpm_limit,
+                                                            0,
+                                                            0.6)));
+          hairpin_steering_factor = min(0.6, max(0.0, float_map(abs(steering_angle),
+                                                                    hairpin_steering_min,
+                                                                    hairpin_steering_max,
+                                                                    0,
+                                                                    0.6)));
+          hairpin_reallocation = hairpin_rpm_factor * hairpin_steering_factor;
+          if (steering_angle > 0) {
+            // steering right
+            torque_setpoint_array[0] = (int16_t) (((float) torque_setpoint_array[0]  + total_torque * hairpin_reallocation));
+            torque_setpoint_array[1] = (int16_t) ((float) torque_setpoint_array[1] -  total_torque * hairpin_reallocation);
+            torque_setpoint_array[2] = (int16_t) (((float) torque_setpoint_array[2] + total_torque * hairpin_reallocation));
+            torque_setpoint_array[3] = (int16_t) ((float) torque_setpoint_array[3] -  total_torque * hairpin_reallocation);
+          } else {
+            // steering left
+            torque_setpoint_array[0] = (int16_t) ((float) torque_setpoint_array[0] - total_torque * hairpin_reallocation);
+            torque_setpoint_array[1] = (int16_t) (((float) torque_setpoint_array[1]  + total_torque * hairpin_reallocation));
+            torque_setpoint_array[2] = (int16_t) ((float) torque_setpoint_array[2] - total_torque * hairpin_reallocation);
+            torque_setpoint_array[3] = (int16_t) ((float) torque_setpoint_array[3] + total_torque * hairpin_reallocation);
+          }
+        }
+      } else {
+        torque_setpoint_array[0] = (int16_t)((float)mcu_load_cells.get_FL_load_cell() / (float)total_load_cells * (float)total_torque);
+        torque_setpoint_array[1] = (int16_t)((float)mcu_load_cells.get_FR_load_cell() / (float)total_load_cells * (float)total_torque);
+        torque_setpoint_array[2] = (int16_t)((float)mcu_load_cells.get_RL_load_cell() / (float)total_load_cells * (float)total_torque / 2.0);
+        torque_setpoint_array[3] = (int16_t)((float)mcu_load_cells.get_RR_load_cell() / (float)total_load_cells * (float)total_torque / 2.0);
+      }
+      break;
     default:
       for (int i = 0; i < 4; i++) {
         speed_setpoint_array[i] = 0;
