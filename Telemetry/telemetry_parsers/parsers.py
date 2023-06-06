@@ -522,7 +522,7 @@ def parse_MCU_analog_readings(data, id = None, time=None):
     vectors = [
         (16, -1, True , lambda x: x*(180/(2**13)) , "steering_1"          , "" , "MCU.analog.steering_1"),
         (16, -1, False, lambda x: x               , "steering_2"          , "" , "MCU.analog.steering_2"),
-        (16, -1, True , lambda x: x/100           , "temperature"         , "C", "MCU.analog.temperature"),
+        (16, -1, False , lambda x: x               , "hall_effect"         , "A", "MCU.analog.hall_effect"),
         (16, -1, False, lambda x: x/2500          , "glv_battery_voltage" , "V", "MCU.analog.glv_battery_voltage"),
     ]
 
@@ -1209,3 +1209,503 @@ def parse_IMU_gryoscope(data, id = None, time=None):
     directory = [vector[6] for vector in vectors]
     return [(arr, cols, units, directory)]
 MESSAGE_DICT[0x91] = (parse_IMU_gryoscope, "IMU_gryoscope") 
+
+def parse_TPMS_LF(data, id = None, time=None):
+    msg_id = 0x424
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
+    
+    vectors = [
+        (16, -1, False, lambda x: x*.001, "roll"   , "deg/s", "TPMS.LF.guage_pressure"),
+        (16, -1, True, lambda x: (x*.0001) + 3, "roll"   , "deg/s", "TPMS.LF.hs_pressure"),
+        (16, -1, False, lambda x: x*.001, "pitch"  , "deg/s", "TPMS.LF.batt_voltage"),
+        (16, -1, False, lambda x: x, "yaw"    , "deg/s", "TPMS.LF.serial_no"),
+    ]
+
+    bitoffsets, bitmasks = get_offsets_masks(vectors)
+    arr = parse_to_np(data.byteswap(), vectors, bitoffsets, bitmasks, time = time)
+
+    #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    directory = [vector[6] for vector in vectors]
+    return [(arr, cols, units, directory)]
+MESSAGE_DICT[0x424] = (parse_TPMS_LF, "TPMS_LF")
+
+def parse_TPMS_LF_TEMP1(data, id = None, time=None):
+    msg_id = 0x425
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
+    
+    vectors = [
+        (16, -1, False, lambda x: (x*.1)-100, "roll"   , "deg/s", "TPMS.LF.temp_4"),
+        (16, -1, False, lambda x: (x*.1)-100, "roll"   , "deg/s", "TPMS.LF.temp_3"),
+        (16, -1, False, lambda x: (x*.1)-100, "pitch"  , "deg/s", "TPMS.LF.temp_2"),
+        (16, -1, False, lambda x: (x*.1)-100, "yaw"    , "deg/s", "TPMS.LF.temp_1"),
+    ]
+
+    bitoffsets, bitmasks = get_offsets_masks(vectors)
+    arr = parse_to_np(data.byteswap(), vectors, bitoffsets, bitmasks, time = time)
+
+    #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    directory = [vector[6] for vector in vectors]
+    return [(arr, cols, units, directory)]
+MESSAGE_DICT[0x425] = (parse_TPMS_LF_TEMP1, "TPMS_LF_TEMP1")
+
+def parse_TPMS_LF_TEMP2(data, id = None, time=None):
+    msg_id = 0x426
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
+    
+    vectors = [
+        (16, -1, False, lambda x: (x*.1)-100, "roll"   , "deg/s", "TPMS.LF.temp_8"),
+        (16, -1, False, lambda x: (x*.1)-100, "roll"   , "deg/s", "TPMS.LF.temp_7"),
+        (16, -1, False, lambda x: (x*.1)-100, "pitch"  , "deg/s", "TPMS.LF.temp_6"),
+        (16, -1, False, lambda x: (x*.1)-100, "yaw"    , "deg/s", "TPMS.LF.temp_5"),
+    ]
+
+    bitoffsets, bitmasks = get_offsets_masks(vectors)
+    arr = parse_to_np(data.byteswap(), vectors, bitoffsets, bitmasks, time = time)
+
+    #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    directory = [vector[6] for vector in vectors]
+    return [(arr, cols, units, directory)]
+MESSAGE_DICT[0x426] = (parse_TPMS_LF_TEMP2, "TPMS_LF_TEMP2")
+
+def parse_TPMS_LF_TEMP3(data, id = None, time=None):
+    msg_id = 0x427
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
+    
+    vectors = [
+        (16, -1, False, lambda x: (x*.1)-100, "roll"   , "deg/s", "TPMS.LF.temp_12"),
+        (16, -1, False, lambda x: (x*.1)-100, "roll"   , "deg/s", "TPMS.LF.temp_11"),
+        (16, -1, False, lambda x: (x*.1)-100, "pitch"  , "deg/s", "TPMS.LF.temp_10"),
+        (16, -1, False, lambda x: (x*.1)-100, "yaw"    , "deg/s", "TPMS.LF.temp_9"),
+    ]
+
+    bitoffsets, bitmasks = get_offsets_masks(vectors)
+    arr = parse_to_np(data.byteswap(), vectors, bitoffsets, bitmasks, time = time)
+
+    #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    directory = [vector[6] for vector in vectors]
+    return [(arr, cols, units, directory)]
+MESSAGE_DICT[0x427] = (parse_TPMS_LF_TEMP3, "TPMS_LF_TEMP3")
+
+def parse_TPMS_LF_TEMP4(data, id = None, time=None):
+    msg_id = 0x428
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
+    
+    vectors = [
+        (16, -1, False, lambda x: (x*.1)-100, "roll"   , "deg/s", "TPMS.LF.temp_16"),
+        (16, -1, False, lambda x: (x*.1)-100, "roll"   , "deg/s", "TPMS.LF.temp_15"),
+        (16, -1, False, lambda x: (x*.1)-100, "pitch"  , "deg/s", "TPMS.LF.temp_14"),
+        (16, -1, False, lambda x: (x*.1)-100, "yaw"    , "deg/s", "TPMS.LF.temp_13"),
+    ]
+
+    bitoffsets, bitmasks = get_offsets_masks(vectors)
+    arr = parse_to_np(data.byteswap(), vectors, bitoffsets, bitmasks, time = time)
+
+    #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    directory = [vector[6] for vector in vectors]
+    return [(arr, cols, units, directory)]
+MESSAGE_DICT[0x428] = (parse_TPMS_LF_TEMP4, "TPMS_LF_TEMP4")
+
+def parse_TPMS_RF(data, id = None, time=None):
+    msg_id = 0x42A
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
+    
+    vectors = [
+        (16, -1, False, lambda x: x*.001, "roll"   , "deg/s", "TPMS.RF.guage_pressure"),
+        (16, -1, True, lambda x: (x*.0001) + 3, "roll"   , "deg/s", "TPMS.RF.hs_pressure"),
+        (16, -1, False, lambda x: x*.001, "pitch"  , "deg/s", "TPMS.RF.batt_voltage"),
+        (16, -1, False, lambda x: x, "yaw"    , "deg/s", "TPMS.RF.serial_no"),
+    ]
+
+    bitoffsets, bitmasks = get_offsets_masks(vectors)
+    arr = parse_to_np(data.byteswap(), vectors, bitoffsets, bitmasks, time = time)
+
+    #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    directory = [vector[6] for vector in vectors]
+    return [(arr, cols, units, directory)]
+MESSAGE_DICT[0x42A] = (parse_TPMS_RF, "TPMS_RF")
+
+def parse_TPMS_RF_TEMP1(data, id = None, time=None):
+    msg_id = 0x42B
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
+    
+    vectors = [
+        (16, -1, False, lambda x: (x*.1)-100, "roll"   , "deg/s", "TPMS.RF.temp_4"),
+        (16, -1, False, lambda x: (x*.1)-100, "roll"   , "deg/s", "TPMS.RF.temp_3"),
+        (16, -1, False, lambda x: (x*.1)-100, "pitch"  , "deg/s", "TPMS.RF.temp_2"),
+        (16, -1, False, lambda x: (x*.1)-100, "yaw"    , "deg/s", "TPMS.RF.temp_1"),
+    ]
+
+    bitoffsets, bitmasks = get_offsets_masks(vectors)
+    arr = parse_to_np(data.byteswap(), vectors, bitoffsets, bitmasks, time = time)
+
+    #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    directory = [vector[6] for vector in vectors]
+    return [(arr, cols, units, directory)]
+MESSAGE_DICT[0x42B] = (parse_TPMS_RF_TEMP1, "TPMS_RF_TEMP1")
+
+def parse_TPMS_RF_TEMP2(data, id = None, time=None):
+    msg_id = 0x42C
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
+    
+    vectors = [
+        (16, -1, False, lambda x: (x*.1)-100, "roll"   , "deg/s", "TPMS.RF.temp_8"),
+        (16, -1, False, lambda x: (x*.1)-100, "roll"   , "deg/s", "TPMS.RF.temp_7"),
+        (16, -1, False, lambda x: (x*.1)-100, "pitch"  , "deg/s", "TPMS.RF.temp_6"),
+        (16, -1, False, lambda x: (x*.1)-100, "yaw"    , "deg/s", "TPMS.RF.temp_5"),
+    ]
+
+    bitoffsets, bitmasks = get_offsets_masks(vectors)
+    arr = parse_to_np(data.byteswap(), vectors, bitoffsets, bitmasks, time = time)
+
+    #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    directory = [vector[6] for vector in vectors]
+    return [(arr, cols, units, directory)]
+MESSAGE_DICT[0x42C] = (parse_TPMS_RF_TEMP2, "TPMS_RF_TEMP2")
+
+def parse_TPMS_RF_TEMP3(data, id = None, time=None):
+    msg_id = 0x42D
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
+    
+    vectors = [
+        (16, -1, False, lambda x: (x*.1)-100, "roll"   , "deg/s", "TPMS.RF.temp_12"),
+        (16, -1, False, lambda x: (x*.1)-100, "roll"   , "deg/s", "TPMS.RF.temp_11"),
+        (16, -1, False, lambda x: (x*.1)-100, "pitch"  , "deg/s", "TPMS.RF.temp_10"),
+        (16, -1, False, lambda x: (x*.1)-100, "yaw"    , "deg/s", "TPMS.RF.temp_9"),
+    ]
+
+    bitoffsets, bitmasks = get_offsets_masks(vectors)
+    arr = parse_to_np(data.byteswap(), vectors, bitoffsets, bitmasks, time = time)
+
+    #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    directory = [vector[6] for vector in vectors]
+    return [(arr, cols, units, directory)]
+MESSAGE_DICT[0x42D] = (parse_TPMS_RF_TEMP3, "TPMS_RF_TEMP3")
+
+def parse_TPMS_RF_TEMP4(data, id = None, time=None):
+    msg_id = 0x42E
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
+    
+    vectors = [
+        (16, -1, False, lambda x: (x*.1)-100, "roll"   , "deg/s", "TPMS.RF.temp_16"),
+        (16, -1, False, lambda x: (x*.1)-100, "roll"   , "deg/s", "TPMS.RF.temp_15"),
+        (16, -1, False, lambda x: (x*.1)-100, "pitch"  , "deg/s", "TPMS.RF.temp_14"),
+        (16, -1, False, lambda x: (x*.1)-100, "yaw"    , "deg/s", "TPMS.RF.temp_13"),
+    ]
+
+    bitoffsets, bitmasks = get_offsets_masks(vectors)
+    arr = parse_to_np(data.byteswap(), vectors, bitoffsets, bitmasks, time = time)
+
+    #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    directory = [vector[6] for vector in vectors]
+    return [(arr, cols, units, directory)]
+MESSAGE_DICT[0x42E] = (parse_TPMS_RF_TEMP4, "TPMS_RF_TEMP4")
+
+def parse_TPMS_LR(data, id = None, time=None):
+    msg_id = 0x430
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
+    
+    vectors = [
+        (16, -1, False, lambda x: x*.001, "roll"   , "deg/s", "TPMS.LR.guage_pressure"),
+        (16, -1, True, lambda x: (x*.0001) + 3, "roll"   , "deg/s", "TPMS.LR.hs_pressure"),
+        (16, -1, False, lambda x: x*.001, "pitch"  , "deg/s", "TPMS.LR.batt_voltage"),
+        (16, -1, False, lambda x: x, "yaw"    , "deg/s", "TPMS.LR.serial_no"),
+    ]
+
+    bitoffsets, bitmasks = get_offsets_masks(vectors)
+    arr = parse_to_np(data.byteswap(), vectors, bitoffsets, bitmasks, time = time)
+
+    #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    directory = [vector[6] for vector in vectors]
+    return [(arr, cols, units, directory)]
+MESSAGE_DICT[0x430] = (parse_TPMS_LR, "TPMS_LR")
+
+def parse_TPMS_LR_TEMP1(data, id = None, time=None):
+    msg_id = 0x431
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
+    
+    vectors = [
+        (16, -1, False, lambda x: (x*.1)-100, "roll"   , "deg/s", "TPMS.LR.temp_4"),
+        (16, -1, False, lambda x: (x*.1)-100, "roll"   , "deg/s", "TPMS.LR.temp_3"),
+        (16, -1, False, lambda x: (x*.1)-100, "pitch"  , "deg/s", "TPMS.LR.temp_2"),
+        (16, -1, False, lambda x: (x*.1)-100, "yaw"    , "deg/s", "TPMS.LR.temp_1"),
+    ]
+
+    bitoffsets, bitmasks = get_offsets_masks(vectors)
+    arr = parse_to_np(data.byteswap(), vectors, bitoffsets, bitmasks, time = time)
+
+    #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    directory = [vector[6] for vector in vectors]
+    return [(arr, cols, units, directory)]
+MESSAGE_DICT[0x431] = (parse_TPMS_LR_TEMP1, "TPMS_LR_TEMP1")
+
+def parse_TPMS_LR_TEMP2(data, id = None, time=None):
+    msg_id = 0x432
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
+    
+    vectors = [
+        (16, -1, False, lambda x: (x*.1)-100, "roll"   , "deg/s", "TPMS.LR.temp_8"),
+        (16, -1, False, lambda x: (x*.1)-100, "roll"   , "deg/s", "TPMS.LR.temp_7"),
+        (16, -1, False, lambda x: (x*.1)-100, "pitch"  , "deg/s", "TPMS.LR.temp_6"),
+        (16, -1, False, lambda x: (x*.1)-100, "yaw"    , "deg/s", "TPMS.LR.temp_5"),
+    ]
+
+    bitoffsets, bitmasks = get_offsets_masks(vectors)
+    arr = parse_to_np(data.byteswap(), vectors, bitoffsets, bitmasks, time = time)
+
+    #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    directory = [vector[6] for vector in vectors]
+    return [(arr, cols, units, directory)]
+MESSAGE_DICT[0x432] = (parse_TPMS_LR_TEMP2, "TPMS_LR_TEMP2")
+
+def parse_TPMS_LR_TEMP3(data, id = None, time=None):
+    msg_id = 0x433
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
+    
+    vectors = [
+        (16, -1, False, lambda x: (x*.1)-100, "roll"   , "deg/s", "TPMS.LR.temp_12"),
+        (16, -1, False, lambda x: (x*.1)-100, "roll"   , "deg/s", "TPMS.LR.temp_11"),
+        (16, -1, False, lambda x: (x*.1)-100, "pitch"  , "deg/s", "TPMS.LR.temp_10"),
+        (16, -1, False, lambda x: (x*.1)-100, "yaw"    , "deg/s", "TPMS.LR.temp_9"),
+    ]
+
+    bitoffsets, bitmasks = get_offsets_masks(vectors)
+    arr = parse_to_np(data.byteswap(), vectors, bitoffsets, bitmasks, time = time)
+
+    #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    directory = [vector[6] for vector in vectors]
+    return [(arr, cols, units, directory)]
+MESSAGE_DICT[0x433] = (parse_TPMS_LR_TEMP3, "TPMS_LR_TEMP3")
+
+def parse_TPMS_LR_TEMP4(data, id = None, time=None):
+    msg_id = 0x434
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
+    
+    vectors = [
+        (16, -1, False, lambda x: (x*.1)-100, "roll"   , "deg/s", "TPMS.LR.temp_16"),
+        (16, -1, False, lambda x: (x*.1)-100, "roll"   , "deg/s", "TPMS.LR.temp_15"),
+        (16, -1, False, lambda x: (x*.1)-100, "pitch"  , "deg/s", "TPMS.LR.temp_14"),
+        (16, -1, False, lambda x: (x*.1)-100, "yaw"    , "deg/s", "TPMS.LR.temp_13"),
+    ]
+
+    bitoffsets, bitmasks = get_offsets_masks(vectors)
+    arr = parse_to_np(data.byteswap(), vectors, bitoffsets, bitmasks, time = time)
+
+    #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    directory = [vector[6] for vector in vectors]
+    return [(arr, cols, units, directory)]
+MESSAGE_DICT[0x434] = (parse_TPMS_LR_TEMP4, "TPMS_LR_TEMP4")
+
+def parse_TPMS_RR(data, id = None, time=None):
+    msg_id = 0x436
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
+    
+    vectors = [
+        (16, -1, False, lambda x: x*.001, "roll"   , "deg/s", "TPMS.RR.guage_pressure"),
+        (16, -1, True, lambda x: (x*.0001) + 3, "roll"   , "deg/s", "TPMS.RR.hs_pressure"),
+        (16, -1, False, lambda x: x*.001, "pitch"  , "deg/s", "TPMS.RR.batt_voltage"),
+        (16, -1, False, lambda x: x, "yaw"    , "deg/s", "TPMS.RR.serial_no"),
+    ]
+
+    bitoffsets, bitmasks = get_offsets_masks(vectors)
+    arr = parse_to_np(data.byteswap(), vectors, bitoffsets, bitmasks, time = time)
+
+    #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    directory = [vector[6] for vector in vectors]
+    return [(arr, cols, units, directory)]
+MESSAGE_DICT[0x436] = (parse_TPMS_RR, "TPMS_RR")
+
+def parse_TPMS_RR_TEMP1(data, id = None, time=None):
+    msg_id = 0x437
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
+    
+    vectors = [
+        (16, -1, False, lambda x: (x*.1)-100, "roll"   , "deg/s", "TPMS.RR.temp_4"),
+        (16, -1, False, lambda x: (x*.1)-100, "roll"   , "deg/s", "TPMS.RR.temp_3"),
+        (16, -1, False, lambda x: (x*.1)-100, "pitch"  , "deg/s", "TPMS.RR.temp_2"),
+        (16, -1, False, lambda x: (x*.1)-100, "yaw"    , "deg/s", "TPMS.RR.temp_1"),
+    ]
+
+    bitoffsets, bitmasks = get_offsets_masks(vectors)
+    arr = parse_to_np(data.byteswap(), vectors, bitoffsets, bitmasks, time = time)
+
+    #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    directory = [vector[6] for vector in vectors]
+    return [(arr, cols, units, directory)]
+MESSAGE_DICT[0x437] = (parse_TPMS_RR_TEMP1, "TPMS_RR_TEMP1")
+
+def parse_TPMS_RR_TEMP2(data, id = None, time=None):
+    msg_id = 0x438
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
+    
+    vectors = [
+        (16, -1, False, lambda x: (x*.1)-100, "roll"   , "deg/s", "TPMS.RR.temp_8"),
+        (16, -1, False, lambda x: (x*.1)-100, "roll"   , "deg/s", "TPMS.RR.temp_7"),
+        (16, -1, False, lambda x: (x*.1)-100, "pitch"  , "deg/s", "TPMS.RR.temp_6"),
+        (16, -1, False, lambda x: (x*.1)-100, "yaw"    , "deg/s", "TPMS.RR.temp_5"),
+    ]
+
+    bitoffsets, bitmasks = get_offsets_masks(vectors)
+    arr = parse_to_np(data.byteswap(), vectors, bitoffsets, bitmasks, time = time)
+
+    #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    directory = [vector[6] for vector in vectors]
+    return [(arr, cols, units, directory)]
+MESSAGE_DICT[0x438] = (parse_TPMS_RR_TEMP2, "TPMS_RR_TEMP2")
+
+def parse_TPMS_RR_TEMP3(data, id = None, time=None):
+    msg_id = 0x439
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
+    
+    vectors = [
+        (16, -1, False, lambda x: (x*.1)-100, "roll"   , "deg/s", "TPMS.RR.temp_12"),
+        (16, -1, False, lambda x: (x*.1)-100, "roll"   , "deg/s", "TPMS.RR.temp_11"),
+        (16, -1, False, lambda x: (x*.1)-100, "pitch"  , "deg/s", "TPMS.RR.temp_10"),
+        (16, -1, False, lambda x: (x*.1)-100, "yaw"    , "deg/s", "TPMS.RR.temp_9"),
+    ]
+
+    bitoffsets, bitmasks = get_offsets_masks(vectors)
+    arr = parse_to_np(data.byteswap(), vectors, bitoffsets, bitmasks, time = time)
+
+    #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    directory = [vector[6] for vector in vectors]
+    return [(arr, cols, units, directory)]
+MESSAGE_DICT[0x439] = (parse_TPMS_RR_TEMP3, "TPMS_RR_TEMP3")
+
+def parse_TPMS_RR_TEMP4(data, id = None, time=None):
+    msg_id = 0x43A
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
+    
+    vectors = [
+        (16, -1, False, lambda x: (x*.1)-100, "roll"   , "deg/s", "TPMS.RR.temp_16"),
+        (16, -1, False, lambda x: (x*.1)-100, "roll"   , "deg/s", "TPMS.RR.temp_15"),
+        (16, -1, False, lambda x: (x*.1)-100, "pitch"  , "deg/s", "TPMS.RR.temp_14"),
+        (16, -1, False, lambda x: (x*.1)-100, "yaw"    , "deg/s", "TPMS.RR.temp_13"),
+    ]
+
+    bitoffsets, bitmasks = get_offsets_masks(vectors)
+    arr = parse_to_np(data.byteswap(), vectors, bitoffsets, bitmasks, time = time)
+
+    #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    directory = [vector[6] for vector in vectors]
+    return [(arr, cols, units, directory)]
+MESSAGE_DICT[0x43A] = (parse_TPMS_RR_TEMP4, "TPMS_RR_TEMP4")
