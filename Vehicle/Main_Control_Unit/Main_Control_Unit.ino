@@ -135,6 +135,9 @@ float cell_temp_alpha = 0.8;
 uint16_t current_read = 0;
 uint16_t reference_read = 0;
 
+float max_front_power = 0.0;
+float max_rear_power = 0.0;
+
 enum launch_states {launch_not_ready, launch_ready, launching};
 launch_states launch_state = launch_not_ready;
 int16_t launch_speed_target = 0;
@@ -833,6 +836,9 @@ inline void set_inverter_torques() {
       launch_state = launch_not_ready;
       // standard no torque vectoring
 
+      max_front_power = 19000.0;
+      max_rear_power = 36000.0;
+
       torque_setpoint_array[0] = avg_accel -  avg_brake;
       torque_setpoint_array[1] = avg_accel -  avg_brake;
       torque_setpoint_array[2] = avg_accel - avg_brake;
@@ -865,6 +871,9 @@ inline void set_inverter_torques() {
       // Slip is determined by observing how much faster the rear axle is spinning than the front axle.
       // Slip equation is clamp((avg rear speed) / (avg front speed) * (tunable slip factor), 0, 1).
       // Torque equation is (default split) * (1 - slip) + (alt split) * slip
+
+      max_front_power = 15000.0;
+      max_rear_power = 40000.0;
 
       if (avg_accel - avg_brake >= 0) {
         // Accelerating
@@ -906,6 +915,8 @@ inline void set_inverter_torques() {
         speed_setpoint_array[i] = MAX_ALLOWED_SPEED;
       }
       launch_state = launch_not_ready;
+      max_front_power = 19000.0;
+      max_rear_power = 36000.0;
       // Original load cell torque vectoring
       load_cell_alpha = 0.95;
       total_torque = 4 * (avg_accel - avg_brake) ;
@@ -928,6 +939,8 @@ inline void set_inverter_torques() {
       for (int i = 0; i < 4; i++) {
         max_speed = max(max_speed, mc_status[i].get_speed());
       }
+      max_front_power = 19000.0;
+      max_rear_power = 36000.0;
 
       switch (launch_state) {
         case launch_not_ready:
@@ -990,6 +1003,8 @@ inline void set_inverter_torques() {
       for (int i = 0; i < 4; i++) {
         speed_setpoint_array[i] = MAX_ALLOWED_SPEED;
       }
+      max_front_power = 19000.0;
+      max_rear_power = 36000.0;
       launch_state = launch_not_ready;
       // Original load cell torque vectoring
       load_cell_alpha = 0.95;
@@ -1017,6 +1032,8 @@ inline void set_inverter_torques() {
         speed_setpoint_array[i] = 0;
       }
       launch_state = launch_not_ready;
+      max_front_power = 19000.0;
+      max_rear_power = 36000.0;
       // Original load cell torque vectoring
       load_cell_alpha = 0.95;
       total_torque = 4 * (avg_accel - avg_brake) ;
@@ -1087,7 +1104,7 @@ inline void set_inverter_torques() {
     float mech_power = 0;
     float mdiff = 1;
     //float ediff = 1;
-    float pw_lim_factor = 1.0;
+    // float pw_lim_factor = 1.0;
 
     float voltage_lim_factor = 1.0;
     float temp_lim_factor = 1.0;
@@ -1099,8 +1116,8 @@ inline void set_inverter_torques() {
       mech_power += 2 * 3.1415 * torque_in_nm * speed_in_rpm / 60.0;
     }
 
-    pw_lim_factor = float_map(mech_power, 40000.0, 55000.0, 1.0, 0);
-    pw_lim_factor = max(min(1.0, pw_lim_factor), 0.0);
+    // pw_lim_factor = float_map(mech_power, 40000.0, 55000.0, 1.0, 0);
+    // pw_lim_factor = max(min(1.0, pw_lim_factor), 0.0);
 
     voltage_lim_factor = float_map(filtered_min_cell_voltage, 3.5, 3.2, 1.0, 0.2);
     voltage_lim_factor = max(min(1.0, voltage_lim_factor), 0.2);
@@ -1136,10 +1153,10 @@ inline void set_inverter_torques() {
     //      if (mech_power > MECH_POWER_LIMIT && dc_power > DC_POWER_LIMIT) {
     //        diff = (ediff <= mdiff) ? ediff : mdiff;
     //      }
-    torque_setpoint_array[0] = (uint16_t) (torque_setpoint_array[0] * pw_lim_factor * accu_lim_factor);
-    torque_setpoint_array[1] = (uint16_t) (torque_setpoint_array[1] * pw_lim_factor * accu_lim_factor);
-    torque_setpoint_array[2] = (uint16_t) (torque_setpoint_array[2] * pw_lim_factor * accu_lim_factor);
-    torque_setpoint_array[3] = (uint16_t) (torque_setpoint_array[3] * pw_lim_factor * accu_lim_factor);
+    torque_setpoint_array[0] = (uint16_t) (min((float) torque_setpoint_array[0], max_allowed_torque(max_front_power / 2.0, (float) mc_status[0].get_speed())) * accu_lim_factor);
+    torque_setpoint_array[1] = (uint16_t) (min((float) torque_setpoint_array[1], max_allowed_torque(max_front_power / 2.0, (float) mc_status[1].get_speed())) * accu_lim_factor);
+    torque_setpoint_array[2] = (uint16_t) (min((float) torque_setpoint_array[2], max_allowed_torque(max_rear_power / 2.0, (float) mc_status[2].get_speed())) * accu_lim_factor);
+    torque_setpoint_array[3] = (uint16_t) (min((float) torque_setpoint_array[3], max_allowed_torque(max_rear_power / 2.0, (float) mc_status[3].get_speed())) * accu_lim_factor);
   }
 
 
@@ -1510,4 +1527,10 @@ inline void calculate_pedal_implausibilities() {
   if (mcu_status.get_no_accel_implausability() && mcu_status.get_no_brake_implausability() && mcu_status.get_no_accel_brake_implausability()) {
     pedal_implausability_duration = 0;
   }
+}
+
+inline float max_allowed_torque(float maxwatts, float rpm) {
+  float angularspeed = abs(rpm) / 60 * 2 * 3.1415;
+  float maxnm = min(maxwatts / angularspeed, 20);
+  return maxnm / 9.8 * 1000;
 }
