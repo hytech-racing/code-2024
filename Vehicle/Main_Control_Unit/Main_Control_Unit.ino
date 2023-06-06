@@ -1530,7 +1530,7 @@ inline void calculate_pedal_implausibilities() {
 }
 
 inline float max_allowed_torque(float maxwatts, float rpm) {
-  float angularspeed = abs(rpm) / 60 * 2 * 3.1415;
+  float angularspeed = (abs(rpm) + 1) / 60 * 2 * 3.1415;
   float maxnm = min(maxwatts / angularspeed, 20);
   return maxnm / 9.8 * 1000;
 }
