@@ -1030,54 +1030,9 @@ inline void set_inverter_torques() {
     case 5:
       for (int i = 0; i < 4; i++) {
         speed_setpoint_array[i] = 0;
+        torque_setpoint_array[i] = 0;
       }
       launch_state = launch_not_ready;
-      max_front_power = 19000.0;
-      max_rear_power = 36000.0;
-      // Original load cell torque vectoring
-      load_cell_alpha = 0.95;
-      total_torque = 4 * (avg_accel - avg_brake) ;
-      total_load_cells = mcu_load_cells.get_FL_load_cell() + mcu_load_cells.get_FR_load_cell() + mcu_load_cells.get_RL_load_cell() + mcu_load_cells.get_RR_load_cell();
-      if (avg_accel >= avg_brake) {
-        torque_setpoint_array[0] = (int16_t)((float)mcu_load_cells.get_FL_load_cell() / (float)total_load_cells * (float)total_torque);
-        torque_setpoint_array[1] = (int16_t)((float)mcu_load_cells.get_FR_load_cell() / (float)total_load_cells * (float)total_torque);
-        torque_setpoint_array[2] = (int16_t)((float)mcu_load_cells.get_RL_load_cell() / (float)total_load_cells * (float)total_torque);
-        torque_setpoint_array[3] = (int16_t)((float)mcu_load_cells.get_RR_load_cell() / (float)total_load_cells * (float)total_torque);
-
-        // Hairpin corner improvement
-        // If speed is below a certain speed AND steering angle is above a certain threshold begin reallocating torque toward the outer wheel.
-        if (avg_speed < hairpin_rpm_limit && abs(steering_angle) > hairpin_steering_min) {
-          hairpin_rpm_factor = min(0.6, max(0.0, float_map(avg_speed,
-                                                            hairpin_rpm_limit,
-                                                            hairpin_rpm_full,
-                                                            0,
-                                                            0.6)));
-          hairpin_steering_factor = min(0.6, max(0.0, float_map(abs(steering_angle),
-                                                                    hairpin_steering_min,
-                                                                    hairpin_steering_max,
-                                                                    0,
-                                                                    0.6)));
-          hairpin_reallocation = hairpin_rpm_factor * hairpin_steering_factor;
-          if (steering_angle > 0) {
-            // steering right
-            torque_setpoint_array[0] = (int16_t) (((float) torque_setpoint_array[0]  + total_torque * hairpin_reallocation));
-            torque_setpoint_array[1] = (int16_t) ((float) torque_setpoint_array[1] -  total_torque * hairpin_reallocation);
-            torque_setpoint_array[2] = (int16_t) (((float) torque_setpoint_array[2] + total_torque * hairpin_reallocation));
-            torque_setpoint_array[3] = (int16_t) ((float) torque_setpoint_array[3] -  total_torque * hairpin_reallocation);
-          } else {
-            // steering left
-            torque_setpoint_array[0] = (int16_t) ((float) torque_setpoint_array[0] - total_torque * hairpin_reallocation);
-            torque_setpoint_array[1] = (int16_t) (((float) torque_setpoint_array[1]  + total_torque * hairpin_reallocation));
-            torque_setpoint_array[2] = (int16_t) ((float) torque_setpoint_array[2] - total_torque * hairpin_reallocation);
-            torque_setpoint_array[3] = (int16_t) ((float) torque_setpoint_array[3] + total_torque * hairpin_reallocation);
-          }
-        }
-      } else {
-        torque_setpoint_array[0] = (int16_t)((float)mcu_load_cells.get_FL_load_cell() / (float)total_load_cells * (float)total_torque);
-        torque_setpoint_array[1] = (int16_t)((float)mcu_load_cells.get_FR_load_cell() / (float)total_load_cells * (float)total_torque);
-        torque_setpoint_array[2] = (int16_t)((float)mcu_load_cells.get_RL_load_cell() / (float)total_load_cells * (float)total_torque / 2.0);
-        torque_setpoint_array[3] = (int16_t)((float)mcu_load_cells.get_RR_load_cell() / (float)total_load_cells * (float)total_torque / 2.0);
-      }
       break;
     default:
       for (int i = 0; i < 4; i++) {
