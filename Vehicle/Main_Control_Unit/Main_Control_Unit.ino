@@ -1159,6 +1159,28 @@ inline void set_inverter_torques() {
     torque_setpoint_array[3] = (uint16_t) (min((float) torque_setpoint_array[3], max_allowed_torque(max_rear_power / 2.0, (float) mc_status[3].get_speed())) * accu_lim_factor);
   }
 
+  // when accelerating find the slowest wheel, only allow other wheels to spin at a fixed RPM above it.
+  const int16_t allowed_speed_diff = 1500;
+  if (launch_state == launch_not_ready) {
+    if (avg_accel >= avg_brake) {
+      int16_t slowest_speed = 20000;
+      for (int i = 0; i < 4; i++) {
+        slowest_speed = min(mc_status[i].get_speed(), slowest_speed);
+      }
+      for (int i = 0; i < 4; i++) {
+        speed_setpoint_array[i] = max(0, min(speed_setpoint_array[i], slowest_speed + allowed_speed_diff)); // allow the speed setpoint to be lowered
+      }
+    } else {
+      // while braking, don't allow wheel to slow more than allowed RPM below fastest wheel
+      int16_t fastest_speed = 0;
+      for (int i = 0; i < 4; i++) {
+        fastest_speed = max(mc_status[i].get_speed(), fastest_speed);
+      }
+      for (int i = 0; i < 4; i++) {
+        speed_setpoint_array[i] = max(0, max(speed_setpoint_array[i], fastest_speed - allowed_speed_diff)); // allow the speed setpoint to be raised
+      }
+    }
+  }
 
   int16_t max_speed_regen = 0;
   for (int i = 0; i < sizeof(torque_setpoint_array); i++) {
