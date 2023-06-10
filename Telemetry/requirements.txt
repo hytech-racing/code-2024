@@ -12,3 +12,7 @@ PySerial
 influxdb
 cobs
 argparse
+
+dash
+plotly
+dash-bootstrap-components
