@@ -166,6 +166,7 @@ void loop() {
 
 inline void forward_CAN_em() {
   if (timer_CAN_em_forward.check()) {
+
     em_measurement.write(msg.buf);
     msg.id = ID_EM_MEASUREMENT;
     msg.len = sizeof(em_measurement);
@@ -447,9 +448,9 @@ void parse_CAN_CCU_status() {
 }
 
 void parse_energy_meter_can_message(const CAN_message_t& RX_msg) {
-  static CAN_message_t rx_msg = RX_msg;
+   CAN_message_t rx_msg = RX_msg;
   switch (rx_msg.id) {
-    case ID_EM_MEASUREMENT:   em_measurement.load(rx_msg.buf);    break;
+    case ID_EM_MEASUREMENT:   em_measurement.load_from_emeter(rx_msg.buf);    break;
     case ID_EM_STATUS:        em_status.load(rx_msg.buf);         break;
   }         
 }

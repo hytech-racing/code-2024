@@ -34,8 +34,8 @@ public:
         buf[7] = current        & 0xFF;
     }
 
-    inline uint8_t get_voltage()        const { return voltage;  }
-    inline uint8_t get_current()        const { return current;  }
+    inline uint32_t get_voltage()        const { return voltage;  }
+    inline uint32_t get_current()        const { return current;  }
 
 #ifdef HT_DEBUG_EN
     void print() {
