@@ -882,60 +882,73 @@ inline void set_inverter_torques() {
       }
       break;
     case 2:
+      max_speed = 0;
+      launch_rate_target = 11.76;
       for (int i = 0; i < 4; i++) {
-        speed_setpoint_array[i] = MAX_ALLOWED_SPEED;
+        max_speed = max(max_speed, mc_status[i].get_speed());
       }
-      launch_state = launch_not_ready;
       max_front_power = 19000.0;
       max_rear_power = 36000.0;
-      // Original load cell torque vectoring
-      load_cell_alpha = 0.95;
-      total_torque = 4 * (avg_accel - avg_brake) ;
-      total_load_cells = mcu_load_cells.get_FL_load_cell() + mcu_load_cells.get_FR_load_cell() + mcu_load_cells.get_RL_load_cell() + mcu_load_cells.get_RR_load_cell();
-      if (avg_accel >= avg_brake) {
-        torque_setpoint_array[0] = (int16_t)((float)mcu_load_cells.get_FL_load_cell() / (float)total_load_cells * (float)total_torque);
-        torque_setpoint_array[1] = (int16_t)((float)mcu_load_cells.get_FR_load_cell() / (float)total_load_cells * (float)total_torque);
-        torque_setpoint_array[2] = (int16_t)((float)mcu_load_cells.get_RL_load_cell() / (float)total_load_cells * (float)total_torque);
-        torque_setpoint_array[3] = (int16_t)((float)mcu_load_cells.get_RR_load_cell() / (float)total_load_cells * (float)total_torque);
 
-        // Hairpin corner improvement
-        // If speed is below a certain speed AND steering angle is above a certain threshold begin reallocating torque toward the outer wheel.
-        if (avg_speed < hairpin_rpm_limit && abs(steering_angle) > hairpin_steering_min) {
-          hairpin_rpm_factor = min(0.6, max(0.0, float_map(avg_speed,
-                                                            hairpin_rpm_limit,
-                                                            hairpin_rpm_full,
-                                                            0,
-                                                            0.6)));
-          hairpin_steering_factor = min(0.6, max(0.0, float_map(abs(steering_angle),
-                                                                    hairpin_steering_min,
-                                                                    hairpin_steering_max,
-                                                                    0,
-                                                                    0.6)));
-          hairpin_reallocation = hairpin_rpm_factor * hairpin_steering_factor;
-          if (steering_angle > 0) {
-            // steering left
-            torque_setpoint_array[0] = (int16_t) (((float) torque_setpoint_array[0]  - total_torque * hairpin_reallocation));
-            torque_setpoint_array[1] = (int16_t) ((float) torque_setpoint_array[1] +  total_torque * hairpin_reallocation);
-            torque_setpoint_array[2] = (int16_t) (((float) torque_setpoint_array[2] - total_torque * hairpin_reallocation));
-            torque_setpoint_array[3] = (int16_t) ((float) torque_setpoint_array[3] +  total_torque * hairpin_reallocation);
-          } else {
-            // steering right
-            torque_setpoint_array[0] = (int16_t) ((float) torque_setpoint_array[0] + total_torque * hairpin_reallocation);
-            torque_setpoint_array[1] = (int16_t) (((float) torque_setpoint_array[1]  - total_torque * hairpin_reallocation));
-            torque_setpoint_array[2] = (int16_t) ((float) torque_setpoint_array[2] + total_torque * hairpin_reallocation);
-            torque_setpoint_array[3] = (int16_t) ((float) torque_setpoint_array[3] - total_torque * hairpin_reallocation);
+      switch (launch_state) {
+        case launch_not_ready:
+          for (int i = 0; i < 4; i++) {
+            torque_setpoint_array[i] = (int16_t)(-1 * avg_brake);
+            speed_setpoint_array[i] = 0;
           }
-        }
-      } else {
-        torque_setpoint_array[0] = (int16_t)((float)mcu_load_cells.get_FL_load_cell() / (float)total_load_cells * (float)total_torque);
-        torque_setpoint_array[1] = (int16_t)((float)mcu_load_cells.get_FR_load_cell() / (float)total_load_cells * (float)total_torque);
-        torque_setpoint_array[2] = (int16_t)((float)mcu_load_cells.get_RL_load_cell() / (float)total_load_cells * (float)total_torque / 2.0);
-        torque_setpoint_array[3] = (int16_t)((float)mcu_load_cells.get_RR_load_cell() / (float)total_load_cells * (float)total_torque / 2.0);
+          time_since_launch = 0;
+          launch_speed_target = 0;
+
+          // To enter launch_ready, the following conditions must be true:
+          // 1. Pedals are not pressed
+          // 2. Speed is zero
+          if (avg_accel < LAUNCH_READY_ACCEL_THRESHOLD && avg_brake < LAUNCH_READY_BRAKE_THRESHOLD && max_speed < LAUNCH_READY_SPEED_THRESHOLD) {
+            launch_state = launch_ready;
+          }
+          break;
+        case launch_ready:
+          for (int i = 0; i < 4; i++) {
+            torque_setpoint_array[i] = 0;
+            speed_setpoint_array[i] = 0;
+          }
+          time_since_launch = 0;
+          launch_speed_target = 0;
+
+          // Revert to launch_not_ready if brake is pressed or speed is too high
+          if (avg_brake >= LAUNCH_READY_BRAKE_THRESHOLD || max_speed >= LAUNCH_READY_SPEED_THRESHOLD) {
+            launch_state = launch_not_ready;
+          } else {
+            // Otherwise, check if launch should begin
+            if (avg_accel >= LAUNCH_GO_THRESHOLD) {
+              launch_state = launching;
+            }
+          }
+
+          break;
+        case launching:
+          // Exit launch if accel pedal goes past STOP threshold or brake pedal is pressed
+          if (avg_accel <= LAUNCH_STOP_THRESHOLD || avg_brake >= LAUNCH_READY_BRAKE_THRESHOLD) {
+            launch_state = launch_not_ready;
+            break;
+          }
+
+          launch_speed_target = (int16_t)((float) time_since_launch / 1000.0 * launch_rate_target * 60.0 / 1.2767432544 * 11.86);
+          launch_speed_target += 1500;
+          launch_speed_target = min(20000, max(0, launch_speed_target));
+
+          for (int i = 0; i < 4; i++) {
+            torque_setpoint_array[i] = 2142;
+            speed_setpoint_array[i] = launch_speed_target;
+          }
+          break;
+        default:
+          break;
       }
+
       break;
     case 3:
       max_speed = 0;
-      launch_rate_target = 9.7;
+      launch_rate_target = 12.74;
       for (int i = 0; i < 4; i++) {
         max_speed = max(max_speed, mc_status[i].get_speed());
       }
@@ -1029,10 +1042,34 @@ inline void set_inverter_torques() {
       break;
     case 5:
       for (int i = 0; i < 4; i++) {
-        speed_setpoint_array[i] = 0;
-        torque_setpoint_array[i] = 0;
+        speed_setpoint_array[i] = MAX_ALLOWED_SPEED;
       }
       launch_state = launch_not_ready;
+      // standard no torque vectoring
+
+      max_front_power = 19000.0;
+      max_rear_power = 36000.0;
+
+      torque_setpoint_array[0] = avg_accel -  avg_brake;
+      torque_setpoint_array[1] = avg_accel -  avg_brake;
+      torque_setpoint_array[2] = avg_accel - avg_brake;
+      torque_setpoint_array[3] = avg_accel - avg_brake;
+
+      for (int i = 0; i < 4; i++) {
+        if (torque_setpoint_array[i] >= 0) {
+          if (i < 2) {
+            torque_setpoint_array[i] = (int16_t)(torque_setpoint_array[i] * front_power_balance);
+          } else {
+            torque_setpoint_array[i] = (int16_t)(torque_setpoint_array[i] * rear_power_balance);
+          }
+        } else {
+          if (i < 2) {
+            torque_setpoint_array[i] = (int16_t)(torque_setpoint_array[i] * front_brake_balance);
+          } else {
+            torque_setpoint_array[i] = (int16_t)(torque_setpoint_array[i] * rear_brake_balance);
+          }
+        }
+      }
       break;
     default:
       for (int i = 0; i < 4; i++) {
