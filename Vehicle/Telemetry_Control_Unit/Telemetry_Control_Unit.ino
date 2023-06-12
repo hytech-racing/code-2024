@@ -103,6 +103,7 @@ typedef struct perf_counters {
   unsigned long max_loop_latency = 0;
   uint16_t slow_loops = 0;
   uint16_t slow_loop_time = 0;
+  uint16_t live_messages_sent = 0;  
 } perf_counters;
 perf_counters counters;
 Metro timer_debug_RTC = Metro(1000);
@@ -278,7 +279,7 @@ void loop() {
     if (timer_debug_RTC.check()) { //1000
         Serial.printf("Clock: %u\n", Teensy3Clock.get());
         Serial.printf("CAN1: %u, CAN2: %u, CAN3: %u, GPS: %u, Loops: %lu\n",counters.CAN_1_freq, counters.CAN_2_freq, counters.CAN_3_freq, counters.GPS_freq, counters.loops);
-        Serial.printf("Messages written: %lu Messages queued: %u\n", counters.bytes_written, counters.messages_queued);
+        Serial.printf("Messages written: %lu Messages queued: %u Live messages sent: %u\n", counters.bytes_written, counters.messages_queued, counters.live_messages_sent);
         Serial.printf("Max loop latency: %lu Slow loops: %u Slow loop time: %u\n", counters.max_loop_latency, counters.slow_loops, counters.slow_loop_time);
         Serial.println();
         counters = (perf_counters){
@@ -291,7 +292,8 @@ void loop() {
           .messages_queued = 0,
           .max_loop_latency = 0,
           .slow_loops = 0,
-          .slow_loop_time = 0
+          .slow_loop_time = 0,
+          .live_messages_sent = 0,
           };
     }
     counters.loops++;

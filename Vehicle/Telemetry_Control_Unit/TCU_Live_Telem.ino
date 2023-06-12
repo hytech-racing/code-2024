@@ -14,9 +14,9 @@ MC_temps live_mc_temps2;
 MC_temps live_mc_temps3;
 MC_temps live_mc_temps4;
 
-Metro detailed_voltages_timer = Metro(1000);
-Metro voltages_timer = Metro(1000);
-Metro detailed_temperatures_timer = Metro(1000);
+Metro detailed_voltages_timer = Metro(5000);
+Metro voltages_timer = Metro(250);
+Metro detailed_temperatures_timer = Metro(5000);
 Metro onboard_temperatures_timer = Metro(1000);
 Metro temperatures_timer = Metro(1000);
 Metro mc_temps1_timer = Metro(1000);

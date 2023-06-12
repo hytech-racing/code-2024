@@ -23,6 +23,7 @@ int send_can_message(HardwareSerial& serial, CAN_message_t& can_msg) {
     }*/
     if (serial.availableForWrite() >= (int) sizeof(cobs_buf)) {
       int written = serial.write(cobs_buf, sizeof(cobs_buf));
+      counters.live_messages_sent++;
       return written;
     }    
     return 0;
