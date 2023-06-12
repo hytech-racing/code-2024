@@ -1502,7 +1502,7 @@ inline void calculate_pedal_implausibilities() {
       ||
       (mcu_pedal_readings.get_accelerator_pedal_2() > ((END_ACCELERATOR_PEDAL_2 - START_ACCELERATOR_PEDAL_2) / 4 + START_ACCELERATOR_PEDAL_2))
     )
-    && mcu_status.get_brake_pedal_active()
+    && mcu_status.get_mech_brake_active()
   )
   {
     mcu_status.set_no_accel_brake_implausability(false);
