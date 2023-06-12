@@ -222,8 +222,8 @@ void setup() {
   delay(5000);
 
   set_state(MCU_STATE::TRACTIVE_SYSTEM_NOT_ACTIVE);
-  mcu_status.set_max_torque(TORQUE_1);
-  mcu_status.set_torque_mode(1);
+  mcu_status.set_max_torque(TORQUE_3);
+  mcu_status.set_torque_mode(3);
 
   /* Set up total discharge readings */
   //setup_total_discharge();
