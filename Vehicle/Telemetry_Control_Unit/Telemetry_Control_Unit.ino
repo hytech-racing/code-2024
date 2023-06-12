@@ -247,6 +247,11 @@ void loop() {
     
     //write_buf_to_SD(current_write_buf);
     /* Flush data to SD card occasionally */
+    static unsigned int live_telem_has_setup = 0;
+    if ((!live_telem_has_setup) && (millis > 30000)) {
+      live_telem_setup();
+      live_telem_has_setup = 1;
+    }
 
     live_telem_loop();
 
@@ -271,11 +276,11 @@ void loop() {
 
     /* Print timestamp to serial occasionally */
     if (timer_debug_RTC.check()) { //1000
-        //Serial.printf("Clock: %u\n", Teensy3Clock.get());
-        //Serial.printf("CAN1: %u, CAN2: %u, CAN3: %u, GPS: %u, Loops: %lu\n",counters.CAN_1_freq, counters.CAN_2_freq, counters.CAN_3_freq, counters.GPS_freq, counters.loops);
-        //Serial.printf("Messages written: %lu Messages queued: %u\n", counters.bytes_written, counters.messages_queued);
-        //Serial.printf("Max loop latency: %lu Slow loops: %u Slow loop time: %u\n", counters.max_loop_latency, counters.slow_loops, counters.slow_loop_time);
-        //Serial.println();
+        Serial.printf("Clock: %u\n", Teensy3Clock.get());
+        Serial.printf("CAN1: %u, CAN2: %u, CAN3: %u, GPS: %u, Loops: %lu\n",counters.CAN_1_freq, counters.CAN_2_freq, counters.CAN_3_freq, counters.GPS_freq, counters.loops);
+        Serial.printf("Messages written: %lu Messages queued: %u\n", counters.bytes_written, counters.messages_queued);
+        Serial.printf("Max loop latency: %lu Slow loops: %u Slow loop time: %u\n", counters.max_loop_latency, counters.slow_loops, counters.slow_loop_time);
+        Serial.println();
         counters = (perf_counters){
           .CAN_1_freq = 0, 
           .CAN_2_freq = 0, 

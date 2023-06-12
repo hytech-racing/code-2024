@@ -54,22 +54,22 @@ void parse_can_message_macro(CAN_message_t& msg) {
 }
 */
 
-Metro mc1_status_timer = Metro(20);
-Metro mc2_status_timer = Metro(20);
-Metro mc3_status_timer = Metro(20);
-Metro mc4_status_timer = Metro(20);
-Metro mc1_temps_timer = Metro(20);
-Metro mc2_temps_timer = Metro(20);
-Metro mc3_temps_timer = Metro(20);
-Metro mc4_temps_timer = Metro(20);
-Metro mc1_energy_timer = Metro(20);
-Metro mc2_energy_timer = Metro(20);
-Metro mc3_energy_timer = Metro(20);
-Metro mc4_energy_timer = Metro(20);
-Metro mc1_setpoints_command_timer = Metro(20);
-Metro mc2_setpoints_command_timer = Metro(20);
-Metro mc3_setpoints_command_timer = Metro(20);
-Metro mc4_setpoints_command_timer = Metro(20);
+//Metro mc1_status_timer = Metro(20);
+//Metro mc2_status_timer = Metro(20);
+//Metro mc3_status_timer = Metro(20);
+//Metro mc4_status_timer = Metro(20);
+//Metro mc1_temps_timer = Metro(20);
+//Metro mc2_temps_timer = Metro(20);
+//Metro mc3_temps_timer = Metro(20);
+//Metro mc4_temps_timer = Metro(20);
+//Metro mc1_energy_timer = Metro(20);
+//Metro mc2_energy_timer = Metro(20);
+//Metro mc3_energy_timer = Metro(20);
+//Metro mc4_energy_timer = Metro(20);
+//Metro mc1_setpoints_command_timer = Metro(20);
+//Metro mc2_setpoints_command_timer = Metro(20);
+//Metro mc3_setpoints_command_timer = Metro(20);
+//Metro mc4_setpoints_command_timer = Metro(20);
 
 #pragma pack(push,1)
 typedef struct CAN_write_t {
@@ -193,5 +193,28 @@ void message_cbs(const CAN_message_t& rx_msg) {
     case ID_MC2_TEMPS: parse_mc_temps2(rx_msg); break;
     case ID_MC3_TEMPS: parse_mc_temps3(rx_msg); break;
     case ID_MC4_TEMPS: parse_mc_temps4(rx_msg); break;
+
+    case ID_IMU_ACCELEROMETER: parse_imu_accelerometer(rx_msg); break;
+    case ID_IMU_GYROSCOPE: parse_imu_gyroscope(rx_msg); break;
+    case ID_MC1_STATUS: parse_mc1_status(rx_msg); break;
+    case ID_MC2_STATUS: parse_mc2_status(rx_msg); break;
+    case ID_MC3_STATUS: parse_mc3_status(rx_msg); break;
+    case ID_MC4_STATUS: parse_mc4_status(rx_msg); break;
+    case ID_MC1_ENERGY: parse_mc1_energy(rx_msg); break;
+    case ID_MC2_ENERGY: parse_mc2_energy(rx_msg); break;
+    case ID_MC3_ENERGY: parse_mc3_energy(rx_msg); break;
+    case ID_MC4_ENERGY: parse_mc4_energy(rx_msg); break;
+    case ID_MC1_SETPOINTS_COMMAND: parse_mc1_setpoints_command(rx_msg); break;
+    case ID_MC2_SETPOINTS_COMMAND: parse_mc2_setpoints_command(rx_msg); break;
+    case ID_MC3_SETPOINTS_COMMAND: parse_mc3_setpoints_command(rx_msg); break;
+    case ID_MC4_SETPOINTS_COMMAND: parse_mc4_setpoints_command(rx_msg); break;
+    case ID_MCU_STATUS: parse_mcu_status(rx_msg); break;
+    case ID_MCU_PEDAL_READINGS: parse_mcu_pedal_readings(rx_msg); break;
+    case ID_MCU_LOAD_CELLS: parse_mcu_load_cells(rx_msg); break;
+    case ID_MCU_ANALOG_READINGS: parse_mcu_analog_readings(rx_msg); break;
+    case ID_BMS_STATUS: parse_bms_status(rx_msg); break;
+    case ID_DASHBOARD_STATUS: parse_dashboard_status(rx_msg); break;
+    case ID_GPS_LAT_LONG: parse_gps_lat_long(rx_msg); break;
+    case ID_GPS_OTHER: parse_gps_other(rx_msg); break;
   }
 }
