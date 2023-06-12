@@ -272,6 +272,14 @@ void loop() {
     Serial.println(mcu_pedal_readings.get_accelerator_pedal_2());
     Serial.println(mcu_pedal_readings.get_brake_pedal_1());
     Serial.println(mcu_pedal_readings.get_brake_pedal_2());
+    //calculate_pedal_implausibilities();
+//    Serial.println(mcu_status.get_no_accel_implausability());
+//    Serial.println(mcu_status.get_no_brake_implausability());
+//    Serial.println(mcu_status.get_no_accel_brake_implausability());
+//    int brake1 = map(round(mcu_pedal_readings.get_brake_pedal_1()), START_BRAKE_PEDAL_1, END_BRAKE_PEDAL_1, 0, 2140);
+//    int brake2 = map(round(mcu_pedal_readings.get_brake_pedal_2()), START_BRAKE_PEDAL_2, END_BRAKE_PEDAL_2, 0, 2140);
+//    Serial.println(brake1);
+//    Serial.println(brake2);
     Serial.println();
     Serial.println("LOAD CELLS");
     Serial.println(mcu_load_cells.get_FL_load_cell());
@@ -1487,7 +1495,7 @@ inline void calculate_pedal_implausibilities() {
   else if (mcu_pedal_readings.get_brake_pedal_2() > MIN_BRAKE_PEDAL_2 || mcu_pedal_readings.get_brake_pedal_2() < MAX_BRAKE_PEDAL_2) { //negative slope for brake 2
     mcu_status.set_no_brake_implausability(false);
   } else if (fabs((mcu_pedal_readings.get_brake_pedal_1() - START_BRAKE_PEDAL_1) / (END_BRAKE_PEDAL_1 - START_BRAKE_PEDAL_1) -
-                  (START_BRAKE_PEDAL_2 - mcu_pedal_readings.get_brake_pedal_2()) / (START_BRAKE_PEDAL_2 - END_BRAKE_PEDAL_2)) > 0.1) {
+                  (START_BRAKE_PEDAL_2 - mcu_pedal_readings.get_brake_pedal_2()) / (START_BRAKE_PEDAL_2 - END_BRAKE_PEDAL_2)) > 0.25) {
     mcu_status.set_no_brake_implausability(false);
   }
   else {
