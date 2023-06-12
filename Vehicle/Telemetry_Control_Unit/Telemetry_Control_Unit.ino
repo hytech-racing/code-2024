@@ -248,7 +248,7 @@ void loop() {
     //write_buf_to_SD(current_write_buf);
     /* Flush data to SD card occasionally */
     static unsigned int live_telem_has_setup = 0;
-    if ((!live_telem_has_setup) && (millis > 30000)) {
+    if ((!live_telem_has_setup) && (millis() > 30000)) {
       live_telem_setup();
       live_telem_has_setup = 1;
     }
