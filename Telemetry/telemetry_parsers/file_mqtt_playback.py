@@ -49,8 +49,9 @@ def csv_step(df, t):
     index = np.where(df["time"] >= (t*1000))[0][0]
     start_t = time.time()
     while loop:
-        l = MESSAGE_DICT[int(df["msg.id"][index])][0](df["data"][index])
-        upload_parsed_data(l)
+        if int(df["msg.id"][index]) in MESSAGE_DICT.keys():
+            l = MESSAGE_DICT[int(df["msg.id"][index])][0](df["data"][index])
+            upload_parsed_data(l)
         if index+1 >= df["time"].size:
             break;
         else:

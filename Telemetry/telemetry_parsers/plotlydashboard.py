@@ -13,7 +13,7 @@ import re
 #MQTT_SERVER = "3.134.2.166"
 MQTT_SERVER = "localhost"
 MQTT_PORT   = 1883
-MQTT_TOPIC_LIST  = ['BMS/#', "MOTOR_CONTROLLER/#"]
+MQTT_TOPIC_LIST  = ['BMS/#', "MOTOR_CONTROLLER/#", "TPMS/#", "MCU/load_cells/#"]
 client = mqtt.Client()
 
 datadict = {}
@@ -68,7 +68,11 @@ def initialize_mqtt():
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP])
 
+#app.css.config.serve_locally = True
+app.scripts.config.serve_locally = True
+
 app.layout = dbc.Container([
+#app.layout = html.Div([
     html.Div(id="hidden-div", style={"display":"none"}),
     html.H1("HyTech Racing Live Telemetry", className="display-3"),
     html.Hr(className="my-2"),
@@ -85,6 +89,10 @@ app.layout = dbc.Container([
         id='igbt_temps_graph'),
     dcc.Graph(
         id='maximum_temp_graph'),
+    dcc.Graph(
+        id='load_cells_graph'),
+    dcc.Graph(
+        id='tyre_pressures_graph'),
     dcc.Interval(
             id='interval-component',
             interval=1000, # in milliseconds
@@ -185,14 +193,14 @@ def tyre_temps_graph(n):
     def get_data(data, corner, times):
         out = np.zeros((times,16))
         for i in range(16):
-            out[:,i] = data["TPMS"][corner]["temp_"+str(i+1)][-1*times-1200:-1200,1]
+            out[:,i] = data["TPMS"][corner]["temp_"+str(i+1)][-1*times:,1]
         return out
-    points = 32
+    points = 16
     fig = make_subplots(rows=2, cols=2, subplot_titles=("Front Left","Front Right", "Rear Left", "Rear Right"))
-
+    
     fig.add_trace(row = 1, col = 1,
                   trace = go.Heatmap(
-                    z = get_data(root2, "LF", points)[::-1,::-1],
+                    z = get_data(root, "LF", points)[::-1,::-1],
                     x = [str(i) for i in np.arange(16,0,-1)],
                     y = ["T-"+str(i) for i in np.arange(points,0,-1)],
                     coloraxis = "coloraxis",
@@ -201,7 +209,7 @@ def tyre_temps_graph(n):
     
     fig.add_trace(row = 1, col = 2,
                   trace = go.Heatmap(
-                    z = get_data(root2, "RF", points)[::-1,:],
+                    z = get_data(root, "RF", points)[::-1,:],
                     x = [str(i) for i in np.arange(1,17)],
                     y = ["T-"+str(i) for i in np.arange(points,0,-1)],
                     coloraxis = "coloraxis",
@@ -210,7 +218,7 @@ def tyre_temps_graph(n):
     
     fig.add_trace(row = 2, col = 1,
                   trace = go.Heatmap(
-                    z = get_data(root2, "LR", points)[::-1,::-1],
+                    z = get_data(root, "LR", points)[::-1,::-1],
                     x = [str(i) for i in np.arange(16,0,-1)],
                     y = ["T-"+str(i) for i in np.arange(points,0,-1)],
                     coloraxis = "coloraxis",
@@ -219,7 +227,7 @@ def tyre_temps_graph(n):
     
     fig.add_trace(row = 2, col = 2,
                   trace = go.Heatmap(
-                    z = get_data(root2, "RR", points)[::-1,:],
+                    z = get_data(root, "RR", points)[::-1,:],
                     x = [str(i) for i in np.arange(1,17)],
                     y = ["T-"+str(i) for i in np.arange(points,0,-1)],
                     coloraxis = "coloraxis",
@@ -232,7 +240,7 @@ def tyre_temps_graph(n):
     fig.update_yaxes(title_text="Time", row=2, col=2)
     
     
-    fig.update_layout(height=800, width=1000, title_text="Tyre Temps")
+    fig.update_layout(height=800, width=1000, title_text="Tire Temps")
     fig.update_layout(coloraxis=dict(colorscale = 'RdBu_r'), showlegend=False)
     fig.update_coloraxes(colorbar=dict(title='Temps (C)'))
 
@@ -370,6 +378,96 @@ def maximum_temp_graph(n):
     '''
 
 
+@app.callback(
+        Output('load_cells_graph', 'figure'),
+        Input('interval-component', 'n_intervals')
+    )
+def load_cells_graph(n):
+
+    #keys = get_keys_matching_regex(datadict, "BMS\/detailed_temperatures\/ic_\d*\/cell_\d*")
+    #data = create_scatter_plots(keys)
+    
+    fldata = root["MCU"]["load_cells"]["FL"][-100:,:]
+    frdata = root["MCU"]["load_cells"]["FR"][-100:,:]
+    rldata = root["MCU"]["load_cells"]["RL"][-100:,:]
+    rrdata = root["MCU"]["load_cells"]["RR"][-100:,:]
+
+    data = [
+        go.Scatter(
+        x = (fldata[:,0]*1000).astype('datetime64[ms]'),
+        y = fldata[:,1],
+        name = "Front Left"
+    ),
+        go.Scatter(
+        x = (frdata[:,0]*1000).astype('datetime64[ms]'),
+        y = frdata[:,1],
+        name = "Front Right"
+    ),
+        go.Scatter(
+        x = (rldata[:,0]*1000).astype('datetime64[ms]'),
+        y = rldata[:,1],
+        name = "Rear Left"
+    ),
+        go.Scatter(
+        x = (rrdata[:,0]*1000).astype('datetime64[ms]'),
+        y = rrdata[:,1],
+        name = "Rear Right"
+    )]
+    
+    return {'data': data,
+            'layout': go.Layout(
+        title = dict(text="Load Cells"),
+        legend = dict(x = 0, y = 1, bgcolor = 'rgba(255,255,255,.7)'),
+        yaxis_title = "Force (lb)"
+        )
+                    
+        }
+
+@app.callback(
+        Output('tyre_pressures_graph', 'figure'),
+        Input('interval-component', 'n_intervals')
+    )
+def tyre_pressures_graph(n):
+
+    #keys = get_keys_matching_regex(datadict, "BMS\/detailed_temperatures\/ic_\d*\/cell_\d*")
+    #data = create_scatter_plots(keys)
+    
+    fldata = root["TPMS"]["LF"]["guage_pressure"][-10:,:]
+    frdata = root["TPMS"]["RF"]["guage_pressure"][-10:,:]
+    rldata = root["TPMS"]["LR"]["guage_pressure"][-10:,:]
+    rrdata = root["TPMS"]["RR"]["guage_pressure"][-10:,:]
+
+    data = [
+        go.Scatter(
+        x = (fldata[:,0]*1000).astype('datetime64[ms]'),
+        y = fldata[:,1]*14.50377,
+        name = "Front Left"
+    ),
+        go.Scatter(
+        x = (frdata[:,0]*1000).astype('datetime64[ms]'),
+        y = frdata[:,1]*14.50377,
+        name = "Front Right"
+    ),
+        go.Scatter(
+        x = (rldata[:,0]*1000).astype('datetime64[ms]'),
+        y = rldata[:,1]*14.50377,
+        name = "Rear Left"
+    ),
+        go.Scatter(
+        x = (rrdata[:,0]*1000).astype('datetime64[ms]'),
+        y = rrdata[:,1]*14.50377,
+        name = "Rear Right"
+    )]
+    
+    return {'data': data,
+            'layout': go.Layout(
+        title = dict(text="Tire Guage Pressure"),
+        legend = dict(x = 0, y = 1, bgcolor = 'rgba(255,255,255,.7)'),
+        yaxis_title = "Tire Pressure (psi)"
+        )
+                    
+        }
+
 def get_keys_matching_regex(dictionary, regex):
     pattern = re.compile(regex)
     matching_keys = [key for key in dictionary.keys() if pattern.match(key)]
@@ -390,4 +488,4 @@ def create_scatter_plots(topics):
 
 if __name__ == '__main__':
     initialize_mqtt()
-    app.run_server(debug=True)
+    app.run_server(host= '0.0.0.0',debug=True)
