@@ -50,9 +50,9 @@ char Metro::check()
     // If the interval is set to 0 we revert to the original behavior
     if (this->interval_millis <= 0 || this->autoreset ) {
     	this->previous_millis = millis();
-	} else {
-		this->previous_millis += this->interval_millis; 
-	}
+	  } else {
+	  	this->previous_millis += this->interval_millis; 
+	  }
     
     return 1;
   }
@@ -70,4 +70,9 @@ void Metro::reset()
 
 }
 
+void Metro::offset(unsigned long offset_millis) 
+{
+ 
+  this->previous_millis += offset_millis;
 
+}

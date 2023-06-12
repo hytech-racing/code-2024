@@ -14,6 +14,7 @@ public:
   void interval(unsigned long interval_millis);
   char check();
   void reset();
+  void offset(unsigned long offset_millis);
 	
 private:
   uint8_t autoreset;
