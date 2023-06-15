@@ -18,7 +18,7 @@ def find_new_paths(relativepaths, newpath):
 
 def find_csv_dst_paths(path, newpath):
     paths = find_relative_paths(path, "*.csv")
-    new_paths = find_new_paths(paths, newpath)
+    new_paths = [p.replace(".CSV",".mat") for p in find_new_paths(paths, newpath)]
     csv_paths = [os.path.join(path, p) for p in paths]
     return (csv_paths, new_paths)
 
@@ -55,7 +55,6 @@ def parse_csv_folder(path):
 
     # Create a pool of worker processes
     pool = multiprocessing.Pool(processes=num_workers)
-
     # Apply the `process_csv` function to each CSV file path in parallel
     for csv_path, result in zip(csv_paths, pool.map(parse_file, csv_paths)):
         results_dict[csv_path] = result
