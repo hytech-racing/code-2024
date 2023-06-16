@@ -70,6 +70,56 @@ Metro dashboard_status_timer = Metro(5000);
 Metro gps_lat_long_timer = Metro(1000);
 Metro gps_other_timer = Metro(5000);
 
+GPS_other tpms_lf;
+GPS_other temp1_lf;
+GPS_other temp2_lf;
+GPS_other temp3_lf;
+GPS_other temp4_lf;
+GPS_other temp5_lf;
+GPS_other tpms_rf;
+GPS_other temp1_rf;
+GPS_other temp2_rf;
+GPS_other temp3_rf;
+GPS_other temp4_rf;
+GPS_other temp5_rf;
+GPS_other tpms_lr;
+GPS_other temp1_lr;
+GPS_other temp2_lr;
+GPS_other temp3_lr;
+GPS_other temp4_lr;
+GPS_other temp5_lr;
+GPS_other tpms_rr;
+GPS_other temp1_rr;
+GPS_other temp2_rr;
+GPS_other temp3_rr;
+GPS_other temp4_rr;
+GPS_other temp5_rr;
+
+Metro tpms_lf_timer = Metro(5000);
+Metro temp1_lf_timer = Metro(5000);
+Metro temp2_lf_timer = Metro(5000);
+Metro temp3_lf_timer = Metro(5000);
+Metro temp4_lf_timer = Metro(5000);
+Metro temp5_lf_timer = Metro(5000);
+Metro tpms_rf_timer = Metro(5000);
+Metro temp1_rf_timer = Metro(5000);
+Metro temp2_rf_timer = Metro(5000);
+Metro temp3_rf_timer = Metro(5000);
+Metro temp4_rf_timer = Metro(5000);
+Metro temp5_rf_timer = Metro(5000);
+Metro tpms_lr_timer = Metro(5000);
+Metro temp1_lr_timer = Metro(5000);
+Metro temp2_lr_timer = Metro(5000);
+Metro temp3_lr_timer = Metro(5000);
+Metro temp4_lr_timer = Metro(5000);
+Metro temp5_lr_timer = Metro(5000);
+Metro tpms_rr_timer = Metro(5000);
+Metro temp1_rr_timer = Metro(5000);
+Metro temp2_rr_timer = Metro(5000);
+Metro temp3_rr_timer = Metro(5000);
+Metro temp4_rr_timer = Metro(5000);
+Metro temp5_rr_timer = Metro(5000);
+
 static CAN_message_t live_telem_msg;
 
 void parse_detailed_voltages(const CAN_message_t& rx_msg) {
@@ -417,6 +467,223 @@ void send_gps_other() {
   //MULTI LINE EDITING
 }
 
+void parse_tpms_lf(const CAN_message_t& rx_msg) {
+  tpms_lf.load(rx_msg.buf);
+}
+void send_tpms_lf() {
+  tpms_lf.write(live_telem_msg.buf);
+  live_telem_msg.len = sizeof(GPS_other);
+  live_telem_msg.id = ID_TPMS_LF;
+  send_can_message(Serial8, live_telem_msg);
+}
+void parse_temp1_lf(const CAN_message_t& rx_msg) {
+  temp1_lf.load(rx_msg.buf);
+}
+void send_temp1_lf() {
+  temp1_lf.write(live_telem_msg.buf);
+  live_telem_msg.len = sizeof(GPS_other);
+  live_telem_msg.id = ID_TEMP1_LF;
+  send_can_message(Serial8, live_telem_msg);
+}
+void parse_temp2_lf(const CAN_message_t& rx_msg) {
+  temp2_lf.load(rx_msg.buf);
+}
+void send_temp2_lf() {
+  temp2_lf.write(live_telem_msg.buf);
+  live_telem_msg.len = sizeof(GPS_other);
+  live_telem_msg.id = ID_TEMP2_LF;
+  send_can_message(Serial8, live_telem_msg);
+}
+void parse_temp3_lf(const CAN_message_t& rx_msg) {
+  temp3_lf.load(rx_msg.buf);
+}
+void send_temp3_lf() {
+  temp3_lf.write(live_telem_msg.buf);
+  live_telem_msg.len = sizeof(GPS_other);
+  live_telem_msg.id = ID_TEMP3_LF;
+  send_can_message(Serial8, live_telem_msg);
+}
+void parse_temp4_lf(const CAN_message_t& rx_msg) {
+  temp4_lf.load(rx_msg.buf);
+}
+void send_temp4_lf() {
+  temp4_lf.write(live_telem_msg.buf);
+  live_telem_msg.len = sizeof(GPS_other);
+  live_telem_msg.id = ID_TEMP4_LF;
+  send_can_message(Serial8, live_telem_msg);
+}
+void parse_temp5_lf(const CAN_message_t& rx_msg) {
+  temp5_lf.load(rx_msg.buf);
+}
+void send_temp5_lf() {
+  temp5_lf.write(live_telem_msg.buf);
+  live_telem_msg.len = sizeof(GPS_other);
+  live_telem_msg.id = ID_TEMP5_LF;
+  send_can_message(Serial8, live_telem_msg);
+}
+void parse_tpms_rf(const CAN_message_t& rx_msg) {
+  tpms_rf.load(rx_msg.buf);
+}
+void send_tpms_rf() {
+  tpms_rf.write(live_telem_msg.buf);
+  live_telem_msg.len = sizeof(GPS_other);
+  live_telem_msg.id = ID_TPMS_RF;
+  send_can_message(Serial8, live_telem_msg);
+}
+void parse_temp1_rf(const CAN_message_t& rx_msg) {
+  temp1_rf.load(rx_msg.buf);
+}
+void send_temp1_rf() {
+  temp1_rf.write(live_telem_msg.buf);
+  live_telem_msg.len = sizeof(GPS_other);
+  live_telem_msg.id = ID_TEMP1_RF;
+  send_can_message(Serial8, live_telem_msg);
+}
+void parse_temp2_rf(const CAN_message_t& rx_msg) {
+  temp2_rf.load(rx_msg.buf);
+}
+void send_temp2_rf() {
+  temp2_rf.write(live_telem_msg.buf);
+  live_telem_msg.len = sizeof(GPS_other);
+  live_telem_msg.id = ID_TEMP2_RF;
+  send_can_message(Serial8, live_telem_msg);
+}
+void parse_temp3_rf(const CAN_message_t& rx_msg) {
+  temp3_rf.load(rx_msg.buf);
+}
+void send_temp3_rf() {
+  temp3_rf.write(live_telem_msg.buf);
+  live_telem_msg.len = sizeof(GPS_other);
+  live_telem_msg.id = ID_TEMP3_RF;
+  send_can_message(Serial8, live_telem_msg);
+}
+void parse_temp4_rf(const CAN_message_t& rx_msg) {
+  temp4_rf.load(rx_msg.buf);
+}
+void send_temp4_rf() {
+  temp4_rf.write(live_telem_msg.buf);
+  live_telem_msg.len = sizeof(GPS_other);
+  live_telem_msg.id = ID_TEMP4_RF;
+  send_can_message(Serial8, live_telem_msg);
+}
+void parse_temp5_rf(const CAN_message_t& rx_msg) {
+  temp5_rf.load(rx_msg.buf);
+}
+void send_temp5_rf() {
+  temp5_rf.write(live_telem_msg.buf);
+  live_telem_msg.len = sizeof(GPS_other);
+  live_telem_msg.id = ID_TEMP5_RF;
+  send_can_message(Serial8, live_telem_msg);
+}
+void parse_tpms_lr(const CAN_message_t& rx_msg) {
+  tpms_lr.load(rx_msg.buf);
+}
+void send_tpms_lr() {
+  tpms_lr.write(live_telem_msg.buf);
+  live_telem_msg.len = sizeof(GPS_other);
+  live_telem_msg.id = ID_TPMS_LR;
+  send_can_message(Serial8, live_telem_msg);
+}
+void parse_temp1_lr(const CAN_message_t& rx_msg) {
+  temp1_lr.load(rx_msg.buf);
+}
+void send_temp1_lr() {
+  temp1_lr.write(live_telem_msg.buf);
+  live_telem_msg.len = sizeof(GPS_other);
+  live_telem_msg.id = ID_TEMP1_LR;
+  send_can_message(Serial8, live_telem_msg);
+}
+void parse_temp2_lr(const CAN_message_t& rx_msg) {
+  temp2_lr.load(rx_msg.buf);
+}
+void send_temp2_lr() {
+  temp2_lr.write(live_telem_msg.buf);
+  live_telem_msg.len = sizeof(GPS_other);
+  live_telem_msg.id = ID_TEMP2_LR;
+  send_can_message(Serial8, live_telem_msg);
+}
+void parse_temp3_lr(const CAN_message_t& rx_msg) {
+  temp3_lr.load(rx_msg.buf);
+}
+void send_temp3_lr() {
+  temp3_lr.write(live_telem_msg.buf);
+  live_telem_msg.len = sizeof(GPS_other);
+  live_telem_msg.id = ID_TEMP3_LR;
+  send_can_message(Serial8, live_telem_msg);
+}
+void parse_temp4_lr(const CAN_message_t& rx_msg) {
+  temp4_lr.load(rx_msg.buf);
+}
+void send_temp4_lr() {
+  temp4_lr.write(live_telem_msg.buf);
+  live_telem_msg.len = sizeof(GPS_other);
+  live_telem_msg.id = ID_TEMP4_LR;
+  send_can_message(Serial8, live_telem_msg);
+}
+void parse_temp5_lr(const CAN_message_t& rx_msg) {
+  temp5_lr.load(rx_msg.buf);
+}
+void send_temp5_lr() {
+  temp5_lr.write(live_telem_msg.buf);
+  live_telem_msg.len = sizeof(GPS_other);
+  live_telem_msg.id = ID_TEMP5_LR;
+  send_can_message(Serial8, live_telem_msg);
+}
+void parse_tpms_rr(const CAN_message_t& rx_msg) {
+  tpms_rr.load(rx_msg.buf);
+}
+void send_tpms_rr() {
+  tpms_rr.write(live_telem_msg.buf);
+  live_telem_msg.len = sizeof(GPS_other);
+  live_telem_msg.id = ID_TPMS_RR;
+  send_can_message(Serial8, live_telem_msg);
+}
+void parse_temp1_rr(const CAN_message_t& rx_msg) {
+  temp1_rr.load(rx_msg.buf);
+}
+void send_temp1_rr() {
+  temp1_rr.write(live_telem_msg.buf);
+  live_telem_msg.len = sizeof(GPS_other);
+  live_telem_msg.id = ID_TEMP1_RR;
+  send_can_message(Serial8, live_telem_msg);
+}
+void parse_temp2_rr(const CAN_message_t& rx_msg) {
+  temp2_rr.load(rx_msg.buf);
+}
+void send_temp2_rr() {
+  temp2_rr.write(live_telem_msg.buf);
+  live_telem_msg.len = sizeof(GPS_other);
+  live_telem_msg.id = ID_TEMP2_RR;
+  send_can_message(Serial8, live_telem_msg);
+}
+void parse_temp3_rr(const CAN_message_t& rx_msg) {
+  temp3_rr.load(rx_msg.buf);
+}
+void send_temp3_rr() {
+  temp3_rr.write(live_telem_msg.buf);
+  live_telem_msg.len = sizeof(GPS_other);
+  live_telem_msg.id = ID_TEMP3_RR;
+  send_can_message(Serial8, live_telem_msg);
+}
+void parse_temp4_rr(const CAN_message_t& rx_msg) {
+  temp4_rr.load(rx_msg.buf);
+}
+void send_temp4_rr() {
+  temp4_rr.write(live_telem_msg.buf);
+  live_telem_msg.len = sizeof(GPS_other);
+  live_telem_msg.id = ID_TEMP4_RR;
+  send_can_message(Serial8, live_telem_msg);
+}
+void parse_temp5_rr(const CAN_message_t& rx_msg) {
+  temp5_rr.load(rx_msg.buf);
+}
+void send_temp5_rr() {
+  temp5_rr.write(live_telem_msg.buf);
+  live_telem_msg.len = sizeof(GPS_other);
+  live_telem_msg.id = ID_TEMP5_RR;
+  send_can_message(Serial8, live_telem_msg);
+}
+
 uint8_t live_telem_ready = 0;
 
 void live_telem_setup() {
@@ -486,6 +753,56 @@ void live_telem_setup() {
   dashboard_status_timer.offset(4500);
   gps_lat_long_timer.offset(4500);
   gps_other_timer.offset(4500);
+
+  tpms_lf_timer.reset();
+  temp1_lf_timer.reset();
+  temp2_lf_timer.reset();
+  temp3_lf_timer.reset();
+  temp4_lf_timer.reset();
+  temp5_lf_timer.reset();
+  tpms_rf_timer.reset();
+  temp1_rf_timer.reset();
+  temp2_rf_timer.reset();
+  temp3_rf_timer.reset();
+  temp4_rf_timer.reset();
+  temp5_rf_timer.reset();
+  tpms_lr_timer.reset();
+  temp1_lr_timer.reset();
+  temp2_lr_timer.reset();
+  temp3_lr_timer.reset();
+  temp4_lr_timer.reset();
+  temp5_lr_timer.reset();
+  tpms_rr_timer.reset();
+  temp1_rr_timer.reset();
+  temp2_rr_timer.reset();
+  temp3_rr_timer.reset();
+  temp4_rr_timer.reset();
+  temp5_rr_timer.reset();
+
+  tpms_lf_timer.offset(1000);
+  temp1_lf_timer.offset(1000);
+  temp2_lf_timer.offset(1000);
+  temp3_lf_timer.offset(1000);
+  temp4_lf_timer.offset(1000);
+  temp5_lf_timer.offset(1000);
+  tpms_rf_timer.offset(2000);
+  temp1_rf_timer.offset(2000);
+  temp2_rf_timer.offset(2000);
+  temp3_rf_timer.offset(2000);
+  temp4_rf_timer.offset(2000);
+  temp5_rf_timer.offset(2000);
+  tpms_lr_timer.offset(3000);
+  temp1_lr_timer.offset(3000);
+  temp2_lr_timer.offset(3000);
+  temp3_lr_timer.offset(3000);
+  temp4_lr_timer.offset(3000);
+  temp5_lr_timer.offset(3000);
+  tpms_rr_timer.offset(4000);
+  temp1_rr_timer.offset(4000);
+  temp2_rr_timer.offset(4000);
+  temp3_rr_timer.offset(4000);
+  temp4_rr_timer.offset(4000);
+  temp5_rr_timer.offset(4000);
 
   live_telem_ready = 1;
 }
@@ -643,6 +960,103 @@ void live_telem_loop() {
       send_gps_other();
       sent = 1;
       //timer check multi line editing
+    }
+
+    if(tpms_lf_timer.check()) {
+      send_tpms_lf();
+      sent = 1;
+    }
+    if(temp1_lf_timer.check()) {
+      send_temp1_lf();
+      sent = 1;
+    }
+    if(temp2_lf_timer.check()) {
+      send_temp2_lf();
+      sent = 1;
+    }
+    if(temp3_lf_timer.check()) {
+      send_temp3_lf();
+      sent = 1;
+    }
+    if(temp4_lf_timer.check()) {
+      send_temp4_lf();
+      sent = 1;
+    }
+    if(temp5_lf_timer.check()) {
+      send_temp5_lf();
+      sent = 1;
+    }
+    if(tpms_rf_timer.check()) {
+      send_tpms_rf();
+      sent = 1;
+    }
+    if(temp1_rf_timer.check()) {
+      send_temp1_rf();
+      sent = 1;
+    }
+    if(temp2_rf_timer.check()) {
+      send_temp2_rf();
+      sent = 1;
+    }
+    if(temp3_rf_timer.check()) {
+      send_temp3_rf();
+      sent = 1;
+    }
+    if(temp4_rf_timer.check()) {
+      send_temp4_rf();
+      sent = 1;
+    }
+    if(temp5_rf_timer.check()) {
+      send_temp5_rf();
+      sent = 1;
+    }
+    if(tpms_lr_timer.check()) {
+      send_tpms_lr();
+      sent = 1;
+    }
+    if(temp1_lr_timer.check()) {
+      send_temp1_lr();
+      sent = 1;
+    }
+    if(temp2_lr_timer.check()) {
+      send_temp2_lr();
+      sent = 1;
+    }
+    if(temp3_lr_timer.check()) {
+      send_temp3_lr();
+      sent = 1;
+    }
+    if(temp4_lr_timer.check()) {
+      send_temp4_lr();
+      sent = 1;
+    }
+    if(temp5_lr_timer.check()) {
+      send_temp5_lr();
+      sent = 1;
+    }
+    if(tpms_rr_timer.check()) {
+      send_tpms_rr();
+      sent = 1;
+    }
+    if(temp1_rr_timer.check()) {
+      send_temp1_rr();
+      sent = 1;
+    }
+    if(temp2_rr_timer.check()) {
+      send_temp2_rr();
+      sent = 1;
+    }
+    if(temp3_rr_timer.check()) {
+      send_temp3_rr();
+      sent = 1;
+    }
+    if(temp4_rr_timer.check()) {
+      send_temp4_rr();
+      sent = 1;
+    }
+    if(temp5_rr_timer.check()) {
+      send_temp5_rr();
+      sent = 1;
     }
 
     if (sent) {
