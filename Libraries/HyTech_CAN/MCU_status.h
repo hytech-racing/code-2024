@@ -79,7 +79,7 @@ public:
 
     inline uint16_t get_ecu_states()        const { return (ecu_states); }
     inline MCU_STATE get_state()           const { return static_cast<MCU_STATE>((ecu_states & 0x07)); }
-    inline bool get_inverter_powered()     const { return (ecu_states & 0x008); }
+    inline bool get_inverters_error()     const { return (ecu_states & 0x008); }
     inline bool get_energy_meter_present() const { return (ecu_states & 0x010); }
     inline bool get_activate_buzzer()      const { return (ecu_states & 0x020); }
     inline bool get_software_is_ok()       const { return (ecu_states & 0x040); }
@@ -88,7 +88,7 @@ public:
 
     inline void set_ecu_states(const uint16_t states)         { ecu_states = states; }
     inline void set_state(const MCU_STATE state)             { ecu_states = (ecu_states & 0xFFF8) | (static_cast<uint8_t>(state)); }
-    inline void set_inverter_powered(const bool powered)     { ecu_states = (ecu_states & 0xFFF7) | (powered  << 3); }
+    inline void set_inverters_error(const bool error)     { ecu_states = (ecu_states & 0xFFF7) | (error  << 3); }
     inline void set_energy_meter_present(const bool present) { ecu_states = (ecu_states & 0xFFEF) | (present  << 4); }
     inline void set_activate_buzzer(const bool activate)     { ecu_states = (ecu_states & 0xFFDF) | (activate << 5); }
     inline void set_software_is_ok(const bool is_ok)         { ecu_states = (ecu_states & 0xFFBF) | (is_ok    << 6); }
@@ -150,7 +150,7 @@ private:
      * pack charge critical
      */
     /* @Parse @Flaglist(
-        inverter_powered,
+        inverters_error,
         energy_meter_present,
         activate_buzzer,
         software_is_ok,

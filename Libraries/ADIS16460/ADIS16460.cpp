@@ -45,9 +45,9 @@ ADIS16460::ADIS16460(int CS, int DR, int RST) {
   _DR = DR;
   _RST = RST;
 // Initialize SPI
-  SPI.begin();
+  // SPI.begin();
 // Configure SPI controller
-  configSPI();
+  // configSPI();
 // Set default pin states
   pinMode(_CS, OUTPUT); // Set CS pin to be an output
   pinMode(_DR, INPUT); // Set DR pin to be an input
@@ -61,7 +61,7 @@ ADIS16460::ADIS16460(int CS, int DR, int RST) {
 ////////////////////////////////////////////////////////////////////////////
 ADIS16460::~ADIS16460() {
   // Close SPI bus
-  SPI.end();
+  // SPI.end();
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -81,9 +81,32 @@ int ADIS16460::resetDUT(uint8_t ms) {
 // Returns 1 when complete.
 ////////////////////////////////////////////////////////////////////////////
 int ADIS16460::configSPI() {
-  SPISettings IMUSettings(1000000, MSBFIRST, SPI_MODE3);
-  SPI.beginTransaction(IMUSettings);
+  // FlexIOSPISettings IMUSettings(1000000, MSBFIRST, SPI_MODE3);
+  // (* _SPI).beginTransaction(IMUSettings);
   return(1);
+}
+
+uint8_t ADIS16460::transferWrapper(uint8_t sendval) {
+  uint8_t toReturn = 0;
+  cli();
+  // Serial.println(send);
+  delayNanoseconds(200);
+  digitalWrite(13, HIGH);
+  for (int j = 0; j < 8; j++) {
+    digitalWrite(13, LOW);
+    // write channel on the falling edge
+    digitalWrite(11, sendval & (1 << (7-j)) ? HIGH : LOW);
+    // Serial.print(send & (1 << j) ? "0" : "1");
+    delayMicroseconds(1);
+    digitalWrite(13, HIGH);
+    // read outputs on the falling edge
+    toReturn |= digitalRead(12) << (7 - j);
+    delayMicroseconds(1);
+  }
+  // Serial.println();
+  sei();
+  return toReturn;
+  // return (uint8_t)((* _SPI).transferNBits(send, 8));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -97,16 +120,16 @@ int16_t ADIS16460::regRead(uint8_t regAddr) {
   configSPI();
   // Write register address to be read
   digitalWrite(_CS, LOW); // Set CS low to enable device
-  SPI.transfer(regAddr); // Write address over SPI bus
-  SPI.transfer(0x00); // Write 0x00 to the SPI bus fill the 16 bit transaction requirement
+  transferWrapper(regAddr); // Write address over SPI bus
+  transferWrapper(0x00); // Write 0x00 to the SPI bus fill the 16 bit transaction requirement
   digitalWrite(_CS, HIGH); // Set CS high to disable device
 
   delayMicroseconds(40); // Delay to not violate read rate (16 us)
 
   // Read data from requested register
   digitalWrite(_CS, LOW); // Set CS low to enable device
-  uint8_t _msbData = SPI.transfer(0x00); // Send (0x00) and place upper byte into variable
-  uint8_t _lsbData = SPI.transfer(0x00); // Send (0x00) and place lower byte into variable
+  uint8_t _msbData = transferWrapper(0x00); // Send (0x00) and place upper byte into variable
+  uint8_t _lsbData = transferWrapper(0x00); // Send (0x00) and place lower byte into variable
   digitalWrite(_CS, HIGH); // Set CS high to disable device
 
   delayMicroseconds(40); // Delay to not violate read rate (16 us)
@@ -139,16 +162,16 @@ int ADIS16460::regWrite(uint8_t regAddr, int16_t regData) {
 
   // Write highWord to SPI bus
   digitalWrite(_CS, LOW); // Set CS low to enable device
-  SPI.transfer(highBytelowWord); // Write high byte from low word to SPI bus
-  SPI.transfer(lowBytelowWord); // Write low byte from low word to SPI bus
+  transferWrapper(highBytelowWord); // Write high byte from low word to SPI bus
+  transferWrapper(lowBytelowWord); // Write low byte from low word to SPI bus
   digitalWrite(_CS, HIGH); // Set CS high to disable device
 
   delayMicroseconds(40); // Delay to not violate read rate (16 us)
 
   // Write lowWord to SPI bus
   digitalWrite(_CS, LOW); // Set CS low to enable device
-  SPI.transfer(highBytehighWord); // Write high byte from high word to SPI bus
-  SPI.transfer(lowBytehighWord); // Write low byte from high word to SPI bus
+  transferWrapper(highBytehighWord); // Write high byte from high word to SPI bus
+  transferWrapper(lowBytehighWord); // Write low byte from high word to SPI bus
   digitalWrite(_CS, HIGH); // Set CS high to disable device
 
   return(1);
@@ -166,29 +189,29 @@ int16_t *ADIS16460::burstRead(void) {
 	static int16_t burstwords[10];
 	// Trigger Burst Read
 	digitalWrite(_CS, LOW);
-	SPI.transfer(0x3E);
-	SPI.transfer(0x00);
+	transferWrapper(0x3E);
+	transferWrapper(0x00);
 	// Read Burst Data
-	burstdata[0] = SPI.transfer(0x00); //DIAG_STAT
-	burstdata[1] = SPI.transfer(0x00);
-	burstdata[2] = SPI.transfer(0x00); //XGYRO_OUT
-	burstdata[3] = SPI.transfer(0x00);
-	burstdata[4] = SPI.transfer(0x00); //YGYRO_OUT
-	burstdata[5] = SPI.transfer(0x00);
-	burstdata[6] = SPI.transfer(0x00); //ZGYRO_OUT
-	burstdata[7] = SPI.transfer(0x00);
-	burstdata[8] = SPI.transfer(0x00); //XACCEL_OUT
-	burstdata[9] = SPI.transfer(0x00);
-	burstdata[10] = SPI.transfer(0x00); //YACCEL_OUT
-	burstdata[11] = SPI.transfer(0x00);
-	burstdata[12] = SPI.transfer(0x00); //ZACCEL_OUT
-	burstdata[13] = SPI.transfer(0x00);
-	burstdata[14] = SPI.transfer(0x00); //TEMP_OUT
-	burstdata[15] = SPI.transfer(0x00);
-	burstdata[16] = SPI.transfer(0x00); //SMPL_CNTR
-	burstdata[17] = SPI.transfer(0x00);
-	burstdata[18] = SPI.transfer(0x00); //CHECKSUM
-	burstdata[19] = SPI.transfer(0x00);
+	burstdata[0] = transferWrapper(0x00); //DIAG_STAT
+	burstdata[1] = transferWrapper(0x00);
+	burstdata[2] = transferWrapper(0x00); //XGYRO_OUT
+	burstdata[3] = transferWrapper(0x00);
+	burstdata[4] = transferWrapper(0x00); //YGYRO_OUT
+	burstdata[5] = transferWrapper(0x00);
+	burstdata[6] = transferWrapper(0x00); //ZGYRO_OUT
+	burstdata[7] = transferWrapper(0x00);
+	burstdata[8] = transferWrapper(0x00); //XACCEL_OUT
+	burstdata[9] = transferWrapper(0x00);
+	burstdata[10] = transferWrapper(0x00); //YACCEL_OUT
+	burstdata[11] = transferWrapper(0x00);
+	burstdata[12] = transferWrapper(0x00); //ZACCEL_OUT
+	burstdata[13] = transferWrapper(0x00);
+	burstdata[14] = transferWrapper(0x00); //TEMP_OUT
+	burstdata[15] = transferWrapper(0x00);
+	burstdata[16] = transferWrapper(0x00); //SMPL_CNTR
+	burstdata[17] = transferWrapper(0x00);
+	burstdata[18] = transferWrapper(0x00); //CHECKSUM
+	burstdata[19] = transferWrapper(0x00);
 	digitalWrite(_CS, HIGH);
 
 	// Join bytes into words
