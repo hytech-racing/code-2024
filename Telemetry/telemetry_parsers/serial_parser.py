@@ -99,7 +99,7 @@ def read_serial_until_double_null(serial_port):
     
     for byte_msg in split_data:
         print(len(byte_msg), end=" ")
-        if len(byte_msg) > 1:
+        if len(byte_msg) == 16:
             decoded = cobs.decode(byte_msg)
             msg_id = decoded[0]
             print(hex(msg_id), end="")
@@ -113,7 +113,7 @@ def read_serial_until_double_null(serial_port):
             msg_data = (np.uint64(np.uint64(msg_data) << np.uint16(8*(8-msg_len))) >> np.uint16(8*(8-msg_len)))
             #print(msg_id)
             l = MESSAGE_DICT[int(msg_id)][0](msg_data)
-            #upload_parsed_data(l)
+            upload_parsed_data(l)
             messages_received += 1
         print("")
 
