@@ -166,15 +166,23 @@ def minimum_voltages_graph(n):
     #keys = get_keys_matching_regex(datadict, "BMS\/detailed_voltage\/ic_\d*\/cell_\d*")
     #data = create_scatter_plots(keys)
     d = root["BMS"]["voltages"]["low_voltage"][-1000:,:]
+    b = root["BMS"]["voltages"]["average_voltage"][-1000:,:]
     data = [go.Scatter(
         x = (d[:,0]*1000).astype('datetime64[ms]'),
         y = d[:,1],
+        name = "Minimum"
+    ),
+    go.Scatter(
+        x = (b[:,0]*1000).astype('datetime64[ms]'),
+        y = b[:,1],
+        name = "Average"
     )]
 
 
     return {'data': data,
             'layout': go.Layout(
-        title = dict(text="Minimum Cell Voltage"),
+        title = dict(text="Cell Voltages"),
+        legend = dict(x = 0, y = 1, bgcolor = 'rgba(255,255,255,.7)'),
         yaxis_title = "Voltage (V)"
         )}
     '''

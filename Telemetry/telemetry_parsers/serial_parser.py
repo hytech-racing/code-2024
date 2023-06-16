@@ -43,8 +43,8 @@ def upload_parsed_data(data_list):
             #print(payload)
             #payload = struct.pack('<f', payload)
             payload = str(payload)
-            #print(topic)
-            #print(payload)
+            print(topic, end= ": ")
+            print(payload)
             publish_data(topic, payload)
             #publish_data("HT07_PARSED/"+topic, payload)
 
