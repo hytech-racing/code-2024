@@ -78,6 +78,7 @@ Metro timer_CAN_mcu_status_send = Metro(100);
 Metro timer_CAN_mcu_pedal_readings_send = Metro(50);
 Metro timer_CAN_mcu_analog_readings_send = Metro(50);
 Metro timer_CAN_mcu_load_cells_send = Metro(20);
+Metro timer_CAN_mcu_potentiometers_send = Metro(20);
 
 Metro timer_ready_sound = Metro(2000); // Time to play RTD sound
 
@@ -359,7 +360,7 @@ inline void send_CAN_mcu_load_cells() {
 }
 
 inline void send_CAN_mcu_potentiometers() {
-  if (timer_CAN_mcu_load_cells_send.check()) {
+  if (timer_CAN_mcu_potentiometers_send.check()) {
     mcu_front_potentiometers.write(msg.buf);
     msg.id = ID_MCU_FRONT_POTS;
     msg.len = sizeof(mcu_front_potentiometers);
