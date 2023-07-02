@@ -1,8 +1,8 @@
 ![HyTech Logo](https://hytechracing.gatech.edu/images/hytech_logo.png)
 
-# 2023 Code
+# 2024 Code
 
-Repository for all of the code for the 2022-2023 car.
+Repository for all of the code for the 2023-2024 car.
 
 ## Getting Started with this Git Repository
 1. Create a GitHub account if you don't already have one.
@@ -15,8 +15,8 @@ Repository for all of the code for the 2022-2023 car.
     * You may want to keep a copy of [GitHub's Git Cheat Sheet](https://services.github.com/kit/downloads/github-git-cheat-sheet.pdf) as a reference.
 4. Talk to your subteam lead to be added to the team within the GitHub organization.
 5. Clone this repository to your computer using the URLs:
-    * SSH: `git@github.com:hytech-racing/code-2023.git`
-    * HTTPS: `https://github.com/hytech-racing/code-2023.git`
+    * SSH: `git@github.com:hytech-racing/code-2024.git`
+    * HTTPS: `https://github.com/hytech-racing/code-2024.git`
 
 ## Github Software Guidelines and Electrical Designs Rules Review Process
 Follow HyTech's [Github Software Guidelines](https://gtvault.sharepoint.com/:w:/r/sites/HyTechRacing2/Shared%20Documents/Electrical%20-%20All/HT06/Guidelines%20Rules%20and%20Procedures/Github%20Software%20Guidelines.docx?d=w7e0d7e36afeb47b5a935bd7a4851bceb&csf=1&web=1&e=sudzjV) to understand our development flow and pull request procedure.
