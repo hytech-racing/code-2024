@@ -8,6 +8,7 @@
 import PySimpleGUI as sg, sys
 import time
 import threading
+import serial
 from os import path
 from enum import Enum
 from datetime import datetime
@@ -44,6 +45,10 @@ class ConnectionType(Enum):
 MQTT_SERVER = "ec2-3-134-2-166.us-east-2.compute.amazonaws.com"
 MQTT_PORT   = 1883
 MQTT_TOPIC  = 'hytech_car/telemetry'
+
+# ESP32 Connection Defintions
+COM_PORT = 'COM4' # Needs to be set to the right COM Port with the ESP32
+BAUD_RATE = 115200
 
 # Set this to whatever the script is running
 # @TODO: Make a screen at the beginning to let the user choose the type
@@ -244,6 +249,36 @@ def read_from_csv_thread(window):
         line_count += 1
 
     window.write_event_value("-Read CSV Done-", "No data for you left")
+
+'''
+@brief: Thread to connect to ESP32 via PySerial.
+        Parses incoming messages and packages them as an event to the GUI if match.
+@param[in]: window - the PySimpleGUI window object
+'''
+def handle_esp32_thread(window):
+    ser = serial.Serial(COM_PORT, BAUD_RATE, timeout=1)
+    window.write_event_value("-Connection Success-", "good job!")
+
+    while True:
+        line =  ser.readline()
+        if line:
+            string = line.decode()
+            vals = string.split(",")
+
+            id =  hex(int(vals[0]))[2:]
+            raw = hex(int(vals[1]))[2:]
+
+            table = parse_message(id, raw)
+            if table != "INVALID_ID" and table != "UNPARSEABLE":
+                for i in range(len(table[1])):
+                    name = table[1][i].upper()
+                    data = table[2][i]
+                    units = table[3][i]
+                    if name == "MCU_STATE":
+                        window.write_event_value("-MCU State Change-", [data.replace("_", " ")])
+                    elif recursive_lookup(name, DICT):
+                        window.write_event_value("-Update Data-", [name, name.replace("_", " ") + ": " + str(data) + " " + units])
+                        handle_inverter_power(name, data, window)
 
 
 '''
@@ -463,7 +498,7 @@ def main():
     if CONNECTION == ConnectionType.SERVER.value:
         thread = threading.Thread(target=mqtt_connection_thread, args=[window], daemon=True)
     elif CONNECTION == ConnectionType.ESP32.value:
-        sys.exit("ESP32 connection type currently not implemented. Terminating script")
+        thread = threading.Thread(target=handle_esp32_thread, args=[window], daemon=True)
     elif CONNECTION == ConnectionType.TEST_CSV.value:
         thread = threading.Thread(target=read_from_csv_thread, args=[window], daemon=True)
     else:

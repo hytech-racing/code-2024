@@ -6,8 +6,17 @@
  * Rev 2 - 4/23/2019
  * Last Modified: 9/29/2022
  */
+
+ /*
+  * TODO: GPS
+  */
 #define GPS_EN false
 #define COULOUMB_COUNTING_EN false
+
+#define CIRCULAR_BUFFER_INT_SAFE
+#include "CircularBuffer.h"
+
+#include <TeensyThreads.h>
 
 #include <SD.h>
 #include <FlexCAN_T4.h>
@@ -15,22 +24,36 @@
 #include <kinetis_flexcan.h>
 #include <Wire.h>
 #include <TimeLib.h>
+#include <Time.h>
 #include <Metro.h>
 #include <XBTools.h>
-#include <Adafruit_GPS.h>
 #include <ADC_SPI.h>
 
-#define XB Serial2
-#define XBEE_PKT_LEN 15
+
+#define NUM_BMS_IC 12
+#define SER_PKT_LEN 13
 #define TEMP_SENSE_CHANNEL 0
 #define ECU_CURRENT_CHANNEL 1
 #define SUPPLY_READ_CHANNEL 2
 #define COOLING_CURRENT_CHANNEL 3
 #define ALPHA 0.9772                     // parameter for the sowftware filter used on ADC pedal channels
 
+#define CAN_MSG_Q_SZ 512
+#define SD_BUFF_SZ 4096
+
+/*
+ * Serial larger buffer
+ */
+#define NRF Serial2
+#define ESP Serial8
+#define SER_BUF_SZ 4096
+uint8_t NRFbuffer[SER_BUF_SZ];
+uint8_t ESPbuffer[SER_BUF_SZ];
+
 /*
  * Variables to store filtered values from ADC channels
  */
+ADC_SPI ADC(A1, 1800000);
 float filtered_temp_reading{};
 float filtered_ecu_current_reading{};
 float filtered_supply_reading{};
@@ -39,29 +62,60 @@ float filtered_cooling_current_reading{};
 /*
  * CAN Variables
  */
-FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> CAN;
+FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> CAN_1;
+FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> CAN_2;
+FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> CAN_3;
 static CAN_message_t msg_rx;
 static CAN_message_t msg_tx;
 static CAN_message_t xb_msg;
+typedef struct CAN_msg_time {
+  CAN_message_t msg;
+  uint64_t time = 0;
+} CAN_msg_time;
+CircularBuffer<CAN_msg_time, CAN_MSG_Q_SZ> CAN_msg_q;
+Threads::Mutex buffer_lock;
 
+
+/*
+ * SD Card Variables
+ */
+typedef struct SD_write_buf {
+  unsigned int size = 0;
+  uint8_t buffer[SD_BUFF_SZ];
+} SD_write_buf;
+SD_write_buf SD_buf_1;
+SD_write_buf SD_buf_2;
+SD_write_buf *incoming_buf = &SD_buf_1;
+SD_write_buf *current_write_buf = &SD_buf_2;
 File logger;
 
 /*
- * Variables to help with time calculation
+ * Perf counters and debug
  */
-uint64_t global_ms_offset = 0;
-uint64_t last_sec_epoch;
+typedef struct perf_counters {
+  uint16_t CAN_1_freq = 0;
+  uint16_t CAN_2_freq = 0;
+  uint16_t CAN_3_freq = 0;
+  uint16_t GPS_freq = 0;
+  uint32_t loops = 0;
+  uint32_t bytes_written = 0;
+  uint16_t messages_queued = 0;
+  unsigned long max_loop_latency = 0;
+  uint16_t slow_loops = 0;
+  uint16_t slow_loop_time = 0;
+  uint16_t live_messages_sent = 0;  
+} perf_counters;
+perf_counters counters;
+Metro timer_debug_RTC = Metro(1000);
 
-#if GPS_EN
-Adafruit_GPS GPS(&Serial1);
-#endif
-ADC_SPI ADC(A1, 1800000);
+
+Metro timer_flush = Metro(100);
+Metro timer_mcu_analog_readings = Metro(500);
+/*
 Metro timer_mcu_status = Metro(2000);
 Metro timer_debug_dashboard = Metro(2000);
 Metro timer_debug_mcu_pedal_readings = Metro(200);
-Metro timer_debug_mcu_wheel_speed = Metro(200);
 Metro timer_debug_bms_balancing_status = Metro(3000);
-Metro timer_mcu_analog_readings = Metro(500);
 Metro timer_debug_bms_status = Metro(1000);
 Metro timer_debug_bms_temperatures = Metro(3000);
 Metro timer_debug_bms_detailed_temperatures = Metro(3000);
@@ -71,13 +125,10 @@ Metro timer_energy = Metro(1000);
 Metro timer_setpoints_command = Metro(1000);
 Metro timer_status = Metro(1000);
 Metro timer_temps = Metro(1000);
-Metro timer_torque_command = Metro(1000);
 Metro timer_detailed_voltages = Metro(1000);
 Metro timer_status_send = Metro(100);
 Metro timer_status_send_xbee = Metro(2000);
 Metro timer_gps = Metro(100);
-Metro timer_debug_RTC = Metro(1000);
-Metro timer_flush = Metro(100);
 #if COULOUMB_COUNTING_EN
 Metro timer_total_discharge = Metro(1000);
 Metro timer_debug_bms_coulomb_counts = Metro(1000);
@@ -89,12 +140,17 @@ Metro timer_imu_gyroscope = Metro(200);
 Metro timer_sab_readings_front = Metro(200);
 Metro timer_sab_readings_rear = Metro(200);
 Metro timer_sab_readings_gps = Metro(200);
+*/
 
+BMS_detailed_voltages bms_detailed_voltages[4][NUM_BMS_IC];
+MCU_analog_readings mcu_analog_readings;
+BMS_coulomb_counts bms_coulomb_counts;                                                
+uint32_t total_discharge;
+unsigned long previous_data_time;
+/*
 MCU_status mcu_status;
 MCU_pedal_readings mcu_pedal_readings;
-MCU_analog_readings mcu_analog_readings;
 MCU_GPS_readings mcu_gps_readings;
-MCU_wheel_speed mcu_wheel_speed;
 
 MC_energy mc1_energy;
 MC_energy mc2_energy;
@@ -112,24 +168,16 @@ MC_temps mc1_temps;
 MC_temps mc2_temps;
 MC_temps mc3_temps;
 MC_temps mc4_temps;
-MC_torque_command mc1_torque_command;
-MC_torque_command mc2_torque_command;
-MC_torque_command mc3_torque_command;
-MC_torque_command mc4_torque_command;
 
 BMS_voltages bms_voltages;
-BMS_detailed_voltages bms_detailed_voltages[4][8];
 BMS_temperatures bms_temperatures;
-BMS_detailed_temperatures bms_detailed_temperatures[2][8];
+BMS_detailed_temperatures bms_detailed_temperatures[2][NUM_BMS_IC];
 BMS_onboard_temperatures bms_onboard_temperatures;
-BMS_onboard_detailed_temperatures bms_onboard_detailed_temperatures[8];
+BMS_onboard_detailed_temperatures bms_onboard_detailed_temperatures[NUM_BMS_IC]; // Not used
 BMS_status bms_status;
 BMS_balancing_status bms_balancing_status[2];
-BMS_coulomb_counts bms_coulomb_counts;                                                
 CCU_status ccu_status;
 Dashboard_status dashboard_status;
-uint32_t total_discharge;
-unsigned long previous_data_time;
 EM_status em_status;
 EM_measurement em_measurement;
 IMU_accelerometer imu_accelerometer;
@@ -137,96 +185,87 @@ IMU_gyroscope imu_gyroscope;
 SAB_readings_front sab_readings_front;
 SAB_readings_rear sab_readings_rear;
 SAB_readings_gps sab_readings_gps;
+*/
 
-void parse_can_message();
-void write_to_SD(CAN_message_t *msg);
-time_t getTeensy3Time();
-void process_current();
-#if GPS_EN
-void process_gps();
-static bool pending_gps_data;
-#endif
-void process_glv_voltage();
-void setup_total_discharge();
-void process_total_discharge();
-void write_total_discharge();
-int write_xbee_data();
-void send_xbee();
-void sd_date_time(uint16_t* date, uint16_t* time);
 void setup() {
-    delay(5000); // Prevents suprious text files when turning the car on and off rapidly
+    //MTP.begin();
+    setupSD();
+    //MTP.addFilesystem(SD, "SD Card");
     
     /* Set up Serial, XBee and CAN */
     Serial.begin(115200);
-    XB.begin(115200);
+    NRF.begin(115200);
+    NRF.addMemoryForWrite(NRFbuffer, SER_BUF_SZ);
+    ESP.begin(115200);
+    ESP.addMemoryForWrite(ESPbuffer, SER_BUF_SZ);
 
-    /* Set up real-time clock */
-    //Teensy3Clock.set(9999999999); // set time (epoch) at powerup  (COMMENT OUT THIS LINE AND PUSH ONCE RTC HAS BEEN SET!!!!)
-    setSyncProvider(getTeensy3Time); // registers Teensy RTC as system time
-    if (timeStatus() != timeSet) {
-        Serial.println("RTC not set up - uncomment the Teensy3Clock.set() function call to set the time");
-    } else {
-        Serial.println("System time set to RTC");
-    }
-    last_sec_epoch = Teensy3Clock.get();
-    
+    setupClock();
+
+    int gps_setup = setupGPS();
+
+    createFile();
+
     //FLEXCAN0_MCR &= 0xFFFDFFFF; // Enables CAN message self-reception
-    CAN.begin();
+    CAN_1.begin();
+    CAN_1.setBaudRate(500000);
+    CAN_2.begin();
+    CAN_2.setBaudRate(500000);
+    CAN_3.begin();
+    CAN_3.setBaudRate(500000);
+    CAN_1.enableMBInterrupts();
+    CAN_2.enableMBInterrupts();
+    CAN_3.enableMBInterrupts();
+    CAN_1.onReceive(parse_can1_message);
+    CAN_2.onReceive(parse_can2_message);
+    CAN_3.onReceive(parse_can3_message);
     
-  #if GPS_EN
-    /* Set up GPS */
-    GPS.begin(9600);
-    GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA); // specify data to be received (minimum + fix)
-    GPS.sendCommand(PMTK_SET_NMEA_UPDATE_10HZ); // set update rate (10Hz)
-    GPS.sendCommand(PGCMD_ANTENNA); // report data about antenna
-  #endif
-  
-    /* Set up SD card */
-    Serial.println("Initializing SD card...");
-    SdFile::dateTimeCallback(sd_date_time); // Set date/time callback function
-    if (!SD.begin(BUILTIN_SDCARD)) { // Begin Arduino SD API (Teensy 3.5)
-        Serial.println("SD card failed or not present");
+    Serial.println("TCU On");
+
+    threads.setSliceMicros(10);
+    threads.setDefaultTimeSlice(1);
+    if (gps_setup == 0) {
+      int id1 = threads.addThread(gpsthread);
     }
-    char filename[] = "data0000.CSV";
-    for (uint8_t i = 0; i < 10000; i++) {
-        filename[4] = i / 1000     + '0';
-        filename[5] = i / 100 % 10 + '0';
-        filename[6] = i / 10  % 10 + '0';
-        filename[7] = i       % 10 + '0';
-        if (!SD.exists(filename)) {
-            logger = SD.open(filename, (uint8_t) O_WRITE | (uint8_t) O_CREAT); // Open file for writing
-            break;
-        }
-        if (i == 9999) { // If all possible filenames are in use, print error
-            Serial.println("All possible SD card log filenames are in use - please clean up the SD card");
-        }
-    }
-    
-    if (logger) {
-        Serial.println("Successfully opened SD file");
-    } else {
-        Serial.println("Failed to open SD file");
-    }
-    
-    logger.println("time,msg.id,msg.len,data"); // Print CSV heading to the logfile
-    logger.flush();
+    threads.setTimeSlice(0, 19);    
 }
+
+Metro telem = Metro(1000);
+
 void loop() {
+    unsigned long before = millis();
+    CAN_1.events();
+    CAN_2.events();
+    CAN_3.events();
+    //gpsLoop();
+    //MTP.loop();
     /* Process and log incoming CAN messages */
-    parse_can_message();
-    read_analog_values();
+    //parse_can_lines();
+    //read_analog_values();
+    //readESP();
     /* Send messages over XBee */
     send_xbee();
+    parse_can_q();
+    
+    //write_buf_to_SD(current_write_buf);
     /* Flush data to SD card occasionally */
-    if (timer_flush.check()) {
+    static unsigned int live_telem_has_setup = 0;
+    if ((!live_telem_has_setup) && (millis() > 30000)) {
+      live_telem_setup();
+      live_telem_has_setup = 1;
+    }
+
+    live_telem_loop();
+
+    /*if (telem.check()) { //1000
+      print_voltages_temps();
+      print_temps();
+    }*/
+    
+    if (timer_flush.check()) { //100 
         logger.flush(); // Flush data to disk (data is also flushed whenever the 512 Byte buffer fills up, but this call ensures we don't lose more than a second of data when the car turns off)
     }
-    /* Print timestamp to serial occasionally */
-    if (timer_debug_RTC.check()) {
-        Serial.println(Teensy3Clock.get());
-    }
     /* Process MCU analog readings */
-    if (timer_mcu_analog_readings.check()) {
+    if (timer_mcu_analog_readings.check()) { //500
         process_mcu_analog_readings();
     }
     /* Couloumb counting */
@@ -235,116 +274,54 @@ void loop() {
         write_total_discharge();
     }
     #endif
-  #if GPS_EN
-    /* Process GPS readings */
-    GPS.read();
-    if (GPS.newNMEAreceived()) {
-        GPS.parse(GPS.lastNMEA());
-        pending_gps_data = true;
-    }
-    if (timer_gps.check() && pending_gps_data) {
-        process_gps();
-    }
-  #endif
-}
-void parse_can_message() {
-    while (CAN.read(msg_rx)) {
-        write_to_SD(&msg_rx); // Write to SD card buffer (if the buffer fills up, triggering a flush to disk, this will take 8ms)
-        // Identify received CAN messages and load contents into corresponding structs
-        if (msg_rx.id == ID_BMS_DETAILED_VOLTAGES) {
-            BMS_detailed_voltages temp = BMS_detailed_voltages(msg_rx.buf);
-            bms_detailed_voltages[temp.get_group_id()][temp.get_ic_id()].load(msg_rx.buf);
-        }
-        else if (msg_rx.id == ID_BMS_DETAILED_TEMPERATURES) {
-            BMS_detailed_temperatures temp = BMS_detailed_temperatures(msg_rx.buf);
-            bms_detailed_temperatures[temp.get_group_id()][temp.get_ic_id()].load(msg_rx.buf);
-        }
-        else if (msg_rx.id == ID_BMS_ONBOARD_DETAILED_TEMPERATURES) {
-            BMS_onboard_detailed_temperatures temp = BMS_onboard_detailed_temperatures(msg_rx.buf);
-            bms_onboard_detailed_temperatures[temp.get_ic_id()].load(msg_rx.buf);
-        }
-        else if (msg_rx.id == ID_BMS_BALANCING_STATUS) {
-            BMS_balancing_status temp = BMS_balancing_status(msg_rx.buf);
-            bms_balancing_status[temp.get_group_id()].load(msg_rx.buf);
-        }
-        else switch(msg_rx.id) {
-            case ID_MCU_STATUS:                         
-                // Serial.println("mcu_received");
-                mcu_status.load(msg_rx.buf);                        break;
-            case ID_DASHBOARD_STATUS:                   dashboard_status.load(msg_rx.buf);                  break;
-            case ID_MCU_PEDAL_READINGS:                 mcu_pedal_readings.load(msg_rx.buf);                break;
-            case ID_MCU_ANALOG_READINGS:                mcu_analog_readings.load(msg_rx.buf);               break;
-            case ID_BMS_VOLTAGES:                       bms_voltages.load(msg_rx.buf);                      break;
-            case ID_BMS_TEMPERATURES:                   bms_temperatures.load(msg_rx.buf);                  break;
-            case ID_BMS_ONBOARD_TEMPERATURES:           bms_onboard_temperatures.load(msg_rx.buf);          break;
-            case ID_BMS_STATUS:                         bms_status.load(msg_rx.buf);                        break;
-            case ID_BMS_COULOMB_COUNTS:                 bms_coulomb_counts.load(msg_rx.buf);                break;
-            case ID_CCU_STATUS:                         ccu_status.load(msg_rx.buf);                        break;
-            case ID_MC1_STATUS:                         mc1_status.load(msg_rx.buf);                        break;
-            case ID_MC2_STATUS:                         mc2_status.load(msg_rx.buf);                        break;
-            case ID_MC3_STATUS:                         mc3_status.load(msg_rx.buf);                        break;
-            case ID_MC4_STATUS:                         mc4_status.load(msg_rx.buf);                        break;
-            case ID_MC1_TEMPS:                          mc1_temps.load(msg_rx.buf);                         break;
-            case ID_MC2_TEMPS:                          mc2_temps.load(msg_rx.buf);                         break;
-            case ID_MC3_TEMPS:                          mc3_temps.load(msg_rx.buf);                         break;
-            case ID_MC4_TEMPS:                          mc4_temps.load(msg_rx.buf);                         break;
-            case ID_MC1_ENERGY:                         mc1_energy.load(msg_rx.buf);                        break;
-            case ID_MC2_ENERGY:                         mc2_energy.load(msg_rx.buf);                        break;
-            case ID_MC3_ENERGY:                         mc3_energy.load(msg_rx.buf);                        break;
-            case ID_MC4_ENERGY:                         mc4_energy.load(msg_rx.buf);                        break;
-            case ID_MC1_SETPOINTS_COMMAND:              mc1_setpoints_command.load(msg_rx.buf);             break;
-            case ID_MC2_SETPOINTS_COMMAND:              mc2_setpoints_command.load(msg_rx.buf);             break;
-            case ID_MC3_SETPOINTS_COMMAND:              mc3_setpoints_command.load(msg_rx.buf);             break;
-            case ID_MC4_SETPOINTS_COMMAND:              mc4_setpoints_command.load(msg_rx.buf);             break;
-            case ID_MC1_TORQUE_COMMAND:                 mc1_torque_command.load(msg_rx.buf);                break;
-            case ID_MC2_TORQUE_COMMAND:                 mc2_torque_command.load(msg_rx.buf);                break;
-            case ID_MC3_TORQUE_COMMAND:                 mc3_torque_command.load(msg_rx.buf);                break;
-            case ID_MC4_TORQUE_COMMAND:                 mc4_torque_command.load(msg_rx.buf);                break;
-            case ID_MCU_WHEEL_SPEED:                    mcu_wheel_speed.load(msg_rx.buf);                   break;
-            case ID_EM_STATUS:                          em_status.load(msg_rx.buf);                         break;
-            case ID_EM_MEASUREMENT:                     em_measurement.load(msg_rx.buf);                    break;
-            case ID_IMU_ACCELEROMETER:                  imu_accelerometer.load(msg_rx.buf);                 break;
-            case ID_IMU_GYROSCOPE:                      imu_gyroscope.load(msg_rx.buf);                     break;
-            case ID_SAB_READINGS_FRONT:                 sab_readings_front.load(msg_rx.buf);                break;
-            case ID_SAB_READINGS_REAR:                  sab_readings_rear.load(msg_rx.buf);                 break;
-            case ID_SAB_READINGS_GPS:                   sab_readings_gps.load(msg_rx.buf);                  break;
-        }
-    }
-}
-void write_to_SD(CAN_message_t *msg) { // Note: This function does not flush data to disk! It will happen when the buffer fills or when the above flush timer fires
-    // Calculate Time
-    //This block is verified to loop through
-    uint64_t sec_epoch = Teensy3Clock.get();
-    if (sec_epoch != last_sec_epoch) {
-        global_ms_offset = millis() % 1000;
-        last_sec_epoch = sec_epoch;
-    }
-    uint64_t current_time = sec_epoch * 1000 + (millis() - global_ms_offset) % 1000;
 
-    // Log to SD
-    logger.print(current_time);
-    logger.print(",");
-    logger.print(msg->id, HEX);
-    logger.print(",");
-    logger.print(msg->len);
-    logger.print(",");
-    for (int i = 0; i < msg->len; i++) {
-        if (msg->buf[i] < 16) {
-            logger.print("0");
-        }
-        logger.print(msg->buf[i], HEX);
+    /* Print timestamp to serial occasionally */
+    if (timer_debug_RTC.check()) { //1000
+        Serial.printf("Clock: %u\n", Teensy3Clock.get());
+        Serial.printf("CAN1: %u, CAN2: %u, CAN3: %u, GPS: %u, Loops: %lu\n",counters.CAN_1_freq, counters.CAN_2_freq, counters.CAN_3_freq, counters.GPS_freq, counters.loops);
+        Serial.printf("Messages written: %lu Messages queued: %u Live messages sent: %u\n", counters.bytes_written, counters.messages_queued, counters.live_messages_sent);
+        Serial.printf("Max loop latency: %lu Slow loops: %u Slow loop time: %u\n", counters.max_loop_latency, counters.slow_loops, counters.slow_loop_time);
+        Serial.println();
+        counters = (perf_counters){
+          .CAN_1_freq = 0, 
+          .CAN_2_freq = 0, 
+          .CAN_3_freq = 0, 
+          .GPS_freq = 0, 
+          .loops = 0,
+          .bytes_written = 0,
+          .messages_queued = 0,
+          .max_loop_latency = 0,
+          .slow_loops = 0,
+          .slow_loop_time = 0,
+          .live_messages_sent = 0,
+          };
     }
-    logger.println();
+    counters.loops++;
+    unsigned long after = millis();
+    if (after-before > counters.max_loop_latency) {
+      counters.max_loop_latency = after-before;
+    }
+    if (after-before > 1) {
+      counters.slow_loops++;
+      counters.slow_loop_time += after-before;
+    }
+    if (Serial8.available()) {
+      Serial.write(Serial8.read());
+    }
 }
+
+
+
 time_t getTeensy3Time() {
     return Teensy3Clock.get();
 }
+
 inline void read_analog_values() {
     /* Filter ADC readings */
-    filtered_temp_reading        = ALPHA * filtered_temp_reading      + (1 - ALPHA) * ADC.read_adc(TEMP_SENSE_CHANNEL);
-    filtered_ecu_current_reading   = ALPHA * filtered_ecu_current_reading   + (1 - ALPHA) * ADC.read_adc(ECU_CURRENT_CHANNEL);
-    filtered_supply_reading      = ALPHA * filtered_supply_reading      + (1 - ALPHA) * ADC.read_adc(SUPPLY_READ_CHANNEL);
-    filtered_cooling_current_reading = ALPHA * filtered_cooling_current_reading + (1 - ALPHA) * ADC.read_adc(COOLING_CURRENT_CHANNEL);
+    filtered_temp_reading        = ALPHA * filtered_temp_reading      + (1 - ALPHA) * ADC.read_channel(TEMP_SENSE_CHANNEL);
+    filtered_ecu_current_reading   = ALPHA * filtered_ecu_current_reading   + (1 - ALPHA) * ADC.read_channel(ECU_CURRENT_CHANNEL);
+    filtered_supply_reading      = ALPHA * filtered_supply_reading      + (1 - ALPHA) * ADC.read_channel(SUPPLY_READ_CHANNEL);
+    filtered_cooling_current_reading = ALPHA * filtered_cooling_current_reading + (1 - ALPHA) * ADC.read_channel(COOLING_CURRENT_CHANNEL);
 }
 void process_mcu_analog_readings() {
     //self derived
@@ -355,18 +332,18 @@ void process_mcu_analog_readings() {
     float glv_voltage_value = (((filtered_supply_reading/4096) * 5) * 55/12) + 0.14; //ADC->12V conversion + offset likely due to resistor values
     //Serial.print("GLV: ");
     //Serial.println(glv_voltage_value);
-    mcu_analog_readings.set_ecu_current(current_ecu * 5000);
-    mcu_analog_readings.set_cooling_current(current_cooling * 5000);
-    mcu_analog_readings.set_glv_battery_voltage(glv_voltage_value * 2500);
-    mcu_analog_readings.set_temperature(filtered_temp_reading);
-    mcu_analog_readings.write(msg_tx.buf);
-    msg_tx.id = ID_MCU_ANALOG_READINGS;
-    msg_tx.len = sizeof(mcu_analog_readings);
-    CAN.write(msg_tx);
-    mcu_analog_readings.write(xb_msg.buf);
-    xb_msg.id = ID_MCU_ANALOG_READINGS;
-    xb_msg.len = sizeof(mcu_analog_readings);
-    write_xbee_data();   
+    //mcu_analog_readings.set_ecu_current(current_ecu * 5000);
+    //mcu_analog_readings.set_cooling_current(current_cooling * 5000);
+    //mcu_analog_readings.set_glv_battery_voltage(glv_voltage_value * 2500);
+    //mcu_analog_readings.set_temperature(filtered_temp_reading);
+    //mcu_analog_readings.write(msg_tx.buf);
+    //msg_tx.id = ID_MCU_ANALOG_READINGS;
+    //msg_tx.len = sizeof(mcu_analog_readings);
+    //CAN_1.write(msg_tx);
+    //mcu_analog_readings.write(xb_msg.buf);
+    //xb_msg.id = ID_MCU_ANALOG_READINGS;
+    //xb_msg.len = sizeof(mcu_analog_readings);
+    //write_xbee_data();   
 }
 void setup_total_discharge() {
   total_discharge = 0;
@@ -392,290 +369,6 @@ void write_total_discharge() {
 }
 #endif
 
-#if GPS_EN
-void process_gps() {
-    mcu_gps_readings.set_latitude(GPS.latitude_fixed);
-    mcu_gps_readings.set_longitude(GPS.longitude_fixed);
-    //Serial.print("Latitude (x100000): ");
-    //Serial.println(mcu_gps_readings_alpha.get_latitude());
-    //Serial.print("Longitude (x100000): ");
-    //Serial.println(mcu_gps_readings_alpha.get_longitude());
-    msg_tx.id = ID_MCU_GPS_READINGS;
-    msg_tx.len = sizeof(MCU_GPS_readings);
-    CAN.write(msg_tx);
-    pending_gps_data = false;
-}
-#endif
-int write_xbee_data() {
-    /*
-     * DECODED FRAME STRUCTURE:
-     * [ msg id (4) | msg len (1) | msg contents (8) | checksum (2) ]
-     * ENCODED FRAME STRUCTURE:
-     * [ fletcher (1) | msg id (4) | msg len (1) | msg contents (8) | checksum (2) | delimiter (1) ]
-     */
-    uint8_t xb_buf[XBEE_PKT_LEN];
-    memcpy(xb_buf, &xb_msg.id, sizeof(xb_msg.id));        // msg id
-    memcpy(xb_buf + sizeof(xb_msg.id), &xb_msg.len, sizeof(uint8_t));     // msg len
-    memcpy(xb_buf + sizeof(xb_msg.id) + sizeof(uint8_t), xb_msg.buf, xb_msg.len); // msg contents
-    // calculate checksum
-    uint16_t checksum = fletcher16(xb_buf, XBEE_PKT_LEN - 2);
-    //Serial.print("CHECKSUM: ");
-    //Serial.println(checksum, HEX);
-    memcpy(&xb_buf[XBEE_PKT_LEN - 2], &checksum, sizeof(uint16_t));
-    for (int i = 0; i < XBEE_PKT_LEN; i++) {
-        //Serial.print(xb_buf[i], HEX);
-        //Serial.print(" ");
-    }
-    //Serial.println();
-    uint8_t cobs_buf[2 + XBEE_PKT_LEN];
-    cobs_encode(xb_buf, XBEE_PKT_LEN, cobs_buf);
-    cobs_buf[XBEE_PKT_LEN+1] = 0x0;
-    for (int i = 0; i < XBEE_PKT_LEN+2; i++) {
-        //Serial.print(cobs_buf[i], HEX);
-        //Serial.print(" ");
-    }
-    //Serial.println();
-    int written = XB.write(cobs_buf, 2 + XBEE_PKT_LEN);
-    //Serial.print("Wrote ");
-    //Serial.print(written);
-    //Serial.println(" bytes");
-    memset(xb_buf, 0, sizeof(CAN_message_t));
-    return written;
-}
-void send_xbee() {
-    if (timer_debug_bms_voltages.check()) {
-        bms_voltages.write(xb_msg.buf);
-        xb_msg.len = sizeof(BMS_voltages);
-        xb_msg.id = ID_BMS_VOLTAGES;
-        write_xbee_data();
-        /*XB.print("BMS VOLTAGE AVERAGE: ");
-        XB.println(bms_voltages.get_average() / (double) 10000, 4);
-        XB.print("BMS VOLTAGE LOW: ");
-        XB.println(bms_voltages.get_low() / (double) 10000, 4);
-        XB.print("BMS VOLTAGE HIGH: ");
-        XB.println(bms_voltages.get_high() / (double) 10000, 4);
-        XB.print("BMS VOLTAGE TOTAL: ");
-        XB.println(bms_voltages.get_total() / (double) 100, 2);*/
-    }
-    if (timer_debug_bms_detailed_voltages.check()) {
-        for (int ic = 0; ic < 8; ic++) {
-            for (int group = 0; group < ((ic % 2 == 0) ? 4 : 3); group++) {
-                bms_detailed_voltages[group][ic].write(xb_msg.buf);
-                xb_msg.len = sizeof(BMS_detailed_voltages);
-                xb_msg.id = ID_BMS_DETAILED_VOLTAGES;
-                write_xbee_data();
-            }
-        }
-    }
-    if (timer_debug_bms_temperatures.check()) {
-        bms_temperatures.write(xb_msg.buf);
-        xb_msg.len = sizeof(BMS_temperatures);
-        xb_msg.id = ID_BMS_TEMPERATURES;
-        write_xbee_data();
-        /*XB.print("BMS AVERAGE TEMPERATURE: ");
-        XB.println(bms_temperatures.get_average_temperature() / (double) 100, 2);
-        XB.print("BMS LOW TEMPERATURE: ");
-        XB.println(bms_temperatures.get_low_temperature() / (double) 100, 2);
-        XB.print("BMS HIGH TEMPERATURE: ");
-        XB.println(bms_temperatures.get_high_temperature() / (double) 100, 2);*/
-    }
-    if (timer_debug_bms_detailed_temperatures.check()) {
-        for (int ic = 0; ic < 8; ic++) {
-            for (int group = 0; group < 2; group++) {
-                bms_detailed_temperatures[group][ic].write(xb_msg.buf);
-                xb_msg.len = sizeof(BMS_detailed_temperatures);
-                xb_msg.id = ID_BMS_DETAILED_TEMPERATURES;
-                write_xbee_data();
-            }
-        }
-    }
-    if (timer_debug_bms_status.check()) {
-        bms_status.write(xb_msg.buf);
-        xb_msg.len = sizeof(BMS_status);
-        xb_msg.id = ID_BMS_STATUS;
-        write_xbee_data();
-        /*XB.print("BMS STATE: ");
-        XB.println(bms_status.get_state());
-        XB.print("BMS ERROR FLAGS: 0x");
-        XB.println(bms_status.get_error_flags(), HEX);
-        XB.print("BMS CURRENT: ");
-        XB.println(bms_status.get_current() / (double) 100, 2);*/
-    }
-    #if COULOUMB_COUNTING_EN
-    if (timer_debug_bms_coulomb_counts.check()) {
-        bms_coulomb_counts.write(xb_msg.buf);
-        xb_msg.len = sizeof(BMS_coulomb_counts);
-        xb_msg.id = ID_BMS_COULOMB_COUNTS;
-        write_xbee_data();
-    }
-    #endif
-    if (timer_mcu_status.check()) {
-        mcu_status.write(xb_msg.buf);
-        xb_msg.len = sizeof(MCU_status);
-        xb_msg.id = ID_MCU_STATUS;
-        // Serial.println("xbee mcu send");
-        write_xbee_data();
-    }
-    if (timer_debug_mcu_pedal_readings.check()) {
-        mcu_pedal_readings.write(xb_msg.buf);
-        xb_msg.len = sizeof(MCU_pedal_readings);
-        xb_msg.id = ID_MCU_PEDAL_READINGS;
-        write_xbee_data();
-    }
-    
-    if (timer_debug_bms_balancing_status.check()) {
-        for (int i = 0; i < 2; i++) {
-            bms_balancing_status[i].write(xb_msg.buf);
-            xb_msg.len = sizeof(BMS_balancing_status);
-            xb_msg.id = ID_BMS_BALANCING_STATUS;
-            write_xbee_data();
-        }
-    }
-    if (timer_debug_mcu_wheel_speed.check()) {
-        mcu_wheel_speed.write(xb_msg.buf);
-        xb_msg.len = sizeof(MCU_wheel_speed);
-        xb_msg.id = ID_MCU_WHEEL_SPEED;
-        write_xbee_data();
-    }
-    if (timer_debug_dashboard.check()) {
-        dashboard_status.write(xb_msg.buf);
-        xb_msg.len = sizeof(dashboard_status);
-        xb_msg.id = ID_DASHBOARD_STATUS;
-        write_xbee_data();
-    }
-    if (timer_em_status.check()) {
-        em_status.write(xb_msg.buf);
-        xb_msg.len = sizeof(em_status);
-        xb_msg.id = ID_EM_STATUS;
-        write_xbee_data();
-    }
-    if (timer_em_measurement.check()) {
-        em_measurement.write(xb_msg.buf);
-        xb_msg.len = sizeof(em_measurement);
-        xb_msg.id = ID_EM_MEASUREMENT;
-        write_xbee_data();
-    }
-    if (timer_imu_accelerometer.check()) {
-        imu_accelerometer.write(xb_msg.buf);
-        xb_msg.len = sizeof(imu_accelerometer);
-        xb_msg.id = ID_IMU_ACCELEROMETER;
-        write_xbee_data();
-    }
-    if (timer_imu_gyroscope.check()) {
-        imu_gyroscope.write(xb_msg.buf);
-        xb_msg.len = sizeof(imu_gyroscope);
-        xb_msg.id = ID_IMU_GYROSCOPE;
-        write_xbee_data();
-    }
-    if (timer_energy.check()) {
-        mc1_energy.write(xb_msg.buf);
-        xb_msg.len = sizeof(mc1_energy);
-        xb_msg.id = ID_MC1_ENERGY;
-        write_xbee_data();
-        mc2_energy.write(xb_msg.buf);
-        xb_msg.len = sizeof(mc2_energy);
-        xb_msg.id = ID_MC2_ENERGY;
-        write_xbee_data();
-        mc3_energy.write(xb_msg.buf);
-        xb_msg.len = sizeof(mc3_energy);
-        xb_msg.id = ID_MC3_ENERGY;
-        write_xbee_data();
-        mc4_energy.write(xb_msg.buf);
-        xb_msg.len = sizeof(mc4_energy);
-        xb_msg.id = ID_MC4_ENERGY;
-        write_xbee_data();
-    }
-    if (timer_setpoints_command.check()) {
-        mc1_setpoints_command.write(xb_msg.buf);
-        xb_msg.len = sizeof(mc1_setpoints_command);
-        xb_msg.id = ID_MC1_SETPOINTS_COMMAND;
-        write_xbee_data();
-        mc2_setpoints_command.write(xb_msg.buf);
-        xb_msg.len = sizeof(mc2_setpoints_command);
-        xb_msg.id = ID_MC2_SETPOINTS_COMMAND;
-        write_xbee_data();
-        mc3_setpoints_command.write(xb_msg.buf);
-        xb_msg.len = sizeof(mc3_setpoints_command);
-        xb_msg.id = ID_MC3_SETPOINTS_COMMAND;
-        write_xbee_data();
-        mc4_setpoints_command.write(xb_msg.buf);
-        xb_msg.len = sizeof(mc4_setpoints_command);
-        xb_msg.id = ID_MC4_SETPOINTS_COMMAND;
-        write_xbee_data();
-    }
-    if (timer_status.check()) {
-        mc1_status.write(xb_msg.buf);
-        xb_msg.len = sizeof(mc1_status);
-        xb_msg.id = ID_MC1_STATUS;
-        write_xbee_data();
-        mc2_status.write(xb_msg.buf);
-        xb_msg.len = sizeof(mc2_status);
-        xb_msg.id = ID_MC2_STATUS;
-        write_xbee_data();
-        mc3_status.write(xb_msg.buf);
-        xb_msg.len = sizeof(mc3_status);
-        xb_msg.id = ID_MC3_STATUS;
-        write_xbee_data();
-        mc4_status.write(xb_msg.buf);
-        xb_msg.len = sizeof(mc4_status);
-        xb_msg.id = ID_MC4_STATUS;
-        write_xbee_data();
-    }
-    if (timer_temps.check()) {
-        mc1_temps.write(xb_msg.buf);
-        xb_msg.len = sizeof(mc1_temps);
-        xb_msg.id = ID_MC1_TEMPS;
-        write_xbee_data();
-        mc2_temps.write(xb_msg.buf);
-        xb_msg.len = sizeof(mc2_temps);
-        xb_msg.id = ID_MC2_TEMPS;
-        write_xbee_data();
-        mc3_temps.write(xb_msg.buf);
-        xb_msg.len = sizeof(mc3_temps);
-        xb_msg.id = ID_MC3_TEMPS;
-        write_xbee_data();
-        mc4_temps.write(xb_msg.buf);
-        xb_msg.len = sizeof(mc4_temps);
-        xb_msg.id = ID_MC4_TEMPS;
-        write_xbee_data();
-    }
-    if (timer_torque_command.check()) {
-        mc1_torque_command.write(xb_msg.buf);
-        xb_msg.len = sizeof(mc1_torque_command);
-        xb_msg.id = ID_MC1_TORQUE_COMMAND;
-        write_xbee_data();
-        mc2_torque_command.write(xb_msg.buf);
-        xb_msg.len = sizeof(mc2_torque_command);
-        xb_msg.id = ID_MC2_TORQUE_COMMAND;
-        write_xbee_data();
-        mc3_torque_command.write(xb_msg.buf);
-        xb_msg.len = sizeof(mc3_torque_command);
-        xb_msg.id = ID_MC3_TORQUE_COMMAND;
-        write_xbee_data();
-        mc4_torque_command.write(xb_msg.buf);
-        xb_msg.len = sizeof(mc4_torque_command);
-        xb_msg.id = ID_MC4_TORQUE_COMMAND;
-        write_xbee_data();
-    }    
-    if (timer_sab_readings_front.check()) {
-        sab_readings_front.write(xb_msg.buf);
-        xb_msg.len = sizeof(sab_readings_front);
-        xb_msg.id = ID_SAB_READINGS_FRONT;
-        write_xbee_data();
-    }
-    if (timer_sab_readings_rear.check()) {
-        sab_readings_rear.write(xb_msg.buf);
-        xb_msg.len = sizeof(sab_readings_rear);
-        xb_msg.id = ID_SAB_READINGS_REAR;
-        write_xbee_data();
-    }
-    if (timer_sab_readings_gps.check()) {
-        sab_readings_gps.write(xb_msg.buf);
-        xb_msg.len = sizeof(sab_readings_gps);
-        xb_msg.id = ID_SAB_READINGS_GPS;
-        write_xbee_data();
-    }
-}
 void sd_date_time(uint16_t* date, uint16_t* time) {
     // return date using FAT_DATE macro to format fields
     *date = FAT_DATE(year(), month(), day());
