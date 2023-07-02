@@ -31,7 +31,7 @@
 #define WATCHDOG_OUT 7
 #define TEENSY_OK 6
 #define STATUS 5
-#define AC_CURRENT 15
+#define AC_CURRENT 13
 
 #define LED A8
 
@@ -215,8 +215,8 @@ void check_shutdown_signals() {
 void configure_charging() {
   if (charge_enable) {
     //maxChargingVoltage is 529.0V, with .1V/Bit. Hex Value: 14AA
-    charger_configure.set_max_charging_voltage_high(0x14); //1450 is 520.0 V
-    charger_configure.set_max_charging_voltage_low(0x50);
+    charger_configure.set_max_charging_voltage_high(0x14); //1450 is 520.0 V, 14B4 is 530.0
+    charger_configure.set_max_charging_voltage_low(0xB4);
     charger_configure.set_max_charging_current_low(set_charge_current());
     charger_configure.set_control(0);
   } else {

@@ -108,7 +108,7 @@ void loop() {
   btn_update();
   dial_update();
   neopixel_update();
-  Serial.println(mcu_analog_readings.get_glv_battery_voltage());
+
   //Serial.println(bms_voltages.get_low());
 
 
@@ -165,7 +165,7 @@ inline void neo_pixel_init() {
       dashboard_neopixels.setPixelColor(i, 0);
     }
     if (i == 0 || i == 1) {
-      dashboard_neopixels.setPixelColor(i, LED_ON_GREEN);
+      dashboard_neopixels.setPixelColor(i, LED_OFF);
     }
 
   }
@@ -388,53 +388,46 @@ inline void bms_voltages_received() {
 inline void mcu_status_received() {
   // control BUZZER_CTRL
   digitalWrite(BUZZER_CTRL, mcu_status.get_activate_buzzer());
-
+  Serial.print("AMS: ");
+  Serial.println(mcu_status.get_bms_ok_high());
+  Serial.print("IMD: ");
+  Serial.println(mcu_status.get_imd_ok_high());
+  Serial.print("IMD/AMS flags: ");
+  Serial.println(imd_ams_flags, BIN);
   if (mcu_status.get_bms_ok_high()) {
 
-    if ((imd_ams_flags >> 1) & 1 == 0) {
-      dashboard_neopixels.setPixelColor(LED_LIST::AMS, LED_ON_GREEN);
-      dashboard_status.set_ams_led(static_cast<uint8_t>(LED_MODES::ON));
+    if (((imd_ams_flags >> 1) & 1) == 0) {
+      dashboard_neopixels.setPixelColor(LED_LIST::AMS, LED_OFF);
+      dashboard_status.set_ams_led(static_cast<uint8_t>(LED_MODES::OFF));
     //display_list[4] = 1;
       imd_ams_flags |= (1 << 1);
     }
 
-  }
-  // else if (init_ams){
-  //     led_ams.setMode(LED_MODES::OFF);
-  //     dashboard_status.set_ams_led(static_cast<uint8_t>(LED_MODES::OFF));
-  //     init_ams = false;
-  // }
-  else if ((imd_ams_flags >> 1) & 1 == 1) {
-
+  } else if (((imd_ams_flags >> 1) & 1) == 1) {
+    if(mcu_status.get_imd_ok_high()) {
     dashboard_neopixels.setPixelColor(LED_LIST::AMS, LED_RED);
     dashboard_status.set_ams_led(static_cast<uint8_t>(LED_MODES::RED));
     //display_list[4] = 0;
+    }
 
   }
 
   //IMD LED
   if (mcu_status.get_imd_ok_high()) {
-    if (imd_ams_flags & 1 == 0) {
-      dashboard_neopixels.setPixelColor(LED_LIST::IMD, LED_ON_GREEN);
-      dashboard_status.set_imd_led(static_cast<uint8_t>(LED_MODES::ON));
+    if ((imd_ams_flags & 1) == 0) {
+      dashboard_neopixels.setPixelColor(LED_LIST::IMD, LED_OFF);
+      dashboard_status.set_imd_led(static_cast<uint8_t>(LED_MODES::OFF));
     //display_list[3] = 1;
       imd_ams_flags |= 1;
     }
+  } else if ((imd_ams_flags & 1) == 1) {
     
-
-
-  }
-  // else if (init_imd){
-  //     led_imd.setMode(LED_MODES::OFF);
-  //     dashboard_status.set_imd_led(static_cast<uint8_t>(LED_MODES::OFF));
-  //     init_imd = false;
-  // }
-  else if (imd_ams_flags & 1 == 1) {
-
-    dashboard_neopixels.setPixelColor(LED_LIST::IMD, LED_RED);
-    dashboard_status.set_imd_led(static_cast<uint8_t>(LED_MODES::RED));
+      dashboard_neopixels.setPixelColor(LED_LIST::IMD, LED_RED);
+      dashboard_status.set_imd_led(static_cast<uint8_t>(LED_MODES::RED));
     //display_list[3] = 0;
-  }
+
+    
+  } 
 
   //Start LED
   switch (mcu_status.get_state()) {

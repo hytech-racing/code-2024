@@ -78,6 +78,7 @@ Metro timer_CAN_mcu_status_send = Metro(100);
 Metro timer_CAN_mcu_pedal_readings_send = Metro(50);
 Metro timer_CAN_mcu_analog_readings_send = Metro(50);
 Metro timer_CAN_mcu_load_cells_send = Metro(20);
+Metro timer_CAN_mcu_potentiometers_send = Metro(20);
 
 Metro timer_ready_sound = Metro(2000); // Time to play RTD sound
 
@@ -222,8 +223,8 @@ void setup() {
   delay(5000);
 
   set_state(MCU_STATE::TRACTIVE_SYSTEM_NOT_ACTIVE);
-  mcu_status.set_max_torque(TORQUE_1);
-  mcu_status.set_torque_mode(1);
+  mcu_status.set_max_torque(TORQUE_3);
+  mcu_status.set_torque_mode(3);
 
   /* Set up total discharge readings */
   //setup_total_discharge();
@@ -272,6 +273,14 @@ void loop() {
     Serial.println(mcu_pedal_readings.get_accelerator_pedal_2());
     Serial.println(mcu_pedal_readings.get_brake_pedal_1());
     Serial.println(mcu_pedal_readings.get_brake_pedal_2());
+    //calculate_pedal_implausibilities();
+//    Serial.println(mcu_status.get_no_accel_implausability());
+//    Serial.println(mcu_status.get_no_brake_implausability());
+//    Serial.println(mcu_status.get_no_accel_brake_implausability());
+//    int brake1 = map(round(mcu_pedal_readings.get_brake_pedal_1()), START_BRAKE_PEDAL_1, END_BRAKE_PEDAL_1, 0, 2140);
+//    int brake2 = map(round(mcu_pedal_readings.get_brake_pedal_2()), START_BRAKE_PEDAL_2, END_BRAKE_PEDAL_2, 0, 2140);
+//    Serial.println(brake1);
+//    Serial.println(brake2);
     Serial.println();
     Serial.println("LOAD CELLS");
     Serial.println(mcu_load_cells.get_FL_load_cell());
@@ -351,7 +360,7 @@ inline void send_CAN_mcu_load_cells() {
 }
 
 inline void send_CAN_mcu_potentiometers() {
-  if (timer_CAN_mcu_load_cells_send.check()) {
+  if (timer_CAN_mcu_potentiometers_send.check()) {
     mcu_front_potentiometers.write(msg.buf);
     msg.id = ID_MCU_FRONT_POTS;
     msg.len = sizeof(mcu_front_potentiometers);
@@ -866,6 +875,12 @@ inline void set_inverter_torques() {
       }
       launch_state = launch_not_ready;
       // Original load cell torque vectoring
+
+    
+      max_front_power = 19000.0;
+      max_rear_power = 36000.0;
+
+      
       load_cell_alpha = 0.95;
       total_torque = 4 * (avg_accel - avg_brake) ;
       total_load_cells = mcu_load_cells.get_FL_load_cell() + mcu_load_cells.get_FR_load_cell() + mcu_load_cells.get_RL_load_cell() + mcu_load_cells.get_RR_load_cell();
@@ -887,8 +902,10 @@ inline void set_inverter_torques() {
       for (int i = 0; i < 4; i++) {
         max_speed = max(max_speed, mc_status[i].get_speed());
       }
-      max_front_power = 19000.0;
-      max_rear_power = 36000.0;
+//      max_front_power = 19000.0;
+//      max_rear_power = 36000.0;
+      max_front_power = 21760.0;
+      max_rear_power = 41230.0;
 
       switch (launch_state) {
         case launch_not_ready:
@@ -952,8 +969,10 @@ inline void set_inverter_torques() {
       for (int i = 0; i < 4; i++) {
         max_speed = max(max_speed, mc_status[i].get_speed());
       }
-      max_front_power = 19000.0;
-      max_rear_power = 36000.0;
+//      max_front_power = 19000.0;
+//      max_rear_power = 36000.0;
+      max_front_power = 21760.0;
+      max_rear_power = 41230.0;
 
       switch (launch_state) {
         case launch_not_ready:
@@ -1045,38 +1064,27 @@ inline void set_inverter_torques() {
         speed_setpoint_array[i] = MAX_ALLOWED_SPEED;
       }
       launch_state = launch_not_ready;
-      // standard no torque vectoring
+      // Original load cell torque vectoring
 
-      max_front_power = 19000.0;
-      max_rear_power = 36000.0;
+    
+      max_front_power = 21760.0;
+      max_rear_power = 41240.0;
 
-      torque_setpoint_array[0] = avg_accel -  avg_brake;
-      torque_setpoint_array[1] = avg_accel -  avg_brake;
-      torque_setpoint_array[2] = avg_accel - avg_brake;
-      torque_setpoint_array[3] = avg_accel - avg_brake;
-
-      for (int i = 0; i < 4; i++) {
-        if (torque_setpoint_array[i] >= 0) {
-          if (i < 2) {
-            torque_setpoint_array[i] = (int16_t)(torque_setpoint_array[i] * front_power_balance);
-          } else {
-            torque_setpoint_array[i] = (int16_t)(torque_setpoint_array[i] * rear_power_balance);
-          }
-        } else {
-          if (i < 2) {
-            torque_setpoint_array[i] = (int16_t)(torque_setpoint_array[i] * front_brake_balance);
-          } else {
-            torque_setpoint_array[i] = (int16_t)(torque_setpoint_array[i] * rear_brake_balance);
-          }
-        }
+      
+      load_cell_alpha = 0.95;
+      total_torque = 4 * (avg_accel - avg_brake) ;
+      total_load_cells = mcu_load_cells.get_FL_load_cell() + mcu_load_cells.get_FR_load_cell() + mcu_load_cells.get_RL_load_cell() + mcu_load_cells.get_RR_load_cell();
+      if (avg_accel >= avg_brake) {
+        torque_setpoint_array[0] = (int16_t)((float)mcu_load_cells.get_FL_load_cell() / (float)total_load_cells * (float)total_torque);
+        torque_setpoint_array[1] = (int16_t)((float)mcu_load_cells.get_FR_load_cell() / (float)total_load_cells * (float)total_torque);
+        torque_setpoint_array[2] = (int16_t)((float)mcu_load_cells.get_RL_load_cell() / (float)total_load_cells * (float)total_torque);
+        torque_setpoint_array[3] = (int16_t)((float)mcu_load_cells.get_RR_load_cell() / (float)total_load_cells * (float)total_torque);
+      } else {
+        torque_setpoint_array[0] = (int16_t)((float)mcu_load_cells.get_FL_load_cell() / (float)total_load_cells * (float)total_torque);
+        torque_setpoint_array[1] = (int16_t)((float)mcu_load_cells.get_FR_load_cell() / (float)total_load_cells * (float)total_torque);
+        torque_setpoint_array[2] = (int16_t)((float)mcu_load_cells.get_RL_load_cell() / (float)total_load_cells * (float)total_torque / 2.0);
+        torque_setpoint_array[3] = (int16_t)((float)mcu_load_cells.get_RR_load_cell() / (float)total_load_cells * (float)total_torque / 2.0);
       }
-      break;
-    default:
-      for (int i = 0; i < 4; i++) {
-        speed_setpoint_array[i] = 0;
-        torque_setpoint_array[i] = 0;
-      }
-      launch_state = launch_not_ready;
       break;
   }
 
@@ -1114,7 +1122,7 @@ inline void set_inverter_torques() {
     voltage_lim_factor = float_map(filtered_min_cell_voltage, 3.5, 3.2, 1.0, 0.2);
     voltage_lim_factor = max(min(1.0, voltage_lim_factor), 0.2);
 
-    temp_lim_factor = float_map(filtered_max_cell_temp, 55.0, 58.0, 1.0, 0.2);
+    temp_lim_factor = float_map(filtered_max_cell_temp, 50.0, 58.0, 1.0, 0.2);
     temp_lim_factor = max(min(1.0, temp_lim_factor), 0.2);
 
     accu_lim_factor = min(temp_lim_factor, voltage_lim_factor);
@@ -1487,7 +1495,7 @@ inline void calculate_pedal_implausibilities() {
   else if (mcu_pedal_readings.get_brake_pedal_2() > MIN_BRAKE_PEDAL_2 || mcu_pedal_readings.get_brake_pedal_2() < MAX_BRAKE_PEDAL_2) { //negative slope for brake 2
     mcu_status.set_no_brake_implausability(false);
   } else if (fabs((mcu_pedal_readings.get_brake_pedal_1() - START_BRAKE_PEDAL_1) / (END_BRAKE_PEDAL_1 - START_BRAKE_PEDAL_1) -
-                  (START_BRAKE_PEDAL_2 - mcu_pedal_readings.get_brake_pedal_2()) / (START_BRAKE_PEDAL_2 - END_BRAKE_PEDAL_2)) > 0.1) {
+                  (START_BRAKE_PEDAL_2 - mcu_pedal_readings.get_brake_pedal_2()) / (START_BRAKE_PEDAL_2 - END_BRAKE_PEDAL_2)) > 0.25) {
     mcu_status.set_no_brake_implausability(false);
   }
   else {
@@ -1502,7 +1510,7 @@ inline void calculate_pedal_implausibilities() {
       ||
       (mcu_pedal_readings.get_accelerator_pedal_2() > ((END_ACCELERATOR_PEDAL_2 - START_ACCELERATOR_PEDAL_2) / 4 + START_ACCELERATOR_PEDAL_2))
     )
-    && mcu_status.get_brake_pedal_active()
+    && mcu_status.get_mech_brake_active()
   )
   {
     mcu_status.set_no_accel_brake_implausability(false);

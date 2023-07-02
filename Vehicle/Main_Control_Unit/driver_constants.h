@@ -17,18 +17,18 @@
         #define MAX_ACCELERATOR_PEDAL_2 1250   // High accelerator implausibility threshold
 
         #define MIN_BRAKE_PEDAL_1 1876    // Low brale implausibility threshold
-        #define START_BRAKE_PEDAL_1 2090  // Position to start brake // 2078 + pressure
-        #define END_BRAKE_PEDAL_1 2445    // Position to max out brake 2718 +-5
-        #define MAX_BRAKE_PEDAL_1 2700
+        #define START_BRAKE_PEDAL_1 2100  // Position to start brake // 2078 + pressure
+        #define END_BRAKE_PEDAL_1 2490    // Position to max out brake 2718 +-5
+        #define MAX_BRAKE_PEDAL_1 2950
          
 //brake 2 is negative slope
         #define MIN_BRAKE_PEDAL_2 2300    // Low brake implausibility threshold
-        #define START_BRAKE_PEDAL_2 2030  // Position to start brake //2045 - pressure 
-        #define END_BRAKE_PEDAL_2 1670    // Position to max out brake //1410 +- 5
-        #define MAX_BRAKE_PEDAL_2 1400
+        #define START_BRAKE_PEDAL_2 2010  // Position to start brake //2045 - pressure 
+        #define END_BRAKE_PEDAL_2 1630    // Position to max out brake //1410 +- 5
+        #define MAX_BRAKE_PEDAL_2 1100
 
-        #define BRAKE_THRESHOLD_MECH_BRAKE_1 2345 // brake 1, mech brake threshold +-5
-        #define BRAKE_THRESHOLD_MECH_BRAKE_2 1780 // brake 2, mech brake threshold +-5
+        #define BRAKE_THRESHOLD_MECH_BRAKE_1 2350 // brake 1, mech brake threshold +-5
+        #define BRAKE_THRESHOLD_MECH_BRAKE_2 1766 // brake 2, mech brake threshold +-5
     #else
         #error "Bad driver definition"
     #endif
