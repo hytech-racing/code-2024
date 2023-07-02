@@ -874,6 +874,12 @@ inline void set_inverter_torques() {
       }
       launch_state = launch_not_ready;
       // Original load cell torque vectoring
+
+    
+      max_front_power = 19000.0;
+      max_rear_power = 36000.0;
+
+      
       load_cell_alpha = 0.95;
       total_torque = 4 * (avg_accel - avg_brake) ;
       total_load_cells = mcu_load_cells.get_FL_load_cell() + mcu_load_cells.get_FR_load_cell() + mcu_load_cells.get_RL_load_cell() + mcu_load_cells.get_RR_load_cell();
@@ -895,8 +901,10 @@ inline void set_inverter_torques() {
       for (int i = 0; i < 4; i++) {
         max_speed = max(max_speed, mc_status[i].get_speed());
       }
-      max_front_power = 19000.0;
-      max_rear_power = 36000.0;
+//      max_front_power = 19000.0;
+//      max_rear_power = 36000.0;
+      max_front_power = 21760.0;
+      max_rear_power = 41230.0;
 
       switch (launch_state) {
         case launch_not_ready:
@@ -960,8 +968,10 @@ inline void set_inverter_torques() {
       for (int i = 0; i < 4; i++) {
         max_speed = max(max_speed, mc_status[i].get_speed());
       }
-      max_front_power = 19000.0;
-      max_rear_power = 36000.0;
+//      max_front_power = 19000.0;
+//      max_rear_power = 36000.0;
+      max_front_power = 21760.0;
+      max_rear_power = 41230.0;
 
       switch (launch_state) {
         case launch_not_ready:
@@ -1053,38 +1063,27 @@ inline void set_inverter_torques() {
         speed_setpoint_array[i] = MAX_ALLOWED_SPEED;
       }
       launch_state = launch_not_ready;
-      // standard no torque vectoring
+      // Original load cell torque vectoring
 
-      max_front_power = 19000.0;
-      max_rear_power = 36000.0;
+    
+      max_front_power = 21760.0;
+      max_rear_power = 41240.0;
 
-      torque_setpoint_array[0] = avg_accel -  avg_brake;
-      torque_setpoint_array[1] = avg_accel -  avg_brake;
-      torque_setpoint_array[2] = avg_accel - avg_brake;
-      torque_setpoint_array[3] = avg_accel - avg_brake;
-
-      for (int i = 0; i < 4; i++) {
-        if (torque_setpoint_array[i] >= 0) {
-          if (i < 2) {
-            torque_setpoint_array[i] = (int16_t)(torque_setpoint_array[i] * front_power_balance);
-          } else {
-            torque_setpoint_array[i] = (int16_t)(torque_setpoint_array[i] * rear_power_balance);
-          }
-        } else {
-          if (i < 2) {
-            torque_setpoint_array[i] = (int16_t)(torque_setpoint_array[i] * front_brake_balance);
-          } else {
-            torque_setpoint_array[i] = (int16_t)(torque_setpoint_array[i] * rear_brake_balance);
-          }
-        }
+      
+      load_cell_alpha = 0.95;
+      total_torque = 4 * (avg_accel - avg_brake) ;
+      total_load_cells = mcu_load_cells.get_FL_load_cell() + mcu_load_cells.get_FR_load_cell() + mcu_load_cells.get_RL_load_cell() + mcu_load_cells.get_RR_load_cell();
+      if (avg_accel >= avg_brake) {
+        torque_setpoint_array[0] = (int16_t)((float)mcu_load_cells.get_FL_load_cell() / (float)total_load_cells * (float)total_torque);
+        torque_setpoint_array[1] = (int16_t)((float)mcu_load_cells.get_FR_load_cell() / (float)total_load_cells * (float)total_torque);
+        torque_setpoint_array[2] = (int16_t)((float)mcu_load_cells.get_RL_load_cell() / (float)total_load_cells * (float)total_torque);
+        torque_setpoint_array[3] = (int16_t)((float)mcu_load_cells.get_RR_load_cell() / (float)total_load_cells * (float)total_torque);
+      } else {
+        torque_setpoint_array[0] = (int16_t)((float)mcu_load_cells.get_FL_load_cell() / (float)total_load_cells * (float)total_torque);
+        torque_setpoint_array[1] = (int16_t)((float)mcu_load_cells.get_FR_load_cell() / (float)total_load_cells * (float)total_torque);
+        torque_setpoint_array[2] = (int16_t)((float)mcu_load_cells.get_RL_load_cell() / (float)total_load_cells * (float)total_torque / 2.0);
+        torque_setpoint_array[3] = (int16_t)((float)mcu_load_cells.get_RR_load_cell() / (float)total_load_cells * (float)total_torque / 2.0);
       }
-      break;
-    default:
-      for (int i = 0; i < 4; i++) {
-        speed_setpoint_array[i] = 0;
-        torque_setpoint_array[i] = 0;
-      }
-      launch_state = launch_not_ready;
       break;
   }
 
@@ -1122,7 +1121,7 @@ inline void set_inverter_torques() {
     voltage_lim_factor = float_map(filtered_min_cell_voltage, 3.5, 3.2, 1.0, 0.2);
     voltage_lim_factor = max(min(1.0, voltage_lim_factor), 0.2);
 
-    temp_lim_factor = float_map(filtered_max_cell_temp, 55.0, 58.0, 1.0, 0.2);
+    temp_lim_factor = float_map(filtered_max_cell_temp, 50.0, 58.0, 1.0, 0.2);
     temp_lim_factor = max(min(1.0, temp_lim_factor), 0.2);
 
     accu_lim_factor = min(temp_lim_factor, voltage_lim_factor);
