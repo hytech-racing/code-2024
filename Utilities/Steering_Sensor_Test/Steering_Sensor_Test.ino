@@ -18,15 +18,11 @@ STEERING_SPI STEERING(STEERING_CS, STEERING_SPI_SPEED);
 
 void setup() {
   Serial.begin(9600);
-  while (!Serial);
 
   Serial.println("BRD Steering Sensor Simple Test");
   
   STEERING.set_zero_position(11800);    // Test steering sensor
 
-  pinMode(ECU_CLK, OUTPUT);
-  pinMode(ECU_SDI, INPUT);
-  pinMode(ECU_SDO, OUTPUT);
 }
 
 void loop() {
