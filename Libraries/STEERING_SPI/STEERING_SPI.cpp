@@ -54,8 +54,9 @@ int16_t STEERING_SPI::read_steering() {
 	int16_t encoder_pos_hi;    // Data type reconsider
 	int16_t encoder_pos_low_and_status;
 	int8_t crc;
+	SPI.beginTransaction(SPISettings(SPI_SPEED, MSBFIRST, SPI_MODE1)); 
 	digitalWrite(STEERING_SPI_CS, LOW);
-	SPI.beginTransaction(SPISettings(SPI_SPEED, MSBFIRST, SPI_MODE1));    // SPI_MODE0 also works
+	   // SPI_MODE0 also works
 	delayMicroseconds(8);    // ts: time after NCS low to first SCK rise edge (?)
 	cli(); 
 	
