@@ -23,9 +23,9 @@ public:
 	int16_t get_encoder_position() const { return encoder_position; }
 private:
 	int STEERING_SPI_CS;
-	int STEERING_SPI_SDI;
-	int STEERING_SPI_SDO;
-	int STEERING_SPI_CLK;
+	//int STEERING_SPI_SDI;
+	//int STEERING_SPI_SDO;
+	//int STEERING_SPI_CLK;
 	unsigned int SPI_SPEED;
 	//uint8_t STEERING_SPI_CS;
 	//uint8_t SPI_SPEED;
