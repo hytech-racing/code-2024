@@ -188,9 +188,9 @@ void setup() {
 //  pinMode(STEERING_CS, OUTPUT);     // Testing steering spi
 //  digitalWrite(STEERING_CS, HIGH);
 
-  pinMode(ECU_CLK, OUTPUT);
-  pinMode(ECU_SDI, INPUT);
-  pinMode(ECU_SDO, OUTPUT);
+  // pinMode(ECU_CLK, OUTPUT);
+  // pinMode(ECU_SDI, INPUT);
+  // pinMode(ECU_SDO, OUTPUT);
 
 #if DEBUG
   Serial.begin(115200);
