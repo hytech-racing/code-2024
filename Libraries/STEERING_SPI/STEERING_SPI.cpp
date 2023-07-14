@@ -60,7 +60,9 @@ int16_t STEERING_SPI::read_steering() {
 	delayMicroseconds(8);    // ts: time after NCS low to first SCK rise edge (?)
 	cli(); 
 	
+	Serial.println("First transfer");
 	encoder_pos_hi = SPI.transfer(0) << 8;
+	Serial.println("Second transfer");
 	encoder_pos_hi |= SPI.transfer(0);
 	encoder_pos_low_and_status = SPI.transfer(0) << 8;
 	encoder_pos_low_and_status |= SPI.transfer(0);

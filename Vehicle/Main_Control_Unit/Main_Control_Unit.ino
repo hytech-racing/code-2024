@@ -83,7 +83,7 @@ Metro timer_CAN_mcu_potentiometers_send = Metro(20);
 Metro timer_ready_sound = Metro(2000); // Time to play RTD sound
 
 Metro timer_read_all_adcs = Metro(20);
-Metro timer_steering_spi_read = Metro(1000);
+Metro timer_steering_spi_read = Metro(1000);    // Might want to align with adcs later
 Metro timer_read_imu = Metro(20);
 
 Metro timer_inverter_enable = Metro(5000);
@@ -169,6 +169,8 @@ void setup() {
   IMU.regWrite(DEC_RATE, 0), // Disable decimation
                delay(20);
 
+  STEERING.set_zero_position(11800);    // Test steering sensor
+
   pinMode(BRAKE_LIGHT_CTRL, OUTPUT);
 
   // change to input if comparator is PUSH PULL
@@ -182,6 +184,9 @@ void setup() {
   digitalWrite(WATCHDOG_INPUT, HIGH);
   pinMode(SOFTWARE_OK, OUTPUT);
   digitalWrite(SOFTWARE_OK, HIGH);
+
+//  pinMode(STEERING_CS, OUTPUT);     // Testing steering spi
+//  digitalWrite(STEERING_CS, HIGH);
 
   pinMode(ECU_CLK, OUTPUT);
   pinMode(ECU_SDI, INPUT);
@@ -236,8 +241,9 @@ void loop() {
   REAR_INV_CAN.events();
   TELEM_CAN.events();
 
+  Serial.println("Print something");
   read_all_adcs();
-  //read_steering_spi_values();
+  read_steering_spi_values();  // Test steering sensor 2, a.k.a. steering 1 in ECU code
   read_status_values();
   read_imu();
 
@@ -269,6 +275,7 @@ void loop() {
     Serial.println(mc_temps[2].get_diagnostic_number());
     Serial.println(mc_temps[3].get_diagnostic_number());
     Serial.println();
+    Serial.println("PEDALS");
     Serial.println(mcu_pedal_readings.get_accelerator_pedal_1());
     Serial.println(mcu_pedal_readings.get_accelerator_pedal_2());
     Serial.println(mcu_pedal_readings.get_brake_pedal_1());
@@ -281,6 +288,13 @@ void loop() {
 //    int brake2 = map(round(mcu_pedal_readings.get_brake_pedal_2()), START_BRAKE_PEDAL_2, END_BRAKE_PEDAL_2, 0, 2140);
 //    Serial.println(brake1);
 //    Serial.println(brake2);
+    Serial.println("STEERINGS");
+    Serial.print("Encoder zero position: ");
+    Serial.println(STEERING.get_zero_position());    
+    Serial.println(mcu_analog_readings.get_steering_1());
+    Serial.print("Encoder position: ");
+    Serial.println(STEERING.get_encoder_position());
+//    Serial.println(mcu_analog_readings.get_steering_2());
     Serial.println();
     Serial.println("LOAD CELLS");
     Serial.println(mcu_load_cells.get_FL_load_cell());
@@ -777,6 +791,7 @@ inline void set_inverter_torques() {
     accel2 = max_torque;
   }
   int avg_accel = (accel1 + accel2) / 2;
+//  int avg_accel = accel1;
   int avg_brake = (brake1 + brake2) / 2;
   if (avg_accel > max_torque) {
     avg_accel = max_torque;
@@ -1198,6 +1213,7 @@ inline void set_inverter_torques() {
 }
 
 inline void read_all_adcs() {
+  Serial.println("Start ADC reading:");
   if (timer_read_all_adcs.check()) {
 
     prev_load_cell_readings[0] = mcu_load_cells.get_FL_load_cell();
@@ -1247,7 +1263,10 @@ inline void read_all_adcs() {
 }
 
 inline void read_steering_spi_values() {
+  Serial.println("Start steering reading:");
   if (timer_steering_spi_read.check()) {
+    Serial.println("Start steering reading:");
+//    Serial.println(STEERING_CS);
     mcu_analog_readings.set_steering_1(STEERING.read_steering());
 
   }
