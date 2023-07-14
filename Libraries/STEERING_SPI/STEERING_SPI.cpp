@@ -63,7 +63,7 @@ int16_t STEERING_SPI::read_steering() {
 	encoder_pos_hi = SPI.transfer(0) << 8;
 	encoder_pos_hi |= SPI.transfer(0);
 	encoder_pos_low_and_status = SPI.transfer(0) << 8;
-	encoder_pos_low_and_status |= SPI.transfer(0) << 8;
+	encoder_pos_low_and_status |= SPI.transfer(0);
 	crc = SPI.transfer(0);
 
 
