@@ -51,81 +51,25 @@ void STEERING_SPI::init(uint8_t CS, uint32_t SPIspeed) {
  * Measure steering
  */
 int16_t STEERING_SPI::read_steering() {
-	//Serial.println("Enter library:");
-	//digitalWrite(STEERING_SPI_CS, LOW);
-	//Serial.println("Chip select set LOW");
-	//delayMicroseconds(50);
-	//Serial.println("Delayed 50 us");
-
-	SPI.beginTransaction(SPISettings(SPI_SPEED, MSBFIRST, SPI_MODE1));    // SPI_MODE0 also works
-	//Serial.println("SPI transaction began");
-	digitalWrite(STEERING_SPI_CS, LOW);
-	//Serial.println("Chip select set LOW");
-	delayMicroseconds(5);    // ts: time after NCS low to first SCK rise edge (?)
-
-	// Possibly need some delay
-
-	cli();    // Clear interrupt flags, temporarily not allow ISR
-
-	//uint8_t encoder_pos_hi;    // Data type reconsider
-	//uint8_t encoder_pos_low_and_status;
-	//uint8_t crc;
-	//uint8_t arr[3];
-
-	int8_t first_blank_byte;
-	int8_t encoder_pos_hi;    // Data type reconsider
-	int8_t encoder_pos_low_and_status;
+	int16_t encoder_pos_hi;    // Data type reconsider
+	int16_t encoder_pos_low_and_status;
 	int8_t crc;
-	int8_t arr[4];
-
-	SPI.transfer(0);
-	//first_blank_byte = SPI.transfer(0);    // Potentially
-	encoder_pos_hi = SPI.transfer(0);
-	encoder_pos_low_and_status = SPI.transfer(0);
+	digitalWrite(STEERING_SPI_CS, LOW);
+	SPI.beginTransaction(SPISettings(SPI_SPEED, MSBFIRST, SPI_MODE1));    // SPI_MODE0 also works
+	delayMicroseconds(8);    // ts: time after NCS low to first SCK rise edge (?)
+	cli(); 
+	
+	encoder_pos_hi = SPI.transfer16(0);
+	encoder_pos_low_and_status = SPI.transfer16(0);
 	crc = SPI.transfer(0);
 
-	/*
-	for (uint8_t i = 0; i < 4; i++) {
-		digitalWrite(STEERING_SPI_CLK, LOW);
-		arr[i] = 0;
-		//uint8_t shiftout = (6 - i) << 11;
-		for (int j = 0; j < 8; j++) {
-			// read outputs on the rising edge
-			digitalWrite(STEERING_SPI_CLK, HIGH);
-			arr[i] |= digitalRead(STEERING_SPI_SDI) << (7 - j);
-			delayMicroseconds(1);    // Possibly wrong
-			// write channel on the rising edge
-			//digitalWrite(ADC_SPI_SDO, shiftout & (0b1000000000000000 >> j) ? LOW : HIGH);
-			digitalWrite(STEERING_SPI_SDO, LOW);
-			digitalWrite(STEERING_SPI_CLK, LOW);
-			delayMicroseconds(1);    // Possibly wrong
-		}
-	}
 
 
-	multi_corner_count = arr[0];
-	//char encoder_pos_hi = SPI.transfer(0);
-	encoder_pos_hi = arr[1];
-	//Serial.print("encoder_pos_hi: ");
-	//Serial.println(encoder_pos_hi);
-	//char encoder_pos_low_and_status = SPI.transfer(0);
-	encoder_pos_low_and_status = arr[2];
-	//Serial.print("encoder_pos_low_and_status: ");
-	//Serial.println(encoder_pos_low_and_status);
-	//char crc = SPI.transfer(0);
-	crc = arr[3];
-	//Serial.print("crc: ");
-	//Serial.println(crc);
-	*/
-
-	// Possibly need some delay
-	delayMicroseconds(40);    // tp: pause time (?)
+	
 
 	digitalWrite(STEERING_SPI_CS, HIGH);
-	//Serial.println("Chip select set HIGH");
-
 	sei();    // Enable interrupt flags, allow ISR again
-
+	delayMicroseconds(40);
 	SPI.endTransaction();
 	//Serial.println("SPI transaction ended");
 	/*digitalWrite(STEERING_SPI_CS, HIGH);
