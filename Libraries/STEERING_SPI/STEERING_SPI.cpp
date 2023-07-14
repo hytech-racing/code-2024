@@ -51,17 +51,19 @@ void STEERING_SPI::init(uint8_t CS, uint32_t SPIspeed) {
  * Measure steering
  */
 int16_t STEERING_SPI::read_steering() {
-	int16_t encoder_pos_hi;    // Data type reconsider
-	int16_t encoder_pos_low_and_status;
-	int8_t crc;
+	uint16_t encoder_pos_hi;    // Data type reconsider
+	uint16_t encoder_pos_low_and_status;
+	uint8_t crc;
 	SPI.beginTransaction(SPISettings(SPI_SPEED, MSBFIRST, SPI_MODE1)); 
 	digitalWrite(STEERING_SPI_CS, LOW);
 	   // SPI_MODE0 also works
 	delayMicroseconds(8);    // ts: time after NCS low to first SCK rise edge (?)
 	cli(); 
 	
-	encoder_pos_hi = SPI.transfer16(0);
-	encoder_pos_low_and_status = SPI.transfer16(0);
+	encoder_pos_hi = SPI.transfer(0) << 8;
+	encoder_pos_hi |= SPI.transfer(0);
+	encoder_pos_low_and_status = SPI.transfer(0) << 8;
+	encoder_pos_low_and_status |= SPI.transfer(0) << 8;
 	crc = SPI.transfer(0);
 
 
@@ -79,17 +81,7 @@ int16_t STEERING_SPI::read_steering() {
 	encoder_position = (encoder_pos_hi << 6) + (encoder_pos_low_and_status >> 2);    // Bitwise OR instead?
 	error = (encoder_pos_low_and_status & 2) >> 1;
 	warning = encoder_pos_low_and_status & 1;
-	/*
-	//steering increases in value in CCW direction
-	//zero_position in the middle still but math is not mathing
-	if ((MAX_POSITION + (encoder_position - zero_position)) % MAX_POSITION <= (MAX_POSITION / 2)) {
-		steering_position = -((MAX_POSITION + (encoder_position - zero_position)) % MAX_POSITION);
-	}
-	else {
-		steering_position = MAX_POSITION - ((MAX_POSITION + (encoder_position - zero_position)) % MAX_POSITION);
-	}
-	*/
-	// zero_position in the middle
+
 	steering_position = -((encoder_position - zero_position) % MAX_POSITION);
 
 	return steering_position;
