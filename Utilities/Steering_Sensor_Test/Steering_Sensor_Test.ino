@@ -26,25 +26,26 @@ void setup() {
 }
 
 void loop() {
-  Serial.println("Print something");
+//  Serial.println("Print something");
   read_steering_spi_values();  // Test steering sensor 2, a.k.a. steering 1 in ECU code
-//
-//  if (timer_debug.check()) {
-//    Serial.println("STEERINGS");
-//    Serial.print("Encoder zero position: ");
-//    Serial.println(STEERING.get_zero_position());    
-//    Serial.println(mcu_analog_readings.get_steering_1());
-//    Serial.print("Encoder position: ");
-//    Serial.println(STEERING.get_encoder_position());
-//  }
+
+  if (timer_debug.check()) {
+    Serial.println("STEERINGS");
+    Serial.print("Encoder zero position: ");
+    Serial.println(STEERING.get_zero_position());
+    Serial.print("Steering position: ");
+    Serial.println(mcu_analog_readings.get_steering_1());
+    Serial.print("Encoder position: ");
+    Serial.println(STEERING.get_encoder_position());
+  }
 
 }
 
 void read_steering_spi_values() {
-  Serial.println("Start reading");
+//  Serial.println("Start reading");
   if (timer_steering_spi_read.check()) {
-    Serial.println("Start steering reading:");
-    Serial.println(STEERING_CS);
+//    Serial.println("Start steering reading:");
+//    Serial.println(STEERING_CS);
     mcu_analog_readings.set_steering_1(STEERING.read_steering());
   }
 }

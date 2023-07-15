@@ -51,39 +51,36 @@ void STEERING_SPI::init(uint8_t CS, uint32_t SPIspeed) {
  * Measure steering
  */
 int16_t STEERING_SPI::read_steering() {
-	uint16_t encoder_pos_hi;    // Data type reconsider
-	uint16_t encoder_pos_low_and_status;
+	uint8_t blank_byte;
+	uint8_t encoder_pos_hi;    // Data type reconsider
+	uint8_t encoder_pos_low_and_status;
 	uint8_t crc;
-	SPI.beginTransaction(SPISettings(SPI_SPEED, MSBFIRST, SPI_MODE1)); 
+	SPI.beginTransaction(SPISettings(SPI_SPEED, MSBFIRST, SPI_MODE0));    // SPI_MODE0 also works
 	digitalWrite(STEERING_SPI_CS, LOW);
-	   // SPI_MODE0 also works
+	   
 	delayMicroseconds(8);    // ts: time after NCS low to first SCK rise edge (?)
 	cli(); 
 	
-	Serial.println("First transfer");
-	encoder_pos_hi = SPI.transfer(0) << 8;
-	Serial.println("Second transfer");
-	encoder_pos_hi |= SPI.transfer(0);
-	encoder_pos_low_and_status = SPI.transfer(0) << 8;
-	encoder_pos_low_and_status |= SPI.transfer(0);
-	crc = SPI.transfer(0);
-
-
-
-	
+	blank_byte = SPI.transfer(0);
+	encoder_pos_hi = SPI.transfer(0);
+	encoder_pos_low_and_status = SPI.transfer(0);
+	crc = SPI.transfer(0);	
 
 	digitalWrite(STEERING_SPI_CS, HIGH);
 	sei();    // Enable interrupt flags, allow ISR again
 	delayMicroseconds(40);
 	SPI.endTransaction();
-	//Serial.println("SPI transaction ended");
-	/*digitalWrite(STEERING_SPI_CS, HIGH);
-	Serial.println("Chip select set HIGH");*/
 
 	encoder_position = (encoder_pos_hi << 6) + (encoder_pos_low_and_status >> 2);    // Bitwise OR instead?
 	error = (encoder_pos_low_and_status & 2) >> 1;
 	warning = encoder_pos_low_and_status & 1;
 
+	//if ((MAX_POSITION + (encoder_position - zero_position)) % MAX_POSITION <= (MAX_POSITION / 2)) {
+	//	steering_position = -((MAX_POSITION + (encoder_position - zero_position)) % MAX_POSITION);
+	//}
+	//else {
+	//	steering_position = MAX_POSITION - ((MAX_POSITION + (encoder_position - zero_position)) % MAX_POSITION);
+	//}
 	steering_position = -((encoder_position - zero_position) % MAX_POSITION);
 
 	return steering_position;
