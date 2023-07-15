@@ -37,7 +37,7 @@ class data(ABC):
             offset = 1
         
         for i in range(len(vectors)):
-           out[:,i+offset] = vectors[i][3](unsigned_to_signed(((data & (masks[i]<<offsets[i]))>>offsets[i]), vectors[i][0], convert = vectors[i][2]))
+           out[:,i+offset] = vectors[i][3](data.unsigned_to_signed(((data & (masks[i]<<offsets[i]))>>offsets[i]), vectors[i][0], convert = vectors[i][2]))
             #out[:,i] = vectors[i][2](((data & (masks[i]<<offsets[i]))>>offsets[i]))
         return out
 
