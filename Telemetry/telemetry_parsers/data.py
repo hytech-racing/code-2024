@@ -4,6 +4,11 @@ import numpy as np
 
 class data(ABC):
     
+    @property
+    @abstractmethod
+    def vectors(self):
+        pass
+
     @abstractmethod
     def parse(data, id = None, time = None):
         pass
