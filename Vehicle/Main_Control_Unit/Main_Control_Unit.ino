@@ -88,7 +88,7 @@ Metro timer_read_imu = Metro(20);
 
 Metro timer_inverter_enable = Metro(5000);
 Metro timer_reset_inverter = Metro(5000);
-Metro timer_watchdog_timer = Metro(10);
+Metro timer_watchdog_timer = Metro(7);
 
 elapsedMillis pedal_implausability_duration;
 
