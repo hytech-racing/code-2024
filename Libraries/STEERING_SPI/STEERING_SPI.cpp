@@ -52,8 +52,8 @@ void STEERING_SPI::init(uint8_t CS, uint32_t SPIspeed) {
  */
 int16_t STEERING_SPI::read_steering() {
 	uint8_t blank_byte;
-	uint16_t encoder_pos_hi;    // Data type reconsider
-	uint16_t encoder_pos_low_and_status_and_crc;
+	uint8_t encoder_pos_hi;    // Data type reconsider
+	uint8_t encoder_pos_low_and_status;
 	uint8_t crc;
 	SPI.beginTransaction(SPISettings(SPI_SPEED, MSBFIRST, SPI_MODE0));    // SPI_MODE0 also works
 	digitalWrite(STEERING_SPI_CS, LOW);
@@ -62,19 +62,19 @@ int16_t STEERING_SPI::read_steering() {
 	cli(); 
 	
 	//blank_byte = SPI.transfer(0);
-	encoder_pos_hi = SPI.transfer16(0);
-	encoder_pos_low_and_status_and_crc = SPI.transfer16(0);
-	//crc = SPI.transfer(0);
+	encoder_pos_hi = SPI.transfer(0);
+	encoder_pos_low_and_status = SPI.transfer(0);
+	crc = SPI.transfer(0);
 
 	digitalWrite(STEERING_SPI_CS, HIGH);
 	sei();    // Enable interrupt flags, allow ISR again
 	delayMicroseconds(40);
 	SPI.endTransaction();
 
-	//encoder_position = (encoder_pos_hi << 6) + (encoder_pos_low_and_status >> 2);    // Bitwise OR instead?
-	encoder_position = (encoder_pos_hi << 6) + (encoder_pos_low_and_status_and_crc >> 10);
-	error = (encoder_pos_low_and_status_and_crc & 2) >> 1;
-	warning = encoder_pos_low_and_status_and_crc & 1;
+	encoder_position = (encoder_pos_hi << 6) + (encoder_pos_low_and_status >> 2);    // Bitwise OR instead?
+	//encoder_position = (encoder_pos_hi << 6) + (encoder_pos_low_and_status_and_crc >> 10);
+	error = (encoder_pos_low_and_status & 2) >> 1;
+	warning = encoder_pos_low_and_status & 1;
 
 	//if ((MAX_POSITION + (encoder_position - zero_position)) % MAX_POSITION <= (MAX_POSITION / 2)) {
 	//	steering_position = -((MAX_POSITION + (encoder_position - zero_position)) % MAX_POSITION);
