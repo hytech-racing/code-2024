@@ -25,21 +25,10 @@ STEERING_SPI::STEERING_SPI(uint8_t CS, uint32_t SPIspeed) {
  */
 void STEERING_SPI::init(uint8_t CS, uint32_t SPIspeed) {
 	STEERING_SPI_CS = CS;
-	SPI_SPEED = SPIspeed;
-	//STEERING_SPI_SDI = DEFAULT_STEERING_SPI_SDI;
-	//STEERING_SPI_SDO = DEFAULT_STEERING_SPI_SDO;
-	//STEERING_SPI_CLK = DEFAULT_STEERING_SPI_CLK;
+	SPI_SPEED  = SPIspeed;
 
 	pinMode(STEERING_SPI_CS, OUTPUT);
 	digitalWrite(STEERING_SPI_CS, HIGH);
-
-	//pinMode(STEERING_SPI_CS, OUTPUT);
-	//pinMode(STEERING_SPI_SDI, INPUT);
-	//pinMode(STEERING_SPI_SDO, OUTPUT);
-	//pinMode(STEERING_SPI_CLK, OUTPUT);
-	//digitalWrite(STEERING_SPI_CS, HIGH);
-	//digitalWrite(STEERING_SPI_CLK, LOW);    // Not sure why, corresponds to SPI_MODE0?
-	//digitalWrite(STEERING_SPI_SDO, LOW);
 
 	// Initialize SPI:
 	SPI.begin();
@@ -51,39 +40,28 @@ void STEERING_SPI::init(uint8_t CS, uint32_t SPIspeed) {
  * Measure steering
  */
 int16_t STEERING_SPI::read_steering() {
-	uint8_t blank_byte;
-	uint8_t encoder_pos_hi;    // Data type reconsider
-	uint8_t encoder_pos_low_and_status;
-	uint8_t crc;
-	SPI.beginTransaction(SPISettings(SPI_SPEED, MSBFIRST, SPI_MODE0));    // SPI_MODE0 also works
 	digitalWrite(STEERING_SPI_CS, LOW);
-	   
-	delayMicroseconds(8);    // ts: time after NCS low to first SCK rise edge (?)
-	cli(); 
-	
-	//blank_byte = SPI.transfer(0);
-	encoder_pos_hi = SPI.transfer(0);
-	encoder_pos_low_and_status = SPI.transfer(0);
-	crc = SPI.transfer(0);
+	delayMicroseconds(5);    // 5 us would now be enough using mode 1
+	  
+	SPI.beginTransaction(SPISettings(SPI_SPEED, MSBFIRST, SPI_MODE1));    // Eric's genius discovery
 
-	digitalWrite(STEERING_SPI_CS, HIGH);
-	sei();    // Enable interrupt flags, allow ISR again
-	delayMicroseconds(40);
+	char encoder_pos_hi = SPI.transfer(0);
+	char encoder_pos_low_and_status = SPI.transfer(0);
+	char crc = SPI.transfer(0);
+
 	SPI.endTransaction();
+	delayMicroseconds(40);    // Add pause time after transmission before CS goes high per datasheet suggestion, data accuracy seemingly improved
+	digitalWrite(STEERING_SPI_CS, HIGH);
 
-	encoder_position = (encoder_pos_hi << 6) + (encoder_pos_low_and_status >> 2);    // Bitwise OR instead?
-	//encoder_position = (encoder_pos_hi << 6) + (encoder_pos_low_and_status_and_crc >> 10);
+	encoder_position = (encoder_pos_hi << 6) + (encoder_pos_low_and_status >> 2);
 	error = (encoder_pos_low_and_status & 2) >> 1;
 	warning = encoder_pos_low_and_status & 1;
-
-	//if ((MAX_POSITION + (encoder_position - zero_position)) % MAX_POSITION <= (MAX_POSITION / 2)) {
-	//	steering_position = -((MAX_POSITION + (encoder_position - zero_position)) % MAX_POSITION);
-	//}
-	//else {
-	//	steering_position = MAX_POSITION - ((MAX_POSITION + (encoder_position - zero_position)) % MAX_POSITION);
-	//}
-	steering_position = -((encoder_position - zero_position) % MAX_POSITION);
-
-	return steering_position;
+    //steering increases in value in CCW direction
+     if ((MAX_POSITION + (encoder_position - zero_position)) % MAX_POSITION <= (MAX_POSITION / 2)) {
+         steering_position = -((MAX_POSITION + (encoder_position - zero_position)) % MAX_POSITION);
+     } else {
+         steering_position = MAX_POSITION - ((MAX_POSITION + (encoder_position - zero_position)) % MAX_POSITION);
+     }
+     return steering_position;
 
 }
