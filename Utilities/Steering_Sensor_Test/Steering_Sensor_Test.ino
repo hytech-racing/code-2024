@@ -31,8 +31,8 @@ void loop() {
 
   if (timer_debug.check()) {
     Serial.println("STEERINGS");
-    Serial.print("Encoder zero position: ");
-    Serial.println(STEERING.get_zero_position());
+//    Serial.print("Encoder zero position: ");
+//    Serial.println(STEERING.get_zero_position());
     Serial.print("Steering position: ");
     Serial.println(mcu_analog_readings.get_steering_1());
     Serial.print("Encoder position: ");
