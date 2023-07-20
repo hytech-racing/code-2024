@@ -1,7 +1,7 @@
 #include <SPI.h>
 
 #define CS 10
-#define SCk_SPEED 1000000
+#define SCk_SPEED 500000
 
 
 void setup() {
@@ -17,6 +17,8 @@ void setup() {
   SPI.begin();
 
 //  SPI.beginTransaction(settings);
+
+//  SPI.beginTransaction(SPISettings(SCk_SPEED, MSBFIRST, SPI_MODE0));
   
 }
 
@@ -31,13 +33,13 @@ void loop() {
 
   delay(10);
 
-//  SPI.beginTransaction(SPISettings(SCk_SPEED, MSBFIRST, SPI_MODE0));
+  SPI.beginTransaction(SPISettings(SCk_SPEED, MSBFIRST, SPI_MODE0));
 
   message_received = SPI.transfer(message_sent);
   message_received1 = SPI.transfer(0);
   message_received2 = SPI.transfer(0); 
 
-//  SPI.endTransaction();
+  SPI.endTransaction();
 
   digitalWrite(CS, HIGH);
 
