@@ -22,12 +22,14 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-  uint8_t message_sent = 0x22;
+  uint8_t message_sent = 0x11;
   uint8_t message_received;
   uint8_t message_received1;
   uint8_t message_received2;
 
   digitalWrite(CS, LOW);
+
+  delay(10);
 
   SPI.beginTransaction(SPISettings(SCk_SPEED, MSBFIRST, SPI_MODE0));
 
