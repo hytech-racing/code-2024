@@ -31,8 +31,8 @@
 #define CAN_ECU_RX3 30
 #define CAN_ECU_TX3 31
 
-#define ADC1_CS 33 
-#define ADC2_CS 29 
+#define ADC1_CS 33
+#define ADC2_CS 29
 #define ADC3_CS 34
 
 #define FR_INTERLOCK 40 
@@ -54,27 +54,30 @@
 /*
  * ADC pin definitions
  */
-#define ADC_BRAKE_1_CHANNEL 2
-#define ADC_BRAKE_2_CHANNEL 3
-#define ADC_ACCEL_1_CHANNEL 0
-#define ADC_ACCEL_2_CHANNEL 1
+ // All on ADC1 on rev14
+#define ADC_BRAKE_1_CHANNEL 5    // 2 on rev13
+#define ADC_BRAKE_2_CHANNEL 4    // 3 on rev13
+#define ADC_ACCEL_1_CHANNEL 7    // 0 on rev13
+#define ADC_ACCEL_2_CHANNEL 6    // 1 on rev13
 
-#define ADC_STEERING_2_CHANNEL 4
+#define ADC_STEERING_2_CHANNEL 3    // 4 on rev13
 
-#define ADC_GLV_READ_CHANNEL 4
+#define ADC_GLV_READ_CHANNEL 7    // ADC2 on rev14, 4 (ADC3) on rev13
 
-#define ADC_FL_LOAD_CELL_CHANNEL 4
-#define ADC_FR_LOAD_CELL_CHANNEL 5
-#define ADC_RL_LOAD_CELL_CHANNEL 7
-#define ADC_RR_LOAD_CELL_CHANNEL 3
+#define ADC_FL_LOAD_CELL_CHANNEL 4    // ADC2 on rev14, 4 (ADC2) on rev13
+#define ADC_FR_LOAD_CELL_CHANNEL 3    // ADC2 on rev14, 5 (ADC2) on rev13
+#define ADC_RL_LOAD_CELL_CHANNEL 0    // ADC1 on rev14, 7 (ADC1) on rev13
+#define ADC_RR_LOAD_CELL_CHANNEL 5    // ADC2 on rev14, 3 (ADC2) on rev13
 
-#define ADC_CURRENT_CHANNEL 5
-#define ADC_REFERENCE_CHANNEL 6
+// ADC1 on both rev's
+#define ADC_CURRENT_CHANNEL 2    // 5 on rev13
+#define ADC_REFERENCE_CHANNEL 1    // 6 on rev13
 
-#define SUS_POT_FL 6
-#define SUS_POT_FR 7
-#define SUS_POT_RL 0
-#define SUS_POT_RR 2
+// All on ADC2 on rev14 (potentially wrong, god knows which is which but whatever)
+#define SUS_POT_FL 6    // 6 on rev13
+#define SUS_POT_FR 1    // 7 on rev13 (ADC3)
+#define SUS_POT_RL 0    // 0 on rev13
+#define SUS_POT_RR 2    // 2 on rev13
 /*
  * Shutdown read thresholds
  */

@@ -14,6 +14,7 @@
 #include <deque>
 
 #include "ADC_SPI.h"
+#include <MCP3208.h>
 #include "STEERING_SPI.h"
 #include "kinetis_flexcan.h"
 #include "Metro.h"
@@ -106,9 +107,11 @@ bool imd_faulting = false;
 bool inverter_restart = false; // True when restarting the inverter
 INVERTER_STARTUP_STATE inverter_startup_state = INVERTER_STARTUP_STATE::WAIT_SYSTEM_READY;
 
-ADC_SPI ADC1(ADC1_CS, ADC_SPI_SPEED, ECU_SDI, ECU_SDO, ECU_CLK);
-ADC_SPI ADC2(ADC2_CS, ADC_SPI_SPEED, ECU_SDI, ECU_SDO, ECU_CLK);
-ADC_SPI ADC3(ADC3_CS, ADC_SPI_SPEED, ECU_SDI, ECU_SDO, ECU_CLK);
+//ADC_SPI ADC1(ADC1_CS, ADC_SPI_SPEED, ECU_SDI, ECU_SDO, ECU_CLK);
+//ADC_SPI ADC2(ADC2_CS, ADC_SPI_SPEED, ECU_SDI, ECU_SDO, ECU_CLK);
+//ADC_SPI ADC3(ADC3_CS, ADC_SPI_SPEED, ECU_SDI, ECU_SDO, ECU_CLK);
+MCP3208 adc1;
+MCP3208 adc2;
 
 STEERING_SPI STEERING(STEERING_CS, STEERING_SPI_SPEED);
 
@@ -191,6 +194,8 @@ void setup() {
   // pinMode(ECU_CLK, OUTPUT);
   // pinMode(ECU_SDI, INPUT);
   // pinMode(ECU_SDO, OUTPUT);
+  adc1.begin(ADC1_CS);
+  adc2.begin(ADC2_CS);   // ADC2, test MCP3208 in ECU code
 
 #if DEBUG
   Serial.begin(115200);
@@ -241,7 +246,6 @@ void loop() {
   REAR_INV_CAN.events();
   TELEM_CAN.events();
 
-  Serial.println("Print something");
   read_all_adcs();
   read_steering_spi_values();  // Test steering sensor 2, a.k.a. steering 1 in ECU code
   read_status_values();
@@ -280,6 +284,7 @@ void loop() {
     Serial.println(mcu_pedal_readings.get_accelerator_pedal_2());
     Serial.println(mcu_pedal_readings.get_brake_pedal_1());
     Serial.println(mcu_pedal_readings.get_brake_pedal_2());
+    Serial.println();
     //calculate_pedal_implausibilities();
 //    Serial.println(mcu_status.get_no_accel_implausability());
 //    Serial.println(mcu_status.get_no_brake_implausability());
@@ -289,31 +294,47 @@ void loop() {
 //    Serial.println(brake1);
 //    Serial.println(brake2);
     Serial.println("STEERINGS");
-    Serial.print("Encoder zero position: ");
-    Serial.println(STEERING.get_zero_position());    
+//    Serial.print("Encoder zero position: ");
+//    Serial.println(STEERING.get_zero_position());
+    Serial.print("Steering position: ");
     Serial.println(mcu_analog_readings.get_steering_1());
     Serial.print("Encoder position: ");
     Serial.println(STEERING.get_encoder_position());
 //    Serial.println(mcu_analog_readings.get_steering_2());
+    Serial.println();
+    Serial.println("Test MCP3208 with potentiometers");
+    Serial.print("FL: ");
+    Serial.println(mcu_front_potentiometers.get_pot1());
+    Serial.print("FR: ");
+    Serial.println(mcu_front_potentiometers.get_pot3());
+    Serial.print("RL: ");
+    Serial.println(mcu_rear_potentiometers.get_pot4());
+    Serial.print("RR: ");
+    Serial.println(mcu_rear_potentiometers.get_pot6());
     Serial.println();
     Serial.println("LOAD CELLS");
     Serial.println(mcu_load_cells.get_FL_load_cell());
     Serial.println(mcu_load_cells.get_FR_load_cell());
     Serial.println(mcu_load_cells.get_RL_load_cell());
     Serial.println(mcu_load_cells.get_RR_load_cell());
+    Serial.println();
+    Serial.println("TORQUE SETPOINTS");
     Serial.println(torque_setpoint_array[0]);
     Serial.println(torque_setpoint_array[1]);
     Serial.println(torque_setpoint_array[2]);
     Serial.println(torque_setpoint_array[3]);
+    Serial.println();
     Serial.println("MOTOR TEMPS");
     Serial.println(mc_temps[0].get_motor_temp());
     Serial.println(mc_temps[1].get_motor_temp());
     Serial.println(mc_temps[2].get_motor_temp());
     Serial.println(mc_temps[3].get_motor_temp());
     Serial.println(mc_temps[3].get_igbt_temp());
+    Serial.println();
     Serial.println("IMU");
     Serial.println(imu_accelerometer.get_vert_accel());
     Serial.println(imu_gyroscope.get_yaw());
+    Serial.println();
     Serial.println("dial");
     Serial.println(dashboard_status.get_dial_state());
   }
@@ -1213,7 +1234,6 @@ inline void set_inverter_torques() {
 }
 
 inline void read_all_adcs() {
-  Serial.println("Start ADC reading:");
   if (timer_read_all_adcs.check()) {
 
     prev_load_cell_readings[0] = mcu_load_cells.get_FL_load_cell();
@@ -1222,7 +1242,10 @@ inline void read_all_adcs() {
     prev_load_cell_readings[3] = mcu_load_cells.get_RR_load_cell();
 
     uint16_t adc1_inputs[8];
-    ADC1.read_all_channels(&adc1_inputs[0]);
+    for (int chan=0; chan<8; chan++) {
+      adc1_inputs[chan] = adc1.readADC(chan);
+    }
+//    ADC1.read_all_channels(&adc1_inputs[0]);
     mcu_pedal_readings.set_accelerator_pedal_1(adc1_inputs[ADC_ACCEL_1_CHANNEL]);
     mcu_pedal_readings.set_accelerator_pedal_2(adc1_inputs[ADC_ACCEL_2_CHANNEL]);
     mcu_pedal_readings.set_brake_pedal_1(adc1_inputs[ADC_BRAKE_1_CHANNEL]);
@@ -1247,28 +1270,29 @@ inline void read_all_adcs() {
     mcu_status.set_mech_brake_active(mcu_pedal_readings.get_brake_pedal_1() >= BRAKE_THRESHOLD_MECH_BRAKE_1); //define in driver_constraints.h (70%)
 
     uint16_t adc2_inputs[8];
-    ADC2.read_all_channels(&adc2_inputs[0]);
+    for (int chan=0; chan<8; chan++) {
+      adc2_inputs[chan] = adc2.readADC(chan);
+    }
+//    ADC2.read_all_channels(&adc2_inputs[0]);
     mcu_load_cells.set_RR_load_cell((uint16_t)((adc2_inputs[ADC_RR_LOAD_CELL_CHANNEL]*LOAD_CELL4_SLOPE + LOAD_CELL4_OFFSET) * (1 - load_cell_alpha) + prev_load_cell_readings[3]*load_cell_alpha));
     mcu_load_cells.set_FL_load_cell((uint16_t)((adc2_inputs[ADC_FL_LOAD_CELL_CHANNEL]*LOAD_CELL1_SLOPE + LOAD_CELL1_OFFSET) * (1 - load_cell_alpha) + prev_load_cell_readings[0]*load_cell_alpha));
     mcu_load_cells.set_FR_load_cell((uint16_t)((adc2_inputs[ADC_FR_LOAD_CELL_CHANNEL]*LOAD_CELL2_SLOPE + LOAD_CELL2_OFFSET) * (1 - load_cell_alpha) + prev_load_cell_readings[1]*load_cell_alpha));
     mcu_rear_potentiometers.set_pot4(adc2_inputs[SUS_POT_RL]);
     mcu_rear_potentiometers.set_pot6(adc2_inputs[SUS_POT_RR]);
     mcu_front_potentiometers.set_pot1(adc2_inputs[SUS_POT_FL]);
+    mcu_front_potentiometers.set_pot3(adc2_inputs[SUS_POT_FR]);
+    mcu_analog_readings.set_glv_battery_voltage(adc2_inputs[ADC_GLV_READ_CHANNEL]);
 
-    uint16_t adc3_inputs[8];
-    ADC3.read_all_channels(&adc3_inputs[0]);
-    mcu_analog_readings.set_glv_battery_voltage(adc3_inputs[ADC_GLV_READ_CHANNEL]);
-    mcu_front_potentiometers.set_pot3(adc3_inputs[SUS_POT_FR]);
+//    uint16_t adc3_inputs[8];
+//    ADC3.read_all_channels(&adc3_inputs[0]);
+//    mcu_analog_readings.set_glv_battery_voltage(adc3_inputs[ADC_GLV_READ_CHANNEL]);
+//    mcu_front_potentiometers.set_pot3(adc3_inputs[SUS_POT_FR]);
   }
 }
 
 inline void read_steering_spi_values() {
-  Serial.println("Start steering reading:");
   if (timer_steering_spi_read.check()) {
-    Serial.println("Start steering reading:");
-//    Serial.println(STEERING_CS);
     mcu_analog_readings.set_steering_1(STEERING.read_steering());
-
   }
 }
 
