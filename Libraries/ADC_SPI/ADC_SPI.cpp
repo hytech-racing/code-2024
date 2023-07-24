@@ -12,7 +12,8 @@
  */
 ADC_SPI::ADC_SPI()
 {
-	init(DEFAULT_ADC_SPI_CS, DEFAULT_ADC_SPI_SPEED, DEFAULT_ADC_SPI_SDI, DEFAULT_ADC_SPI_SDO, DEFAULT_ADC_SPI_CLK);
+	//init(DEFAULT_ADC_SPI_CS, DEFAULT_ADC_SPI_SPEED, DEFAULT_ADC_SPI_SDI, DEFAULT_ADC_SPI_SDO, DEFAULT_ADC_SPI_CLK);
+	init(DEFAULT_ADC_SPI_CS, DEFAULT_ADC_SPI_SPEED);
 }
 
 /*
@@ -21,18 +22,20 @@ ADC_SPI::ADC_SPI()
  */
 ADC_SPI::ADC_SPI(int CS)
 {
-	init(CS, DEFAULT_ADC_SPI_SPEED, DEFAULT_ADC_SPI_SDI, DEFAULT_ADC_SPI_SDO, DEFAULT_ADC_SPI_CLK);
+	//init(CS, DEFAULT_ADC_SPI_SPEED, DEFAULT_ADC_SPI_SDI, DEFAULT_ADC_SPI_SDO, DEFAULT_ADC_SPI_CLK);
+	init(CS, DEFAULT_ADC_SPI_SPEED);
 }
 
 ADC_SPI::ADC_SPI(int CS, unsigned int SPIspeed)
 {
-	init(CS, SPIspeed, DEFAULT_ADC_SPI_SDI, DEFAULT_ADC_SPI_SDO, DEFAULT_ADC_SPI_CLK);
+	//init(CS, SPIspeed, DEFAULT_ADC_SPI_SDI, DEFAULT_ADC_SPI_SDO, DEFAULT_ADC_SPI_CLK);
+	init(CS, SPIspeed);
 }
 
-ADC_SPI::ADC_SPI(int CS, unsigned int SPIspeed, int SDI, int SDO, int CLK)
-{
-	init(CS, SPIspeed, SDI, SDO, CLK);
-}
+//ADC_SPI::ADC_SPI(int CS, unsigned int SPIspeed, int SDI, int SDO, int CLK)
+//{
+//	init(CS, SPIspeed, SDI, SDO, CLK);
+//}
 
 /*
  * Initialization helper
@@ -41,18 +44,18 @@ void ADC_SPI::init(int CS, unsigned int SPIspeed, int SDI, int SDO, int CLK)
 {
 	ADC_SPI_CS = CS;
 	SPI_SPEED = SPIspeed;
-	ADC_SPI_SDI = SDI;
-	ADC_SPI_SDO = SDO;
-	ADC_SPI_CLK = CLK;
+	//ADC_SPI_SDI = SDI;
+	//ADC_SPI_SDO = SDO;
+	//ADC_SPI_CLK = CLK;
 
 	pinMode(ADC_SPI_CS, OUTPUT);
-	pinMode(ADC_SPI_SDI, INPUT);
-	pinMode(ADC_SPI_SDO, OUTPUT);
-	pinMode(ADC_SPI_CLK, OUTPUT);
+	//pinMode(ADC_SPI_SDI, INPUT);
+	//pinMode(ADC_SPI_SDO, OUTPUT);
+	//pinMode(ADC_SPI_CLK, OUTPUT);
 	digitalWrite(ADC_SPI_CS, HIGH);
-	digitalWrite(ADC_SPI_CLK, HIGH);
+	//digitalWrite(ADC_SPI_CLK, HIGH);
 	
-	// SPI.begin();
+	 SPI.begin();
 }
 
 /*
@@ -62,25 +65,24 @@ void ADC_SPI::init(int CS, unsigned int SPIspeed, int SDI, int SDO, int CLK)
  */
 uint16_t ADC_SPI::read_channel(int channel)
 {
-	// // Gain control of the SPI port
-	// // and configure settings
-	// SPI.beginTransaction(SPISettings(SPI_SPEED, MSBFIRST, SPI_MODE0));
+	// Gain control of the SPI port
+	// and configure settings
+	SPI.beginTransaction(SPISettings(SPI_SPEED, MSBFIRST, SPI_MODE3));
 
-	// // Take the SS pin low to select the chip:
+	// Take the SS pin low to select the chip:
 	digitalWrite(ADC_SPI_CS, LOW);
 
-   SPI.beginTransaction(SPISettings(SPI_SPEED, MSBFIRST, SPI_MODE3));
+    //SPI.beginTransaction(SPISettings(SPI_SPEED, MSBFIRST, SPI_MODE3));
 
-  SPI.transfer16(0);//start adc converting channel 0
+	//SPI.transfer16(0);//start adc converting channel 0
 
 	uint16_t value = SPI.transfer16(channel << 11);
 
 	// Take the SS pin high to de-select the chip:
-	
+	digitalWrite(ADC_SPI_CS, HIGH);
 
 	// Release control of the SPI port
-	SPI.endTransaction();
-	digitalWrite(ADC_SPI_CS, HIGH);
+	SPI.endTransaction();	
 
 	return value;
 }
