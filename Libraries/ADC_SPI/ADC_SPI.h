@@ -15,8 +15,9 @@ class ADC_SPI {
 		ADC_SPI();
 		ADC_SPI(int CS);
         ADC_SPI(int CS, unsigned int SPIspeed);
-		ADC_SPI(int CS, unsigned int SPIspeed, int SDI, int SDO, int CLK);
-		void init(int CS, unsigned int SPIspeed, int SDI, int SDO, int CLK);
+		//ADC_SPI(int CS, unsigned int SPIspeed, int SDI, int SDO, int CLK);
+		//void init(int CS, unsigned int SPIspeed, int SDI, int SDO, int CLK);
+		void init(int CS, unsigned int SPIspeed);
 		uint16_t read_channel(int channel);
 		//void read_all_channels(uint16_t* array);
 	private:

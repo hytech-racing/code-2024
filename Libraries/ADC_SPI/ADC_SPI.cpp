@@ -40,7 +40,8 @@ ADC_SPI::ADC_SPI(int CS, unsigned int SPIspeed)
 /*
  * Initialization helper
  */
-void ADC_SPI::init(int CS, unsigned int SPIspeed, int SDI, int SDO, int CLK)
+//void ADC_SPI::init(int CS, unsigned int SPIspeed, int SDI, int SDO, int CLK)
+void ADC_SPI::init(int CS, unsigned int SPIspeed)
 {
 	ADC_SPI_CS = CS;
 	SPI_SPEED = SPIspeed;
@@ -86,7 +87,7 @@ uint16_t ADC_SPI::read_channel(int channel)
 
 	return value;
 }
-
+/*
 void ADC_SPI::read_all_channels(uint16_t *arr)
 
 {
@@ -112,3 +113,4 @@ void ADC_SPI::read_all_channels(uint16_t *arr)
   sei();
   SPI.endTransaction();
 }
+*/
