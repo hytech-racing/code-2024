@@ -173,7 +173,7 @@ void setup() {
   delay(20);
   IMU.regWrite(DEC_RATE, 0), // Disable decimation
   delay(20);
-  begin_imu();
+//  begin_imu();
 
   STEERING.set_zero_position(11800);    // Test steering sensor
 
@@ -1433,24 +1433,21 @@ inline void read_status_values() {
 }
 
 // IMU functions
-inline void begin_imu() {
-  IMU.configSPI(); // Configure SPI communication    // Check back with .cpp file to better code integration
-  delay(1000); // Give the part time to start up
-  
-  IMU.regWrite(MSC_CTRL, 0xC1);  // Enable Data Ready, set polarity
-  delay(20);
-  IMU.regWrite(FLTR_CTRL, 0x504); // Set digital filter
-  delay(20);
-  IMU.regWrite(DEC_RATE, 0), // Disable decimation
-  delay(20);
-
-  SPI.endTransaction();
-}
+//inline void begin_imu() {
+//  IMU.configSPI(); // Configure SPI communication    // Check back with .cpp file to better code integration
+//  delay(1000); // Give the part time to start up
+//  
+//  IMU.regWrite(MSC_CTRL, 0xC1);  // Enable Data Ready, set polarity
+//  delay(20);
+//  IMU.regWrite(FLTR_CTRL, 0x504); // Set digital filter
+//  delay(20);
+//  IMU.regWrite(DEC_RATE, 0), // Disable decimation
+//  delay(20);
+//
+//  SPI.endTransaction();
+//}
 
 inline void read_imu() {
-  
-  SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3));
-  
   if (timer_read_imu.check()) {
     double sinAngle = sin(VEHICLE_TILT_ANGLE_X);
     double cosAngle = cos(VEHICLE_TILT_ANGLE_X);

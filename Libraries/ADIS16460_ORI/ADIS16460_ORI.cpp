@@ -44,16 +44,18 @@ ADIS16460::ADIS16460(int CS, int DR, int RST) {
   _CS = CS;
   _DR = DR;
   _RST = RST;
-// Initialize SPI
-  SPI.begin();
+
 // Configure SPI controller
-  configSPI();
+  //configSPI();
 // Set default pin states
   pinMode(_CS, OUTPUT); // Set CS pin to be an output
   pinMode(_DR, INPUT); // Set DR pin to be an input
   pinMode(_RST, OUTPUT); // Set RST pin to be an output
   digitalWrite(_CS, HIGH); // Initialize CS pin to be high
   digitalWrite(_RST, HIGH); // Initialize RST pin to be high
+
+// Initialize SPI
+  SPI.begin();
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -94,7 +96,9 @@ int ADIS16460::configSPI() {
 ////////////////////////////////////////////////////////////////////////////////////////////
 int16_t ADIS16460::regRead(uint8_t regAddr) {
 //Read registers using SPI
-  
+  // Configure SPI controller
+  configSPI();
+
   // Write register address to be read
   digitalWrite(_CS, LOW); // Set CS low to enable device
   SPI.transfer(regAddr); // Write address over SPI bus
@@ -110,6 +114,8 @@ int16_t ADIS16460::regRead(uint8_t regAddr) {
   digitalWrite(_CS, HIGH); // Set CS high to disable device
 
   delayMicroseconds(40); // Delay to not violate read rate (16 us)
+
+  SPI.endTransaction();
   
   int16_t _dataOut = (_msbData << 8) | (_lsbData & 0xFF); // Concatenate upper and lower bytes
   // Shift MSB data left by 8 bits, mask LSB data with 0xFF, and OR both bits.
@@ -137,6 +143,9 @@ int ADIS16460::regWrite(uint8_t regAddr, int16_t regData) {
   uint8_t highBytelowWord = (lowWord >> 8);
   uint8_t lowBytelowWord = (lowWord & 0xFF);
 
+  // Configure SPI controller
+  configSPI();
+
   // Write highWord to SPI bus
   digitalWrite(_CS, LOW); // Set CS low to enable device
   SPI.transfer(highBytelowWord); // Write high byte from low word to SPI bus
@@ -151,6 +160,8 @@ int ADIS16460::regWrite(uint8_t regAddr, int16_t regData) {
   SPI.transfer(lowBytehighWord); // Write low byte from high word to SPI bus
   digitalWrite(_CS, HIGH); // Set CS high to disable device
 
+  SPI.endTransaction();
+
   return(1);
 }
 
@@ -163,6 +174,8 @@ int ADIS16460::regWrite(uint8_t regAddr, int16_t regData) {
 int16_t *ADIS16460::burstRead(void) {
 	uint8_t burstdata[20];
 	static int16_t burstwords[10];
+	// Configure SPI controller
+	configSPI();
 	// Trigger Burst Read
 	digitalWrite(_CS, LOW);
 	SPI.transfer(0x3E);
@@ -189,6 +202,7 @@ int16_t *ADIS16460::burstRead(void) {
 	burstdata[18] = SPI.transfer(0x00); //CHECKSUM
 	burstdata[19] = SPI.transfer(0x00);
 	digitalWrite(_CS, HIGH);
+	SPI.endTransaction();
 
 	// Join bytes into words
 	burstwords[0] = ((burstdata[0] << 8) | (burstdata[1] & 0xFF)); //DIAG_STAT
