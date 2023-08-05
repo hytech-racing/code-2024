@@ -74,10 +74,10 @@
 #define ADC_REFERENCE_CHANNEL 1    // 6 on rev13
 
 // All on ADC2 on rev14 (potentially wrong, god knows which is which but whatever)
-#define SUS_POT_FL 6    // 6 on rev13
-#define SUS_POT_FR 1    // 7 on rev13 (ADC3)
-#define SUS_POT_RL 0    // 0 on rev13
-#define SUS_POT_RR 2    // 2 on rev13
+#define SUS_POT_FL 2    // 6 on rev13
+#define SUS_POT_FR 0    // 7 on rev13 (ADC3)
+#define SUS_POT_RL 6    // 0 on rev13
+#define SUS_POT_RR 1    // 2 on rev13
 /*
  * Shutdown read thresholds
  */
