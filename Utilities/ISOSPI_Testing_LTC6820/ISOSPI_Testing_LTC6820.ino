@@ -1,53 +1,86 @@
 #include <SPI.h>
+#include <Mcp320x.h>
 
-#define CS 10
-#define SCk_SPEED 500000
+#define SPI_CS    	10 		   // SPI slave select
+#define ADC_VREF    3300     // 3.3V Vref
+#define ADC_CLK     500000  // SPI clock 1.6MHz
 
+MCP3204 adc(ADC_VREF, SPI_CS);
 
 void setup() {
-  // put your setup code here, to run once:
-  pinMode(CS, OUTPUT);
+  // configure PIN mode
+  pinMode(SPI_CS, OUTPUT);
 
-  digitalWrite(CS, HIGH);
+  // set initial PIN state
+  digitalWrite(SPI_CS, HIGH);
 
+  // initialize serial
   Serial.begin(115200);
 
-//  SPISettings settings(SCK_SPEED, MSBFIRST, SPI_MODE0);
-
+  // initialize SPI interface for MCP3208
+  // SPISettings settings(ADC_CLK, MSBFIRST, SPI_MODE0);
   SPI.begin();
-
-//  SPI.beginTransaction(settings);
-
-//  SPI.beginTransaction(SPISettings(SCk_SPEED, MSBFIRST, SPI_MODE0));
+  // SPI.beginTransaction(settings);
   
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  uint8_t message_sent = 0x11;
-  uint8_t message_received;
-  uint8_t message_received1;
-  uint8_t message_received2;
+  // uint32_t t1;
+  // uint32_t t2;
 
-  digitalWrite(CS, LOW);
+  // // start sampling
+  // Serial.println("Reading...");
 
-  delay(10);
+  // t1 = micros();
+  // uint16_t raw = adc.read(MCP3204::Channel::SINGLE_0);
+  // t2 = micros();
 
-  SPI.beginTransaction(SPISettings(SCk_SPEED, MSBFIRST, SPI_MODE0));
+  // // get analog value
+  // uint16_t val = adc.toAnalog(raw);
 
-  message_received = SPI.transfer(message_sent);
-  message_received1 = SPI.transfer(0);
-  message_received2 = SPI.transfer(0); 
+  // // readed value
+  // Serial.print("value: ");
+  // Serial.print(raw);
+  // Serial.print(" (");
+  // Serial.print(val);
+  // Serial.println(" mV)");
+
+  // // sampling time
+  // Serial.print("Sampling time: ");
+  // Serial.print(static_cast<double>(t2 - t1) / 1000, 4);
+  // Serial.println("ms");
+
+  // delay(2000);
+
+  SPISettings settings(ADC_CLK, MSBFIRST, SPI_MODE0);
+
+  SPI.beginTransaction(settings);
+
+  // activate ADC with chip select
+  digitalWrite(SPI_CS, LOW);
+
+  delayMicroseconds(1);
+
+  digitalWrite(SPI_CS, HIGH);
+
+  delayMicroseconds(16);
+
+  digitalWrite(SPI_CS, LOW);
+
+  // // send first command byte
+  // mSpi->transfer(cmd.hiByte);
+  // // send second command byte and receive first(msb) 4 bits
+  // adc.hiByte = mSpi->transfer(cmd.loByte) & 0x0F;
+  // // receive last(lsb) 8 bits
+  // adc.loByte = mSpi->transfer(0x00);
+
+  delayMicroseconds(1);
+
+  // deactivate ADC with slave select
+  digitalWrite(SPI_CS, HIGH);
+
+  delayMicroseconds(1);
 
   SPI.endTransaction();
-
-  digitalWrite(CS, HIGH);
-
-  Serial.println("Message received:");
-  Serial.println(message_received);
-  Serial.println(message_received1);
-  Serial.println(message_received2);
-
-  delay(2000);
 
 }

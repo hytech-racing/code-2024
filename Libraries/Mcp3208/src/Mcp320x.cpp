@@ -210,6 +210,14 @@ uint16_t MCP320x<T>::transfer(SpiData cmd) const
   // activate ADC with chip select
   digitalWrite(mCsPin, LOW);
 
+  delayMicroseconds(1);
+
+  digitalWrite(mCsPin, HIGH);
+
+  delayMicroseconds(16);
+
+  digitalWrite(mCsPin, LOW);
+
   // send first command byte
   mSpi->transfer(cmd.hiByte);
   // send second command byte and receive first(msb) 4 bits
@@ -219,6 +227,8 @@ uint16_t MCP320x<T>::transfer(SpiData cmd) const
 
   // deactivate ADC with slave select
   digitalWrite(mCsPin, HIGH);
+  
+  delayMicroseconds(1);
 
   return adc.value;
 }
