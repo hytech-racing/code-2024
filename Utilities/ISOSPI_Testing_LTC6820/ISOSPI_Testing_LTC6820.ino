@@ -12,7 +12,7 @@ void setup() {
   pinMode(SPI_CS, OUTPUT);
 
   // set initial PIN state
-  digitalWrite(SPI_CS, LOW);
+  digitalWrite(SPI_CS, HIGH);
 
   // initialize serial
   Serial.begin(115200);
@@ -25,15 +25,15 @@ void setup() {
 }
 
 void loop() {
-  uint32_t t1;
-  uint32_t t2;
+  // uint32_t t1;
+  // uint32_t t2;
 
   // start sampling
-  Serial.println("Reading...");
+  // Serial.println("Reading...");
 
-  t1 = micros();
+  // t1 = micros();
   uint16_t raw = adc.read(MCP3204::Channel::SINGLE_0);
-  t2 = micros();
+  // t2 = micros();
 
   // get analog value
   uint16_t val = adc.toAnalog(raw);
