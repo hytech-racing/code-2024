@@ -25,32 +25,32 @@ void setup() {
 }
 
 void loop() {
-  // uint32_t t1;
-  // uint32_t t2;
+   uint32_t t1;
+   uint32_t t2;
 
   // start sampling
-  // Serial.println("Reading...");
+   Serial.println("Reading...");
 
-  // t1 = micros();
-  uint16_t raw = adc.read(MCP3204::Channel::SINGLE_0);
-  // t2 = micros();
+   t1 = micros();
+   uint16_t raw = adc.read(MCP3204::Channel::SINGLE_0);
+   t2 = micros();
 
-  // get analog value
-  uint16_t val = adc.toAnalog(raw);
+   // get analog value
+   uint16_t val = adc.toAnalog(raw);
 
-  // // readed value
-  // Serial.print("value: ");
-  // Serial.print(raw);
-  // Serial.print(" (");
-  // Serial.print(val);
-  // Serial.println(" mV)");
+   // readed value
+   Serial.print("value: ");
+   Serial.print(raw);
+   Serial.print(" (");
+   Serial.print(val);
+   Serial.println(" mV)");
 
-  // // sampling time
-  // Serial.print("Sampling time: ");
-  // Serial.print(static_cast<double>(t2 - t1) / 1000, 4);
-  // Serial.println("ms");
+   // sampling time
+   Serial.print("Sampling time: ");
+   Serial.print(static_cast<double>(t2 - t1) / 1000, 4);
+   Serial.println("ms");
 
-  // delay(2000);
+   delay(1000);
 
   // SPISettings settings(ADC_CLK, MSBFIRST, SPI_MODE0);
 
