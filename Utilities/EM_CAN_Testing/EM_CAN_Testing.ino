@@ -21,40 +21,42 @@ void setup() {
   ENERGY_METER_CAN.setBaudRate(500000);
   ENERGY_METER_CAN.enableMBInterrupts();
   ENERGY_METER_CAN.onReceive(parse_energy_meter_can_message);
+  Serial.println("Receive test");
 }
 
 void loop() {
   ENERGY_METER_CAN.events();
-//  while (ENERGY_METER_CAN.read(msg)) { // Receive a message on CAN
-//    if (msg.id == ID_EM_STATUS) {
-//        Serial.print("Received 0x");
-//        Serial.print(msg.id, HEX);
-//        Serial.print(": ");
-//        for (unsigned int i = 0; i < msg.len; i++) {
-//            Serial.print(msg.buf[i], HEX);
-//            Serial.print(" ");
-//        }
-//        Serial.println();
-//    }
-//  }
+  // Serial.println("Receive test");
+ while (ENERGY_METER_CAN.read(msg)) { // Receive a message on CAN
+   if (msg.id == ID_EM_MEASUREMENT) {
+       Serial.print("Received 0x");
+       Serial.print(msg.id, HEX);
+       Serial.print(": ");
+       for (unsigned int i = 0; i < msg.len; i++) {
+           Serial.print(msg.buf[i], HEX);
+           Serial.print(" ");
+       }
+       Serial.println();
+   }
+ }
 
-  Serial.println();
-  Serial.println("Parsed data");
-  Serial.print("Voltage: ");
-  Serial.println((float)em_measurement.get_voltage() * 1.5258789063e-005);
-  Serial.print("Current: ");
-  Serial.println((float)em_measurement.get_current() * 1.5258789063e-005);
-  Serial.print("Voltage gain: ");
-  Serial.println(em_status.get_voltage_gain());
-  Serial.print("Current gain: ");
-  Serial.println(em_status.get_current_gain());
-  Serial.print("Overvltage flag: ");
-  Serial.println(em_status.get_overvoltage());
-  Serial.print("Overvpower flag: ");
-  Serial.println(em_status.get_overpower());
-  Serial.print("Logging flag: ");
-  Serial.println(em_status.get_logging());
-  delay(100);
+  // Serial.println();
+  // Serial.println("Parsed data");
+  // Serial.print("Voltage: ");
+  // Serial.println((float)em_measurement.get_voltage() * 1.5258789063e-005);
+  // Serial.print("Current: ");
+  // Serial.println((float)em_measurement.get_current() * 1.5258789063e-005);
+  // Serial.print("Voltage gain: ");
+  // Serial.println(em_status.get_voltage_gain());
+  // Serial.print("Current gain: ");
+  // Serial.println(em_status.get_current_gain());
+  // Serial.print("Overvltage flag: ");
+  // Serial.println(em_status.get_overvoltage());
+  // Serial.print("Overvpower flag: ");
+  // Serial.println(em_status.get_overpower());
+  // Serial.print("Logging flag: ");
+  // Serial.println(em_status.get_logging());
+  // delay(100);
   
 //  forward_CAN_em();
 }
