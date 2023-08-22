@@ -131,6 +131,7 @@ void setup() {
   SPI.begin();
   TELEM_CAN.begin();
   TELEM_CAN.setBaudRate(500000);
+//  TELEM_CAN.setBaudRate(1000000);    // Test CAN capacity 1,000,000 baud
   ENERGY_METER_CAN.begin();
   ENERGY_METER_CAN.setBaudRate(500000);
   ENERGY_METER_CAN.enableMBInterrupts();

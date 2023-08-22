@@ -89,6 +89,7 @@ void setup() {
   //Initializes CAN
   CAN.begin();
   CAN.setBaudRate(500000);
+//  CAN.setBaudRate(1000000);    // Test CAN capacity 1,000,000 baud
   CAN.enableMBInterrupts();
   CAN.onReceive(read_can);
   //

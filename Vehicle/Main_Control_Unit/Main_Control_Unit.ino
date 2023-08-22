@@ -79,6 +79,8 @@ Metro timer_CAN_mcu_pedal_readings_send = Metro(50);
 Metro timer_CAN_mcu_analog_readings_send = Metro(50);
 Metro timer_CAN_mcu_load_cells_send = Metro(20);
 Metro timer_CAN_mcu_potentiometers_send = Metro(20);
+Metro timer_CAN_front_inv_send = Metro(50);
+Metro timer_CAN_rear_inv_send = Metro(50);
 
 Metro timer_ready_sound = Metro(2000); // Time to play RTD sound
 
@@ -196,6 +198,7 @@ void setup() {
   REAR_INV_CAN.setBaudRate(500000);
   TELEM_CAN.begin();
   TELEM_CAN.setBaudRate(500000);
+//  TELEM_CAN.setBaudRate(1000000);    // Test CAN capacity 1,000,000 baud
   FRONT_INV_CAN.enableMBInterrupts();
   REAR_INV_CAN.enableMBInterrupts();
   TELEM_CAN.enableMBInterrupts();
@@ -249,6 +252,8 @@ void loop() {
   send_CAN_imu_accelerometer();
   send_CAN_imu_gyroscope();
   send_CAN_inverter_setpoints();
+  send_CAN_front_inv();
+  send_CAN_rear_inv();
 
   //  /* Finish restarting the inverter when timer expires */
   check_all_inverters_error();
@@ -308,13 +313,14 @@ void loop() {
 
 
 
+
 inline void send_CAN_inverter_setpoints() {
   if (timer_CAN_inverter_setpoints_send.check()) {
     mc_setpoints_command[0].write(msg.buf);
     msg.id = ID_MC1_SETPOINTS_COMMAND;
     msg.len = sizeof(mc_setpoints_command[0]);
     FRONT_INV_CAN.write(msg);
-
+    
     mc_setpoints_command[1].write(msg.buf);
     msg.id = ID_MC2_SETPOINTS_COMMAND;
     msg.len = sizeof(mc_setpoints_command[1]);
@@ -609,6 +615,96 @@ void parse_telem_can_message(const CAN_message_t &RX_msg) {
       // eliminate all action buttons to not process twice
       dashboard_status.set_button_flags(0);
       break;
+  }
+}
+
+inline void send_CAN_front_inv() {
+  if (timer_CAN_front_inv_send.check()) {
+    mc_status[0].write(msg.buf);
+    msg.id = ID_MC1_STATUS;
+    msg.len = sizeof(mc_status[0]);
+    TELEM_CAN.write(msg);
+
+    mc_status[1].write(msg.buf);
+    msg.id = ID_MC2_STATUS;
+    msg.len = sizeof(mc_status[1]);
+    TELEM_CAN.write(msg);
+
+    mc_temps[0].write(msg.buf);
+    msg.id = ID_MC1_TEMPS;
+    msg.len = sizeof(mc_temps[0]);
+    TELEM_CAN.write(msg);
+
+    mc_temps[1].write(msg.buf);
+    msg.id = ID_MC2_TEMPS;
+    msg.len = sizeof(mc_temps[1]);
+    TELEM_CAN.write(msg);
+
+    mc_energy[0].write(msg.buf);
+    msg.id = ID_MC1_ENERGY;
+    msg.len = sizeof(mc_energy[0]);
+    TELEM_CAN.write(msg);
+
+    mc_energy[1].write(msg.buf);
+    msg.id = ID_MC2_ENERGY;
+    msg.len = sizeof(mc_energy[1]);
+    TELEM_CAN.write(msg);
+
+    mc_setpoints_command[0].write(msg.buf);
+    msg.id = ID_MC1_SETPOINTS_COMMAND;
+    msg.len = sizeof(mc_setpoints_command[0]);
+    TELEM_CAN.write(msg);
+    
+    mc_setpoints_command[1].write(msg.buf);
+    msg.id = ID_MC2_SETPOINTS_COMMAND;
+    msg.len = sizeof(mc_setpoints_command[1]);
+    TELEM_CAN.write(msg);
+
+    
+  }
+}
+
+inline void send_CAN_rear_inv() {
+  if (timer_CAN_rear_inv_send.check()) {
+    mc_status[2].write(msg.buf);
+    msg.id = ID_MC3_STATUS;
+    msg.len = sizeof(mc_status[0]);
+    TELEM_CAN.write(msg);
+
+    mc_status[3].write(msg.buf);
+    msg.id = ID_MC4_STATUS;
+    msg.len = sizeof(mc_status[1]);
+    TELEM_CAN.write(msg);
+
+    mc_temps[2].write(msg.buf);
+    msg.id = ID_MC3_TEMPS;
+    msg.len = sizeof(mc_temps[0]);
+    TELEM_CAN.write(msg);
+
+    mc_temps[3].write(msg.buf);
+    msg.id = ID_MC4_TEMPS;
+    msg.len = sizeof(mc_temps[1]);
+    TELEM_CAN.write(msg);
+
+    mc_energy[2].write(msg.buf);
+    msg.id = ID_MC3_ENERGY;
+    msg.len = sizeof(mc_energy[0]);
+    TELEM_CAN.write(msg);
+
+    mc_energy[3].write(msg.buf);
+    msg.id = ID_MC4_ENERGY;
+    msg.len = sizeof(mc_energy[1]);
+    TELEM_CAN.write(msg);
+   
+    mc_setpoints_command[2].write(msg.buf);
+    msg.id = ID_MC3_SETPOINTS_COMMAND;
+    msg.len = sizeof(mc_setpoints_command[2]);
+    TELEM_CAN.write(msg);
+
+    mc_setpoints_command[3].write(msg.buf);
+    msg.id = ID_MC4_SETPOINTS_COMMAND;
+    msg.len = sizeof(mc_setpoints_command[3]);
+    TELEM_CAN.write(msg);
   }
 }
 
