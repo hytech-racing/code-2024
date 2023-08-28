@@ -4,8 +4,6 @@
 
 // debug mode
 #define DEBUG false
-// SPI slave select pin, as required for Teensy 4.0
-#define SS 10
 // SPI alternate pin definitions (not needed unless using Teensy 3.2 alternate SPI pins)
 #define MOSI 7 // pin 11 by default
 #define MISO 8 // pin 12 by default
@@ -16,7 +14,7 @@
 // SPI write
 void LTC6811_2::spi_write_reg(uint8_t *cmd, uint8_t *cmd_pec, uint8_t *data, uint8_t *data_pec) {
     SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3));
-    digitalWrite(SS, LOW);
+    digitalWrite(this->chip_select, LOW);
     delayMicroseconds(1);
     SPI.transfer(cmd[0]);
     SPI.transfer(cmd[1]);
@@ -27,7 +25,7 @@ void LTC6811_2::spi_write_reg(uint8_t *cmd, uint8_t *cmd_pec, uint8_t *data, uin
     }
     SPI.transfer(data_pec[0]);
     SPI.transfer(data_pec[1]);
-    digitalWrite(SS, HIGH);
+    digitalWrite(this->chip_select, HIGH);
     delayMicroseconds(1);
     SPI.endTransaction();
 #if DEBUG
@@ -37,7 +35,7 @@ void LTC6811_2::spi_write_reg(uint8_t *cmd, uint8_t *cmd_pec, uint8_t *data, uin
 // SPI read; IF CODE DOES NOT WORK, THIS IS A GOOD PLACE TO START DEBUGGING
 void LTC6811_2::spi_read_reg(uint8_t *cmd, uint8_t* cmd_pec, uint8_t *data_in) {
     SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3));
-    digitalWrite(SS, LOW);
+    digitalWrite(this->chip_select, LOW);
     delayMicroseconds(1);
     SPI.transfer(cmd[0]);
     SPI.transfer(cmd[1]);
@@ -50,7 +48,7 @@ void LTC6811_2::spi_read_reg(uint8_t *cmd, uint8_t* cmd_pec, uint8_t *data_in) {
         Serial.print("SPI in byte: "); Serial.println(data_in[i], BIN);
 #endif
     }
-    digitalWrite(SS, HIGH);
+    digitalWrite(this->chip_select, HIGH);
     delayMicroseconds(1);
     SPI.endTransaction();
 }
@@ -58,15 +56,20 @@ void LTC6811_2::spi_read_reg(uint8_t *cmd, uint8_t* cmd_pec, uint8_t *data_in) {
 // SPI command
 void LTC6811_2::spi_cmd(uint8_t *cmd, uint8_t* cmd_pec) {
     SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3));
-    digitalWrite(SS, LOW);
+    digitalWrite(this->chip_select, LOW);
     delayMicroseconds(1);
     SPI.transfer(cmd[0]);
     SPI.transfer(cmd[1]);
     SPI.transfer(cmd_pec[0]);
     SPI.transfer(cmd_pec[1]);
-    digitalWrite(SS, HIGH);
+    digitalWrite(this->chip_select, HIGH);
     delayMicroseconds(1);
     SPI.endTransaction();
+}
+
+// Set SPI chip select
+void LTC6811_2::spi_set_chip_select(uint8_t cs) {
+    this->chip_select = cs;
 }
 
 // returns the address of the specific LTC6811-2 chip to send command to
@@ -373,10 +376,10 @@ void LTC6811_2::stcomm() {
  */
 // Wakeup LTC6811 from core SLEEP state and/ or isoSPI IDLE state to ready for ADC measurements or isoSPI comms
 void LTC6811_2::wakeup() {
-    digitalWrite(SS, LOW);
+    digitalWrite(this->chip_select, LOW);
     delayMicroseconds(1);
     SPI.transfer(0);
-    digitalWrite(SS, HIGH);
+    digitalWrite(this->chip_select, HIGH);
     delayMicroseconds(400); //t_wake is 400 microseconds; wait that long to ensure device has turned on.
 }
 
