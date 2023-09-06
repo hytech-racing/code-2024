@@ -18,7 +18,11 @@ void loop() {
   if (read_steering_timer.check()) {
       Serial5.write(0x33);
       if (Serial5.available()) {
-    Serial.println(Serial5.read());
+        char position_high = Serial5.read();
+        char position_low_and_error_warning = Serial.read();
+        uint16_t encoder_position = position_high << 6 | position_low_and_error_warning >> 2;
+        Serial.println(encoder_position);
+//    Serial.println(Serial5.read());
   }
       
 //    //Serial.println();
