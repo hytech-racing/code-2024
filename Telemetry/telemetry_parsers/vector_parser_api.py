@@ -43,8 +43,15 @@ def parse_csv_folder(path):
     '''
 
     csv_paths = []
-    for p in Path(path).rglob( '*.csv' ):
+    print("CSV Files Found:")
+    for p in Path(path).rglob( '*.CSV' ):
+        print(p)
         csv_paths.append(str(p))
+    
+    for p in Path(path).rglob( '*.csv' ):
+        print(p)
+        csv_paths.append(str(p))
+
 
     # Create a shared dictionary object using the multiprocessing.Manager class
     manager = multiprocessing.Manager()
