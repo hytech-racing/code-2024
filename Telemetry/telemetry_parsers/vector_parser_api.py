@@ -6,7 +6,7 @@ from pathlib import Path
 import scipy.io
 from datetime import datetime
 import multiprocessing
-import parsers as p
+import Telemetry.telemetry_parsers.newdata as p
 import json
 import re
 

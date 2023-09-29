@@ -1,4 +1,4 @@
-from parsers import MESSAGE_DICT
+from Telemetry.telemetry_parsers.newdata import MESSAGE_DICT
 import paho.mqtt.client as mqtt
 import struct
 import numpy as np
