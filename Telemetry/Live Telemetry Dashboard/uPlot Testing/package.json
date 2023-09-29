@@ -1,0 +1,7 @@
+{
+  "name": "uPlot Testing",
+  "version": "1.0.0",
+  "dependencies": {
+    "paho-mqtt": "^1.1.0"
+  }
+}
