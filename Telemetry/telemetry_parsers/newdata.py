@@ -56,7 +56,7 @@ MESSAGE_DICT = {
                 "State Signal":{
                     "description": "State",
                     "units": "",
-                    "path": "BMS.detailed_temps.state",
+                    "path": "BMS.status.state",
                     "bits": (0,8),
                     "endianness": "little",
                     "transformation": lambda x: x
@@ -64,19 +64,100 @@ MESSAGE_DICT = {
                 "Overvoltage Signal": {
                     "description": "Overvoltage",
                     "units": "",
-                    "path": "BMS.detailed_temps.group",
+                    "path": "BMS.status.group",
                     "bits": (0,1),
                     "endianness": "little",
                     "transformation": lambda x: x
                 },
                 "Undervoltage Signal": {
-                    "description": "Temps[0]",
-                    "units": "C",
-                    "path": "BMS.detailed_temps.temps[0]",
-                    "bits": (0,16),
+                    "description": "Undervoltage",
+                    "units": "",
+                    "path": "BMS.status.undervoltage",
+                    "bits": (0,1),
+                    "endianness": "little",
+                    "transformation": lambda x: x
+                },
+                "Total Voltage High Signal":{
+                    "description": "Total Voltage High",
+                    "units": "",
+                    "path": "BMS.status.total_volatage_high",
+                    "bits": (0,1),
+                    "endianness": "little",
+                    "transformation": lambda x: x
+                },
+                "Discharge Overcurrent Signal": {
+                    "description": "Discharge Overcurrent",
+                    "units": "",
+                    "path": "BMS.status.discharge_overcurrent",
+                    "bits": (0,1),
+                    "endianness": "little",
+                    "transformation": lambda x: x
+                },
+                "Charge Overcurrent Signal": {
+                    "description": "Charge Overcurrent",
+                    "units": "",
+                    "path": "BMS.status.charge_overcurrent",
+                    "bits": (0,1),
+                    "endianness": "little",
+                    "transformation": lambda x: x
+                },
+                "Discharge Overtemp Signal": {
+                    "description": "Discharge Overtemp",
+                    "units": "",
+                    "path": "BMS.status.discharge_overtemp",
+                    "bits": (0,1),
+                    "endianness": "little",
+                    "transformation": lambda x: x
+                },
+                "Charge Overtemp Signal": {
+                    "description": "Charge Overtemp",
+                    "units": "",
+                    "path": "BMS.status.charge_overtemp",
+                    "bits": (0,1),
+                    "endianness": "little",
+                    "transformation": lambda x: x
+                },
+                "Undertemp Signal": {
+                    "description": "Undertemp",
+                    "units": "",
+                    "path": "BMS.status.undertemp",
+                    "bits": (0,1),
+                    "endianness": "little",
+                    "transformation": lambda x: x
+                },
+                "Onboard Overtemp Signal": {
+                    "description": "Onboard Overtemp",
+                    "units": "",
+                    "path": "BMS.status.onboard_overtemp",
+                    "bits": (0,1),
+                    "endianness": "little",
+                    "transformation": lambda x: x
+                },
+                "Current Signal": {
+                    "description": "Current",
+                    "units": "A",
+                    "path": "BMS.status.current",
+                    "bits": (25,16),
                     "endianness": "little",
                     "transformation": lambda x: x/100
+                },
+                "Shutdown G Above Threshold Signal": {
+                    "description": "Shutdown G Above Threshold",
+                    "units": "",
+                    "path": "BMS.status.shutdown_g_above_threshold",
+                    "bits": (0,1),
+                    "endianness": "little",
+                    "transformation": lambda x: x
+                },
+                "Shutdown H Above Threshold Signal": {
+                    "description": "Shutdown H Above Threshold",
+                    "units": "",
+                    "path": "BMS.status.shutdown_h_above_threshold",
+                    "bits": (0,1),
+                    "endianness": "little",
+                    "transformation": lambda x: x
                 }
+            }
         }
     }
 }
