@@ -1,5 +1,4 @@
 <div class="container-fluid">
-    <h1>AniJS demo</h1>
     <div>
         <a onClick="addWidget()" class="btn btn-primary" href="#">Add Widget</a>
     </div>
@@ -21,51 +20,43 @@
 <script type="text/javascript">
     let grid = GridStack.init();
     let self = this;
+    var contentList = [];
     grid.on('added', function(e, items) {
         // add anijs data to gridstack item
         for (let i = 0; i < items.length; i++) {
-            //items[i].el.setAttribute('data-anijs', 'if: added, do: swing animated, after: $removeAnimations, on: $gridstack');
             let contentItem = items[i].el.querySelector('.grid-stack-item-content');
+            let content=new Object();
+            content.id = contentItem.id;
             let { width, height } = contentItem.getBoundingClientRect();
-            let u = new uPlot({
+            content.plot = new uPlot({
                 width,
                 height: height - 50,
                 ...sharedOpts
             }, [[1,5], [1,5]], contentItem);
+            contentList.push(content);
         }
-        //self.gridstackNotifier = AniJS.getNotifier('gridstack');
-        // fire added event!
-        //self.gridstackNotifier.dispatchEvent('added');
     });
 
     function addWidget() {
         grid.addWidget({w: Math.floor(1 + 3 * Math.random()), h: Math.floor(1 + 3 * Math.random())});
     }
 
-    grid.on('resizestop', (event, item) => {
-
-
-
-            let contentItem = item;//[i].el.querySelector('.grid-stack-item-content');
+    grid.on('resizestop', (event, contentItem) => {
+            content = contentList.find((element) => element.id === contentItem.id);
             let { width, height } = contentItem.getBoundingClientRect();
-            let u = new uPlot({
+            content.plot.setSize(width, height - 50);
+            /*
+            content.plot = new uPlot({
                 width,
                 height: height - 50,
                 ...sharedOpts
             }, [[1,5], [1,5]], contentItem);
 
+             */
+
 
     })
-    /*
-    let animationHelper = AniJS.getHelper();
 
-    //Defining removeAnimations to remove existing animations
-    animationHelper.removeAnimations = function(e, animationContext) {
-        document.querySelectorAll('.grid-stack-item').forEach( function(el) {
-            el.removeAttribute('data-anijs');
-        });
-    }
-     */
     const sharedOpts = {
         scales: {
             x: {

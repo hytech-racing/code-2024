@@ -1,9 +1,15 @@
-
 <!-- import jquery library -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js"></script>
 
 <!-- import paho MQTT library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js" type="text/javascript"></script>
+<div class="container-fluid">
+    <div>
+        <a onClick="addWidget()" class="btn btn-primary" href="#">Add Widget</a>
+    </div>
+    <br>
+    <div class="grid-stack"></div>
+</div>
 <html>
 <body>
 <head>
@@ -15,6 +21,16 @@
 </head>
 
 <script src="../uPlot Testing/dist/uPlot.iife.js"></script>
+<script src="../uPlot Testing/node_modules/gridstack/dist/gridstack-all.js"></script>
+<link href="../uPlot Testing/node_modules/gridstack/dist/gridstack.min.css" rel="stylesheet"/>
+<script src="../uPlot Testing/dist/uPlot.iife.js"></script>
+<link rel="stylesheet" href="../uPlot Testing/dist/uPlot.min.css">
+<style type="text/css">
+    .grid-stack { background: #FAFAD2; }
+    .grid-stack-item-content { background-color: #18BC9C; }
+</style>
+
+<div class="grid-stack"></div>
 
 <script>
     //create MQTT clients
@@ -22,64 +38,107 @@
     client1.connect();
     let client2 = new Paho.MQTT.Client('localhost', 8080, "/", "iawgwd");
     client2.connect({ onSuccess: myClientConnected });
-    var uplot;
-
-
-    // This is the function which handles subscribing to topics after a connection is made
-    function myClientConnected() {
-        console.log("Connected");
-        //set topics to subscribe to
-        client1.subscribe("MOTOR_CONTROLLER/mc_rl/torque_current");
-        client2.subscribe("MOTOR_CONTROLLER/mc_rl/magnetizing_current");
-    }
 
     let data = [
         [],    // x-values (timestamps)
         [],    // y-values (series 1)
         []     // y-values (series 2)
     ];
-    let time = 0
-    let graphWidth = 750
+    let maxDataEntries = 100;
+    let numItems = 0;
 
-    // This is the function which handles received messages
-    function myMessageArrived(message, series) {
-
-        // Get the payload
-        var messageBody = message.payloadString;
-        if (messageBody != null) {
-
-        data[0].push(time);
-        time++; //im just incrementing the time series by 1 cuz idk if timestamps are included with the MQTT messages
-        for (let i = 1; i < data.length; i++){
-            if (i === series){
-                data[i].push(parseInt(messageBody));
-            }
-            else{
-                data[i].push(data[i][data[i].length-1]); //if this series isn't being updated, just add the last recorded data for that series
-            }
-        }
-
-        //removes data if there are more than groupWidth data points
-        if (data[0].length > graphWidth){
-            for (let i = 1; i < data.length; i++){
-                data[i].splice(0, 1);
-            }
-        }
-        }
-        console.log(data);
-        uplot.setData(data);
+    // This is the function which handles subscribing to topics after a connection is made
+    function myClientConnected() {
+        //console.log("Connected");
+        //set topics to subscribe to
+        client1.subscribe("MOTOR_CONTROLLER/mc_rl/torque_current");
+        client2.subscribe("MOTOR_CONTROLLER/mc_rl/magnetizing_current");
     }
 
-    //helper methods
-    function handleClient1(message){
-        myMessageArrived(message, 1);
+
+
+    let grid = GridStack.init();
+    let self = this;
+    var contentList = [];
+
+    grid.on('added', function(e, items) {
+        // add anijs data to gridstack item
+        for (let i = 0; i < items.length; i++) {
+            let content=new Object();
+            items[i].el.id = numItems;
+            content.id = items[i].el.id;
+            numItems++;
+            let contentItem = items[i].el.querySelector('.grid-stack-item-content');
+            content.data = [[],[]];
+            content.client = new Paho.MQTT.Client('localhost', 8080, "/", content.id);
+            content.myClientConnected = function(){
+                console.log("connected");
+                content.client.subscribe("MOTOR_CONTROLLER/mc_rl/torque_current");
+            }
+            content.client.connect({ onSuccess: content.myClientConnected });
+            content.handleMessage=function(message){
+               content.data[0].push(Date.now());
+               content.data[1].push(parseInt(message.payloadString))
+                /*
+                if (content.data[0].length > maxDataEntries){
+                    console.log('cut');
+                    content.data[0].splice(0, 1);
+                    for (let i = 1; i < data.length; i++){
+                        content.data[i].splice(0, 1);
+                    }
+                }
+                */
+
+                content.plot.setData(content.data);
+            };
+            content.client.onMessageArrived = content.handleMessage;
+
+            let { width, height } = contentItem.getBoundingClientRect();
+            content.plot = new uPlot({
+                width: width-50,
+                height: height - 50,
+                ...sharedOpts
+            }, content.data, contentItem);
+            contentList.push(content);
+        }
+
+    });
+
+    function addWidget() {
+        grid.addWidget({w: 2, h: 2});
     }
-    function handleClient2(message){
-        myMessageArrived(message, 2);
-    }
-    //calls handleClient when MQTT message arrives
-    client1.onMessageArrived = handleClient1;
-    client2.onMessageArrived = handleClient2;
+
+    grid.on('resizestop', (event, contentItem) => {
+
+        content = contentList.find((element) => element.id === contentItem.id);
+        let { width, height } = contentItem.getBoundingClientRect();
+        width = width-50;
+        height = height-50;
+        content.plot.setSize({width, height});
+    })
+
+    const sharedOpts = {
+        scales: {
+            'x': {
+                auto: true,
+                //range: (min, max) => [data[0][0], data[0][data[0].length-1]],
+            },
+            'y': {
+                auto: true,
+                //range: (min, max) => [-50, 50],
+            }
+        },
+        series: [
+            {},
+            {
+                stroke: "red"
+            },
+        ],
+    };
+
+
+
+
 
 
     //uPlot stuff
@@ -92,7 +151,7 @@
             scales: {
                 'x': {
                     //auto: true,
-                    range: (min, max) => [data[0][0], data[0][0]+graphWidth],
+                    range: (min, max) => [data[0][0], data[0][data[0].length-1]],
                 },
                 'y': {
                     auto: true,
@@ -129,8 +188,52 @@
         }
          uplot = new uPlot(opts, data, document.body);
     }
-    makeChart(data);
+    //makeChart(data);
 
+</script>
+<script>
+/*
+// This is the function which handles received messages
+function myMessageArrived(message, series) {
+
+// Get the payload
+var messageBody = message.payloadString;
+if (messageBody != null) {
+
+data[0].push(time);
+time++; //im just incrementing the time series by 1 cuz idk if timestamps are included with the MQTT messages
+for (let i = 1; i < data.length; i++){
+if (i === series){
+data[i].push(parseInt(messageBody));
+}
+else{
+data[i].push(data[i][data[i].length-1]); //if this series isn't being updated, just add the last recorded data for that series
+}
+}
+
+//removes data if there are more than graphWidth data points
+if (data[0].length > graphWidth){
+for (let i = 1; i < data.length; i++){
+data[i].splice(0, 1);
+}
+}
+}
+console.log(data);
+uplot.setData(data);
+}
+
+//helper methods
+function handleClient1(message){
+myMessageArrived(message, 1);
+}
+function handleClient2(message){
+myMessageArrived(message, 2);
+}
+//calls handleClient when MQTT message arrives
+client1.onMessageArrived = handleClient1;
+client2.onMessageArrived = handleClient2;
+*/
 </script>
 </body>
 </html>
+
