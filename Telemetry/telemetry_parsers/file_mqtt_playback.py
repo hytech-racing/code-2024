@@ -63,13 +63,13 @@ def csv_step(df, t):
     print(f"Finished in {time.time()-start_t} seconds")
     
 #MQTT_SERVER = "localhost"
-MQTT_PORT   = 1883
-client = mqtt.Client()
+MQTT_PORT   = 8080
+client = mqtt.Client(transport="websockets")
 loop = True
 
 print("AWS IP: 3.134.2.166")
 MQTT_SERVER = input("Input MQTT server (default: localhost): ") or "localhost"
-
+MQTT_SERVER = "localhost"
 initialize_mqtt()
 time.sleep(.1)
 
