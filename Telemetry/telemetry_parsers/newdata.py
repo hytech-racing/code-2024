@@ -53,23 +53,23 @@ MESSAGE_DICT = {
             "id": 0xDB,
             "length": 64,
             "signals": {
-                "IC Signal":{
-                    "description": "IC",
+                "State Signal":{
+                    "description": "State",
                     "units": "",
-                    "path": "BMS.detailed_temps.ic",
-                    "bits": (0,4),
+                    "path": "BMS.detailed_temps.state",
+                    "bits": (0,8),
                     "endianness": "little",
                     "transformation": lambda x: x
                 },
-                "Group Signal": {
-                    "description": "Group",
+                "Overvoltage Signal": {
+                    "description": "Overvoltage",
                     "units": "",
                     "path": "BMS.detailed_temps.group",
-                    "bits": (0,4),
+                    "bits": (0,1),
                     "endianness": "little",
                     "transformation": lambda x: x
                 },
-                "Temps[0] Signal": {
+                "Undervoltage Signal": {
                     "description": "Temps[0]",
                     "units": "C",
                     "path": "BMS.detailed_temps.temps[0]",
