@@ -5,7 +5,7 @@ from parser_helpers import get_offsets_masks, parse_to_np
 NOMINAL_TORQUE = 9.8
 GRAVITY = 9.80665
 
-MESSAGE_DICT = {
+PARSERS_DICT = {
     "messages": {
         "BMS Balancing Status": {
             "description": "Message BMS Balancing Status",
@@ -26,7 +26,8 @@ MESSAGE_DICT = {
                     "description": "IC",
                     "units": "",
                     "path": "BMS.detailed_temps.ic",
-                    "bits": (0,4),
+                    "bits": (0,3),
+                    "signed": False,
                     "endianness": "little",
                     "transformation": lambda x: x
                 },
@@ -34,20 +35,48 @@ MESSAGE_DICT = {
                     "description": "Group",
                     "units": "",
                     "path": "BMS.detailed_temps.group",
-                    "bits": (0,4),
+                    "bits": (4,7),
+                    "signed": False,
                     "endianness": "little",
                     "transformation": lambda x: x
                 },
                 "Temps[0] Signal": {
-                    "description": "Temps[0]",
+                    "description": "Temps",
                     "units": "C",
                     "path": "BMS.detailed_temps.temps[0]",
-                    "bits": (0,16),
+                    "bits": (8,23),
+                    "signed": True,
+                    "endianness": "little",
+                    "transformation": lambda x: x/100
+                },
+                "Temps[1] Signal": {
+                    "description": "Temps",
+                    "units": "C",
+                    "path": "BMS.detailed_temps.temps[1]",
+                    "bits": (24,39),
+                    "signed": True,
+                    "endianness": "little",
+                    "transformation": lambda x: x/100
+                },
+                "Temps[2] Signal": {
+                    "description": "Temps",
+                    "units": "C",
+                    "path": "BMS.detailed_temps.temps[2]",
+                    "bits": (40,55),
+                    "signed": True,
                     "endianness": "little",
                     "transformation": lambda x: x/100
                 }
             }
         },
+        "BMS Detailed Voltages": {
+            "description": "Message Detailed Voltages",
+            "id": 0xD8,
+            "length": 56,
+
+
+        },
+
         "BMS_status": {
             "description": "Message BMS Status ",
             "id": 0xDB,
