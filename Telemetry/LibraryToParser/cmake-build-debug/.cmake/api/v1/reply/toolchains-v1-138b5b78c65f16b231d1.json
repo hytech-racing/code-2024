@@ -1,0 +1,96 @@
+{
+	"kind" : "toolchains",
+	"toolchains" : 
+	[
+		{
+			"compiler" : 
+			{
+				"id" : "AppleClang",
+				"implicit" : 
+				{
+					"includeDirectories" : 
+					[
+						"/Library/Developer/CommandLineTools/usr/lib/clang/14.0.3/include",
+						"/Library/Developer/CommandLineTools/SDKs/MacOSX13.3.sdk/usr/include",
+						"/Library/Developer/CommandLineTools/usr/include"
+					],
+					"linkDirectories" : 
+					[
+						"/Library/Developer/CommandLineTools/SDKs/MacOSX13.3.sdk/usr/lib"
+					],
+					"linkFrameworkDirectories" : 
+					[
+						"/Library/Developer/CommandLineTools/SDKs/MacOSX13.3.sdk/System/Library/Frameworks"
+					],
+					"linkLibraries" : []
+				},
+				"path" : "/Library/Developer/CommandLineTools/usr/bin/cc",
+				"version" : "14.0.3.14030022"
+			},
+			"language" : "C",
+			"sourceFileExtensions" : 
+			[
+				"c",
+				"m"
+			]
+		},
+		{
+			"compiler" : 
+			{
+				"id" : "GNU",
+				"implicit" : 
+				{
+					"includeDirectories" : 
+					[
+						"/usr/local/Cellar/gcc/13.2.0/include/c++/13",
+						"/usr/local/Cellar/gcc/13.2.0/include/c++/13/x86_64-apple-darwin22",
+						"/usr/local/Cellar/gcc/13.2.0/include/c++/13/backward",
+						"/usr/local/Cellar/gcc/13.2.0/lib/gcc/current/gcc/x86_64-apple-darwin22/13/include",
+						"/usr/local/Cellar/gcc/13.2.0/lib/gcc/current/gcc/x86_64-apple-darwin22/13/include-fixed",
+						"/Library/Developer/CommandLineTools/SDKs/MacOSX13.3.sdk/usr/include",
+						"/Library/Developer/CommandLineTools/SDKs/MacOSX13.3.sdk/System/Library/Frameworks"
+					],
+					"linkDirectories" : 
+					[
+						"/usr/local/Cellar/gcc/13.2.0/lib/gcc/current/gcc/x86_64-apple-darwin22/13",
+						"/usr/local/Cellar/gcc/13.2.0/lib/gcc/current/gcc",
+						"/usr/local/Cellar/gcc/13.2.0/lib/gcc/current",
+						"/Library/Developer/CommandLineTools/SDKs/MacOSX13.3.sdk/usr/lib"
+					],
+					"linkFrameworkDirectories" : 
+					[
+						"/Library/Developer/CommandLineTools/SDKs/MacOSX13.3.sdk/System/Library/Frameworks"
+					],
+					"linkLibraries" : 
+					[
+						"stdc++",
+						"gcc_s.1.1",
+						"gcc"
+					]
+				},
+				"path" : "/usr/local/Cellar/gcc/13.2.0/bin/g++-13",
+				"version" : "13.2.0"
+			},
+			"language" : "CXX",
+			"sourceFileExtensions" : 
+			[
+				"C",
+				"M",
+				"c++",
+				"cc",
+				"cpp",
+				"cxx",
+				"mm",
+				"mpp",
+				"CPP",
+				"ixx",
+				"cppm"
+			]
+		}
+	],
+	"version" : 
+	{
+		"major" : 1,
+		"minor" : 0
+	}
+}
