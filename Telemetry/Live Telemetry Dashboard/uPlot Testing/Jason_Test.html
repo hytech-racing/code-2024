@@ -16,11 +16,34 @@
 <link rel="stylesheet" href="../uPlot Testing/node_modules/gridstack/dist/gridstack-extra.min.css"/>
 <link href="../uPlot Testing/node_modules/gridstack/dist/gridstack.min.css" rel="stylesheet"/>
 <script src="../uPlot Testing/dist/uPlot.iife.js"></script>
-<link rel="stylesheet" href="../uPlot Testing/node-modules/gridstack/dist/demo.css"/>
+
 <link rel="stylesheet" href="../uPlot Testing/dist/uPlot.min.css">
 <style type="text/css">
-    .grid-stack { background: #F4F4F4; }
-    .grid-stack-item-content { background-color: #FFFFFF; }
+
+    .grid-stack { background: #F2F2F2; }
+    .grid-stack-item-content { background-color: #FFFFFF;
+        text-align: center;}
+    .btn-primary {
+        color: #fff;
+        background-color: #262B4A;
+    }
+    .sidebar {
+        background: #F2F2F2;
+        padding: 25px 0;
+        height: auto;
+        text-align: center;
+
+    }
+    .sidebar .grid-stack-item {
+        width: 150px;
+        height: 50px;
+        margin: 5px;
+        text-align: center;
+        line-height: 50px;
+        background: #F2F2F2;
+        cursor: default;
+        display: inline-block;
+    }
 </style>
 
 <html>
@@ -31,31 +54,29 @@
 
     <link rel="stylesheet" href="../uPlot Testing/dist/uPlot.min.css">
 </head>
-
+<body style="background-color:#FFFFFF;color:#000000;">
 <body>
 <div class="container-fluid">
+    <br>
     <div>
         <a onClick="addWidget()" class="btn btn-primary" href="#">Add Widget</a>
     </div>
-    <br>
 
     <div class="row" style="margin-top: 20px">
-        <!--
-        <div class="col-2" >
-            <div class="grid-stack" id="seriesGrid"></div>
-        </div>
-        -->
         <div class="col-2">
+            <div class="grid-stack" id="seriesGrid"></div>
+            <!--
             <div class="sidebar">
-                <!-- will size to match content -->
+
                 <div class="grid-stack-item">
                     <div class="grid-stack-item-content">Series 1</div>
                 </div>
-                <!-- manually force a drop size of 2x1 -->
+
                 <div class="grid-stack-item" gs-w="2" gs-h="1" gs-max-w="3">
                     <div class="grid-stack-item-content">2x1, max=3</div>
                 </div>
             </div>
+        -->
         </div>
         <div class="col-10" >
             <div class="grid-stack" id="plotGrid"></div>
@@ -81,8 +102,10 @@
     //let seriesGrid =  GridStack.init({columns: 1, rows: 1, disableOneColumnMode: true, float: true}, document.getElementById('seriesGrid'))
     //seriesGrid.addWidget({w: 12, h: 4});
     let plotGrid = GridStack.init(options, document.getElementById('plotGrid'));
+    let seriesGrid = GridStack.init({disableOneColumnMode: true, removable: false}, document.getElementById('seriesGrid'))
 
-    GridStack.setupDragIn('.sidebar .grid-stack-item', { appendTo: 'body', helper: myClone });
+
+
 
     function myClone(event) {
         const el = event.target.cloneNode(true);
@@ -136,18 +159,29 @@
 
     });
 
+    seriesGrid.on('added', function(e, items){
+        for (let i = 0; i < items.length; i++) {
+            let content = new Object();
+            let contentItem = items[i].el.querySelector('.grid-stack-item-content');
+            contentItem = "NAH";
+        }
+    });
+
     function addWidget() {
         plotGrid.addWidget({w: 3, h: 3});
     }
 
     plotGrid.on('resizestop', (event, contentItem) => {
-
         content = contentList.find((element) => element.id === contentItem.id);
         let { width, height } = contentItem.getBoundingClientRect();
         width = width-50;
         height = height-50;
         content.plot.setSize({width, height});
     })
+
+
+
+
 
     const sharedOpts = {
         scales: {
@@ -170,57 +204,27 @@
 
 
 
-
-
-
-    //uPlot stuff
-    function makeChart(data) {
-
-        const opts = {
-            title: "Graph",
-            width: 1000,
-            height: 400,
-            scales: {
-                'x': {
-                    //auto: true,
-                    range: (min, max) => [data[0][0], data[0][data[0].length-1]],
-                },
-                'y': {
-                    auto: true,
-                    //range: (min, max) => [-50, 50],
+    seriesGrid.on('dragstop', function(event) {
+        mouseX = event.clientX;
+        mouseY = event.clientY;
+        pos =  plotGrid.getCellFromPixel({top: mouseY, left: mouseX});
+        items = plotGrid.getGridItems();
+        for (let i = 0; i < items.length; i++) {
+            el = items[i];
+            left = parseInt(el.getAttribute('gs-x'));
+            right = left+parseInt(el.getAttribute('gs-w'));
+            top2 = parseInt(el.getAttribute('gs-y')); //for some reason using var name top ruins everything
+            bottom = top2 + parseInt(el.getAttribute('gs-h'));
+            if (left<= pos.x-2 && pos.x-2 <= right){ //hard-coded offset for some reason. I hate myself
+                if (top2 <= pos.y-2  && pos.y-2<= bottom){
+                    console.log("ID" + el.id);
                 }
-            },
-            series: [
-                {},
-                {
-                    show: true,
-                    spanGaps: true,
-                    // in-legend display
-                    label: "Torque Current",
-                    //value: data[1][data.length],
-                    stroke: "red",
-                    width: 1,
-
-                },
-                {
-                    show: true,
-                    spanGaps: true,
-                    // in-legend display
-                    label: "Magnetizing Current",
-                    //value: data[2][data.length],
-                    stroke: "orange",
-                    width: 1,
-
-                },
-
-            ],
-
-
-
+            }
         }
-         uplot = new uPlot(opts, data, document.body);
-    }
-    //makeChart(data);
+    });
+    let series = "Temperature"
+    seriesGrid.addWidget({w: 14, h: 5, content: series, id: series});
+
 
 </script>
 <script>

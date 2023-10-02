@@ -1,4 +1,4 @@
-//test script for MQTT in JavaScript, most of this code was moved to Test.html
+//test script for MQTT in JavaScript, most of this code was moved to Jason_Test.html
 
 var client = new Paho.MQTT.Client('localhost', 8080, "/", "iawgewagwd");
 
