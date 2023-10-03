@@ -1,0 +1,13 @@
+[{
+  "name": "Torque Current",
+  "channel": "MOTOR_CONTROLLER/mc_rl/torque_current",
+  "xMin": -50,
+  "xMax": 50
+},
+{
+  "name": "Magnetizing Current",
+  "channel": "MOTOR_CONTROLLER/mc_rl/magnetizing_current",
+  "xMin": -50,
+  "xMax": 50
+}
+]

@@ -46,6 +46,8 @@
     }
 </style>
 
+
+
 <html>
 <head>
     <meta charset="utf-8">
@@ -87,7 +89,22 @@
 </div>
 <script>
     let maxDataEntries = 100;
-    let numItems = 0;
+    let numItems = 0; //number of plot widgets, used to generate widget IDs
+
+    var dataSeriesInfo;
+    async function loadJson() {
+        const response = await fetch('/dataSeriesInfo.json');
+        dataSeriesInfo = await response.json();
+        for (let i = 0; i < dataSeriesInfo.length; i++) {
+            let name = dataSeriesInfo[i].name;
+            seriesGrid.addWidget({w: 16, h: 5, content: name, id: i});
+
+        }
+        console.log("Done");
+
+    }
+
+    loadJson();
 
 
     let options = {
@@ -105,14 +122,6 @@
     let seriesGrid = GridStack.init({disableOneColumnMode: true, removable: false}, document.getElementById('seriesGrid'))
 
 
-
-
-    function myClone(event) {
-        const el = event.target.cloneNode(true);
-        el.setAttribute('gs-id', 'foo'); // TEST why clone element is not used directly on drop #2231
-        return el;
-    }
-
     let self = this;
     var contentList = [];
 
@@ -124,29 +133,8 @@
             content.id = items[i].el.id;
             numItems++;
             let contentItem = items[i].el.querySelector('.grid-stack-item-content');
-            content.data = [[],[]];
-            content.client = new Paho.MQTT.Client('localhost', 8080, "/", content.id);
-            content.myClientConnected = function(){
-                console.log("connected");
-                content.client.subscribe("MOTOR_CONTROLLER/mc_rl/torque_current");
-            }
-            content.client.connect({ onSuccess: content.myClientConnected });
-            content.handleMessage=function(message){
-               content.data[0].push(Date.now());
-               content.data[1].push(parseInt(message.payloadString))
-                /*
-                if (content.data[0].length > maxDataEntries){
-                    console.log('cut');
-                    content.data[0].splice(0, 1);
-                    for (let i = 1; i < data.length; i++){
-                        content.data[i].splice(0, 1);
-                    }
-                }
-                */
-
-                content.plot.setData(content.data);
-            };
-            content.client.onMessageArrived = content.handleMessage;
+            content.data = [[]];
+            content.clientList = [];
 
             let { width, height } = contentItem.getBoundingClientRect();
             content.plot = new uPlot({
@@ -160,11 +148,7 @@
     });
 
     seriesGrid.on('added', function(e, items){
-        for (let i = 0; i < items.length; i++) {
-            let content = new Object();
-            let contentItem = items[i].el.querySelector('.grid-stack-item-content');
-            contentItem = "NAH";
-        }
+
     });
 
     function addWidget() {
@@ -204,26 +188,70 @@
 
 
 
-    seriesGrid.on('dragstop', function(event) {
+    seriesGrid.on('dragstop', function(event, el) {
+        el = el.gridstackNode;
         mouseX = event.clientX;
         mouseY = event.clientY;
         pos =  plotGrid.getCellFromPixel({top: mouseY, left: mouseX});
         items = plotGrid.getGridItems();
+        var content = null;
         for (let i = 0; i < items.length; i++) {
-            el = items[i];
-            left = parseInt(el.getAttribute('gs-x'));
-            right = left+parseInt(el.getAttribute('gs-w'));
-            top2 = parseInt(el.getAttribute('gs-y')); //for some reason using var name top ruins everything
-            bottom = top2 + parseInt(el.getAttribute('gs-h'));
-            if (left<= pos.x-2 && pos.x-2 <= right){ //hard-coded offset for some reason. I hate myself
-                if (top2 <= pos.y-2  && pos.y-2<= bottom){
-                    console.log("ID" + el.id);
+            plotWidget = items[i];
+
+            there be problems with this code
+            left = parseInt(plotWidget.getAttribute('gs-x'));
+            right = left+parseInt(plotWidget.getAttribute('gs-w'));
+            top2 = parseInt(plotWidget.getAttribute('gs-y')); //for some reason using var name top ruins everything
+            bottom = top2 + parseInt(plotWidget.getAttribute('gs-h'));
+            if (left< pos.x-2 && pos.x-2 < right){ //hard-coded offset for some reason. I hate myself
+                if (top2 < pos.y-2  && pos.y-2< bottom){
+                    content = contentList.find((element) => element.id === plotWidget.id);
+                    break;
                 }
             }
         }
-    });
-    let series = "Temperature"
-    seriesGrid.addWidget({w: 14, h: 5, content: series, id: series});
+        if (content != null) {
+            dataSeries = dataSeriesInfo[el.id];
+            content.clientList.push(new Paho.MQTT.Client('localhost', 8080, "/", plotWidget.id));
+            index = content.clientList.length-1;
+            content.myClientConnected = function () {
+                console.log("connected");
+                content.clientList[index].subscribe(dataSeries.channel);
+                content.data.push(Array(content.data[0].length).fill(0));
+            }
+            content.clientList[index].connect({onSuccess: content.myClientConnected});
+/*
+            content.handleMessage = function (message) {
+                content.data[0].push(Date.now());
+                content.data[index+1].push(parseInt(message.payloadString))
+
+            if (content.data[0].length > maxDataEntries){
+                console.log('cut');
+                content.data[0].splice(0, 1);
+                for (let i = 1; i < data.length; i++){
+                    content.data[i].splice(0, 1);
+                }
+            }
+
+
+
+                content.plot.setData(content.data);
+            };
+*/
+            content.clientList[index].onMessageArrived = function (message) {
+                content.data[0].push(Date.now());
+                content.data[index + 1].push(parseInt(message.payloadString))
+                content.plot.setData(content.data);
+            }//content.handleMessage;
+
+    }
+    })
+
+
+
+
+
+
 
 
 </script>
