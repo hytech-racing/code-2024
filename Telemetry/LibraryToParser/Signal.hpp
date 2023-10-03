@@ -1,5 +1,5 @@
-#ifndef HYTECH_C_TO_PY_SIGNAL_HPP
-#define HYTECH_C_TO_PY_SIGNAL_HPP
+#ifndef LIBRARY_TO_PARSER_SIGNAL_HPP
+#define LIBRARY_TO_PARSER_SIGNAL_HPP
 
 
 #include <string>
@@ -80,4 +80,4 @@ private:
 };
 
 
-#endif //HYTECH_C_TO_PY_SIGNAL_HPP
+#endif //LIBRARY_TO_PARSER_SIGNAL_HPP

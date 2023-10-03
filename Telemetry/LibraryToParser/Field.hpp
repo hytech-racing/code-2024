@@ -1,5 +1,5 @@
-#ifndef HYTECH_C_TO_PY_FIELD_HPP
-#define HYTECH_C_TO_PY_FIELD_HPP
+#ifndef LIBRARY_TO_PARSER_FIELD_HPP
+#define LIBRARY_TO_PARSER_FIELD_HPP
 
 #include <cassert>
 
@@ -57,4 +57,4 @@ private:
     T defaultData;
 };
 
-#endif //HYTECH_C_TO_PY_FIELD_HPP
+#endif //LIBRARY_TO_PARSER_FIELD_HPP

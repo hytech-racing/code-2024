@@ -1,5 +1,5 @@
-#ifndef HYTECH_C_TO_PY_STRINGMANIP_HPP
-#define HYTECH_C_TO_PY_STRINGMANIP_HPP
+#ifndef LIBRARY_TO_PARSER_STRINGMANIP_HPP
+#define LIBRARY_TO_PARSER_STRINGMANIP_HPP
 
 #include <string>
 #include <vector>
@@ -55,4 +55,4 @@ namespace StringManip{
     std::pair<int,int> parseIntPair(std::string &s);
 }
 
-#endif //HYTECH_C_TO_PY_STRINGMANIP_HPP
+#endif //LIBRARY_TO_PARSER_STRINGMANIP_HPP

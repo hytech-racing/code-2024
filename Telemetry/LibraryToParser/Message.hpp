@@ -1,5 +1,5 @@
-#ifndef HYTECH_C_TO_PY_MESSAGE_HPP
-#define HYTECH_C_TO_PY_MESSAGE_HPP
+#ifndef LIBRARY_TO_PARSER_MESSAGE_HPP
+#define LIBRARY_TO_PARSER_MESSAGE_HPP
 
 
 #include <string>
@@ -60,4 +60,4 @@ private:
 };
 
 
-#endif //HYTECH_C_TO_PY_MESSAGE_HPP
+#endif //LIBRARY_TO_PARSER_MESSAGE_HPP

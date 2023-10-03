@@ -151,10 +151,10 @@
 				},
 				{
 					"name" : "HELPSTRING",
-					"value" : "CXX compiler"
+					"value" : "No help, variable specified on the command line."
 				}
 			],
-			"type" : "STRING",
+			"type" : "UNINITIALIZED",
 			"value" : "/usr/local/Cellar/gcc/13.2.0/bin/g++-13"
 		},
 		{
@@ -851,7 +851,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "HyTech_C_To_Py"
+			"value" : "LibraryToParser"
 		},
 		{
 			"name" : "CMAKE_RANLIB",
@@ -1159,6 +1159,42 @@
 		},
 		{
 			"name" : "HyTech_C_To_Py_SOURCE_DIR",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Value Computed by CMake"
+				}
+			],
+			"type" : "STATIC",
+			"value" : "/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/LibraryToParser"
+		},
+		{
+			"name" : "LibraryToParser_BINARY_DIR",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Value Computed by CMake"
+				}
+			],
+			"type" : "STATIC",
+			"value" : "/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/LibraryToParser/cmake-build-debug"
+		},
+		{
+			"name" : "LibraryToParser_IS_TOP_LEVEL",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Value Computed by CMake"
+				}
+			],
+			"type" : "STATIC",
+			"value" : "ON"
+		},
+		{
+			"name" : "LibraryToParser_SOURCE_DIR",
 			"properties" : 
 			[
 				{

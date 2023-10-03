@@ -2,7 +2,7 @@
 	"artifacts" : 
 	[
 		{
-			"path" : "HyTech_C_To_Py"
+			"path" : "LibraryToParser"
 		}
 	],
 	"backtrace" : 1,
@@ -57,7 +57,7 @@
 			]
 		}
 	],
-	"id" : "HyTech_C_To_Py::@6890427a1f51a3e7e1df",
+	"id" : "LibraryToParser::@6890427a1f51a3e7e1df",
 	"link" : 
 	{
 		"commandFragments" : 
@@ -73,8 +73,8 @@
 		],
 		"language" : "CXX"
 	},
-	"name" : "HyTech_C_To_Py",
-	"nameOnDisk" : "HyTech_C_To_Py",
+	"name" : "LibraryToParser",
+	"nameOnDisk" : "LibraryToParser",
 	"paths" : 
 	{
 		"build" : ".",

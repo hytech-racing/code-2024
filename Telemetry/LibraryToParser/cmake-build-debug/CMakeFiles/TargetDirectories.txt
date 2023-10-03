@@ -1,3 +1,3 @@
-/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/LibraryToParser/cmake-build-debug/CMakeFiles/HyTech_C_To_Py.dir
+/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/LibraryToParser/cmake-build-debug/CMakeFiles/LibraryToParser.dir
 /Users/kevinlou/Documents/GitHub/code-2024/Telemetry/LibraryToParser/cmake-build-debug/CMakeFiles/edit_cache.dir
 /Users/kevinlou/Documents/GitHub/code-2024/Telemetry/LibraryToParser/cmake-build-debug/CMakeFiles/rebuild_cache.dir

@@ -27,8 +27,8 @@ CMAKE_BUILD_TYPE:STRING=Debug
 //Enable colored diagnostics throughout.
 CMAKE_COLOR_DIAGNOSTICS:BOOL=ON
 
-//CXX compiler
-CMAKE_CXX_COMPILER:STRING=/usr/local/Cellar/gcc/13.2.0/bin/g++-13
+//No help, variable specified on the command line.
+CMAKE_CXX_COMPILER:UNINITIALIZED=/usr/local/Cellar/gcc/13.2.0/bin/g++-13
 
 //A wrapper around 'ar' adding the appropriate '--plugin' option
 // for the GCC compiler
@@ -154,7 +154,7 @@ CMAKE_PROJECT_DESCRIPTION:STATIC=
 CMAKE_PROJECT_HOMEPAGE_URL:STATIC=
 
 //Value Computed by CMake
-CMAKE_PROJECT_NAME:STATIC=HyTech_C_To_Py
+CMAKE_PROJECT_NAME:STATIC=LibraryToParser
 
 //Path to a program.
 CMAKE_RANLIB:FILEPATH=/Library/Developer/CommandLineTools/usr/bin/ranlib
@@ -226,6 +226,15 @@ HyTech_C_To_Py_IS_TOP_LEVEL:STATIC=ON
 
 //Value Computed by CMake
 HyTech_C_To_Py_SOURCE_DIR:STATIC=/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/LibraryToParser
+
+//Value Computed by CMake
+LibraryToParser_BINARY_DIR:STATIC=/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/LibraryToParser/cmake-build-debug
+
+//Value Computed by CMake
+LibraryToParser_IS_TOP_LEVEL:STATIC=ON
+
+//Value Computed by CMake
+LibraryToParser_SOURCE_DIR:STATIC=/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/LibraryToParser
 
 
 ########################
