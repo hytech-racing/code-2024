@@ -898,7 +898,7 @@ inline void set_inverter_torques() {
       break;
     case 2:
       max_speed = 0;
-      launch_rate_target = 11.76;
+      launch_rate_target = 4.91;//.5g
       for (int i = 0; i < 4; i++) {
         max_speed = max(max_speed, mc_status[i].get_speed());
       }
@@ -951,7 +951,7 @@ inline void set_inverter_torques() {
 
           launch_speed_target = (int16_t)((float) time_since_launch / 1000.0 * launch_rate_target * 60.0 / 1.2767432544 * 11.86);
           launch_speed_target += 1500;
-          launch_speed_target = min(20000, max(0, launch_speed_target));
+          launch_speed_target = min(2831, max(0, launch_speed_target)); //
 
           for (int i = 0; i < 4; i++) {
             torque_setpoint_array[i] = 2142;
@@ -965,7 +965,7 @@ inline void set_inverter_torques() {
       break;
     case 3:
       max_speed = 0;
-      launch_rate_target = 12.74;
+      launch_rate_target = 4.91; //.5g
       for (int i = 0; i < 4; i++) {
         max_speed = max(max_speed, mc_status[i].get_speed());
       }
