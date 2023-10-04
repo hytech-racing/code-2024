@@ -53,7 +53,8 @@ def csv_step(df, t):
             l = MESSAGE_DICT[int(df["msg.id"][index])][0](df["data"][index])
             upload_parsed_data(l)
         if index+1 >= df["time"].size:
-            break;
+            index = np.where(df["time"] >= (t*1000))[0][0]
+            #break;
         else:
             sleeptime = (df["time"][index+1] - df["time"][index])
             if sleeptime < -950:
@@ -68,12 +69,13 @@ client = mqtt.Client(transport="websockets")
 loop = True
 
 print("AWS IP: 3.134.2.166")
-MQTT_SERVER = input("Input MQTT server (default: localhost): ") or "localhost"
+#MQTT_SERVER = input("Input MQTT server (default: localhost): ") or "localhost" ######## UNCOMMENT LATER
 MQTT_SERVER = "localhost"
 initialize_mqtt()
 time.sleep(.1)
 
-filename = input(r"Input a filename (.csv or .pkl): ").replace("\"","")
+#filename = input(r"Input a filename (.csv or .pkl): ").replace("\"","")  ######## UNCOMMENT LATER
+filename = "data0054.csv"
 df = pd.DataFrame()
 if filename.lower().endswith(('.csv')):
     start_t = time.time()
@@ -86,7 +88,8 @@ while True:
     loop = True
     max_t = df["time"][df["time"].size-1]/1000
     print(f"File length: {max_t} seconds")
-    start_time = float(input("Input the time to start at: "))
+    #start_time = float(input("Input the time to start at: ")) ######## UNCOMMENT LATER#
+    start_time = 0
     thread = threading.Thread(target=csv_step, args=(df, start_time))
     thread.daemon = True
     print("Press Enter to stop the thread...")

@@ -97,8 +97,7 @@
         dataSeriesInfo = await response.json();
         for (let i = 0; i < dataSeriesInfo.length; i++) {
             let name = dataSeriesInfo[i].name;
-            seriesGrid.addWidget({w: 16, h: 5, content: name, id: i});
-
+            seriesGrid.addWidget({w: 16, h: 5, content: name, id: i, locked: true, });
         }
         console.log("Done");
 
@@ -112,6 +111,7 @@
         disableOneColumnMode: true,
         float: true,
         acceptWidgets: false
+
         //removable: '.trash', // true or drag-out delete class
         // itemClass: 'with-lines', // test a custom additional class #2110
         //acceptWidgets: function(el) { return true } // function example, but can also be: true | false | '.someClass' value
@@ -119,14 +119,13 @@
     //let seriesGrid =  GridStack.init({columns: 1, rows: 1, disableOneColumnMode: true, float: true}, document.getElementById('seriesGrid'))
     //seriesGrid.addWidget({w: 12, h: 4});
     let plotGrid = GridStack.init(options, document.getElementById('plotGrid'));
-    let seriesGrid = GridStack.init({disableOneColumnMode: true, removable: false}, document.getElementById('seriesGrid'))
+    let seriesGrid = GridStack.init({disableOneColumnMode: true, removable: false, float: false}, document.getElementById('seriesGrid'))
 
 
     let self = this;
     var contentList = [];
 
     plotGrid.on('added', function(e, items) {
-        // add anijs data to gridstack item
         for (let i = 0; i < items.length; i++) {
             let content=new Object();
             items[i].el.id = numItems;
@@ -134,7 +133,13 @@
             numItems++;
             let contentItem = items[i].el.querySelector('.grid-stack-item-content');
             content.data = [[]];
-            content.clientList = [];
+            content.client = new Paho.MQTT.Client('localhost', 8080, "/", content.id);
+            content.myClientConnected = function () {
+                console.log("connected");
+            }
+            content.client.connect({onSuccess: content.myClientConnected});
+            content.topicIndexMap = new Map();
+            content.numChannels = 1;
 
             let { width, height } = contentItem.getBoundingClientRect();
             content.plot = new uPlot({
@@ -147,9 +152,7 @@
 
     });
 
-    seriesGrid.on('added', function(e, items){
 
-    });
 
     function addWidget() {
         plotGrid.addWidget({w: 3, h: 3});
@@ -183,43 +186,45 @@
             {
                 stroke: "red"
             },
+
         ],
     };
-
-
+    /*
+    seriesGrid.on('drag', function(event) {
+        el = el.gridstackNode;
+        mouseX = event.clientX;
+        mouseY = event.clientY;
+        plotWidget = getWidgetAtCoord(mouseX, mouseY);
+        if (plotWidget != null) {
+            let contentItem = plotWidget.el.querySelector('.grid-stack-item-content');
+        }
+    });
+    */
 
     seriesGrid.on('dragstop', function(event, el) {
         el = el.gridstackNode;
         mouseX = event.clientX;
         mouseY = event.clientY;
-        pos =  plotGrid.getCellFromPixel({top: mouseY, left: mouseX});
-        items = plotGrid.getGridItems();
-        var content = null;
-        for (let i = 0; i < items.length; i++) {
-            plotWidget = items[i];
-
-            there be problems with this code
-            left = parseInt(plotWidget.getAttribute('gs-x'));
-            right = left+parseInt(plotWidget.getAttribute('gs-w'));
-            top2 = parseInt(plotWidget.getAttribute('gs-y')); //for some reason using var name top ruins everything
-            bottom = top2 + parseInt(plotWidget.getAttribute('gs-h'));
-            if (left< pos.x-2 && pos.x-2 < right){ //hard-coded offset for some reason. I hate myself
-                if (top2 < pos.y-2  && pos.y-2< bottom){
-                    content = contentList.find((element) => element.id === plotWidget.id);
-                    break;
-                }
-            }
+        plotWidget = getWidgetAtCoord(mouseX, mouseY);
+        var content;
+        if (plotWidget != null) {
+            content = contentList.find((element) => element.id === plotWidget.id);
         }
         if (content != null) {
             dataSeries = dataSeriesInfo[el.id];
-            content.clientList.push(new Paho.MQTT.Client('localhost', 8080, "/", plotWidget.id));
-            index = content.clientList.length-1;
-            content.myClientConnected = function () {
-                console.log("connected");
-                content.clientList[index].subscribe(dataSeries.channel);
+            content.client.subscribe(dataSeries.channel)
+            if (content.numChannels === 1) {
                 content.data.push(Array(content.data[0].length).fill(0));
             }
-            content.clientList[index].connect({onSuccess: content.myClientConnected});
+            else {
+                content.data.push(Array(content.data[0].length).fill(0));
+                content.plot.addSeries({
+                    stroke: "orange", label: dataSeries.channel}, 2);
+            }
+            content.topicIndexMap.set(dataSeries.channel, content.numChannels);
+            content.numChannels++;
+
+
 /*
             content.handleMessage = function (message) {
                 content.data[0].push(Date.now());
@@ -238,16 +243,48 @@
                 content.plot.setData(content.data);
             };
 */
-            content.clientList[index].onMessageArrived = function (message) {
+            content.client.onMessageArrived = function (message) {
+                index = content.topicIndexMap.get(message.destinationName);
+
                 content.data[0].push(Date.now());
-                content.data[index + 1].push(parseInt(message.payloadString))
+                for (let i = 1; i < content.data.length; i++) {
+                    if (i === index) {
+
+                        content.data[i].push(parseInt(message.payloadString));
+                    }
+                    else {
+                        content.data[i].push(content.data[i][content.data[i].length-1])
+                    }
+                }
+
                 content.plot.setData(content.data);
+
             }//content.handleMessage;
 
     }
     })
 
+    function getWidgetAtCoord(x, y) {
+        pos =  plotGrid.getCellFromPixel({top: mouseY, left: mouseX});
+        items = plotGrid.getGridItems();
+        var content = null;
+        for (let i = 0; i < items.length; i++) {
+            plotWidget = items[i];
 
+            //smth be wrong with this code, fails on borders
+            left = parseInt(plotWidget.getAttribute('gs-x'));
+            right = left+parseInt(plotWidget.getAttribute('gs-w')-1);
+            top2 = parseInt(plotWidget.getAttribute('gs-y')); //for some reason using var name top ruins everything
+            bottom = top2 + parseInt(plotWidget.getAttribute('gs-h'))-1;
+            if (left<= pos.x-3 && pos.x-3 <= right){ //hard-coded offset for some reason. I hate myself
+                if (top2 <= pos.y-2  && pos.y-2<= bottom){
+                    return plotWidget;
+                    //content = contentList.find((element) => element.id === plotWidget.id);
+
+                }
+            }
+        }
+    }
 
 
 
