@@ -90,9 +90,8 @@
 <script>
     let maxDataEntries = 100;
     let numItems = 0; //number of plot widgets, used to generate widget IDs
-
     var dataSeriesInfo;
-    async function loadJson() {
+    async function loadJson() { //loads data series info
         const response = await fetch('/dataSeriesInfo.json');
         dataSeriesInfo = await response.json();
         for (let i = 0; i < dataSeriesInfo.length; i++) {
@@ -123,22 +122,22 @@
 
 
     let self = this;
-    var contentList = [];
+    var contentList = []; //list of content in each GridStack widget
 
     plotGrid.on('added', function(e, items) {
         for (let i = 0; i < items.length; i++) {
-            let content=new Object();
+            let content=new Object(); //content is an object that holds relevent info for the widget
             items[i].el.id = numItems;
             content.id = items[i].el.id;
             numItems++;
             let contentItem = items[i].el.querySelector('.grid-stack-item-content');
-            content.data = [[]];
+            content.data = [[]]; //data [0] is time, data[1 to x] are data series. Data series in each index given by topicIndexMap
             content.client = new Paho.MQTT.Client('localhost', 8080, "/", content.id);
             content.myClientConnected = function () {
                 console.log("connected");
             }
             content.client.connect({onSuccess: content.myClientConnected});
-            content.topicIndexMap = new Map();
+            content.topicIndexMap = new Map(); //topicIndexMap, provides the data index given topic name
             content.numChannels = 1;
 
             let { width, height } = contentItem.getBoundingClientRect();
@@ -159,11 +158,11 @@
     }
 
     plotGrid.on('resizestop', (event, contentItem) => {
-        content = contentList.find((element) => element.id === contentItem.id);
+        content = contentList.find((element) => element.id === contentItem.id); //finds content object matching resized widget
         let { width, height } = contentItem.getBoundingClientRect();
         width = width-50;
         height = height-50;
-        content.plot.setSize({width, height});
+        content.plot.setSize({width, height}); //updates size
     })
 
 
@@ -183,9 +182,12 @@
         },
         series: [
             {},
+            /*
             {
                 stroke: "red"
             },
+            */
+
 
         ],
     };
@@ -213,49 +215,41 @@
         if (content != null) {
             dataSeries = dataSeriesInfo[el.id];
             content.client.subscribe(dataSeries.channel)
-            if (content.numChannels === 1) {
-                content.data.push(Array(content.data[0].length).fill(0));
-            }
-            else {
+            if (content.numChannels === 1) { //if adding first channel to plot
                 content.data.push(Array(content.data[0].length).fill(0));
                 content.plot.addSeries({
-                    stroke: "orange", label: dataSeries.channel}, 2);
+                    stroke: "red", label: dataSeries.name}, content.numChannels); //not 100% sure how the 2nd parameter works
+            }
+            else { //if adding >= 2 channel to plot
+                content.data.push(Array(content.data[0].length).fill(0));
+                content.plot.addSeries({
+                    stroke: "orange", label: dataSeries.name}, content.numChannels); //not 100% sure how the 2nd parameter works
             }
             content.topicIndexMap.set(dataSeries.channel, content.numChannels);
             content.numChannels++;
 
 
-/*
-            content.handleMessage = function (message) {
-                content.data[0].push(Date.now());
-                content.data[index+1].push(parseInt(message.payloadString))
-
-            if (content.data[0].length > maxDataEntries){
-                console.log('cut');
-                content.data[0].splice(0, 1);
-                for (let i = 1; i < data.length; i++){
-                    content.data[i].splice(0, 1);
-                }
-            }
 
 
 
-                content.plot.setData(content.data);
-            };
-*/
             content.client.onMessageArrived = function (message) {
                 index = content.topicIndexMap.get(message.destinationName);
-
                 content.data[0].push(Date.now());
                 for (let i = 1; i < content.data.length; i++) {
                     if (i === index) {
-
                         content.data[i].push(parseInt(message.payloadString));
                     }
                     else {
-                        content.data[i].push(content.data[i][content.data[i].length-1])
+                        content.data[i].push(content.data[i][content.data[i].length-1]) //update other series with dead data
                     }
                 }
+                if (content.data[0].length > maxDataEntries){
+                    console.log('cut');
+                    for (let i = 0; i < content.data.length; i++) {
+                        content.data[i].splice(0, 1);
+                    }
+                }
+
 
                 content.plot.setData(content.data);
 
@@ -279,8 +273,6 @@
             if (left<= pos.x-3 && pos.x-3 <= right){ //hard-coded offset for some reason. I hate myself
                 if (top2 <= pos.y-2  && pos.y-2<= bottom){
                     return plotWidget;
-                    //content = contentList.find((element) => element.id === plotWidget.id);
-
                 }
             }
         }
