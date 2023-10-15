@@ -15,6 +15,7 @@ uint8_t curr_brightness = OUTSIDE_BRIGHTNESS;
 Metro timer_led_ams   (LED_MIN_FAULT); //Do I need this?
 Metro timer_led_imd   (LED_MIN_FAULT);
 Metro timer_led_mc_err(LED_MIN_FAULT);
+Metro timer_button (300);
 
 // bool init_ams = true, init_imd = true;
 
@@ -51,6 +52,12 @@ uint8_t number_encodings[11] = {0b01000000, 0b01111001, 0b00100100, 0b00110000, 
 uint8_t display_list[11] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 };
 uint8_t imd_ams_flags = 0;
 Metro timer_mcu_heartbeat(0, 1);
+
+//PWM Timer Variables
+unsigned long sys_time_PWM = millis();
+unsigned long period_PWM_ms = 10;
+unsigned long time_on_PWM_ms;
+
 
 inline void neopixel_update();
 void read_can();
@@ -176,23 +183,26 @@ inline void neo_pixel_init() {
 }
 
 inline void neopixel_update() {
-
-  if (dashboard_status.get_led_dimmer_btn() == 1) {
+  if (dashboard_status.get_led_dimmer_btn()) {
     if (prev_led_dimmer_state == 0) {
-      //set brightnesses
-      toggle_led_dimmer ^= 0x1;
+      //toggling toggle_led_dimmer between three brightness states: 0, 1, 2
+      toggle_led_dimmer += 1; 
+      toggle_led_dimmer %= 3;
     }
+    //prev_led_dimmer_state prevents cycling between toggle_led_dimmer values when led dimmer button is held down
     prev_led_dimmer_state = 1;
-
-
   } else {
+    //resets prev_led_dimmer_state so toggle_led_dimmer can be changed on next button press
     prev_led_dimmer_state = 0;
   }
-
-  //
-  if (toggle_led_dimmer) {
+  //Assigning curr_brightness value based on toggle_led_dimmer
+  if (toggle_led_dimmer == 0) {
+    curr_brightness = OUTSIDE_BRIGHTNESS;
+  } else if (toggle_led_dimmer == 1){
+    curr_brightness = MID_BRIGHTNESS;
+  } else if (toggle_led_dimmer == 2){
     curr_brightness = LOW_BRIGHTNESS;
-  } else curr_brightness = OUTSIDE_BRIGHTNESS;
+  }
 
 
   //    if (brightness != prevBrightness)
@@ -223,8 +233,24 @@ inline void dial_update() {
     dashboard_status.set_launch_control_led(static_cast<uint8_t>(LED_MODES::OFF));
   }
   //display dial state on 7 segment
-  expander.digitalWrite(number_encodings[dashboard_status.get_dial_state()]);
-  
+  //adjust duty cycle
+  if (curr_brightness < 32){
+    time_on_PWM_ms = ceil((double)(period_PWM_ms*32)/OUTSIDE_BRIGHTNESS);
+  } else{
+    time_on_PWM_ms = ceil((double)(period_PWM_ms*curr_brightness)/OUTSIDE_BRIGHTNESS);
+  }
+  if (millis() >= sys_time_PWM+time_on_PWM_ms){
+    //once time on has passed, blank output to screen
+    expander.digitalWrite(number_encodings[10]); //need to figure out encoding for blank screen
+    if (millis() >= sys_time_PWM+period_PWM_ms){
+      //once period has passed, reset cycle
+      sys_time_PWM = millis();
+    }
+  } else {
+    //during time on period, output dial state to screen
+    expander.digitalWrite(number_encodings[dashboard_status.get_dial_state()]);
+  }
+  //expander.digitalWrite(number_encodings[dashboard_status.get_dial_state()]);
 }
 ////inline void btn_toggle(void (Dashboard_status::*toggle)()) {
 ////  if (timer_toggle_button.check()) {
