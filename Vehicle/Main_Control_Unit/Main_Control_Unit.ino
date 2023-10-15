@@ -139,6 +139,9 @@ uint16_t reference_read = 0;
 float max_front_power = 0.0;
 float max_rear_power = 0.0;
 
+unsigned long error_runtime = micros();
+float prev_power_error = -5000; //min error if condition for PD power limiting is met
+
 enum launch_states {launch_not_ready, launch_ready, launching};
 launch_states launch_state = launch_not_ready;
 int16_t launch_speed_target = 0;
@@ -1101,6 +1104,24 @@ inline void set_inverter_torques() {
   //since torque unit to nominal torque and power conversion are linear, the diff can be applied directly to the torque setpoint value.
   if (mc_setpoints_command[0].get_pos_torque_limit() > 0 && mc_setpoints_command[1].get_pos_torque_limit() > 0
       && mc_setpoints_command[2].get_pos_torque_limit() > 0 && mc_setpoints_command[3].get_pos_torque_limit() > 0) {
+    
+    float current; //in A
+    float dc_power = (mc_energy[0].get_dc_bus_voltage() * current); //in W
+    float power_error = dc_power - 75000; //error function for PD controlling
+    float prop_constant;
+    float deriv_constant;
+    unsigned long runtime_dif = micros()-error_runtime; //runtime_dif for deriv calculation
+    if (dc_power > 70000){
+      float power_derate_factor = prop_constant * power_error + deriv_constant * (power_error-prev_power_error) / runtime_dif; // proportional factor (power_error * prop_constant) and deriv factor (deriv_constant * (power error dif with respect to time))
+      float rated_cur_torque = (1+power_derate_factor) * (mc_setpoints_command[0].get_pos_torque_limit() + mc_setpoints_command[1].get_pos_torque_limit() + mc_setpoints_command[2].get_pos_torque_limit() + mc_setpoints_command[3].get_pos_torque_limit()); //total derated output torque (i.e. the amount of torque we want output)
+      float total_req_torque = torque_setpoint_array[0] + torque_setpoint_array[1] + torque_setpoint_array[2] + torque_setpoint_array[3]; //total requested torque
+      for (int i = 0; i < 4; i++) {
+        torque_setpoint_array[i] = (uint16_t) min(torque_setpoint_array[i], torque_setpoint_array[i] * rated_cur_torque / total_req_torque); //proportion of total torque requested for each wheel (requested torque for wheel / total requested torque) multiplied by amount of total torque we want output (derated output torque)
+      }
+    }
+    prev_power_error = power_error; //comparison for deriv calculation
+    error_runtime = micros(); //comparison for runtime_dif
+    
     float mech_power = 0;
     float mdiff = 1;
     //float ediff = 1;
