@@ -9,9 +9,12 @@
 // only send if receiving mcu status messages
 
 // NEOPIXEL Variables
+//Neopixel initinalization
 Adafruit_NeoPixel dashboard_neopixels(NEOPIXEL_COUNT, NEOPIXEL_CTRL, NEO_GRBW + NEO_KHZ800);
+// set brightness to 255
 uint8_t curr_brightness = OUTSIDE_BRIGHTNESS;
 
+// init 3  1-second timers for leds
 Metro timer_led_ams   (LED_MIN_FAULT); //Do I need this?
 Metro timer_led_imd   (LED_MIN_FAULT);
 Metro timer_led_mc_err(LED_MIN_FAULT);
@@ -31,16 +34,19 @@ uint8_t prev_led_dimmer_state = 0;
 //init dial variable
 DialVectoring dial_torque_vectoring;
 
-// CAN Variables
+// CAN timers (Not used)
 Metro timer_can_update = Metro(1000);
 Metro timer_can_read = Metro(100);
 
+// init flexcan on CAN2
 FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> CAN;
+//create msg for send and receive
 CAN_message_t msg;
 
 
-// CAN Messages
+// Sent CAN Message classes from HyTech_CAN
 Dashboard_status dashboard_status{};
+// Receive Messages
 MCU_status mcu_status{};
 MCU_analog_readings mcu_analog_readings;
 BMS_voltages bms_voltages{};
@@ -50,8 +56,10 @@ MCP23S08 expander(IO_ADDR, IO_CS);
 uint8_t number_encodings[11] = {0b01000000, 0b01111001, 0b00100100, 0b00110000, 0b00011001, 0b00010010, 0b00000010, 0b01111000, 0b10000000, 0b00011000, 0b11111111};
 uint8_t display_list[11] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 };
 uint8_t imd_ams_flags = 0;
+// heartbeat timer (not sure how this is implemented)
 Metro timer_mcu_heartbeat(0, 1);
 
+//define functions
 inline void neopixel_update();
 void read_can();
 inline void btn_update();
@@ -69,12 +77,14 @@ void setup() {
     expander.digitalWrite(i, HIGH);
   }
 
+  // begin debouncing for buttons
   btn_safe_ctrl.begin(BTN_SAFE_CTRL, 100);
   btn_mc_cycle.begin(BTN_MC_CYCLE, 100);
   btn_start.begin(BTN_START, 100);
   btn_torque_mode.begin(BTN_TORQUE_MODE, 100);
   btn_led_dimmer.begin(BTN_LED_DIMMER, 100);
 
+  // setup dial
   int dial_pins[DIAL_SIZE] = {DIAL_MODE_ONE, DIAL_MODE_TWO, DIAL_ACCELERATION_LAUNCH_CONTROL, DIAL_SKIDPAD, DIAL_AUTOCROSS, DIAL_ENDURANCE};
   dial_torque_vectoring.begin(dial_pins, DIAL_SIZE, 50);
 
@@ -89,13 +99,16 @@ void setup() {
   //Initializes CAN
   CAN.begin();
   CAN.setBaudRate(500000);
+  // not exactly sure how mailbox interrups work
   CAN.enableMBInterrupts();
+  //"callback" for received can messages. P sure this is
+  // a pseudo callback, CAN.events() in loop processes callbacks
   CAN.onReceive(read_can);
   //
   //  mcu_status.set_imd_ok_high(true);
   //  mcu_status.set_bms_ok_high(true);
 
-
+  //init neopixels
   neo_pixel_init();
 
 
@@ -139,14 +152,18 @@ void loop() {
       (timer_can_update.check() || (temp_buttons) || (prev_start_state != dashboard_status.get_start_btn()))
      ) {
     //  if (timer_can_update.check()) {
-
+    // set message id
     msg.id = ID_DASHBOARD_STATUS;
+    // update button flags in dashboard_status class
     dashboard_status.set_button_flags(temp_buttons);
     //    Serial.println(temp_buttons, BIN);
+    // Not sure how this returns 7, but is the size of msg data
     msg.len = sizeof(dashboard_status);
+    // writes the contents of dasboard_status to the msg buffer
     dashboard_status.write(msg.buf);
+    // write message on can bus
     CAN.write(msg);
-    //rest update timer
+    //reset timer to count to next update
     timer_can_update.reset();
   }
   // clear buttons so they can be retoggled on in the loop
@@ -156,8 +173,11 @@ void loop() {
 
 inline void neo_pixel_init() {
 
+  //begin neopixels
   dashboard_neopixels.begin();
+  //set brightness, might be able to change with a left shift
   dashboard_neopixels.setBrightness(curr_brightness);
+  //set init color for every led (maybe we should change starting brightness/color to not flashbang)
   for (int i = 0; i < NEOPIXEL_COUNT - 1; i++) {
 
     dashboard_neopixels.setPixelColor(i, LED_INIT);
@@ -169,6 +189,7 @@ inline void neo_pixel_init() {
     }
 
   }
+  // write data to neopixels
   dashboard_neopixels.show();
 
 
@@ -177,6 +198,7 @@ inline void neo_pixel_init() {
 
 inline void neopixel_update() {
 
+  // toggle between two brightness levels
   if (dashboard_status.get_led_dimmer_btn() == 1) {
     if (prev_led_dimmer_state == 0) {
       //set brightnesses
@@ -189,13 +211,13 @@ inline void neopixel_update() {
     prev_led_dimmer_state = 0;
   }
 
-  //
+  // if the level just toggled, update curr_brightness
   if (toggle_led_dimmer) {
     curr_brightness = LOW_BRIGHTNESS;
   } else curr_brightness = OUTSIDE_BRIGHTNESS;
 
 
-  //    if (brightness != prevBrightness)
+  // set brightness of pixels (might be used instead of curr_brightness)
   dashboard_neopixels.setBrightness(curr_brightness);
 
   shutdown_signals_read();

@@ -1,32 +1,18 @@
-/*********************************************************************
-This is an example sketch for our Monochrome SHARP Memory Displays
-
-  Pick one up today in the adafruit shop!
-  ------> http://www.adafruit.com/products/1393
-
-These displays use SPI to communicate, 3 pins are required to
-interface
-
-Adafruit invests time and resources providing this open source code,
-please support Adafruit and open-source hardware by purchasing
-products from Adafruit!
-
-Written by Limor Fried/Ladyada  for Adafruit Industries.
-BSD license, check license.txt for more information
-All text above, must be included in any redistribution
-*********************************************************************/
 #include "hytech_dashboard.h"
-#include "STM32_CAN.h"
+#include "DashboardCAN.h"
 
-// defined display pins
+// defined pins for SPI display
 #define SHARP_SCK  PA5
 #define SHARP_MOSI PA7
 #define SHARP_SS   PC4
 
+//defined black and white values for display
 #define BLACK 0
 #define WHITE 1
+//^^ both of those will prob. be moved to hytech_dashboard
 
-
+// STM32 clock config for 24Mhz xtal, generated in CUBE IDE
+// extern "C" overrides configuration written in board variant
 extern "C" void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
@@ -76,20 +62,22 @@ extern "C" void SystemClock_Config(void)
   }
 }
 
+// This might be needed for USB Serial
 extern PCD_HandleTypeDef g_hpcd;
 extern "C" void USB_LP_IRQHandler(void)
 {
   HAL_PCD_IRQHandler(&g_hpcd);
 }
 
-STM32_CAN Can( CAN2, DEF);
-
-static CAN_message_t CAN_TX_msg;
+//Create STM32_CAN object to pass to DashboardCAN
+STM32_CAN stm_can( CAN2, DEF);
+DashboardCAN CAN(&stm_can);
 
 void setup(void)
 {
 
   //set non-needed Display pins low
+  //turn on LED
   pinMode(PC5, OUTPUT);
   pinMode(PB1, OUTPUT);
   pinMode(PA3, OUTPUT);
@@ -99,9 +87,6 @@ void setup(void)
   digitalWrite(PA3, HIGH);
 
   SerialUSB.begin();
-
-  Can.begin();
-  Can.setBaudRate(500000);
 
 }
 
