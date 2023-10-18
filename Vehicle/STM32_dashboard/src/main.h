@@ -1,10 +1,3 @@
-
-#include <Adafruit_NeoPixel.h>
-#include "DebouncedButton.h"
-#include "MCP23S08.h"
-#include "DialVectoring.h"
-#include "HyTech_CAN.h"
-#include "FlexCAN_T4.h"
 // Button pin definition
 #define BTN_SAFE_CTRL 20
 #define BTN_START 19

@@ -1,5 +1,7 @@
 #include "hytech_dashboard.h"
 #include "DashboardCAN.h"
+#include "controls.h"
+#include "main.h"
 
 // defined pins for SPI display
 #define SHARP_SCK  PA5

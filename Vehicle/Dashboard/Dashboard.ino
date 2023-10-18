@@ -15,6 +15,7 @@ Adafruit_NeoPixel dashboard_neopixels(NEOPIXEL_COUNT, NEOPIXEL_CTRL, NEO_GRBW + 
 uint8_t curr_brightness = OUTSIDE_BRIGHTNESS;
 
 // init 3  1-second timers for leds
+// these are not used right now
 Metro timer_led_ams   (LED_MIN_FAULT); //Do I need this?
 Metro timer_led_imd   (LED_MIN_FAULT);
 Metro timer_led_mc_err(LED_MIN_FAULT);
@@ -36,17 +37,20 @@ DialVectoring dial_torque_vectoring;
 
 // CAN timers (Not used)
 Metro timer_can_update = Metro(1000);
+// this is not used, uses interrupts instead
 Metro timer_can_read = Metro(100);
 
 // init flexcan on CAN2
 FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> CAN;
 //create msg for send and receive
+// may need to be global for CAN interrupt
 CAN_message_t msg;
 
 
 // Sent CAN Message classes from HyTech_CAN
 Dashboard_status dashboard_status{};
 // Receive Messages
+// Should change this to ECU/AMS/SAB
 MCU_status mcu_status{};
 MCU_analog_readings mcu_analog_readings;
 BMS_voltages bms_voltages{};
@@ -89,7 +93,7 @@ void setup() {
   dial_torque_vectoring.begin(dial_pins, DIAL_SIZE, 50);
 
 
-
+  
   pinMode(BUZZER_CTRL, OUTPUT);
 
   pinMode(BOTS_READ, INPUT);
@@ -116,8 +120,10 @@ void setup() {
 }
 
 void loop() {
+  // polling interrupts, might be pseudo interrupts
   CAN.events();
-  inertia_status();
+  // update buttons and leds
+  inertia_status(); // reads inertial switch for leds
   btn_update();
   dial_update();
   neopixel_update();
@@ -126,7 +132,13 @@ void loop() {
 
 
   static bool should_send = false;
-
+  // this function will set interval to 0 if timer period lapses
+  // this means that this function will always be true, keeping should_send false
+  // if a CAN message is recieved, interval will be set to 1000, and will set should
+  // send to false until next message that is not received
+  //
+  // as far as I am aware, the only function of this is to not put data onto the CAN bus 
+  // if there are no received messages from ECU
   if (timer_mcu_heartbeat.check()) {
     timer_mcu_heartbeat.interval(0);
     should_send = false;
@@ -182,9 +194,11 @@ inline void neo_pixel_init() {
 
     dashboard_neopixels.setPixelColor(i, LED_INIT);
     if (i == 3) {
+      // Don't use gen purpose led
       dashboard_neopixels.setPixelColor(i, 0);
     }
     if (i == 0 || i == 1) {
+      // sets IMD and AMS lights off on startup as per rules
       dashboard_neopixels.setPixelColor(i, LED_OFF);
     }
 
@@ -219,7 +233,7 @@ inline void neopixel_update() {
 
   // set brightness of pixels (might be used instead of curr_brightness)
   dashboard_neopixels.setBrightness(curr_brightness);
-
+  // reads can messages and updates shutdown signal LEDs
   shutdown_signals_read();
   dashboard_neopixels.show();
   // checks display list for first available flag
@@ -237,6 +251,7 @@ inline void neopixel_update() {
 
 inline void dial_update() {
   dashboard_status.set_dial_state((uint8_t)(dial_torque_vectoring.readMode()));
+  // read dial, change leds, and update 7seg
   if (dashboard_status.get_dial_state() == 2) {
     dashboard_neopixels.setPixelColor(LED_LIST::LAUNCH_CTRL, LED_ON_GREEN);
     dashboard_status.set_launch_control_led(static_cast<uint8_t>(LED_MODES::ON));
@@ -281,6 +296,8 @@ inline void dial_update() {
 //    dashboard_status.set_start_btn(btn_start.isPressed());
 //}
 
+//updates button states to send to ECU or use in dashboard code
+//uses debounce code to poll for presses
 inline void btn_update() {
   // this sets the button to be high: it is set low in send can
   if (btn_safe_ctrl.isPressed())  {
@@ -345,7 +362,8 @@ inline uint32_t color_wheel_glv(uint16_t voltage) {
 }
 
 
-
+// reads shutdown, this function is called in neopixel update, all this code can be moved to main loop
+//THis can also consolidate inertia read
 inline void shutdown_signals_read() { // if one trips al lwill go red, set the other ones orange
   dashboard_neopixels.setPixelColor(LED_LIST::BOTS, (digitalRead(BOTS_READ)) ? LED_ON_GREEN : LED_RED);
   dashboard_status.set_bots_led(digitalRead(BOTS_READ));
@@ -611,6 +629,8 @@ void read_can(const CAN_message_t &msg) {
 }
 
 inline void inertia_status() {
+  // reads bots and inertia to tell if BOTS or Inertia tripped
+  // they are wired in series, so need to check both, bots will trip inertia
   if (digitalRead(INERTIA_READ) || !digitalRead(INERTIA_READ) && !digitalRead(BOTS_READ)) {
 
     dashboard_neopixels.setPixelColor(LED_LIST::INERTIA, LED_ON_GREEN);
