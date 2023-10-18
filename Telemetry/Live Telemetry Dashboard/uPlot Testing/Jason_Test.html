@@ -18,6 +18,17 @@
 <script src="../uPlot Testing/dist/uPlot.iife.js"></script>
 
 <link rel="stylesheet" href="../uPlot Testing/dist/uPlot.min.css">
+<!-- put CSS code here to edit style of uPlot? -->
+<style>
+    body {
+        margin: 0;
+    }
+
+    .u-legend.u-inline .u-value {
+        width: 50px;
+        text-align: left;
+    }
+</style>
 <style type="text/css">
 
     .grid-stack { background: #F2F2F2; }
@@ -67,18 +78,7 @@
     <div class="row" style="margin-top: 20px">
         <div class="col-2">
             <div class="grid-stack" id="seriesGrid"></div>
-            <!--
-            <div class="sidebar">
 
-                <div class="grid-stack-item">
-                    <div class="grid-stack-item-content">Series 1</div>
-                </div>
-
-                <div class="grid-stack-item" gs-w="2" gs-h="1" gs-max-w="3">
-                    <div class="grid-stack-item-content">2x1, max=3</div>
-                </div>
-            </div>
-        -->
         </div>
         <div class="col-10" >
             <div class="grid-stack" id="plotGrid"></div>
@@ -91,6 +91,7 @@
     let maxDataEntries = 100;
     let numItems = 0; //number of plot widgets, used to generate widget IDs
     var dataSeriesInfo;
+    let startTime = Date.now();
     async function loadJson() { //loads data series info
         const response = await fetch('/dataSeriesInfo.json');
         dataSeriesInfo = await response.json();
@@ -98,6 +99,13 @@
             let name = dataSeriesInfo[i].name;
             seriesGrid.addWidget({w: 16, h: 5, content: name, id: i, locked: true, });
         }
+
+        //this is a HACK. adds a bunch of empty widgets so that there's no space for the actual widgets to
+        //move to when they're being dragged.
+        for (let i = 0; i < 10; i++) {
+            seriesGrid.addWidget({w: 16, h: 5, content: "", id: i, locked: true, });
+        }
+
         console.log("Done");
 
     }
@@ -161,7 +169,7 @@
         content = contentList.find((element) => element.id === contentItem.id); //finds content object matching resized widget
         let { width, height } = contentItem.getBoundingClientRect();
         width = width-50;
-        height = height-50;
+        height = height-75;
         content.plot.setSize({width, height}); //updates size
     })
 
@@ -170,6 +178,7 @@
 
 
     const sharedOpts = {
+        pxAlign: 0,
         scales: {
             'x': {
                 auto: true,
@@ -177,19 +186,13 @@
             },
             'y': {
                 auto: true,
-                //range: (min, max) => [-50, 50],
+                range: (min, max) => [-50, 50],
             }
         },
         series: [
-            {},
-            /*
-            {
-                stroke: "red"
-            },
-            */
-
-
+            {value: "{HH}:{mm}:{ss}"}, //https://github.com/leeoniya/uPlot/issues/83#issuecomment-570416433
         ],
+
     };
     /*
     seriesGrid.on('drag', function(event) {
@@ -216,14 +219,14 @@
             dataSeries = dataSeriesInfo[el.id];
             content.client.subscribe(dataSeries.channel)
             if (content.numChannels === 1) { //if adding first channel to plot
-                content.data.push(Array(content.data[0].length).fill(0));
+                content.data.push(Array(content.data[0].length).fill(null));
                 content.plot.addSeries({
-                    stroke: "red", label: dataSeries.name}, content.numChannels); //not 100% sure how the 2nd parameter works
+                    stroke: "red", label: dataSeries.name, spanGaps: true}, content.numChannels); //not 100% sure how the 2nd parameter works
             }
             else { //if adding >= 2 channel to plot
-                content.data.push(Array(content.data[0].length).fill(0));
+                content.data.push(Array(content.data[0].length).fill(null));
                 content.plot.addSeries({
-                    stroke: "orange", label: dataSeries.name}, content.numChannels); //not 100% sure how the 2nd parameter works
+                    stroke: "orange", label: dataSeries.name, spanGaps: true}, content.numChannels); //not 100% sure how the 2nd parameter works
             }
             content.topicIndexMap.set(dataSeries.channel, content.numChannels);
             content.numChannels++;
@@ -234,17 +237,20 @@
 
             content.client.onMessageArrived = function (message) {
                 index = content.topicIndexMap.get(message.destinationName);
-                content.data[0].push(Date.now());
+                content.data[0].push(Date.now()/1000);
                 for (let i = 1; i < content.data.length; i++) {
                     if (i === index) {
-                        content.data[i].push(parseInt(message.payloadString));
+                        let newDataPoint = parseInt(message.payloadString)
+                        if (newDataPoint === -0) {
+                            newDataPoint = 0
+                        }
+                        content.data[i].push(newDataPoint);
                     }
                     else {
-                        content.data[i].push(content.data[i][content.data[i].length-1]) //update other series with dead data
+                        content.data[i].push(content.data[i][content.data[i].length-1]);
                     }
                 }
-                if (content.data[0].length > maxDataEntries){
-                    console.log('cut');
+                if (content.data[0][content.data[0].length-1] - content.data[0][0] > 10){ //10 secs
                     for (let i = 0; i < content.data.length; i++) {
                         content.data[i].splice(0, 1);
                     }

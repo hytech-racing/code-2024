@@ -64,7 +64,7 @@ def csv_step(df, t):
     print(f"Finished in {time.time()-start_t} seconds")
     
 #MQTT_SERVER = "localhost"
-MQTT_PORT   = 8080
+MQTT_PORT   = 80
 client = mqtt.Client(transport="websockets")
 loop = True
 
