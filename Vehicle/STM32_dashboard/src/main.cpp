@@ -1,7 +1,5 @@
-#include "hytech_dashboard.h"
-#include "DashboardCAN.h"
-#include "controls.h"
 #include "main.h"
+#include "hytech_dashboard.h"
 
 // defined pins for SPI display
 #define SHARP_SCK  PA5
@@ -90,10 +88,15 @@ void setup(void)
 
   SerialUSB.begin();
 
+  hytech_dashboard::startup();
+
 }
 
 void loop(void) 
 {
+
+  CAN.read_CAN();
+  hytech_dashboard::refresh();
 
 }
 

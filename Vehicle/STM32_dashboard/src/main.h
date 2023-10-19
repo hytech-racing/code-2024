@@ -1,3 +1,9 @@
+#ifndef MAIN_H
+#define MAIN_H
+
+#include "DashboardCAN.h"
+#include "controls.h"
+
 // Button pin definition
 #define BTN_SAFE_CTRL 20
 #define BTN_START 19
@@ -14,8 +20,6 @@
 #define DIAL_SKIDPAD 6
 #define DIAL_AUTOCROSS 5
 #define DIAL_ENDURANCE 4
-
-
 
 // LED and BUZZER_CTRL pin definition
 #define BUZZER_CTRL 3
@@ -40,3 +44,5 @@
 #define PACK_THRESHOLD 33000
 #define OUTSIDE_BRIGHTNESS 255
 #define LOW_BRIGHTNESS 16
+
+#endif

@@ -23,13 +23,13 @@ class DashboardCAN {
         Metro heartbeat_timer = Metro(0);
         uint8_t imd_ams_flags = 0;
         CAN_message_t _msg;
-
+    public:
         // CAN classes for different messages
         Dashboard_status dashboard_status{};
         MCU_status mcu_status{};
         MCU_analog_readings mcu_analog_readings{};
         BMS_voltages bms_voltages{};
-    public:
+
         // constructor takes pointer to STM32_CAN object
         // can dereference with &
         DashboardCAN(STM32_CAN* CAN);

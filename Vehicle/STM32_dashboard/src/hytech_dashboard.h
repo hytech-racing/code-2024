@@ -17,7 +17,7 @@
 #define WHITE 1
 
 // Neopixel defines
-#define NEOPIXEL_CTRL 2
+#define NEOPIXEL_PIN PA2
 #define NEOPIXEL_COUNT 13
 
 // OFF: OFF, ON: GREEN/OK, YELLOW : WARNING/MISC RED : CRITICAL
@@ -36,8 +36,9 @@ enum LED_LIST { AMS = 0, IMD = 1, MC_ERR = 2, GEN_PURP = 3, INERTIA = 4, BOTS = 
 
 namespace hytech_dashboard {
     extern Adafruit_NeoPixel neopixels;
+    extern Adafruit_SharpMem display;
     void startup();
-
+    void refresh();
     void set_neopixel(uint16_t id, uint32_t c);
 }
 

@@ -195,7 +195,7 @@ inline void neo_pixel_init() {
     dashboard_neopixels.setPixelColor(i, LED_INIT);
     if (i == 3) {
       // Don't use gen purpose led
-      dashboard_neopixels.setPixelColor(i, 0);
+      dashboard_neopixels.setPixelColor(i, 0); 
     }
     if (i == 0 || i == 1) {
       // sets IMD and AMS lights off on startup as per rules
