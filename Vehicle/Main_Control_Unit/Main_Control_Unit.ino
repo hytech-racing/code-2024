@@ -163,7 +163,6 @@ void setup() {
 
   set_all_inverters_disabled();
 
-
   //   IMU set up
   IMU.regWrite(MSC_CTRL, 0xC1);  // Enable Data Ready, set polarity
   delay(20);
@@ -1114,6 +1113,8 @@ inline void set_inverter_torques() {
     if (dc_power > 70000){
       float power_derate_factor = prop_constant * power_error + deriv_constant * (power_error-prev_power_error) / runtime_dif; // proportional factor (power_error * prop_constant) and deriv factor (deriv_constant * (power error dif with respect to time))
       float rated_cur_torque = (1+power_derate_factor) * (mc_setpoints_command[0].get_pos_torque_limit() + mc_setpoints_command[1].get_pos_torque_limit() + mc_setpoints_command[2].get_pos_torque_limit() + mc_setpoints_command[3].get_pos_torque_limit()); //total derated output torque (i.e. the amount of torque we want output)
+      //Alternative (if you want to use current torque instead of previously requested torque)
+      //float rated_cur_torque = (1+power_derate_factor) * MC_status.get_torque_current();
       float total_req_torque = torque_setpoint_array[0] + torque_setpoint_array[1] + torque_setpoint_array[2] + torque_setpoint_array[3]; //total requested torque
       for (int i = 0; i < 4; i++) {
         torque_setpoint_array[i] = (uint16_t) min(torque_setpoint_array[i], torque_setpoint_array[i] * rated_cur_torque / total_req_torque); //proportion of total torque requested for each wheel (requested torque for wheel / total requested torque) multiplied by amount of total torque we want output (derated output torque)
