@@ -3,6 +3,7 @@
 
 #include "DashboardCAN.h"
 #include "controls.h"
+#include "hytech_dashboard.h"
 
 // Button pin definition
 #define BTN_SAFE_CTRL 20
