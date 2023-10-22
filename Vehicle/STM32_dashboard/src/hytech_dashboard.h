@@ -5,7 +5,7 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SharpMem.h>
 #include <Adafruit_NeoPixel.h>
-#include <DashboardCAN.h>
+// #include <DashboardCAN.h>
 #include <bitmaps.h>
 
 // Display defines
@@ -34,17 +34,12 @@ enum LED_LIST { AMS = 0, IMD = 1, MC_ERR = 2, GEN_PURP = 3, INERTIA = 4, BOTS = 
 #define LED_BLUE 0xFF
 #define LED_WHITE 0xFFFFFFFF
 
+class DashboardCAN;
+
 class hytech_dashboard {
     public:
-        // Function to get the instance of the Singleton
-        static hytech_dashboard& getInstance() {
-            static hytech_dashboard instance; // The instance is created only once
-            return instance;
-        }
-
+        static hytech_dashboard* getInstance();
         Adafruit_NeoPixel _neopixels;
-        Adafruit_SharpMem _display;
-
         void startup();
         void refresh(DashboardCAN* can);
         void set_neopixel(uint16_t id, uint32_t c);
@@ -54,16 +49,9 @@ class hytech_dashboard {
         hytech_dashboard();
         // Private destructor to prevent external deletion
         ~hytech_dashboard() { }
+        static hytech_dashboard* _instance;
+
 };
- 
-int main() {
-    hytech_dashboard& dashboard = hytech_dashboard::getInstance(); // Access the Singleton instance
-    // Use mySingleton as needed
- 
-    // You cannot create another instance of the Singleton like this:
-    // Singleton anotherInstance; // This will not work
-    return 0;
-}
 
 #endif
 

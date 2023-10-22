@@ -107,7 +107,7 @@ void DashboardCAN::mcu_status_received() {
     }
   } else if (((imd_ams_flags >> 1) & 1) == 1) {
     if(mcu_status.get_imd_ok_high()) {
-    hytech_dashboard::getInstance().set_neopixel(LED_LIST::AMS, LED_RED);
+    hytech_dashboard::getInstance()->set_neopixel(LED_LIST::AMS, LED_RED);
     dashboard_status.set_ams_led(static_cast<uint8_t>(LED_MODES::RED));
     //display_list[4] = 0;
     }
@@ -116,13 +116,13 @@ void DashboardCAN::mcu_status_received() {
   //IMD LED
   if (mcu_status.get_imd_ok_high()) {
     if ((imd_ams_flags & 1) == 0) {
-      hytech_dashboard::getInstance().set_neopixel(LED_LIST::IMD, LED_OFF);
+      hytech_dashboard::getInstance()->set_neopixel(LED_LIST::IMD, LED_OFF);
       dashboard_status.set_imd_led(static_cast<uint8_t>(LED_MODES::OFF));
     //display_list[3] = 1;
       imd_ams_flags |= 1;
     }
   } else if ((imd_ams_flags & 1) == 1) {
-      hytech_dashboard::getInstance().set_neopixel(LED_LIST::IMD, LED_RED);
+      hytech_dashboard::getInstance()->set_neopixel(LED_LIST::IMD, LED_RED);
       dashboard_status.set_imd_led(static_cast<uint8_t>(LED_MODES::RED));
     //display_list[3] = 0;    
   } 
@@ -130,25 +130,25 @@ void DashboardCAN::mcu_status_received() {
   //Start LED
   switch (mcu_status.get_state()) {
     case MCU_STATE::STARTUP:
-      hytech_dashboard::getInstance().set_neopixel(LED_LIST::RDY_DRIVE, LED_OFF);
+      hytech_dashboard::getInstance()->set_neopixel(LED_LIST::RDY_DRIVE, LED_OFF);
       dashboard_status.set_start_led(static_cast<uint8_t>(LED_MODES::OFF));
       break;
     case MCU_STATE::TRACTIVE_SYSTEM_NOT_ACTIVE:
-      hytech_dashboard::getInstance().set_neopixel(LED_LIST::RDY_DRIVE, LED_OFF);
+      hytech_dashboard::getInstance()->set_neopixel(LED_LIST::RDY_DRIVE, LED_OFF);
       dashboard_status.set_start_led(static_cast<uint8_t>(LED_MODES::RED));
       break;
     case MCU_STATE::TRACTIVE_SYSTEM_ACTIVE:
-      hytech_dashboard::getInstance().set_neopixel(LED_LIST::RDY_DRIVE, LED_ON_GREEN);
+      hytech_dashboard::getInstance()->set_neopixel(LED_LIST::RDY_DRIVE, LED_ON_GREEN);
       dashboard_status.set_start_led(static_cast<uint8_t>(LED_MODES::YELLOW));
       break;
     case MCU_STATE::ENABLING_INVERTER:
     case MCU_STATE::WAITING_READY_TO_DRIVE_SOUND:
     case MCU_STATE::READY_TO_DRIVE:
-      hytech_dashboard::getInstance().set_neopixel(LED_LIST::RDY_DRIVE, LED_BLUE);
+      hytech_dashboard::getInstance()->set_neopixel(LED_LIST::RDY_DRIVE, LED_BLUE);
       dashboard_status.set_start_led(static_cast<uint8_t>(LED_MODES::ON));
       break;
     default:
-      hytech_dashboard::getInstance().set_neopixel(LED_LIST::RDY_DRIVE, LED_OFF);
+      hytech_dashboard::getInstance()->set_neopixel(LED_LIST::RDY_DRIVE, LED_OFF);
       dashboard_status.set_start_led(static_cast<uint8_t>(LED_MODES::OFF));
       break;
   }
@@ -173,15 +173,15 @@ void DashboardCAN::mcu_status_received() {
   // Mode LED
   switch (mcu_status.get_torque_mode()) {
     case 1:
-      hytech_dashboard::getInstance().set_neopixel(LED_LIST::TORQUE_MODE, LED_OFF);
+      hytech_dashboard::getInstance()->set_neopixel(LED_LIST::TORQUE_MODE, LED_OFF);
       dashboard_status.set_mode_led(static_cast<uint8_t>(LED_MODES::OFF));
       break;
     case 2:
-      hytech_dashboard::getInstance().set_neopixel(LED_LIST::TORQUE_MODE, LED_YELLOW);
+      hytech_dashboard::getInstance()->set_neopixel(LED_LIST::TORQUE_MODE, LED_YELLOW);
       dashboard_status.set_mode_led(static_cast<uint8_t>(LED_MODES::YELLOW));
       break;
     case 3:
-      hytech_dashboard::getInstance().set_neopixel(LED_LIST::TORQUE_MODE, LED_ON_GREEN);
+      hytech_dashboard::getInstance()->set_neopixel(LED_LIST::TORQUE_MODE, LED_ON_GREEN);
       dashboard_status.set_mode_led(static_cast<uint8_t>(LED_MODES::ON));
       break;
     default:
@@ -192,26 +192,26 @@ void DashboardCAN::mcu_status_received() {
 
   //Mechanical Braking LED
   if (!mcu_status.get_mech_brake_active()) {
-    hytech_dashboard::getInstance().set_neopixel(LED_LIST::BRAKE_ENGAGE, LED_OFF);
+    hytech_dashboard::getInstance()->set_neopixel(LED_LIST::BRAKE_ENGAGE, LED_OFF);
     dashboard_status.set_mech_brake_led(static_cast<uint8_t>(LED_MODES::OFF));
   } else {
-    hytech_dashboard::getInstance().set_neopixel(LED_LIST::BRAKE_ENGAGE, LED_BLUE);
+    hytech_dashboard::getInstance()->set_neopixel(LED_LIST::BRAKE_ENGAGE, LED_BLUE);
     dashboard_status.set_mech_brake_led(static_cast<uint8_t>(LED_MODES::ON));
   }
 
   if (!mcu_status.get_launch_ctrl_active()) {
-    hytech_dashboard::getInstance().set_neopixel(LED_LIST::LAUNCH_CTRL, LED_OFF);
+    hytech_dashboard::getInstance()->set_neopixel(LED_LIST::LAUNCH_CTRL, LED_OFF);
     dashboard_status.set_launch_control_led(static_cast<uint8_t>(LED_MODES::OFF));
   } else {
-    hytech_dashboard::getInstance().set_neopixel(LED_LIST::LAUNCH_CTRL, LED_ON_GREEN);
+    hytech_dashboard::getInstance()->set_neopixel(LED_LIST::LAUNCH_CTRL, LED_ON_GREEN);
     dashboard_status.set_launch_control_led(static_cast<uint8_t>(LED_MODES::ON));
   }
 
   if (!mcu_status.get_inverters_error()){
-    hytech_dashboard::getInstance().set_neopixel(LED_LIST::MC_ERR, LED_ON_GREEN);
+    hytech_dashboard::getInstance()->set_neopixel(LED_LIST::MC_ERR, LED_ON_GREEN);
     dashboard_status.set_mc_error_led(0);
   } else {
-    hytech_dashboard::getInstance().set_neopixel(LED_LIST::MC_ERR, LED_YELLOW);
+    hytech_dashboard::getInstance()->set_neopixel(LED_LIST::MC_ERR, LED_YELLOW);
     dashboard_status.set_mc_error_led(1);
   }
 }
@@ -225,9 +225,9 @@ void DashboardCAN::mcu_analog_readings_received() {
   else {
     dashboard_status.set_glv_led(static_cast<uint8_t>(LED_MODES::ON));
   }
-  hytech_dashboard::getInstance().set_neopixel(LED_LIST::GLV, color_wheel_bms_glv(false));
+  hytech_dashboard::getInstance()->set_neopixel(LED_LIST::GLV, color_wheel_bms_glv(false));
 }
 
 void DashboardCAN::bms_voltages_received() {
-  hytech_dashboard::getInstance().set_neopixel(LED_LIST::CRIT_CHARGE, color_wheel_bms_glv(true));
+  hytech_dashboard::getInstance()->set_neopixel(LED_LIST::CRIT_CHARGE, color_wheel_bms_glv(true));
 }

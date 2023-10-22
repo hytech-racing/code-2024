@@ -1,7 +1,22 @@
 #include <hytech_dashboard.h>
+#include <DashboardCAN.h>
 
 Adafruit_SharpMem _display(SHARP_SCK, SHARP_MOSI, SHARP_SS, 400, 240);
 Adafruit_NeoPixel _neopixels(NEOPIXEL_COUNT, NEOPIXEL_PIN, NEO_GRBW + NEO_KHZ800);
+
+/* Null, because instance will be initialized on demand. */
+
+
+hytech_dashboard::hytech_dashboard(){}
+
+hytech_dashboard* hytech_dashboard::getInstance()
+{
+    if (_instance == NULL)
+    {
+        _instance = new hytech_dashboard();
+    }
+    return _instance;
+}
 
 void hytech_dashboard::startup() {
     // begin and clear display
@@ -52,7 +67,8 @@ void hytech_dashboard::startup() {
 }
 
 //refresh dashboard
-void hytech_dashboard::refresh(DashboardCAN * can) {
+void hytech_dashboard::refresh(DashboardCAN* can) {
+    // data to write to display
     DashboardCAN CAN = *can;
     Dashboard_status dash_status = CAN.dashboard_status;
     MCU_status mcu_status = CAN.mcu_status;
@@ -63,6 +79,7 @@ void hytech_dashboard::refresh(DashboardCAN * can) {
     _neopixels.show();
 
     // refresh display
+    
 }
 
 //set neopixels
