@@ -3,7 +3,7 @@
 // use a different hytech_CAN object for each CAN interface
 
 // ctor
-DashboardCAN::DashboardCAN(STM32_CAN *CAN) : _CAN(*CAN)
+DashboardCAN::DashboardCAN(STM32_CAN* CAN) : _CAN(*CAN)
 {
 
   // begin can and set baud rate to 500kb
