@@ -34,11 +34,37 @@ enum LED_LIST { AMS = 0, IMD = 1, MC_ERR = 2, GEN_PURP = 3, INERTIA = 4, BOTS = 
 #define LED_BLUE 0xFF
 #define LED_WHITE 0xFFFFFFFF
 
+class Singleton {
+    public:
+        // Function to get the instance of the Singleton
+        static Singleton& getInstance() {
+            static Singleton instance; // The instance is created only once
+            return instance;
+        }
+    
+        // Other member functions and data members here
+    private:
+        // Private constructor to prevent external instantiation
+        Singleton() { }
+    
+        // Private destructor to prevent external deletion
+        ~Singleton() { }
+};
+ 
+int main() {
+    Singleton& mySingleton = Singleton::getInstance(); // Access the Singleton instance
+    // Use mySingleton as needed
+ 
+    // You cannot create another instance of the Singleton like this:
+    // Singleton anotherInstance; // This will not work
+    return 0;
+}
+
 namespace hytech_dashboard {
     extern Adafruit_NeoPixel neopixels;
     extern Adafruit_SharpMem display;
     void startup();
-    void refresh();
+    void refresh(int* i);
     void set_neopixel(uint16_t id, uint32_t c);
 }
 

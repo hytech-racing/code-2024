@@ -40,6 +40,8 @@ void DashboardCAN::read_CAN()
   default:
     break;
   }
+
+  
 }
 
 uint32_t DashboardCAN::color_wheel_bms_glv(bool isBms) {
@@ -98,7 +100,7 @@ void DashboardCAN::mcu_status_received() {
   // Serial.println(imd_ams_flags, BIN);  no work idk why
   if (mcu_status.get_bms_ok_high()) {
     if (((imd_ams_flags >> 1) & 1) == 0) {
-      hytech_dashboard::set_neopixel(LED_LIST::AMS, LED_OFF);
+      // hytech_dashboard::set_neopixel(LED_LIST::AMS, LED_OFF);
       dashboard_status.set_ams_led(static_cast<uint8_t>(LED_MODES::OFF));
     //display_list[4] = 1;
       imd_ams_flags |= (1 << 1);

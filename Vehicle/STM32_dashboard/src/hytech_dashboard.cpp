@@ -52,7 +52,8 @@ void hytech_dashboard::startup() {
 }
 
 //refresh dashboard
-void hytech_dashboard::refresh() {
+void hytech_dashboard::refresh(int* i) {
+    // refresh neopixels, 
 
 }
 // refresh display
