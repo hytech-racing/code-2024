@@ -69,7 +69,7 @@ extern "C" void USB_LP_IRQHandler(void)
 
 //Create STM32_CAN object to pass to DashboardCAN
 STM32_CAN stm_can( CAN2, DEF);
-DashboardCAN dash_can(&stm_can);
+DashboardCAN dashboard_can(&stm_can);
 
 void setup(void)
 {
@@ -86,17 +86,13 @@ void setup(void)
 
   SerialUSB.begin();
 
-  hytech_dashboard::startup();
-
+  hytech_dashboard::getInstance().startup();
 }
 
 void loop(void) 
 {
-
-  dash_can.read_CAN();
-  int i = 0;
-  hytech_dashboard::refresh(&i);
-
+  dashboard_can.read_CAN();
+  hytech_dashboard::getInstance().refresh(&dashboard_can);
 }
 
 
