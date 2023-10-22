@@ -310,16 +310,6 @@ void loop() {
 
 inline void send_CAN_inverter_setpoints() {
   if (timer_CAN_inverter_setpoints_send.check()) {
-    mc_setpoints_command[0].write(msg.buf);
-    msg.id = ID_MC1_SETPOINTS_COMMAND;
-    msg.len = sizeof(mc_setpoints_command[0]);
-    FRONT_INV_CAN.write(msg);
-
-    mc_setpoints_command[1].write(msg.buf);
-    msg.id = ID_MC2_SETPOINTS_COMMAND;
-    msg.len = sizeof(mc_setpoints_command[1]);
-    FRONT_INV_CAN.write(msg);
-
     mc_setpoints_command[2].write(msg.buf);
     msg.id = ID_MC3_SETPOINTS_COMMAND;
     msg.len = sizeof(mc_setpoints_command[2]);
@@ -361,10 +351,6 @@ inline void send_CAN_mcu_load_cells() {
 
 inline void send_CAN_mcu_potentiometers() {
   if (timer_CAN_mcu_potentiometers_send.check()) {
-    mcu_front_potentiometers.write(msg.buf);
-    msg.id = ID_MCU_FRONT_POTS;
-    msg.len = sizeof(mcu_front_potentiometers);
-    TELEM_CAN.write(msg);
     mcu_rear_potentiometers.write(msg.buf);
     msg.id = ID_MCU_REAR_POTS;
     msg.len = sizeof(mcu_rear_potentiometers);
@@ -510,7 +496,7 @@ inline void state_machine() {
 
 
 bool check_TS_over_HV_threshold() {
-  for (uint8_t inv = 0; inv < 4; inv++) {
+  for (uint8_t inv = 2; inv < 4; inv++) {
     if (mc_energy[inv].get_dc_bus_voltage() < MIN_HV_VOLTAGE) {
       return false;
     }
@@ -612,18 +598,6 @@ void parse_telem_can_message(const CAN_message_t &RX_msg) {
   }
 }
 
-void parse_front_inv_can_message(const CAN_message_t &RX_msg) {
-  CAN_message_t rx_msg = RX_msg;
-  switch (rx_msg.id) {
-    case ID_MC1_STATUS:       mc_status[0].load(rx_msg.buf);    break;
-    case ID_MC2_STATUS:       mc_status[1].load(rx_msg.buf);    break;
-    case ID_MC1_TEMPS:        mc_temps[0].load(rx_msg.buf);    break;
-    case ID_MC2_TEMPS:        mc_temps[1].load(rx_msg.buf);    break;
-    case ID_MC1_ENERGY:       mc_energy[0].load(rx_msg.buf);    break;
-    case ID_MC2_ENERGY:       mc_energy[1].load(rx_msg.buf);    break;
-  }
-}
-
 void parse_rear_inv_can_message(const CAN_message_t &RX_msg) {
   CAN_message_t rx_msg = RX_msg;
 
@@ -721,19 +695,18 @@ inline void set_inverter_torques_regen_only() {
   if (avg_brake < 0) {
     avg_brake = 0;
   }
-  torque_setpoint_array[0] = - avg_brake;
-  torque_setpoint_array[1] = -  avg_brake;
   torque_setpoint_array[2] =  - avg_brake;
   torque_setpoint_array[3] =  - avg_brake;
-  for (int i = 0; i < 4; i++) {
-    if (i < 2) {
+  for (int i = 2; i < 4; i++) {
+    torque_setpoint_array[i] = (int16_t)(torque_setpoint_array[i]*1.33);
+    /*if (i < 2) {
       torque_setpoint_array[i] = (int16_t)(torque_setpoint_array[i] * 1.33);
     } else {
       torque_setpoint_array[i] = (int16_t)(torque_setpoint_array[i] * 0.66);
-    }
+    } */
 
   }
-  for (int i = 0; i < 4; i++) {
+  for (int i = 2; i < 4; i++) {
     if (torque_setpoint_array[i] >= 0) {
     }
     else {
@@ -797,9 +770,9 @@ inline void set_inverter_torques() {
     avg_brake = 0;
   }
 
-  float rear_power_balance = 0.66;
+  float rear_power_balance = 1.0;
   float front_power_balance = 1.0 - rear_power_balance;
-  float rear_brake_balance = 0.1;
+  float rear_brake_balance = 1.0;
   float front_brake_balance = 1.0 - rear_brake_balance;
 
   int32_t total_torque = 0;
@@ -818,8 +791,8 @@ inline void set_inverter_torques() {
   float lsd_slip_factor = 0.5;
 
   float avg_speed = 0.0;
-  for (int i = 0; i < 4; i++)
-    avg_speed += ((float) mc_status[i].get_speed()) / 4.0;
+  for (int i = 2; i < 4; i++)
+    avg_speed += ((float) mc_status[i].get_speed()) / 2.0;
   int16_t start_derating_rpm = 2000;
   int16_t end_derating_rpm = 20000;
 
@@ -839,7 +812,7 @@ inline void set_inverter_torques() {
 
   switch (dashboard_status.get_dial_state()) {
     case 0:
-      for (int i = 0; i < 4; i++) {
+      for (int i = 2; i < 4; i++) {
         speed_setpoint_array[i] = MAX_ALLOWED_SPEED;
       }
       launch_state = launch_not_ready;
@@ -848,12 +821,10 @@ inline void set_inverter_torques() {
       max_front_power = 19000.0;
       max_rear_power = 36000.0;
 
-      torque_setpoint_array[0] = avg_accel -  avg_brake;
-      torque_setpoint_array[1] = avg_accel -  avg_brake;
       torque_setpoint_array[2] = avg_accel - avg_brake;
       torque_setpoint_array[3] = avg_accel - avg_brake;
 
-      for (int i = 0; i < 4; i++) {
+      for (int i = 2; i < 4; i++) {
         if (torque_setpoint_array[i] >= 0) {
           if (i < 2) {
             torque_setpoint_array[i] = (int16_t)(torque_setpoint_array[i] * front_power_balance);
@@ -870,7 +841,7 @@ inline void set_inverter_torques() {
       }
       break;
     case 1:
-      for (int i = 0; i < 4; i++) {
+      for (int i = 2; i < 4; i++) {
         speed_setpoint_array[i] = MAX_ALLOWED_SPEED;
       }
       launch_state = launch_not_ready;
@@ -882,16 +853,12 @@ inline void set_inverter_torques() {
 
       
       load_cell_alpha = 0.95;
-      total_torque = 4 * (avg_accel - avg_brake) ;
+      total_torque = 2 * (avg_accel - avg_brake) ;
       total_load_cells = mcu_load_cells.get_FL_load_cell() + mcu_load_cells.get_FR_load_cell() + mcu_load_cells.get_RL_load_cell() + mcu_load_cells.get_RR_load_cell();
       if (avg_accel >= avg_brake) {
-        torque_setpoint_array[0] = (int16_t)((float)mcu_load_cells.get_FL_load_cell() / (float)total_load_cells * (float)total_torque);
-        torque_setpoint_array[1] = (int16_t)((float)mcu_load_cells.get_FR_load_cell() / (float)total_load_cells * (float)total_torque);
         torque_setpoint_array[2] = (int16_t)((float)mcu_load_cells.get_RL_load_cell() / (float)total_load_cells * (float)total_torque);
         torque_setpoint_array[3] = (int16_t)((float)mcu_load_cells.get_RR_load_cell() / (float)total_load_cells * (float)total_torque);
       } else {
-        torque_setpoint_array[0] = (int16_t)((float)mcu_load_cells.get_FL_load_cell() / (float)total_load_cells * (float)total_torque);
-        torque_setpoint_array[1] = (int16_t)((float)mcu_load_cells.get_FR_load_cell() / (float)total_load_cells * (float)total_torque);
         torque_setpoint_array[2] = (int16_t)((float)mcu_load_cells.get_RL_load_cell() / (float)total_load_cells * (float)total_torque / 2.0);
         torque_setpoint_array[3] = (int16_t)((float)mcu_load_cells.get_RR_load_cell() / (float)total_load_cells * (float)total_torque / 2.0);
       }
@@ -899,7 +866,7 @@ inline void set_inverter_torques() {
     case 2:
       max_speed = 0;
       launch_rate_target = 11.76;
-      for (int i = 0; i < 4; i++) {
+      for (int i = 2; i < 4; i++) {
         max_speed = max(max_speed, mc_status[i].get_speed());
       }
 //      max_front_power = 19000.0;
@@ -909,7 +876,7 @@ inline void set_inverter_torques() {
 
       switch (launch_state) {
         case launch_not_ready:
-          for (int i = 0; i < 4; i++) {
+          for (int i = 2; i < 4; i++) {
             torque_setpoint_array[i] = (int16_t)(-1 * avg_brake);
             speed_setpoint_array[i] = 0;
           }
@@ -924,7 +891,7 @@ inline void set_inverter_torques() {
           }
           break;
         case launch_ready:
-          for (int i = 0; i < 4; i++) {
+          for (int i = 2; i < 4; i++) {
             torque_setpoint_array[i] = 0;
             speed_setpoint_array[i] = 0;
           }
@@ -953,7 +920,7 @@ inline void set_inverter_torques() {
           launch_speed_target += 1500;
           launch_speed_target = min(20000, max(0, launch_speed_target));
 
-          for (int i = 0; i < 4; i++) {
+          for (int i = 2; i < 4; i++) {
             torque_setpoint_array[i] = 2142;
             speed_setpoint_array[i] = launch_speed_target;
           }
@@ -966,7 +933,7 @@ inline void set_inverter_torques() {
     case 3:
       max_speed = 0;
       launch_rate_target = 12.74;
-      for (int i = 0; i < 4; i++) {
+      for (int i = 2; i < 4; i++) {
         max_speed = max(max_speed, mc_status[i].get_speed());
       }
 //      max_front_power = 19000.0;
@@ -976,7 +943,7 @@ inline void set_inverter_torques() {
 
       switch (launch_state) {
         case launch_not_ready:
-          for (int i = 0; i < 4; i++) {
+          for (int i = 2; i < 4; i++) {
             torque_setpoint_array[i] = (int16_t)(-1 * avg_brake);
             speed_setpoint_array[i] = 0;
           }
@@ -991,7 +958,7 @@ inline void set_inverter_torques() {
           }
           break;
         case launch_ready:
-          for (int i = 0; i < 4; i++) {
+          for (int i = 2; i < 4; i++) {
             torque_setpoint_array[i] = 0;
             speed_setpoint_array[i] = 0;
           }
@@ -1020,7 +987,7 @@ inline void set_inverter_torques() {
           launch_speed_target += 1500;
           launch_speed_target = min(20000, max(0, launch_speed_target));
 
-          for (int i = 0; i < 4; i++) {
+          for (int i = 2; i < 4; i++) {
             torque_setpoint_array[i] = 2142;
             speed_setpoint_array[i] = launch_speed_target;
           }
@@ -1032,7 +999,7 @@ inline void set_inverter_torques() {
       break;
     case 4:
       // Copy pasted from mode 2 with additional derating for endurance
-      for (int i = 0; i < 4; i++) {
+      for (int i = 2; i < 4; i++) {
         speed_setpoint_array[i] = MAX_ALLOWED_SPEED;
       }
       max_front_power = 19000.0;
@@ -1040,27 +1007,23 @@ inline void set_inverter_torques() {
       launch_state = launch_not_ready;
       // Original load cell torque vectoring
       load_cell_alpha = 0.95;
-      total_torque = 4 * (avg_accel - avg_brake) ;
-      total_load_cells = mcu_load_cells.get_FL_load_cell() + mcu_load_cells.get_FR_load_cell() + mcu_load_cells.get_RL_load_cell() + mcu_load_cells.get_RR_load_cell();
+      total_torque = 2 * (avg_accel - avg_brake);
+      total_load_cells = mcu_load_cells.get_RL_load_cell() + mcu_load_cells.get_RR_load_cell();
 
       // Derating
       float derating_factor = float_map(avg_speed, start_derating_rpm, end_derating_rpm, 1.0, 0.0);
       derating_factor = min(1.0, max(0.0, derating_factor));
 
       if (avg_accel >= avg_brake) {
-        torque_setpoint_array[0] = (int16_t)((float)mcu_load_cells.get_FL_load_cell() / (float)total_load_cells * (float)total_torque * derating_factor);
-        torque_setpoint_array[1] = (int16_t)((float)mcu_load_cells.get_FR_load_cell() / (float)total_load_cells * (float)total_torque * derating_factor);
         torque_setpoint_array[2] = (int16_t)((float)mcu_load_cells.get_RL_load_cell() / (float)total_load_cells * (float)total_torque * derating_factor);
         torque_setpoint_array[3] = (int16_t)((float)mcu_load_cells.get_RR_load_cell() / (float)total_load_cells * (float)total_torque * derating_factor);
       } else {
-        torque_setpoint_array[0] = (int16_t)((float)mcu_load_cells.get_FL_load_cell() / (float)total_load_cells * (float)total_torque);
-        torque_setpoint_array[1] = (int16_t)((float)mcu_load_cells.get_FR_load_cell() / (float)total_load_cells * (float)total_torque);
         torque_setpoint_array[2] = (int16_t)((float)mcu_load_cells.get_RL_load_cell() / (float)total_load_cells * (float)total_torque / 2.0);
         torque_setpoint_array[3] = (int16_t)((float)mcu_load_cells.get_RR_load_cell() / (float)total_load_cells * (float)total_torque / 2.0);
       }
       break;
     case 5:
-      for (int i = 0; i < 4; i++) {
+      for (int i = 2; i < 4; i++) {
         speed_setpoint_array[i] = MAX_ALLOWED_SPEED;
       }
       launch_state = launch_not_ready;
@@ -1072,16 +1035,12 @@ inline void set_inverter_torques() {
 
       
       load_cell_alpha = 0.95;
-      total_torque = 4 * (avg_accel - avg_brake) ;
-      total_load_cells = mcu_load_cells.get_FL_load_cell() + mcu_load_cells.get_FR_load_cell() + mcu_load_cells.get_RL_load_cell() + mcu_load_cells.get_RR_load_cell();
+      total_torque = 2 * (avg_accel - avg_brake) ;
+      total_load_cells = mcu_load_cells.get_RL_load_cell() + mcu_load_cells.get_RR_load_cell();
       if (avg_accel >= avg_brake) {
-        torque_setpoint_array[0] = (int16_t)((float)mcu_load_cells.get_FL_load_cell() / (float)total_load_cells * (float)total_torque);
-        torque_setpoint_array[1] = (int16_t)((float)mcu_load_cells.get_FR_load_cell() / (float)total_load_cells * (float)total_torque);
         torque_setpoint_array[2] = (int16_t)((float)mcu_load_cells.get_RL_load_cell() / (float)total_load_cells * (float)total_torque);
         torque_setpoint_array[3] = (int16_t)((float)mcu_load_cells.get_RR_load_cell() / (float)total_load_cells * (float)total_torque);
       } else {
-        torque_setpoint_array[0] = (int16_t)((float)mcu_load_cells.get_FL_load_cell() / (float)total_load_cells * (float)total_torque);
-        torque_setpoint_array[1] = (int16_t)((float)mcu_load_cells.get_FR_load_cell() / (float)total_load_cells * (float)total_torque);
         torque_setpoint_array[2] = (int16_t)((float)mcu_load_cells.get_RL_load_cell() / (float)total_load_cells * (float)total_torque / 2.0);
         torque_setpoint_array[3] = (int16_t)((float)mcu_load_cells.get_RR_load_cell() / (float)total_load_cells * (float)total_torque / 2.0);
       }
@@ -1099,8 +1058,7 @@ inline void set_inverter_torques() {
   // scale down by m/e limits
   //lots of variables for documentation purposes
   //since torque unit to nominal torque and power conversion are linear, the diff can be applied directly to the torque setpoint value.
-  if (mc_setpoints_command[0].get_pos_torque_limit() > 0 && mc_setpoints_command[1].get_pos_torque_limit() > 0
-      && mc_setpoints_command[2].get_pos_torque_limit() > 0 && mc_setpoints_command[3].get_pos_torque_limit() > 0) {
+  if (mc_setpoints_command[2].get_pos_torque_limit() > 0 && mc_setpoints_command[3].get_pos_torque_limit() > 0) {
     float mech_power = 0;
     float mdiff = 1;
     //float ediff = 1;
@@ -1110,7 +1068,7 @@ inline void set_inverter_torques() {
     float temp_lim_factor = 1.0;
     float accu_lim_factor = 1.0;
 
-    for (int i = 0; i < 4; i++) {
+    for (int i = 2; i < 4; i++) {
       float torque_in_nm = 9.8 * ((float) mc_setpoints_command[i].get_pos_torque_limit()) / 1000.0;
       float speed_in_rpm = (float) mc_status[i].get_speed();
       mech_power += 2 * 3.1415 * torque_in_nm * speed_in_rpm / 60.0;
@@ -1153,25 +1111,23 @@ inline void set_inverter_torques() {
     //      if (mech_power > MECH_POWER_LIMIT && dc_power > DC_POWER_LIMIT) {
     //        diff = (ediff <= mdiff) ? ediff : mdiff;
     //      }
-    torque_setpoint_array[0] = (uint16_t) (min((float) torque_setpoint_array[0], max_allowed_torque(max_front_power / 2.0, (float) mc_status[0].get_speed())) * accu_lim_factor);
-    torque_setpoint_array[1] = (uint16_t) (min((float) torque_setpoint_array[1], max_allowed_torque(max_front_power / 2.0, (float) mc_status[1].get_speed())) * accu_lim_factor);
     torque_setpoint_array[2] = (uint16_t) (min((float) torque_setpoint_array[2], max_allowed_torque(max_rear_power / 2.0, (float) mc_status[2].get_speed())) * accu_lim_factor);
     torque_setpoint_array[3] = (uint16_t) (min((float) torque_setpoint_array[3], max_allowed_torque(max_rear_power / 2.0, (float) mc_status[3].get_speed())) * accu_lim_factor);
   }
 
 
   int16_t max_speed_regen = 0;
-  for (int i = 0; i < sizeof(torque_setpoint_array); i++) {
+  for (int i = 2; i < sizeof(torque_setpoint_array); i++) {
 
     max_speed_regen = (max_speed_regen < mc_status[i].get_speed()) ? mc_status[i].get_speed() : max_speed_regen;
 
   }
 
-  for (int i = 0; i < 4; i++) {
+  for (int i = 2; i < 4; i++) {
     torque_setpoint_array[i] = max(-2140, min(2140, torque_setpoint_array[i]));
   }
 
-  for (int i = 0; i < 4; i++) {
+  for (int i = 2; i < 4; i++) {
     if (torque_setpoint_array[i] >= 0) {
       mc_setpoints_command[i].set_speed_setpoint(speed_setpoint_array[i]);
       mc_setpoints_command[i].set_pos_torque_limit(min(torque_setpoint_array[i] , 2140));
@@ -1254,7 +1210,7 @@ inline void read_steering_spi_values() {
 }
 
 bool check_all_inverters_system_ready() {
-  for (uint8_t inv = 0; inv < 4; inv++) {
+  for (uint8_t inv = 2; inv < 4; inv++) {
     if (! mc_status[inv].get_system_ready()) {
       return false;
     }
@@ -1263,7 +1219,7 @@ bool check_all_inverters_system_ready() {
 }
 
 bool check_all_inverters_quit_dc_on() {
-  for (uint8_t inv = 0; inv < 4; inv++) {
+  for (uint8_t inv = 2; inv < 4; inv++) {
     if (! mc_status[inv].get_quit_dc_on()) {
       return false;
     }
@@ -1272,7 +1228,7 @@ bool check_all_inverters_quit_dc_on() {
 }
 
 bool check_all_inverters_quit_inverter_on() {
-  for (uint8_t inv = 0; inv < 4; inv++) {
+  for (uint8_t inv = 2; inv < 4; inv++) {
     if (! mc_status[inv].get_quit_inverter_on()) {
       return false;
     }
@@ -1282,7 +1238,7 @@ bool check_all_inverters_quit_inverter_on() {
 
 uint8_t check_all_inverters_error() {
   uint8_t error_list = 0; //last 4 bits correspond to error bit in status word of each inverter, inverter 1 is rightmost bit;
-  for (uint8_t inv = 0; inv < 4; inv++) {
+  for (uint8_t inv = 2; inv < 4; inv++) {
     if (mc_status[inv].get_error()) {
       error_list = error_list | (0x01 << inv);
     }
@@ -1296,7 +1252,7 @@ uint8_t check_all_inverters_error() {
 }
 
 inline void set_all_inverters_no_torque() {
-  for (uint8_t inv = 0; inv < 4; inv++) {
+  for (uint8_t inv = 2; inv < 4; inv++) {
     mc_setpoints_command[inv].set_speed_setpoint(0);
     mc_setpoints_command[inv].set_pos_torque_limit(0);
     mc_setpoints_command[inv].set_neg_torque_limit(0);
@@ -1309,13 +1265,13 @@ inline void set_all_inverters_torque_limit(int limit) {
   //inverter torque unit is in 0.1% of nominal torque (9.8Nm), max rated torque is 21Nm, so max possible output is 2142
 
   if (limit >= 0) {
-    for (uint8_t inv = 0; inv < 4; inv++) {
+    for (uint8_t inv = 2; inv < 4; inv++) {
       mc_setpoints_command[inv].set_pos_torque_limit(limit);
       mc_setpoints_command[inv].set_neg_torque_limit(0);
     }
   }
   else {
-    for (uint8_t inv = 0; inv < 4; inv++) {
+    for (uint8_t inv = 2; inv < 4; inv++) {
       mc_setpoints_command[inv].set_pos_torque_limit(0);
       mc_setpoints_command[inv].set_neg_torque_limit(limit);
     }
@@ -1324,13 +1280,13 @@ inline void set_all_inverters_torque_limit(int limit) {
 }
 
 inline void set_all_inverters_speed_setpoint(int setpoint) {
-  for (uint8_t inv = 0; inv < 4; inv++) {
+  for (uint8_t inv = 2; inv < 4; inv++) {
     mc_setpoints_command[inv].set_speed_setpoint(setpoint);
   }
 }
 
 inline void set_all_inverters_disabled() {
-  for (uint8_t inv = 0; inv < 4; inv++) {
+  for (uint8_t inv = 2; inv < 4; inv++) {
     mc_setpoints_command[inv].set_inverter_enable(false);
     mc_setpoints_command[inv].set_hv_enable(false);
     mc_setpoints_command[inv].set_driver_enable(false);
@@ -1342,19 +1298,19 @@ inline void set_all_inverters_disabled() {
 }
 
 inline void set_all_inverters_dc_on(bool input) {
-  for (uint8_t inv = 0; inv < 4; inv++) {
+  for (uint8_t inv = 2; inv < 4; inv++) {
     mc_setpoints_command[inv].set_hv_enable(input);
   }
 }
 
 inline void set_all_inverters_driver_enable(bool input) {
-  for (uint8_t inv = 0; inv < 4; inv++) {
+  for (uint8_t inv = 2; inv < 4; inv++) {
     mc_setpoints_command[inv].set_driver_enable(input);
   }
 }
 
 inline void set_all_inverters_inverter_enable(bool input) {
-  for (uint8_t inv = 0; inv < 4; inv++) {
+  for (uint8_t inv = 2; inv < 4; inv++) {
     mc_setpoints_command[inv].set_inverter_enable(input);
   }
 }
@@ -1366,7 +1322,7 @@ inline void reset_inverters() {
       inverter_restart = false;
       reset_bit = 0;
     }
-    for (uint8_t inv = 0; inv < 4; inv++) {
+    for (uint8_t inv = 2; inv < 4; inv++) {
       mc_setpoints_command[inv].set_remove_error(reset_bit);
     }
   }
