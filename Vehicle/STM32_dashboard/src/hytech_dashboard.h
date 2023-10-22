@@ -39,7 +39,7 @@ class DashboardCAN;
 class hytech_dashboard {
     public:
         static hytech_dashboard* getInstance();
-        Adafruit_NeoPixel _neopixels;
+        // Adafruit_NeoPixel _neopixels;
         void startup();
         void refresh(DashboardCAN* can);
         void set_neopixel(uint16_t id, uint32_t c);
