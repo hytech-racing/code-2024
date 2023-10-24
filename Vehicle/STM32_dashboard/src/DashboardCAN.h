@@ -20,7 +20,12 @@ class DashboardCAN {
         // STM32_CAN member variable
         //member vars designated by _ prefix
         STM32_CAN _CAN;
-        Metro heartbeat_timer = Metro(0);
+        // Creates metro timer with 0 interval and autoreset
+        // This metro timer acts as a latch to prevent the dashboard from sending/flooding messages
+        // onto the CAN line if it has not received messages in 1 second
+        // A metro of interval 0 will always be true, triggering
+        Metro heartbeat_timer = Metro(0, 1);
+        Metro send_timer = Metro(1000);
         uint8_t imd_ams_flags = 0;
         CAN_message_t _msg;
     public:
@@ -34,6 +39,7 @@ class DashboardCAN {
         // can dereference with &
         DashboardCAN(STM32_CAN* CAN);
         void read_CAN();
+        void send_status();
         inline void mcu_status_received();
         inline void mcu_analog_readings_received();
         inline void bms_voltages_received();

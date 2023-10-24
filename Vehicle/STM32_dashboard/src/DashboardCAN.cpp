@@ -19,10 +19,12 @@ DashboardCAN::DashboardCAN(STM32_CAN* CAN) : _CAN(*CAN)
 void DashboardCAN::read_CAN()
 {
   _CAN.read(_msg);
+  // parse message based on ID
   switch (_msg.id)
   {
   case ID_MCU_STATUS:
     mcu_status.load(_msg.buf);
+    // reset heartbeat timer if message received from ECU
     heartbeat_timer.reset();
     heartbeat_timer.interval(MCU_HEARTBEAT_TIMEOUT);
     mcu_status_received();
@@ -41,7 +43,32 @@ void DashboardCAN::read_CAN()
     break;
   }
 
-  
+}
+
+void DashboardCAN::send_status() {
+  // boolean to prevent CAN flooding
+  static bool should_send = false;
+
+  // if heartbeat timer is true, set interval to 0
+  // acts as a latch to prevent sending message until
+  // new CAN message is read
+  if (heartbeat_timer.check()) {
+    heartbeat_timer.interval(0);
+    should_send = false;
+  } else {
+    should_send = true;
+  }
+
+  if (should_send && send_timer.check()) {
+    _msg.id = ID_DASHBOARD_STATUS;
+    //update button flags
+    _msg.len = sizeof(dashboard_status);
+    dashboard_status.write(_msg.buf);
+    _CAN.write(_msg);
+
+    send_timer.reset();
+  }
+
 }
 
 uint32_t DashboardCAN::color_wheel_bms_glv(bool isBms) {

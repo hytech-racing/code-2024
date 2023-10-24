@@ -5,7 +5,6 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SharpMem.h>
 #include <Adafruit_NeoPixel.h>
-// #include <DashboardCAN.h>
 #include <bitmaps.h>
 
 // Display defines
@@ -34,12 +33,15 @@ enum LED_LIST { AMS = 0, IMD = 1, MC_ERR = 2, GEN_PURP = 3, INERTIA = 4, BOTS = 
 #define LED_BLUE 0xFF
 #define LED_WHITE 0xFFFFFFFF
 
+//Forward declaration to allow use of DashboardCAN pointer in header
 class DashboardCAN;
 
+//Singleton class header
 class hytech_dashboard {
     public:
+        // getInstance function returns the one existing insance of hytech_dashboard
         static hytech_dashboard* getInstance();
-        // Adafruit_NeoPixel _neopixels;
+        // definitions for public functions
         void startup();
         void refresh(DashboardCAN* can);
         void set_neopixel(uint16_t id, uint32_t c);
@@ -49,6 +51,7 @@ class hytech_dashboard {
         hytech_dashboard();
         // Private destructor to prevent external deletion
         ~hytech_dashboard() { }
+        // Pointer to the one instance of hytech_dashboard
         static hytech_dashboard* _instance;
 
 };

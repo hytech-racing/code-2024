@@ -1,13 +1,4 @@
 #include "main.h"
-// defined pins for SPI display
-#define SHARP_SCK  PA5
-#define SHARP_MOSI PA7
-#define SHARP_SS   PC4
-
-//defined black and white values for display
-#define BLACK 0
-#define WHITE 1
-//^^ both of those will prob. be moved to hytech_dashboard
 
 // STM32 clock config for 24Mhz xtal, generated in CUBE IDE
 // extern "C" overrides configuration written in board variant
@@ -67,10 +58,14 @@ extern "C" void USB_LP_IRQHandler(void)
   HAL_PCD_IRQHandler(&g_hpcd);
 }
 
+// initialize singleton object(this was a nightmare to setup and
+// can probably be replaced at some point with traditional class)
 hytech_dashboard* hytech_dashboard::_instance = NULL;
+hytech_dashboard* dashboard = hytech_dashboard::getInstance();
 
 //Create STM32_CAN object to pass to DashboardCAN
 STM32_CAN stm_can( CAN2, DEF);
+//Create dashboard_can object
 DashboardCAN dashboard_can(&stm_can);
 
 void setup(void)
@@ -86,15 +81,19 @@ void setup(void)
   //set LED high
   digitalWrite(PA3, HIGH);
 
+  //begin usb serial for STM32
   SerialUSB.begin();
 
-  hytech_dashboard::getInstance()->startup();
+  //run startup sequence for dasboard
+  dashboard->startup();
 }
 
 void loop(void) 
 {
+  //read can messages from CAN bus
   dashboard_can.read_CAN();
-  hytech_dashboard::getInstance()->refresh((DashboardCAN*) &dashboard_can);
+  //refresh dashboard (display and neopixels)
+  dashboard->refresh((DashboardCAN*) &dashboard_can);
 }
 
 

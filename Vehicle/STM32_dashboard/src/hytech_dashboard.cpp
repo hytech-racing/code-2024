@@ -1,14 +1,16 @@
 #include <hytech_dashboard.h>
 #include <DashboardCAN.h>
 
+// Definition of display and neopixel globals
+// For some reason, code complains when these are defined in the header file
 Adafruit_SharpMem _display(SHARP_SCK, SHARP_MOSI, SHARP_SS, 400, 240);
 Adafruit_NeoPixel _neopixels(NEOPIXEL_COUNT, NEOPIXEL_PIN, NEO_GRBW + NEO_KHZ800);
 
-/* Null, because instance will be initialized on demand. */
-
-
+// Empty constructor for hytech_dashboard instance
 hytech_dashboard::hytech_dashboard(){}
 
+// getInstance function to return current instance or 
+// call constructor if not initialized
 hytech_dashboard* hytech_dashboard::getInstance()
 {
     if (_instance == NULL)
@@ -18,6 +20,7 @@ hytech_dashboard* hytech_dashboard::getInstance()
     return _instance;
 }
 
+// startup function
 void hytech_dashboard::startup() {
     // begin and clear display
     _display.begin();
@@ -63,17 +66,17 @@ void hytech_dashboard::startup() {
     _display.drawBitmap(hytech_words_x + 53, hytech_words_y, epd_bitmap_HytechWords, hytech_words_x_size, hytech_words_y_size, BLACK);
     _display.refresh();
 
+    // wait for 5 seconds, can be shortened
     delay(5000);
 }
 
 //refresh dashboard
-void hytech_dashboard::refresh(DashboardCAN* can) {
+void hytech_dashboard::refresh(DashboardCAN* CAN) {
     // data to write to display
-    DashboardCAN CAN = *can;
-    Dashboard_status dash_status = CAN.dashboard_status;
-    MCU_status mcu_status = CAN.mcu_status;
-    MCU_analog_readings mcu_analog_readings = CAN.mcu_analog_readings;
-    BMS_voltages bms_voltages = CAN.bms_voltages;
+    Dashboard_status* dash_status = &CAN->dashboard_status;
+    MCU_status* mcu_status = &CAN->mcu_status;
+    MCU_analog_readings* mcu_analog_readings = &CAN->mcu_analog_readings;
+    BMS_voltages* bms_voltages = &CAN->bms_voltages;
 
     // refresh neopixels
     _neopixels.show();

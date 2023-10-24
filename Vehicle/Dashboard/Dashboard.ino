@@ -35,7 +35,7 @@ uint8_t prev_led_dimmer_state = 0;
 //init dial variable
 DialVectoring dial_torque_vectoring;
 
-// CAN timers (Not used)
+// CAN timers
 Metro timer_can_update = Metro(1000);
 // this is not used, uses interrupts instead
 Metro timer_can_read = Metro(100);
