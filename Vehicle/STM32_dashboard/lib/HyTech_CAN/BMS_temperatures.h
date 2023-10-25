@@ -31,11 +31,11 @@ public:
 
 #ifdef HT_DEBUG_EN
     void print() {
-        Serial.println("\n\nBMS Temperatures");
-        Serial.println(    "----------------");
-        Serial.print("AVERAGE TEMPERATURE: ");  Serial.println(average_temperature / 100.0, 2);
-        Serial.print("LOW TEMPERATURE:     ");  Serial.println(low_temperature / 100.0, 2);
-        Serial.print("HIGH TEMPERATURE:    ");  Serial.println(high_temperature / 100.0, 2);
+        SerialUSB.println("\n\nBMS Temperatures");
+        SerialUSB.println(    "----------------");
+        SerialUSB.print("AVERAGE TEMPERATURE: ");  SerialUSB.println(average_temperature / 100.0, 2);
+        SerialUSB.print("LOW TEMPERATURE:     ");  SerialUSB.println(low_temperature / 100.0, 2);
+        SerialUSB.print("HIGH TEMPERATURE:    ");  SerialUSB.println(high_temperature / 100.0, 2);
     }
 #endif
 

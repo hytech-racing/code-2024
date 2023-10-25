@@ -24,10 +24,10 @@ public:
 
 #ifdef HT_DEBUG_EN
     void print() {
-        Serial.println("\n\nGPS Readings");
-        Serial.println(    "-----------");
-        Serial.print("Latitude:  ");  Serial.println(latitude / 1000000.);
-        Serial.print("Longitude: ");  Serial.println(longitude / 1000000.);
+        SerialUSB.println("\n\nGPS Readings");
+        SerialUSB.println(    "-----------");
+        SerialUSB.print("Latitude:  ");  SerialUSB.println(latitude / 1000000.);
+        SerialUSB.print("Longitude: ");  SerialUSB.println(longitude / 1000000.);
     }
 #endif
 

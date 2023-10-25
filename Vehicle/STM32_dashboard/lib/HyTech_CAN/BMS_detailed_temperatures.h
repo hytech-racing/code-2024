@@ -52,12 +52,12 @@ public:
 
 #ifdef HT_DEBUG_EN
     void print() {
-        Serial.println("\n\nBMS DETAILED TEMPERATURES");
-        Serial.println    ("-------------------------");
-        Serial.print("IC:            ");    Serial.println((uint32_t) ic_id);
-        Serial.print("TEMPERATURE 0: ");    Serial.println(temperature_0 / 100., 2);
-        Serial.print("TEMPERATURE 1: ");    Serial.println(temperature_1 / 100., 2);
-        Serial.print("TEMPERATURE 2: ");    Serial.println(temperature_2 / 100., 2);
+        SerialUSB.println("\n\nBMS DETAILED TEMPERATURES");
+        SerialUSB.println    ("-------------------------");
+        SerialUSB.print("IC:            ");    SerialUSB.println((uint32_t) ic_id);
+        SerialUSB.print("TEMPERATURE 0: ");    SerialUSB.println(temperature_0 / 100., 2);
+        SerialUSB.print("TEMPERATURE 1: ");    SerialUSB.println(temperature_1 / 100., 2);
+        SerialUSB.print("TEMPERATURE 2: ");    SerialUSB.println(temperature_2 / 100., 2);
     }
 #endif
 

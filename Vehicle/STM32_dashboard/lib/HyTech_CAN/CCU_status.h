@@ -21,9 +21,9 @@ public:
 
 #ifdef HT_DEBUG_EN
     void print() {
-        Serial.println("\n\nCCU STATUS");
-		Serial.println(     "---------");
-		Serial.print("CHARGING: "); Serial.println(charger_enabled);
+        SerialUSB.println("\n\nCCU STATUS");
+		SerialUSB.println(     "---------");
+		SerialUSB.print("CHARGING: "); SerialUSB.println(charger_enabled);
 	}
 #endif
 

@@ -6,6 +6,7 @@ extern "C" void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+  RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
 
   /** Configure the main internal regulator output voltage
   */
@@ -49,6 +50,21 @@ extern "C" void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
+  //set peripheral clocks for USB functionality (this is not STM32CUBEIDE code)
+  //This was found in the stm32duino variants clock config, and was modified
+  //to match the clock config in CUBEIDE
+  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_SDIO | RCC_PERIPHCLK_CLK48;
+  PeriphClkInitStruct.PLLSAI.PLLSAIM = 12;
+  PeriphClkInitStruct.PLLSAI.PLLSAIN = 96;
+  PeriphClkInitStruct.PLLSAI.PLLSAIQ = 2;
+  PeriphClkInitStruct.PLLSAI.PLLSAIP = RCC_PLLSAIP_DIV4;
+  PeriphClkInitStruct.PLLSAIDivQ = 1;
+  PeriphClkInitStruct.Clk48ClockSelection = RCC_CLK48CLKSOURCE_PLLSAIP;
+  PeriphClkInitStruct.SdioClockSelection = RCC_SDIOCLKSOURCE_CLK48;
+  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK) {
+    Error_Handler();
+  }
 }
 
 // This might be needed for USB Serial
@@ -65,6 +81,7 @@ hytech_dashboard* dashboard = hytech_dashboard::getInstance();
 
 //Create STM32_CAN object to pass to DashboardCAN
 STM32_CAN stm_can( CAN2, DEF);
+CAN_message_t msg;
 //Create dashboard_can object
 DashboardCAN dashboard_can(&stm_can);
 
@@ -84,6 +101,8 @@ void setup(void)
   //begin usb serial for STM32
   SerialUSB.begin();
 
+  SerialUSB.println("HELLO");
+
   //run startup sequence for dasboard
   dashboard->startup();
 }
@@ -91,7 +110,12 @@ void setup(void)
 void loop(void) 
 {
   //read can messages from CAN bus
+  // if (stm_can.read(msg)) {
+  //   SerialUSB.println("Message Recieved");
+  // }
   dashboard_can.read_CAN();
+  dashboard_can.send_status();
+  
   //refresh dashboard (display and neopixels)
   dashboard->refresh((DashboardCAN*) &dashboard_can);
 }

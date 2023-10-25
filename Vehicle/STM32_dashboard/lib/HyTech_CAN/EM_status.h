@@ -24,13 +24,13 @@ public:
 
 #ifdef HT_DEBUG_EN
     void print() {
-        Serial.println("\n\nEM STATUS");
-		Serial.println(     "---------");
-		Serial.print("VOLTAGE GAIN: "); Serial.println(get_voltage_gain());
-		Serial.print("CURRENT GAIN: "); Serial.println(get_current_gain());
-		Serial.print("OVERVOLTAGE:  "); Serial.println(get_overvoltage());
-		Serial.print("OVERPOWER:    "); Serial.println(get_overpower());
-		Serial.print("LOGGING:      "); Serial.println(get_logging());
+        SerialUSB.println("\n\nEM STATUS");
+		SerialUSB.println(     "---------");
+		SerialUSB.print("VOLTAGE GAIN: "); SerialUSB.println(get_voltage_gain());
+		SerialUSB.print("CURRENT GAIN: "); SerialUSB.println(get_current_gain());
+		SerialUSB.print("OVERVOLTAGE:  "); SerialUSB.println(get_overvoltage());
+		SerialUSB.print("OVERPOWER:    "); SerialUSB.println(get_overpower());
+		SerialUSB.print("LOGGING:      "); SerialUSB.println(get_logging());
 	}
 #endif
 
