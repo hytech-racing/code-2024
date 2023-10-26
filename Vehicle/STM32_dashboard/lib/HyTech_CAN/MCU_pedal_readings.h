@@ -31,6 +31,7 @@ public:
 
 private:
     // @Parse
+    // Accelerator pedal range is 500-2140
     uint16_t accelerator_pedal_1;
     // @Parse
     uint16_t accelerator_pedal_2;

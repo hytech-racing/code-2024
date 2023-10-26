@@ -128,10 +128,11 @@ void hytech_dashboard::startup() {
 // draws white rect top down
 // sets buffer; doesn't refresh display
 // for brake pedal
-void hytech_dashboard::draw_vertical_pedal_bar(double percent, int initial_x_coord) {
+void hytech_dashboard::draw_vertical_pedal_bar(double val, int initial_x_coord) {
     // 100%: height of white box = 40
     //   0%: height of white box = 143 (covering the whole black bar)
-    _display.fillRect(initial_x_coord,40, 17, (1.0-percent)*(143), WHITE);
+    _display.fillRect(initial_x_coord, 40, 17, (1 - (((double)val - 500) / 1640)) * 143, WHITE);
+    SerialUSB.println((((double)val - 500) / 1640));
 }
 
 void hytech_dashboard::draw_regen_bar(double percent) {
@@ -139,44 +140,50 @@ void hytech_dashboard::draw_regen_bar(double percent) {
 }
 
 void hytech_dashboard::draw_current_draw_bar(double percent) {
+
     _display.fillRect(163+156, 5+2, -156, 18-2, WHITE);
 }
 
 //refresh dashboard
 void hytech_dashboard::refresh(DashboardCAN* CAN) {
     // data to write to display
-    Dashboard_status* dash_status = &CAN->dashboard_status;
-    MCU_status* mcu_status = &CAN->mcu_status;
-    MCU_analog_readings* mcu_analog_readings = &CAN->mcu_analog_readings;
-    BMS_voltages* bms_voltages = &CAN->bms_voltages;
+    //CAN->dashboard_status;
+    //CAN->mcu_status;
+    //CAN->mcu_analog_readings;
+    //CAN->bms_voltages;
+    //CAN->pedal_readings;
+
 
     // refresh neopixels
     _neopixels.show();
+
     // refresh display
-    _display.clearDisplayBuffer();
     _display.drawBitmap(0,0, epd_bitmap_Displaytest, 400, 240, BLACK);
+    
+    draw_vertical_pedal_bar(CAN->pedal_readings.get_accelerator_pedal_1(), 374);
 
-    for(double i = 0; i < 1.0; i+=0.03) {
-        _display.clearDisplayBuffer();
-        _display.drawBitmap(0,0, epd_bitmap_Displaytest, 400, 240, BLACK);
-        draw_regen_bar(i);
-        draw_vertical_pedal_bar(i, 9);
-        draw_vertical_pedal_bar(i, 374);
-        _display.refresh();
-        // delay(10);
-    }
 
-    delay(300);
+    // for(double i = 0; i < 1.0; i+=0.03) {
+    //     _display.drawBitmap(0,0, epd_bitmap_Displaytest, 400, 240, BLACK);
+    //     draw_regen_bar(i);
+    //     draw_vertical_pedal_bar(i, 9);
+    //     draw_vertical_pedal_bar(i, 374);
+    //     _display.refresh();
+    //     // delay(10);
+    // }
 
-    for(double i = 1.0; i > 0.0; i-=0.03) {
-        _display.clearDisplayBuffer();
-        _display.drawBitmap(0,0, epd_bitmap_Displaytest, 400, 240, BLACK);
-        draw_regen_bar(i);
-        draw_vertical_pedal_bar(i, 9);
-        draw_vertical_pedal_bar(i, 374);
-        _display.refresh();
-        // delay(10);
-    }
+    // delay(300);
+
+    // for(double i = 1.0; i > 0.0; i-=0.03) {
+    //     _display.drawBitmap(0,0, epd_bitmap_Displaytest, 400, 240, BLACK);
+    //     draw_regen_bar(i);
+    //     draw_vertical_pedal_bar(i, 9);
+    //     draw_vertical_pedal_bar(i, 374);
+    //     _display.refresh();
+    //     // delay(10);
+    // }
+
+    _display.refresh();
 }
 
 //set neopixels

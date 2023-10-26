@@ -45,7 +45,7 @@ class hytech_dashboard {
         void startup();
         void refresh(DashboardCAN* can);
         void set_neopixel(uint16_t id, uint32_t c);
-        void draw_vertical_pedal_bar(double percent, int initial_x_coord);
+        void draw_vertical_pedal_bar(double val, int initial_x_coord);
         void draw_regen_bar(double percent);
         void draw_current_draw_bar(double percent);
     
