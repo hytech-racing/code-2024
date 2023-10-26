@@ -50,12 +50,12 @@ public:
 
 #ifdef HT_DEBUG_EN
     void print() {
-        Serial.println("\n\nBMS Status");
-        Serial.println("----------");
-        Serial.print("STATE:       ");      Serial.println(state, HEX);
-        Serial.print("ERROR FLAGS: 0x");    Serial.println(error_flags, HEX);
-        Serial.print("CURRENT:     ");      Serial.println(current / 100.0, 2);
-        Serial.print("FLAGS:       0x");    Serial.println(flags, HEX);
+        SerialUSB.println("\n\nBMS Status");
+        SerialUSB.println("----------");
+        SerialUSB.print("STATE:       ");      SerialUSB.println(state, HEX);
+        SerialUSB.print("ERROR FLAGS: 0x");    SerialUSB.println(error_flags, HEX);
+        SerialUSB.print("CURRENT:     ");      SerialUSB.println(current / 100.0, 2);
+        SerialUSB.print("FLAGS:       0x");    SerialUSB.println(flags, HEX);
     }
 #endif
 

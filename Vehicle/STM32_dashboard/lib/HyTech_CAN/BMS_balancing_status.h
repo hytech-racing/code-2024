@@ -49,11 +49,11 @@ public:
 
 #ifdef HT_DEBUG_EN
     void print() {
-        Serial.println("\n\nBMS BALANCING STATUS");
-        Serial.println(    "--------------------");
-        Serial.print("GROUP ID:    ");  Serial.println((uint32_t) get_group_id());
-        Serial.print("STATUS:      ");  Serial.print((uint32_t)(get_balancing() >> 32), HEX);
-                                        Serial.println((uint32_t)(get_balancing() & 0xFFFFFFFF), HEX);
+        SerialUSB.println("\n\nBMS BALANCING STATUS");
+        SerialUSB.println(    "--------------------");
+        SerialUSB.print("GROUP ID:    ");  SerialUSB.println((uint32_t) get_group_id());
+        SerialUSB.print("STATUS:      ");  SerialUSB.print((uint32_t)(get_balancing() >> 32), HEX);
+                                        SerialUSB.println((uint32_t)(get_balancing() & 0xFFFFFFFF), HEX);
     }
 #endif
 

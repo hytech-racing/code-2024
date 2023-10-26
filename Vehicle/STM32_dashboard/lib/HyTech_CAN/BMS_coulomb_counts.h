@@ -29,10 +29,10 @@ public:
 
 #ifdef HT_DEBUG_EN
     void print() {
-        Serial.println("\n\nBMS COULOMB COUNTS");
-        Serial.println(    "------------------");
-        Serial.print("TOTAL CHARGE:    ");  Serial.println(total_charge / 10000., 4);
-        Serial.print("TOTAL DISCHARGE: ");  Serial.println(total_discharge / 10000., 4);
+        SerialUSB.println("\n\nBMS COULOMB COUNTS");
+        SerialUSB.println(    "------------------");
+        SerialUSB.print("TOTAL CHARGE:    ");  SerialUSB.println(total_charge / 10000., 4);
+        SerialUSB.print("TOTAL DISCHARGE: ");  SerialUSB.println(total_discharge / 10000., 4);
     }
 #endif
 

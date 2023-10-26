@@ -18,11 +18,17 @@ DashboardCAN::DashboardCAN(STM32_CAN* CAN) : _CAN(*CAN)
 
 void DashboardCAN::read_CAN()
 {
-  _CAN.read(_msg);
+
+  if (_CAN.read(_msg)) {
+    SerialUSB.println("Message Recieved");
+  }
+  // parse message based on ID
   switch (_msg.id)
   {
   case ID_MCU_STATUS:
+    SerialUSB.println("MCU Recieved");
     mcu_status.load(_msg.buf);
+    // reset heartbeat timer if message received from ECU
     heartbeat_timer.reset();
     heartbeat_timer.interval(MCU_HEARTBEAT_TIMEOUT);
     mcu_status_received();
@@ -37,11 +43,41 @@ void DashboardCAN::read_CAN()
     bms_voltages.load(_msg.buf);
     // include bms timer
     bms_voltages_received();
+    break;
+  case ID_MCU_PEDAL_READINGS:
+    pedal_readings.load(_msg.buf);
+    break;
   default:
     break;
   }
 
-  
+}
+
+void DashboardCAN::send_status() {
+  // boolean to prevent CAN flooding
+  static bool should_send = true;
+
+  // if heartbeat timer is true, set interval to 0
+  // acts as a latch to prevent sending message until
+  // new CAN message is read
+  // if (heartbeat_timer.check()) {
+  //   heartbeat_timer.interval(0);
+  //   should_send = false;
+  // } else {
+  //   should_send = true;
+  // }
+
+  if (should_send && send_timer.check()) {
+    _msg.id = ID_DASHBOARD_STATUS;
+    //update button flags
+    SerialUSB.println("Message Sent");
+    _msg.len = sizeof(dashboard_status);
+    dashboard_status.write(_msg.buf);
+    _CAN.write(_msg);
+
+    send_timer.reset();
+  }
+
 }
 
 uint32_t DashboardCAN::color_wheel_bms_glv(bool isBms) {
@@ -92,12 +128,12 @@ uint32_t DashboardCAN::color_wheel_bms_glv(bool isBms) {
 void DashboardCAN::mcu_status_received() {
   // control BUZZER_CTRL
   // digitalWrite(BUZZER_CTRL, mcu_status.get_activate_buzzer());
-  Serial.print("AMS: ");
-  Serial.println(mcu_status.get_bms_ok_high());
-  Serial.print("IMD: ");
-  Serial.println(mcu_status.get_imd_ok_high());
-  Serial.print("IMD/AMS flags: ");
-  // Serial.println(imd_ams_flags, BIN);  no work idk why
+  SerialUSB.print("AMS: ");
+  SerialUSB.println(mcu_status.get_bms_ok_high());
+  SerialUSB.print("IMD: ");
+  SerialUSB.println(mcu_status.get_imd_ok_high());
+  SerialUSB.print("IMD/AMS flags: ");
+  // SerialUSB.println(imd_ams_flags, BIN);  no work idk why
   if (mcu_status.get_bms_ok_high()) {
     if (((imd_ams_flags >> 1) & 1) == 0) {
       // hytech_dashboard::set_neopixel(LED_LIST::AMS, LED_OFF);

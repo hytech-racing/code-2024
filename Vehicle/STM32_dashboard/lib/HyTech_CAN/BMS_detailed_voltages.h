@@ -52,13 +52,13 @@ public:
 
 #ifdef HT_DEBUG_EN
     void print() {
-        Serial.println("\n\nBMS DETAILED VOLTAGES");
-        Serial.println(    "---------------------");
-        Serial.print("IC:        ");    Serial.println((uint32_t) get_ic_id());
-        Serial.print("GROUP:     ");    Serial.println((uint32_t) get_group_id());
-        Serial.print("VOLTAGE 0: ");    Serial.println(voltage_0 / 10000., 4);
-        Serial.print("VOLTAGE 1: ");    Serial.println(voltage_1 / 10000., 4);
-        Serial.print("VOLTAGE 2: ");    Serial.println(voltage_2 / 10000., 4);
+        SerialUSB.println("\n\nBMS DETAILED VOLTAGES");
+        SerialUSB.println(    "---------------------");
+        SerialUSB.print("IC:        ");    SerialUSB.println((uint32_t) get_ic_id());
+        SerialUSB.print("GROUP:     ");    SerialUSB.println((uint32_t) get_group_id());
+        SerialUSB.print("VOLTAGE 0: ");    SerialUSB.println(voltage_0 / 10000., 4);
+        SerialUSB.print("VOLTAGE 1: ");    SerialUSB.println(voltage_1 / 10000., 4);
+        SerialUSB.print("VOLTAGE 2: ");    SerialUSB.println(voltage_2 / 10000., 4);
     }
 #endif
 

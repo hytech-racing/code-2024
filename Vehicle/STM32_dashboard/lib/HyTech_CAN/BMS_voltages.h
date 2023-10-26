@@ -34,12 +34,12 @@ public:
 
 #ifdef HT_DEBUG_EN
     void print() {
-		Serial.println("\n\nBMS VOLTAGES");
-		Serial.println(    "------------");
-		Serial.print("AVERAGE VOLTAGE: ");  Serial.println(average_voltage / 10000.0, 4);
-		Serial.print("LOW VOLTAGE:     ");  Serial.println(low_voltage / 10000.0, 4);
-		Serial.print("HIGH VOLTAGE:    ");  Serial.println(high_voltage / 10000.0, 4);
-		Serial.print("TOTAL VOLTAGE:   ");  Serial.println(total_voltage / 100.0, 2);
+		SerialUSB.println("\n\nBMS VOLTAGES");
+		SerialUSB.println(    "------------");
+		SerialUSB.print("AVERAGE VOLTAGE: ");  SerialUSB.println(average_voltage / 10000.0, 4);
+		SerialUSB.print("LOW VOLTAGE:     ");  SerialUSB.println(low_voltage / 10000.0, 4);
+		SerialUSB.print("HIGH VOLTAGE:    ");  SerialUSB.println(high_voltage / 10000.0, 4);
+		SerialUSB.print("TOTAL VOLTAGE:   ");  SerialUSB.println(total_voltage / 100.0, 2);
     }
 #endif
 

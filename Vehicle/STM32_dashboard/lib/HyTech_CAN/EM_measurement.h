@@ -39,10 +39,10 @@ public:
 
 #ifdef HT_DEBUG_EN
     void print() {
-        Serial.println("\n\nEM MEASUREMENT");
-		Serial.println(     "---------");
-		Serial.print("VOLTAGE: ");      Serial.println(get_voltage() * 1.5258789063E-005 );
-		Serial.print("CURRENT: ");      Serial.println(get_current() * 1.5258789063E-005 );
+        SerialUSB.println("\n\nEM MEASUREMENT");
+		SerialUSB.println(     "---------");
+		SerialUSB.print("VOLTAGE: ");      SerialUSB.println(get_voltage() * 1.5258789063E-005 );
+		SerialUSB.print("CURRENT: ");      SerialUSB.println(get_current() * 1.5258789063E-005 );
 	}
 #endif
 

@@ -1,6 +1,8 @@
 #include <hytech_dashboard.h>
 #include <DashboardCAN.h>
 
+// Definition of display and neopixel globals
+// For some reason, code complains when these are defined in the header file
 Adafruit_SharpMem _display(SHARP_SCK, SHARP_MOSI, SHARP_SS, 400, 240);
 Adafruit_NeoPixel _neopixels(NEOPIXEL_COUNT, NEOPIXEL_PIN, NEO_GRBW + NEO_KHZ800);
 
@@ -15,6 +17,7 @@ hytech_dashboard* hytech_dashboard::getInstance() {
     return _instance;
 }
 
+// startup function
 void hytech_dashboard::startup() {
 
     // begin, clear display, set rotation
@@ -140,13 +143,13 @@ void hytech_dashboard::draw_current_draw_bar(double percent) {
 }
 
 //refresh dashboard
-void hytech_dashboard::refresh(DashboardCAN* can) {
+void hytech_dashboard::refresh(DashboardCAN* CAN) {
     // data to write to display
-    DashboardCAN CAN = *can;
-    Dashboard_status dash_status = CAN.dashboard_status;
-    MCU_status mcu_status = CAN.mcu_status;
-    MCU_analog_readings mcu_analog_readings = CAN.mcu_analog_readings;
-    BMS_voltages bms_voltages = CAN.bms_voltages;
+    Dashboard_status* dash_status = &CAN->dashboard_status;
+    MCU_status* mcu_status = &CAN->mcu_status;
+    MCU_analog_readings* mcu_analog_readings = &CAN->mcu_analog_readings;
+    BMS_voltages* bms_voltages = &CAN->bms_voltages;
+
     // refresh neopixels
     _neopixels.show();
     // refresh display
