@@ -3,12 +3,13 @@
 // use a different hytech_CAN object for each CAN interface
 
 // ctor
-DashboardCAN::DashboardCAN(STM32_CAN* CAN) : _CAN(*CAN)
+DashboardCAN::DashboardCAN(STM32_CAN* CAN)
 {
+  _CAN = CAN;
 
   // begin can and set baud rate to 500kb
-  _CAN.begin();
-  _CAN.setBaudRate(500000);
+  _CAN->begin();
+  _CAN->setBaudRate(500000);
   // CAN onReceive not supported in STM32 CAN library
   // instead of using interrupts on received can message
   // we will just poll the can bus for now
@@ -19,7 +20,7 @@ DashboardCAN::DashboardCAN(STM32_CAN* CAN) : _CAN(*CAN)
 void DashboardCAN::read_CAN()
 {
 
-  if (_CAN.read(_msg)) {
+  if (_CAN->read(_msg)) {
     SerialUSB.println("Message Recieved");
   }
   // parse message based on ID
@@ -73,7 +74,7 @@ void DashboardCAN::send_status() {
     SerialUSB.println("Message Sent");
     _msg.len = sizeof(dashboard_status);
     dashboard_status.write(_msg.buf);
-    _CAN.write(_msg);
+    _CAN->write(_msg);
 
     send_timer.reset();
   }
