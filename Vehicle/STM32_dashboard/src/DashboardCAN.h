@@ -19,7 +19,7 @@ class DashboardCAN {
     private:
         // STM32_CAN member variable
         //member vars designated by _ prefix
-        STM32_CAN _CAN;
+        STM32_CAN* _CAN;
         // Creates metro timer with 0 interval and autoreset
         // This metro timer acts as a latch to prevent the dashboard from sending/flooding messages
         // onto the CAN line if it has not received messages in 1 second

@@ -3,12 +3,13 @@
 // use a different hytech_CAN object for each CAN interface
 
 // ctor
-DashboardCAN::DashboardCAN(STM32_CAN* CAN) : _CAN(*CAN)
+DashboardCAN::DashboardCAN(STM32_CAN* CAN)
 {
+  _CAN = CAN;
 
   // begin can and set baud rate to 500kb
-  _CAN.begin();
-  _CAN.setBaudRate(500000);
+  _CAN->begin();
+  _CAN->setBaudRate(500000);
   // CAN onReceive not supported in STM32 CAN library
   // instead of using interrupts on received can message
   // we will just poll the can bus for now
@@ -19,36 +20,35 @@ DashboardCAN::DashboardCAN(STM32_CAN* CAN) : _CAN(*CAN)
 void DashboardCAN::read_CAN()
 {
 
-  if (_CAN.read(_msg)) {
-    SerialUSB.println("Message Recieved");
-  }
-  // parse message based on ID
-  switch (_msg.id)
-  {
-  case ID_MCU_STATUS:
-    SerialUSB.println("MCU Recieved");
-    mcu_status.load(_msg.buf);
-    // reset heartbeat timer if message received from ECU
-    heartbeat_timer.reset();
-    heartbeat_timer.interval(MCU_HEARTBEAT_TIMEOUT);
-    mcu_status_received();
-    break;
-  case ID_MCU_ANALOG_READINGS:
-    mcu_analog_readings.load(_msg.buf);
-    heartbeat_timer.reset();
-    heartbeat_timer.interval(MCU_HEARTBEAT_TIMEOUT);
-    mcu_analog_readings_received();
-    break;
-  case ID_BMS_VOLTAGES:
-    bms_voltages.load(_msg.buf);
-    // include bms timer
-    bms_voltages_received();
-    break;
-  case ID_MCU_PEDAL_READINGS:
-    pedal_readings.load(_msg.buf);
-    break;
-  default:
-    break;
+  if (_CAN->read(_msg)) {
+  
+    // parse message based on ID
+    switch (_msg.id)
+    {
+    case ID_MCU_STATUS:
+      mcu_status.load(_msg.buf);
+      // reset heartbeat timer if message received from ECU
+      heartbeat_timer.reset();
+      heartbeat_timer.interval(MCU_HEARTBEAT_TIMEOUT);
+      mcu_status_received();
+      break;
+    case ID_MCU_ANALOG_READINGS:
+      mcu_analog_readings.load(_msg.buf);
+      heartbeat_timer.reset();
+      heartbeat_timer.interval(MCU_HEARTBEAT_TIMEOUT);
+      mcu_analog_readings_received();
+      break;
+    case ID_BMS_VOLTAGES:
+      bms_voltages.load(_msg.buf);
+      // include bms timer
+      bms_voltages_received();
+      break;
+    case ID_MCU_PEDAL_READINGS:
+      pedal_readings.load(_msg.buf);
+      break;
+    default:
+      break;
+    }
   }
 
 }
@@ -73,7 +73,7 @@ void DashboardCAN::send_status() {
     SerialUSB.println("Message Sent");
     _msg.len = sizeof(dashboard_status);
     dashboard_status.write(_msg.buf);
-    _CAN.write(_msg);
+    _CAN->write(_msg);
 
     send_timer.reset();
   }

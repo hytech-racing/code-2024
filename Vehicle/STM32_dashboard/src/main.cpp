@@ -110,9 +110,6 @@ void setup(void)
 void loop(void) 
 {
   //read can messages from CAN bus
-  // if (stm_can.read(msg)) {
-  //   SerialUSB.println("Message Recieved");
-  // }
   dashboard_can.read_CAN();
   dashboard_can.send_status();
   

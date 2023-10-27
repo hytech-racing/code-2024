@@ -44,5 +44,5 @@
 #include "EM_status.h"
 #include "EM_measurement.h"
 #include "IMU_accelerometer.h"
-#include "IMU_gryoscope.h"
+#include "IMU_gyroscope.h"
 #endif
