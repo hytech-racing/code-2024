@@ -1,0 +1,3 @@
+[submodule "HyTech_CAN"]
+	path = Libraries/HyTech_CAN
+	url = https://github.com/walkermburns/HyTech_CAN.git
