@@ -1,4 +1,5 @@
 #include "DebouncedButton.h"
+#include "Dashboard_status.h"
 
 // Button pin definition
 #define BTN_SAFE_CTRL 20
@@ -10,7 +11,7 @@
 class controls {
     public:
         void startup();
-        void update();
+        void update(Dashboard_status* status);
     private:
         DebouncedButton btn_safe_ctrl;
         DebouncedButton btn_mc_cycle;

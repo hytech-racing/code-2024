@@ -9,19 +9,19 @@ void controls::startup() {
     btn_led_dimmer.begin(BTN_LED_DIMMER, 100);
 }
 
-void controls::update() {
+void controls::update(Dashboard_status* status) {
   // this sets the button to be high: it is set low in send can
   if (btn_safe_ctrl.isPressed())  {
-    // status->toggle_mode_btn();
+    status->toggle_mode_btn();
   }
   if (btn_mc_cycle.isPressed())    {
-    // status->toggle_mc_cycle_btn();
+    status->toggle_mc_cycle_btn();
   }
   if (btn_torque_mode.isPressed()) {
-    // status->toggle_torque_mode_btn();
+    status->toggle_torque_mode_btn();
   }
   if (btn_led_dimmer.isPressed())  {
-    // status->toggle_led_dimmer_btn();
+    status->toggle_led_dimmer_btn();
   }
-//   status->set_start_btn(btn_start.isPressed());
+  status->set_start_btn(btn_start.isPressed());
 }
