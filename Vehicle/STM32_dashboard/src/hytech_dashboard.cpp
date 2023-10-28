@@ -7,12 +7,6 @@
 Adafruit_SharpMem _display(SHARP_SCK, SHARP_MOSI, SHARP_SS, 400, 240);
 Adafruit_NeoPixel _neopixels(NEOPIXEL_COUNT, NEOPIXEL_PIN, NEO_GRBW + NEO_KHZ800);
 
-DebouncedButton btn_safe_ctrl;
-DebouncedButton btn_mc_cycle;
-DebouncedButton btn_start;
-DebouncedButton btn_torque_mode;
-DebouncedButton btn_led_dimmer;
-
 DebouncedButton b1;
 
 /* Null, because instance will be initialized on demand. */
@@ -28,12 +22,6 @@ hytech_dashboard* hytech_dashboard::getInstance() {
 
 // startup function
 void hytech_dashboard::startup() {
-
-    btn_safe_ctrl.begin(BTN_SAFE_CTRL, 100);
-    btn_mc_cycle.begin(BTN_MC_CYCLE, 100);
-    btn_start.begin(BTN_START, 100);
-    btn_torque_mode.begin(BTN_TORQUE_MODE, 100);
-    btn_led_dimmer.begin(BTN_LED_DIMMER, 100);
 
     b1.begin(PB5, 5);
 
@@ -193,24 +181,6 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     _neopixels.show();
     delay(15);
 }
-
-// void btn_update(Dashboard_status status) {
-//   // this sets the button to be high: it is set low in send can
-//   if (btn_safe_ctrl.isPressed())  {
-//     status->toggle_mode_btn();
-//   }
-//   if (btn_mc_cycle.isPressed())    {
-//     status->toggle_mc_cycle_btn();
-//   }
-//   if (btn_torque_mode.isPressed()) {
-
-//     status->toggle_torque_mode_btn();
-//   }
-//   if (btn_led_dimmer.isPressed())  {
-//     status->toggle_led_dimmer_btn();
-//   }
-//   status->set_start_btn(btn_start.isPressed());
-// }
 
 //set neopixels
 void hytech_dashboard::set_neopixel(uint16_t id, uint32_t c) {

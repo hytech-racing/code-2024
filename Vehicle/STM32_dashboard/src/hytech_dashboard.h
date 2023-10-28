@@ -19,13 +19,6 @@
 #define NEOPIXEL_PIN PA2
 #define NEOPIXEL_COUNT 13
 
-// Button pin definition
-#define BTN_SAFE_CTRL 20
-#define BTN_START 19
-#define BTN_MC_CYCLE 18
-#define BTN_TORQUE_MODE 22
-#define BTN_LED_DIMMER 21
-
 // OFF: OFF, ON: GREEN/OK, YELLOW : WARNING/MISC RED : CRITICAL
 enum class LED_MODES { OFF = 0, ON = 1, YELLOW = 2, RED = 3};
 enum LED_LIST { AMS = 0, IMD = 1, MC_ERR = 2, GEN_PURP = 3, INERTIA = 4, BOTS = 5, 
