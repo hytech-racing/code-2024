@@ -74,9 +74,10 @@ extern "C" void USB_LP_IRQHandler(void)
   HAL_PCD_IRQHandler(&g_hpcd);
 }
 
-// initialize singleton object(this was a nightmare to setup and
+// initialize/construct singleton object(this was a nightmare to setup and
 // can probably be replaced at some point with traditional class)
 hytech_dashboard* hytech_dashboard::_instance = NULL;
+// get instance and set to dashboard pointer for easier reference
 hytech_dashboard* dashboard = hytech_dashboard::getInstance();
 
 //Create STM32_CAN object to pass to DashboardCAN
@@ -89,7 +90,6 @@ void setup(void)
 {
 
   //set non-needed Display pins low
-  //turn on LED
   pinMode(PC5, OUTPUT);
   pinMode(PB1, OUTPUT);
   pinMode(PA3, OUTPUT);
@@ -111,6 +111,7 @@ void loop(void)
 {
   //read can messages from CAN bus
   dashboard_can.read_CAN();
+  //send dashboard status message
   dashboard_can.send_status();
   
   //refresh dashboard (display and neopixels)
