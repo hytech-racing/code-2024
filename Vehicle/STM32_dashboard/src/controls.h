@@ -12,10 +12,10 @@ class controls {
     public:
         void startup();
         void update(Dashboard_status* status);
-    private:
         DebouncedButton btn_safe_ctrl;
         DebouncedButton btn_mc_cycle;
         DebouncedButton btn_start;
         DebouncedButton btn_torque_mode;
         DebouncedButton btn_led_dimmer;
+    private:
 };
