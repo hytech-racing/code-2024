@@ -8,10 +8,13 @@
 #define BTN_TORQUE_MODE 22
 #define BTN_LED_DIMMER 21
 
-class controls {
+class DashboardCAN;
+
+class Controls {
     public:
         void startup();
-        void update(Dashboard_status* status);
+        void update(DashboardCAN* CAN);
+        
         DebouncedButton btn_safe_ctrl;
         DebouncedButton btn_mc_cycle;
         DebouncedButton btn_start;

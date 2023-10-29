@@ -86,6 +86,8 @@ CAN_message_t msg;
 //Create dashboard_can object
 DashboardCAN dashboard_can(&stm_can);
 
+Controls controls = Controls();
+
 void setup(void)
 {
 
@@ -105,12 +107,18 @@ void setup(void)
 
   //run startup sequence for dasboard
   dashboard->startup();
+
+  controls.startup();
 }
 
 void loop(void) 
 {
   //read can messages from CAN bus
   dashboard_can.read_CAN();
+
+  //update controls
+  controls.update(&dashboard_can);
+
   //send dashboard status message
   dashboard_can.send_status();
   
