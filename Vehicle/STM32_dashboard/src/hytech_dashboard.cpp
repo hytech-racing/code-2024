@@ -7,8 +7,6 @@
 Adafruit_SharpMem _display(SHARP_SCK, SHARP_MOSI, SHARP_SS, 400, 240);
 Adafruit_NeoPixel _neopixels(NEOPIXEL_COUNT, NEOPIXEL_PIN, NEO_GRBW + NEO_KHZ800);
 
-DebouncedButton b1;
-
 /* Null, because instance will be initialized on demand. */
 
 hytech_dashboard::hytech_dashboard(){}
@@ -23,7 +21,7 @@ hytech_dashboard* hytech_dashboard::getInstance() {
 // startup function
 void hytech_dashboard::startup() {
 
-    b1.begin(PB5, 5);
+    // b1.begin(PB5, 5);
 
     // begin, clear display, set rotation
     _display.begin();
@@ -36,22 +34,22 @@ void hytech_dashboard::startup() {
 
     // begin neopixels and set half brightness to not flashbang driver
     _neopixels.begin();
-    _neopixels.setBrightness(255);
+    _neopixels.setBrightness(40);
 
-    // //set init color for every led
-    // for (int i = 0; i < NEOPIXEL_COUNT - 1; i++) {
-    //     _neopixels.setPixelColor(i, LED_INIT);
-    //     if (i == 3) {
-    //     // Don't use gen purpose led
-    //     _neopixels.setPixelColor(i, 0);
-    //     }
-    //     if (i == 0 || i == 1) {
-    //     // sets IMD and AMS lights off on startup as per rules
-    //     _neopixels.setPixelColor(i, LED_OFF);
-    //     }
-    // }
-    // // write data to neopixels
-    // _neopixels.show();
+    //set init color for every led
+    for (int i = 0; i < NEOPIXEL_COUNT - 1; i++) {
+        _neopixels.setPixelColor(i, LED_INIT);
+        if (i == 3) {
+        // Don't use gen purpose led
+        _neopixels.setPixelColor(i, 0);
+        }
+        if (i == 0 || i == 1) {
+        // sets IMD and AMS lights off on startup as per rules
+        _neopixels.setPixelColor(i, LED_OFF);
+        }
+    }
+    // write data to neopixels
+    _neopixels.show();
 
     delay(2000);
 
@@ -87,12 +85,9 @@ void hytech_dashboard::startup() {
     _display.fillRect(83, 7, 72, 16, WHITE);
     _display.fillRect(161+2, 5+2, 158-2, 18-2, WHITE);
     _display.refresh();
-
 }
 
 // draws white rect top down
-// sets buffer; doesn't refresh display
-// for brake pedal
 void hytech_dashboard::draw_vertical_pedal_bar(double val, int initial_x_coord) {
     // 100%: height of white box = 40
     //   0%: height of white box = 143 (covering the whole black bar)
@@ -105,7 +100,6 @@ void hytech_dashboard::draw_regen_bar(double percent) {
 }
 
 void hytech_dashboard::draw_current_draw_bar(double percent) {
-
     _display.fillRect(163+156, 5+2, -156, 18-2, WHITE);
 }
 
@@ -118,7 +112,6 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     //CAN->bms_voltages;
     //CAN->pedal_readings;
 
-
     // refresh neopixels
     _neopixels.show();
 
@@ -129,27 +122,6 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     _display.drawBitmap(0,0, epd_bitmap_Displaytest, 400, 240, BLACK);
     
     draw_vertical_pedal_bar(CAN->pedal_readings.get_accelerator_pedal_1(), 374);
-
-
-    // for(double i = 0; i < 1.0; i+=0.03) {
-    //     _display.drawBitmap(0,0, epd_bitmap_Displaytest, 400, 240, BLACK);
-    //     draw_regen_bar(i);
-    //     draw_vertical_pedal_bar(i, 9);
-    //     draw_vertical_pedal_bar(i, 374);
-    //     _display.refresh();
-    //     // delay(10);
-    // }
-
-    // delay(300);
-
-    // for(double i = 1.0; i > 0.0; i-=0.03) {
-    //     _display.drawBitmap(0,0, epd_bitmap_Displaytest, 400, 240, BLACK);
-    //     draw_regen_bar(i);
-    //     draw_vertical_pedal_bar(i, 9);
-    //     draw_vertical_pedal_bar(i, 374);
-    //     _display.refresh();
-    //     // delay(10);
-    // }
 
     _display.refresh();
 
@@ -173,12 +145,12 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     for (int i = 0; i < NEOPIXEL_COUNT - 1; i++) {
         _neopixels.setPixelColor(i, LED_WHITE);
     }
-    _neopixels.show();
+    // _neopixels.show();
     delay(15);
     for (int i = 0; i < NEOPIXEL_COUNT - 1; i++) {
             _neopixels.setPixelColor(i, LED_OFF);
     }
-    _neopixels.show();
+    // _neopixels.show();
     delay(15);
 }
 
