@@ -2,7 +2,7 @@
 #include "DashboardCAN.h"
 
 // initialize buttons
-void controls::startup() {
+void Controls::startup() {
     btn_safe_ctrl.begin(BTN_SAFE_CTRL, 100);
     btn_mc_cycle.begin(BTN_MC_CYCLE, 100);
     btn_start.begin(BTN_START, 100);
@@ -10,7 +10,7 @@ void controls::startup() {
     btn_led_dimmer.begin(BTN_LED_DIMMER, 100);
 }
 
-void controls::update(DashboardCAN* CAN) {
+void Controls::update(DashboardCAN* CAN) {
   // this sets the button to be high: it is set low in send can
   if (btn_safe_ctrl.isPressed())  {
     CAN->dashboard_status.toggle_mode_btn();
