@@ -13,7 +13,7 @@ import re
 #MQTT_SERVER = "3.134.2.166"
 MQTT_SERVER = "localhost"
 MQTT_PORT   = 1883
-MQTT_TOPIC_LIST  = ['BMS/#', "MOTOR_CONTROLLER/#", "TPMS/#", "MCU/load_cells/#"]
+MQTT_TOPIC_LIST  = ["BMS/#", "MOTOR_CONTROLLER/#", "TPMS/#", "MCU/load_cells/#"]
 client = mqtt.Client()
 
 datadict = {}
