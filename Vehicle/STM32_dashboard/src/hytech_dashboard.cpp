@@ -1,10 +1,13 @@
 #include <hytech_dashboard.h>
 #include <DashboardCAN.h>
+#include "DebouncedButton.h"
 
 // Definition of display and neopixel globals
 // For some reason, code complains when these are defined in the header file
 Adafruit_SharpMem _display(SHARP_SCK, SHARP_MOSI, SHARP_SS, 400, 240);
 Adafruit_NeoPixel _neopixels(NEOPIXEL_COUNT, NEOPIXEL_PIN, NEO_GRBW + NEO_KHZ800);
+
+DebouncedButton b1;
 
 /* Null, because instance will be initialized on demand. */
 
@@ -20,6 +23,8 @@ hytech_dashboard* hytech_dashboard::getInstance() {
 // startup function
 void hytech_dashboard::startup() {
 
+    b1.begin(PB5, 5);
+
     // begin, clear display, set rotation
     _display.begin();
     _display.clearDisplay();
@@ -31,22 +36,22 @@ void hytech_dashboard::startup() {
 
     // begin neopixels and set half brightness to not flashbang driver
     _neopixels.begin();
-    _neopixels.setBrightness(20);
+    _neopixels.setBrightness(255);
 
-    //set init color for every led
-    for (int i = 0; i < NEOPIXEL_COUNT - 1; i++) {
-        _neopixels.setPixelColor(i, LED_INIT);
-        if (i == 3) {
-        // Don't use gen purpose led
-        _neopixels.setPixelColor(i, 0);
-        }
-        if (i == 0 || i == 1) {
-        // sets IMD and AMS lights off on startup as per rules
-        _neopixels.setPixelColor(i, LED_OFF);
-        }
-    }
-    // write data to neopixels
-    _neopixels.show();
+    // //set init color for every led
+    // for (int i = 0; i < NEOPIXEL_COUNT - 1; i++) {
+    //     _neopixels.setPixelColor(i, LED_INIT);
+    //     if (i == 3) {
+    //     // Don't use gen purpose led
+    //     _neopixels.setPixelColor(i, 0);
+    //     }
+    //     if (i == 0 || i == 1) {
+    //     // sets IMD and AMS lights off on startup as per rules
+    //     _neopixels.setPixelColor(i, LED_OFF);
+    //     }
+    // }
+    // // write data to neopixels
+    // _neopixels.show();
 
     delay(2000);
 
@@ -83,46 +88,6 @@ void hytech_dashboard::startup() {
     _display.fillRect(161+2, 5+2, 158-2, 18-2, WHITE);
     _display.refresh();
 
-    // does inverting make sense here (as opposed to redrawing frame each time)? - might save resources
-
-    // // test draw_vertical_pedal_bar animation
-    // // start from all white and go black
-
-    // for(double i = 0; i < 1.0; i+=0.03) {
-
-    // }
-
-    // for(double i = 0; i < 1.0; i+=0.03) {
-    //     _display.clearDisplayBuffer();
-    //     _display.drawBitmap(0,0, epd_bitmap_Displaytest, 400, 240, BLACK);
-    //     draw_vertical_pedal_bar(i, 9);
-    //     draw_vertical_pedal_bar(i, 374);
-    //     _display.refresh();
-    //     // delay(10);
-    // }
-
-    // delay(300);
-
-    // for(double i = 1.0; i > 0.0; i-=0.03) {
-    //     _display.clearDisplayBuffer();
-    //     _display.drawBitmap(0,0, epd_bitmap_Displaytest, 400, 240, BLACK);
-    //     draw_vertical_pedal_bar(i, 9);
-    //     draw_vertical_pedal_bar(i, 374);
-    //     _display.refresh();
-    //     // delay(10);
-    // }
-
-    // for(double i = 1.0; i > 0.0; i-=0.03) {
-    //     _display.clearDisplayBuffer();
-    //     _display.drawBitmap(0,0, epd_bitmap_Displaytest, 400, 240, BLACK);
-    //     draw_vertical_pedal_bar(i, 9);
-    //     draw_vertical_pedal_bar(i, 374);
-    //     draw_regen_bar(i);
-    //     draw_current_draw_bar(i);
-    //     _display.refresh();
-    //     // delay(10);
-    // }
-
 }
 
 // draws white rect top down
@@ -157,6 +122,9 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     // refresh neopixels
     _neopixels.show();
 
+    //update buttons
+    // btn_update(CAN->dashboard_status);
+
     // refresh display
     _display.drawBitmap(0,0, epd_bitmap_Displaytest, 400, 240, BLACK);
     
@@ -184,6 +152,34 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     // }
 
     _display.refresh();
+
+    // if(b1.isPressed()) {
+    //     //set init color for every led
+    //     for (int i = 0; i < NEOPIXEL_COUNT - 1; i++) {
+    //         if(i%2 == 0) {
+    //             _neopixels.setPixelColor(i, LED_WHITE);
+    //         } else {
+    //             _neopixels.setPixelColor(i, LED_BLUE);
+    //         }
+    //     }
+    // } else {
+    //     //set init color for every led
+    //     for (int i = 0; i < NEOPIXEL_COUNT - 1; i++) {
+    //         _neopixels.setPixelColor(i, LED_OFF);
+    //     }
+    // }
+    // _neopixels.show();
+
+    for (int i = 0; i < NEOPIXEL_COUNT - 1; i++) {
+        _neopixels.setPixelColor(i, LED_WHITE);
+    }
+    _neopixels.show();
+    delay(15);
+    for (int i = 0; i < NEOPIXEL_COUNT - 1; i++) {
+            _neopixels.setPixelColor(i, LED_OFF);
+    }
+    _neopixels.show();
+    delay(15);
 }
 
 //set neopixels
