@@ -7,6 +7,7 @@
 #include <Adafruit_NeoPixel.h>
 #include <bitmaps.h>
 
+
 // Display defines
 #define SHARP_SCK  PA5
 #define SHARP_MOSI PA7

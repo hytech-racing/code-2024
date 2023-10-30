@@ -1,7 +1,6 @@
 #include <hytech_dashboard.h>
 #include <DashboardCAN.h>
 #include <SAB_lap_times.h>
-#include "DebouncedButton.h"
 
 // Definition of display and neopixel globals
 // For some reason, code complains when these are defined in the header file
@@ -33,7 +32,7 @@ void hytech_dashboard::startup() {
 
     // begin neopixels and set half brightness to not flashbang driver
     _neopixels.begin();
-    _neopixels.setBrightness(255);
+    _neopixels.setBrightness(50);
 
     //set init color for every led
     for (int i = 0; i < NEOPIXEL_COUNT - 1; i++) {

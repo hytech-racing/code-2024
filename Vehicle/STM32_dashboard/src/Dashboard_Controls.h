@@ -1,5 +1,4 @@
 #include "DebouncedButton.h"
-#include "Dashboard_status.h"
 
 // Button pin definition
 #define BTN_SAFE_CTRL PB5  // gpio 1
@@ -10,14 +9,15 @@
 
 class DashboardCAN;
 
-class Controls {
+class Dashboard_Controls {
     public:
         void startup();
         void update(DashboardCAN* CAN);
-    private:
         DebouncedButton btn_safe_ctrl;
         DebouncedButton btn_mc_cycle;
         DebouncedButton btn_start;
         DebouncedButton btn_torque_mode;
         DebouncedButton btn_led_dimmer;
+    private:
+        
 };

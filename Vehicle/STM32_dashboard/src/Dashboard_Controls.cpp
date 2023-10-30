@@ -1,9 +1,9 @@
-#include "Controls.h"
+#include "Dashboard_Controls.h"
 #include "DashboardCAN.h"
 #include "hytech_dashboard.h"
 
 // initialize buttons
-void Controls::startup() {
+void Dashboard_Controls::startup() {
     btn_safe_ctrl.begin(BTN_SAFE_CTRL, 10);
     btn_mc_cycle.begin(BTN_MC_CYCLE, 10);
     btn_start.begin(BTN_START, 10);
@@ -11,7 +11,7 @@ void Controls::startup() {
     btn_led_dimmer.begin(BTN_LED_DIMMER, 10);
 }
 
-void Controls::update(DashboardCAN* CAN) {
+void Dashboard_Controls::update(DashboardCAN* CAN) {
   // this sets the button to be high: it is set low in send can
   if (btn_safe_ctrl.isPressed())  {
     CAN->dashboard_status.toggle_mode_btn();
