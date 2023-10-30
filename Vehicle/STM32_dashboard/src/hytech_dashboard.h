@@ -35,6 +35,7 @@ enum LED_LIST { AMS = 0, IMD = 1, MC_ERR = 2, GEN_PURP = 3, INERTIA = 4, BOTS = 
 
 //Forward declaration to allow use of DashboardCAN pointer in header
 class DashboardCAN;
+class SAB_lap_times;
 
 //Singleton class header
 class hytech_dashboard {
@@ -48,6 +49,7 @@ class hytech_dashboard {
         void draw_vertical_pedal_bar(double val, int initial_x_coord);
         void draw_regen_bar(double percent);
         void draw_current_draw_bar(double percent);
+        void show_lap_times(SAB_lap_times* can);
     
     private:
         // Private constructor to prevent external instantiation
@@ -56,6 +58,9 @@ class hytech_dashboard {
         ~hytech_dashboard() { }
         // Pointer to the one instance of hytech_dashboard
         static hytech_dashboard* _instance;
+        uint8_t previousTimerState = 0;
+        uint32_t initialTime = 0;
+        uint32_t currentTime = 0;
 
 };
 

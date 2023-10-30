@@ -1,5 +1,6 @@
 #include <hytech_dashboard.h>
 #include <DashboardCAN.h>
+#include <SAB_lap_times.h>
 #include "DebouncedButton.h"
 
 // Definition of display and neopixel globals
@@ -21,8 +22,6 @@ hytech_dashboard* hytech_dashboard::getInstance() {
 // startup function
 void hytech_dashboard::startup() {
 
-    // b1.begin(PB5, 5);
-
     // begin, clear display, set rotation
     _display.begin();
     _display.clearDisplay();
@@ -34,7 +33,7 @@ void hytech_dashboard::startup() {
 
     // begin neopixels and set half brightness to not flashbang driver
     _neopixels.begin();
-    _neopixels.setBrightness(40);
+    _neopixels.setBrightness(255);
 
     //set init color for every led
     for (int i = 0; i < NEOPIXEL_COUNT - 1; i++) {
@@ -92,7 +91,7 @@ void hytech_dashboard::draw_vertical_pedal_bar(double val, int initial_x_coord) 
     // 100%: height of white box = 40
     //   0%: height of white box = 143 (covering the whole black bar)
     _display.fillRect(initial_x_coord, 40, 17, (1 - (((double)val - 500) / 1640)) * 143, WHITE);
-    SerialUSB.println((((double)val - 500) / 1640));
+    // SerialUSB.println((((double)val - 500) / 1640));
 }
 
 void hytech_dashboard::draw_regen_bar(double percent) {
@@ -105,56 +104,55 @@ void hytech_dashboard::draw_current_draw_bar(double percent) {
 
 //refresh dashboard
 void hytech_dashboard::refresh(DashboardCAN* CAN) {
-    // data to write to display
-    //CAN->dashboard_status;
-    //CAN->mcu_status;
-    //CAN->mcu_analog_readings;
-    //CAN->bms_voltages;
-    //CAN->pedal_readings;
-
-    // refresh neopixels
-    _neopixels.show();
-
-    //update buttons
-    // btn_update(CAN->dashboard_status);
+    // update neopixels
+    // _neopixels.show();
 
     // refresh display
     _display.drawBitmap(0,0, epd_bitmap_Displaytest, 400, 240, BLACK);
-    
     draw_vertical_pedal_bar(CAN->pedal_readings.get_accelerator_pedal_1(), 374);
-
+    show_lap_times(&(CAN->lap_times));
     _display.refresh();
-
-    // if(b1.isPressed()) {
-    //     //set init color for every led
-    //     for (int i = 0; i < NEOPIXEL_COUNT - 1; i++) {
-    //         if(i%2 == 0) {
-    //             _neopixels.setPixelColor(i, LED_WHITE);
-    //         } else {
-    //             _neopixels.setPixelColor(i, LED_BLUE);
-    //         }
-    //     }
-    // } else {
-    //     //set init color for every led
-    //     for (int i = 0; i < NEOPIXEL_COUNT - 1; i++) {
-    //         _neopixels.setPixelColor(i, LED_OFF);
-    //     }
-    // }
-    // _neopixels.show();
-
-    for (int i = 0; i < NEOPIXEL_COUNT - 1; i++) {
-        _neopixels.setPixelColor(i, LED_WHITE);
-    }
-    // _neopixels.show();
-    delay(15);
-    for (int i = 0; i < NEOPIXEL_COUNT - 1; i++) {
-            _neopixels.setPixelColor(i, LED_OFF);
-    }
-    // _neopixels.show();
-    delay(15);
 }
 
 //set neopixels
 void hytech_dashboard::set_neopixel(uint16_t id, uint32_t c) {
     _neopixels.setPixelColor(id, c);
+}
+
+void hytech_dashboard::show_lap_times(SAB_lap_times* lap_times) {
+    _display.setCursor(40, 70);
+    _display.setTextColor(BLACK);
+    _display.setTextSize(3);
+    _display.println("Lap Times");
+    _display.setCursor(40, _display.getCursorY());
+    switch(lap_times->get_state()) {
+        case 0:
+            // clear timer
+            previousTimerState = 0;
+            _display.print("Time = 0");
+            break;
+        case 1:
+            // start timer
+            if(previousTimerState == 0) {
+                initialTime = millis();
+            } 
+            currentTime = millis() - initialTime;
+            _display.print(currentTime);
+            previousTimerState = 1;
+            break;
+        case 2:
+            // end timer
+            if(previousTimerState == 1) {
+                currentTime = millis() - initialTime;
+            }
+            _display.print(currentTime);
+            previousTimerState = 2;
+            break;
+        default:
+            if(previousTimerState == 0) {
+                _display.print("Time = 0");
+            }
+    }
+
+
 }

@@ -19,12 +19,10 @@ DashboardCAN::DashboardCAN(STM32_CAN* CAN)
 
 void DashboardCAN::read_CAN()
 {
-
   if (_CAN->read(_msg)) {
-  
+    SerialUSB.println("message received");
     // parse message based on ID
-    switch (_msg.id)
-    {
+    switch (_msg.id) {
     case ID_MCU_STATUS:
       mcu_status.load(_msg.buf);
       // reset heartbeat timer if message received from ECU
@@ -44,18 +42,21 @@ void DashboardCAN::read_CAN()
       bms_voltages_received();
       break;
     case ID_MCU_PEDAL_READINGS:
+      SerialUSB.println("Received MCU Pedal Reading");
       pedal_readings.load(_msg.buf);
       break;
+    case ID_SAB_LAP_TIMES:
+      SerialUSB.println("Received SAB Lap Time");
+      lap_times.load(_msg.buf);
     default:
       break;
     }
   }
-
 }
 
 void DashboardCAN::send_status() {
   // boolean to prevent CAN flooding
-  static bool should_send = true;
+  static bool should_send = false;
 
   // if heartbeat timer is true, set interval to 0
   // acts as a latch to prevent sending message until
@@ -254,11 +255,8 @@ void DashboardCAN::mcu_status_received() {
 
 void DashboardCAN::mcu_analog_readings_received() {
   if (mcu_analog_readings.get_glv_battery_voltage() < GLV_THRESHOLD) {
-    // not completely sure how this works but just ported over from previous dashboard code
-    // red vs on?
     dashboard_status.set_glv_led(static_cast<uint8_t>(LED_MODES::RED));
-  }
-  else {
+  } else {
     dashboard_status.set_glv_led(static_cast<uint8_t>(LED_MODES::ON));
   }
   hytech_dashboard::getInstance()->set_neopixel(LED_LIST::GLV, color_wheel_bms_glv(false));

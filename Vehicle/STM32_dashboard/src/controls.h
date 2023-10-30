@@ -2,11 +2,11 @@
 #include "Dashboard_status.h"
 
 // Button pin definition
-#define BTN_SAFE_CTRL 20
-#define BTN_START 19
-#define BTN_MC_CYCLE 18
-#define BTN_TORQUE_MODE 22
-#define BTN_LED_DIMMER 21
+#define BTN_SAFE_CTRL PB5  // gpio 1
+#define BTN_START PB6 // gpio 2
+#define BTN_MC_CYCLE PB7 // gpio 3
+#define BTN_TORQUE_MODE PC13 // gpio 4
+#define BTN_LED_DIMMER PC14 // gppio 5
 
 class DashboardCAN;
 
