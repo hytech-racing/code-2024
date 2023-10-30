@@ -62,6 +62,8 @@ class hytech_dashboard {
         uint8_t previousTimerState = 0;
         uint32_t initialTime = 0;
         uint32_t currentTime = 0;
+        void format_millis();
+        String twoDigits(int number);
 
 };
 

@@ -20,7 +20,7 @@ DashboardCAN::DashboardCAN(STM32_CAN* CAN)
 void DashboardCAN::read_CAN()
 {
   if (_CAN->read(_msg)) {
-    SerialUSB.println("message received");
+    // SerialUSB.println("message received");
     // parse message based on ID
     switch (_msg.id) {
     case ID_MCU_STATUS:

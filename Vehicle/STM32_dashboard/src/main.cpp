@@ -46,7 +46,7 @@ void loop(void) {
   dashboard_can.read_CAN();
 
   // update controls (buttons, knobs, etc.)
-  // controls.update(&dashboard_can);
+  dash_controls.update(&dashboard_can);
 
   // send dashboard status message
   dashboard_can.send_status();
