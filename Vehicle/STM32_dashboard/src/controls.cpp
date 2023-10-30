@@ -14,16 +14,19 @@ void Controls::update(DashboardCAN* CAN) {
   // this sets the button to be high: it is set low in send can
   if (btn_safe_ctrl.isPressed())  {
     CAN->dashboard_status.toggle_mode_btn();
+    SerialUSB.println("BTN SAFE CTRL PRESSED");
   }
   if (btn_mc_cycle.isPressed())    {
     CAN->dashboard_status.toggle_mc_cycle_btn();
+    SerialUSB.println("BTN MC CYCLE PRESSED");
   }
   if (btn_torque_mode.isPressed()) {
     CAN->dashboard_status.toggle_torque_mode_btn();
+    SerialUSB.println("BTN TORQUE MODE PRESSED");
   }
   if (btn_led_dimmer.isPressed())  {
     CAN->dashboard_status.toggle_led_dimmer_btn();
+    SerialUSB.println("BTN LED DIMMER PRESSED");
   }
-
   CAN->dashboard_status.set_start_btn(btn_start.isPressed());
 }

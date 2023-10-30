@@ -23,6 +23,7 @@ void setup(void)
   pinMode(PA3, OUTPUT);
   digitalWrite(PC5, LOW);
   digitalWrite(PB1, LOW);
+  
   //set LED high
   digitalWrite(PA3, HIGH);
 
@@ -34,6 +35,7 @@ void setup(void)
   //run startup sequence for dasboard
   dashboard->startup();
 
+  // initialize buttons and other controls
   controls.startup();
 }
 
@@ -42,7 +44,7 @@ void loop(void)
   //read can messages from CAN bus
   dashboard_can.read_CAN();
 
-  //update controls
+  //update controls (buttons, knobs, etc.)
   controls.update(&dashboard_can);
 
   //send dashboard status message
