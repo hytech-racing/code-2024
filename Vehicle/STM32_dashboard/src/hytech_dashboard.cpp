@@ -104,7 +104,7 @@ void hytech_dashboard::draw_current_draw_bar(double percent) {
 //refresh dashboard
 void hytech_dashboard::refresh(DashboardCAN* CAN) {
     // update neopixels
-    // _neopixels.show();
+    _neopixels.show();
 
     // refresh display
     _display.clearDisplayBuffer();
@@ -129,6 +129,7 @@ void hytech_dashboard::show_lap_times(SAB_lap_times* lap_times) {
         case 0:
             // clear timer
             previousTimerState = 0;
+            currentTime = 0;
             break;
         case 1:
             // start timer

@@ -56,7 +56,7 @@ void DashboardCAN::read_CAN()
 
 void DashboardCAN::send_status() {
   // boolean to prevent CAN flooding
-  static bool should_send = false;
+  static bool should_send = true;
 
   // if heartbeat timer is true, set interval to 0
   // acts as a latch to prevent sending message until

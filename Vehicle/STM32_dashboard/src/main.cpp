@@ -38,7 +38,7 @@ void setup(void)
   dashboard->startup();
 
   // initialize buttons and other controls
-  // controls.startup();
+  dash_controls.startup();
 }
 
 void loop(void) {
