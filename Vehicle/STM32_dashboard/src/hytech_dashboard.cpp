@@ -65,7 +65,7 @@ void hytech_dashboard::startup() {
     _display.drawBitmap(hytech_words_x + 53, hytech_words_y, epd_bitmap_HytechWords, hytech_words_x_size, hytech_words_y_size, BLACK);
     _display.refresh();
 
-    delay(3000);
+    delay(5000);
 
     // display template
     _display.clearDisplay();
@@ -104,9 +104,10 @@ void hytech_dashboard::draw_current_draw_bar(double percent) {
 //refresh dashboard
 void hytech_dashboard::refresh(DashboardCAN* CAN) {
     // update neopixels
-    // _neopixels.show();
+    _neopixels.show();
 
     // refresh display
+    _display.clearDisplayBuffer();
     _display.drawBitmap(0,0, epd_bitmap_Displaytest, 400, 240, BLACK);
     draw_vertical_pedal_bar(CAN->pedal_readings.get_accelerator_pedal_1(), 374);
     show_lap_times(&(CAN->lap_times));
@@ -128,15 +129,14 @@ void hytech_dashboard::show_lap_times(SAB_lap_times* lap_times) {
         case 0:
             // clear timer
             previousTimerState = 0;
-            _display.print("Time = 0");
+            currentTime = 0;
             break;
         case 1:
             // start timer
-            if(previousTimerState == 0) {
+            if(previousTimerState != 1) {
                 initialTime = millis();
             } 
             currentTime = millis() - initialTime;
-            _display.print(currentTime);
             previousTimerState = 1;
             break;
         case 2:
@@ -144,14 +144,40 @@ void hytech_dashboard::show_lap_times(SAB_lap_times* lap_times) {
             if(previousTimerState == 1) {
                 currentTime = millis() - initialTime;
             }
-            _display.print(currentTime);
             previousTimerState = 2;
             break;
         default:
-            if(previousTimerState == 0) {
-                _display.print("Time = 0");
-            }
+            break;
+    }
+    format_millis();
+}
+
+void hytech_dashboard::format_millis() {
+    int minutes = currentTime/(1000*60);
+    int seconds = (currentTime-minutes*60000)/1000;
+    int milliseconds = currentTime - minutes*60000 - seconds*1000;
+    _display.print("Curr: ");
+    _display.print(twoDigits(minutes));
+    _display.print(":");
+    _display.print(twoDigits(seconds));
+    _display.print(".");
+    _display.print(milliseconds);
+}
+
+String hytech_dashboard::twoDigits(int number) {
+    
+    if(number <= 9) {
+        return "0" + String(number);
+    }
+
+    if(number >= 10 && number <= 99) {
+        return String(number);
     }
 
 
+    if(number >=100 && number <=999) {
+        return String(number/10);
+    }
+
+    return String(number);
 }

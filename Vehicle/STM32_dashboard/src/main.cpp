@@ -38,7 +38,7 @@ void setup(void)
   dashboard->startup();
 
   // initialize buttons and other controls
-  // controls.startup();
+  dash_controls.startup();
 }
 
 void loop(void) {
@@ -46,7 +46,7 @@ void loop(void) {
   dashboard_can.read_CAN();
 
   // update controls (buttons, knobs, etc.)
-  // controls.update(&dashboard_can);
+  dash_controls.update(&dashboard_can);
 
   // send dashboard status message
   dashboard_can.send_status();
