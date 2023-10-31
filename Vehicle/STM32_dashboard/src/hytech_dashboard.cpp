@@ -4,7 +4,7 @@
 
 // Definition of display and neopixel globals
 // For some reason, code complains when these are defined in the header file
-Adafruit_SharpMem _display(SHARP_SCK, SHARP_MOSI, SHARP_SS, 400, 240);
+Adafruit_SharpMem _display(SHARP_SCK, SHARP_MOSI, SHARP_SS, 336, 536);
 Adafruit_NeoPixel _neopixels(NEOPIXEL_COUNT, NEOPIXEL_PIN, NEO_GRBW + NEO_KHZ800);
 
 /* Null, because instance will be initialized on demand. */
@@ -24,7 +24,7 @@ void hytech_dashboard::startup() {
     // begin, clear display, set rotation
     _display.begin();
     _display.clearDisplay();
-    _display.setRotation(2);
+    _display.setRotation(3);
 
     // draw Hytech logo in center of screen
     _display.drawBitmap(hytech_logo_x, hytech_logo_y, epd_bitmap_Hytech_Logo, hytech_logo_size, hytech_logo_size, BLACK);

@@ -6,7 +6,7 @@ FlexCAN_T4<CAN2> CAN;
 CAN_message_t msg;
 MCU_pedal_readings pedal{};
 SAB_lap_times lap_times{};
-int state = 0;
+int state = 1;
 
 Metro state_change(5000);
 Metro send_can(500);
