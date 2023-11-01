@@ -51,6 +51,12 @@ class hytech_dashboard {
         void draw_regen_bar(double percent);
         void draw_current_draw_bar(double percent);
         void show_lap_times(SAB_lap_times* can);
+        enum Time_Type {
+            previous,
+            best,
+            delta,
+            current
+        };
     
     private:
         // Private constructor to prevent external instantiation
@@ -61,8 +67,11 @@ class hytech_dashboard {
         static hytech_dashboard* _instance;
         uint8_t previousTimerState = 0;
         uint32_t initialTime = 0;
-        uint32_t currentTime = 0;
-        void format_millis();
+        uint32_t current_time = 0;
+        uint32_t best_time = 0;
+        uint32_t prev_time = 0;
+        uint32_t times[4] = {0,0,0,0};
+        void format_millis(String label, uint32_t time);
         String twoDigits(int number);
 
 };

@@ -109,6 +109,7 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     // refresh display
     _display.clearDisplayBuffer();
     _display.drawBitmap(0,0, epd_bitmap_Displaytest, 400, 240, BLACK);
+    draw_vertical_pedal_bar(CAN->pedal_readings.get_accelerator_pedal_1(), 40);
     draw_vertical_pedal_bar(CAN->pedal_readings.get_accelerator_pedal_1(), 374);
     show_lap_times(&(CAN->lap_times));
     _display.refresh();
@@ -129,55 +130,58 @@ void hytech_dashboard::show_lap_times(SAB_lap_times* lap_times) {
         case 0:
             // clear timer
             previousTimerState = 0;
-            currentTime = 0;
+            times[current] = 0;
             break;
         case 1:
             // start timer
             if(previousTimerState != 1) {
                 initialTime = millis();
             } 
-            currentTime = millis() - initialTime;
+            times[current] = millis() - initialTime;
             previousTimerState = 1;
             break;
         case 2:
             // end timer
             if(previousTimerState == 1) {
-                currentTime = millis() - initialTime;
+                times[current] = millis() - initialTime;
             }
             previousTimerState = 2;
             break;
         default:
             break;
     }
-    format_millis();
+    
+    times[lap_times->get_time_1_type()] = lap_times->get_time_1();
+    times[lap_times->get_time_2_type()] = lap_times->get_time_2();
+
+    format_millis("Curr", current);
+    format_millis("Prev", previous);
+    format_millis("Best", best);
 }
 
-void hytech_dashboard::format_millis() {
-    int minutes = currentTime/(1000*60);
-    int seconds = (currentTime-minutes*60000)/1000;
-    int milliseconds = currentTime - minutes*60000 - seconds*1000;
-    _display.print("Curr: ");
+void hytech_dashboard::format_millis(String label, uint32_t time) {
+    int minutes = times[time]/(1000*60);
+    int seconds = (times[time]-minutes*60000)/1000;
+    int milliseconds = times[time] - minutes*60000 - seconds*1000;
+    _display.setCursor(40, _display.getCursorY());
+    _display.print(label);
+    _display.print(": ");
     _display.print(twoDigits(minutes));
     _display.print(":");
     _display.print(twoDigits(seconds));
     _display.print(".");
-    _display.print(milliseconds);
+    _display.println(milliseconds);
 }
 
 String hytech_dashboard::twoDigits(int number) {
-    
     if(number <= 9) {
         return "0" + String(number);
     }
-
     if(number >= 10 && number <= 99) {
         return String(number);
     }
-
-
     if(number >=100 && number <=999) {
         return String(number/10);
     }
-
     return String(number);
 }
