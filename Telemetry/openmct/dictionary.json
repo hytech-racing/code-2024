@@ -1,60 +1,64 @@
 {
     "name": "HT08",
     "key": "HT08",
-    "measurements": [
+    "subsystems" : [
         {
-            "name": "Torque Current",
-            "key": "MOTOR_CONTROLLER.mc_rl.torque_current",
-            "values": [
+            "name": "Motor Controller",
+            "key": "MOTOR_CONTROLLER",
+            "measurements": [
                 {
-                    "key": "value",
                     "name": "Torque Current",
-                    "units": "amp",
-                    "format": "float",
-                    "min": -50.0,
-                    "max": 50.0,
-                    "hints": {
-                        "range": 1
-                    }
+                    "key": "MOTOR_CONTROLLER.mc_rl.torque_current",
+                    "values": [
+                        {
+                            "key": "value",
+                            "name": "Torque Current",
+                            "units": "amp",
+                            "format": "float",
+                            "min": -50.0,
+                            "max": 50.0,
+                            "hints": {
+                                "range": 1
+                            }
+                        },
+                        {
+                            "key": "utc",
+                            "source": "timestamp",
+                            "name": "Timestamp",
+                            "format": "utc",
+                            "hints": {
+                                "domain": 1
+                            }
+                        }
+                    ]
                 },
                 {
-                    "key": "utc",
-                    "source": "timestamp",
-                    "name": "Timestamp",
-                    "format": "utc",
-                    "hints": {
-                        "domain": 1
-                    }
-                }
-            ]
-        },
-        {
-            "name": "Magnetizing Current",
-            "key": "MOTOR_CONTROLLER.mc_rl.magnetizing_current",
-            "values": [
-                {
-                    "key": "value",
                     "name": "Magnetizing Current",
-                    "format": "float",
-                    "min": -50.0,
-                    "max": 50.0,
-                    "hints": {
-                        "range": 1
-                    }
-                },
-                {
-                    "key": "utc",
-                    "source": "timestamp",
-                    "name": "Timestamp",
-                    "format": "utc",
-                    "hints": {
-                        "domain": 1
-                    }
+                    "key": "MOTOR_CONTROLLER.mc_rl.magnetizing_current",
+                    "values": [
+                        {
+                            "key": "value",
+                            "name": "Magnetizing Current",
+                            "format": "float",
+                            "min": -50.0,
+                            "max": 50.0,
+                            "hints": {
+                                "range": 1
+                            }
+                        },
+                        {
+                            "key": "utc",
+                            "source": "timestamp",
+                            "name": "Timestamp",
+                            "format": "utc",
+                            "hints": {
+                                "domain": 1
+                            }
+                        }
+                    ]
                 }
             ]
         }
-
-
-
     ]
+
 }

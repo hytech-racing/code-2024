@@ -20,7 +20,7 @@
   "dependencies": {
     "express": "^4.16.4",
     "express-ws": "^4.0.0",
-    "openmct": "latest",
+    "openmct": "^3.1.0",
     "ws": "^6.1.2"
   }
 }
