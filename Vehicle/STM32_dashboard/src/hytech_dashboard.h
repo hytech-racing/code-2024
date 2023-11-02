@@ -20,6 +20,8 @@
 #define NEOPIXEL_PIN PA2
 #define NEOPIXEL_COUNT 13
 
+#define MAX_STATE 2
+
 // OFF: OFF, ON: GREEN/OK, YELLOW : WARNING/MISC RED : CRITICAL
 enum class LED_MODES { OFF = 0, ON = 1, YELLOW = 2, RED = 3};
 enum LED_LIST { AMS = 0, IMD = 1, MC_ERR = 2, GEN_PURP = 3, INERTIA = 4, BOTS = 5, 
@@ -51,12 +53,17 @@ class hytech_dashboard {
         void draw_regen_bar(double percent);
         void draw_current_draw_bar(double percent);
         void show_lap_times(SAB_lap_times* can);
+        void restart_current_timer();
+        void increment_state();
+        void decrement_state();
+
         enum Time_Type {
             previous,
             best,
             delta,
             current
         };
+        uint8_t current_state = 0;
     
     private:
         // Private constructor to prevent external instantiation
@@ -73,6 +80,7 @@ class hytech_dashboard {
         uint32_t times[4] = {0,0,0,0};
         void format_millis(String label, uint32_t time);
         String twoDigits(int number);
+
 
 };
 

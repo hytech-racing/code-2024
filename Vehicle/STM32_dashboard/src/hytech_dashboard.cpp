@@ -109,7 +109,7 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     // refresh display
     _display.clearDisplayBuffer();
     _display.drawBitmap(0,0, epd_bitmap_Displaytest, 400, 240, BLACK);
-    draw_vertical_pedal_bar(CAN->pedal_readings.get_accelerator_pedal_1(), 40);
+    draw_vertical_pedal_bar(CAN->pedal_readings.get_accelerator_pedal_1(), 9);
     draw_vertical_pedal_bar(CAN->pedal_readings.get_accelerator_pedal_1(), 374);
     show_lap_times(&(CAN->lap_times));
     _display.refresh();
@@ -154,9 +154,31 @@ void hytech_dashboard::show_lap_times(SAB_lap_times* lap_times) {
     times[lap_times->get_time_1_type()] = lap_times->get_time_1();
     times[lap_times->get_time_2_type()] = lap_times->get_time_2();
 
-    format_millis("Curr", current);
-    format_millis("Prev", previous);
-    format_millis("Best", best);
+    switch(current_state) {
+        case 0:
+            format_millis("Curr", current);
+            format_millis("Prev", previous);
+            format_millis("Best", best);
+            break;
+        case 1:
+            _display.print("screen 1");
+            break;
+        case 2:
+            _display.print("screen 2");
+            break;
+    }
+
+}
+
+void hytech_dashboard::restart_current_timer() {
+    initialTime = millis();
+}
+
+void hytech_dashboard::increment_state() {
+    current_state++;
+    if(current_state > MAX_STATE) {
+        current_state = 0;
+    }
 }
 
 void hytech_dashboard::format_millis(String label, uint32_t time) {

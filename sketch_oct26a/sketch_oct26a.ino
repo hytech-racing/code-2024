@@ -8,7 +8,8 @@ MCU_pedal_readings pedal{};
 SAB_lap_times lap_times{};
 int state = 1;
 
-Metro state_change(5000);
+int interval = 160000;
+Metro state_change(interval);
 Metro send_can(500);
 
 void setup() {
@@ -21,6 +22,12 @@ void setup() {
 
 void loop() {
   CAN.events();
+
+  if(state == 2 || state == 3) {
+    state_change.interval(1000);
+  } else {
+    state_change.interval(interval);
+  }
 
   if (state_change.check()) {
     state++;
