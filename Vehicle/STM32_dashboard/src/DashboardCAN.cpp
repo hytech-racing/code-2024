@@ -42,11 +42,11 @@ void DashboardCAN::read_CAN()
       bms_voltages_received();
       break;
     case ID_MCU_PEDAL_READINGS:
-      SerialUSB.println("Received MCU Pedal Reading");
+      // SerialUSB.println("Received MCU Pedal Reading");
       pedal_readings.load(_msg.buf);
       break;
     case ID_SAB_LAP_TIMES:
-      SerialUSB.println("Received SAB Lap Time");
+      // SerialUSB.println("Received SAB Lap Time");
       lap_times.load(_msg.buf);
     default:
       break;
@@ -71,7 +71,7 @@ void DashboardCAN::send_status() {
   if (should_send && send_timer.check()) {
     _msg.id = ID_DASHBOARD_STATUS;
     //update button flags
-    SerialUSB.println("Message Sent");
+    // SerialUSB.println("Message Sent");
     _msg.len = sizeof(dashboard_status);
     dashboard_status.write(_msg.buf);
     _CAN->write(_msg);

@@ -11,6 +11,7 @@
 // Display defines
 #define SHARP_SCK  PA5
 #define SHARP_MOSI PA7
+#define SHARP_MISO PA6
 #define SHARP_SS   PC4
 
 #define BLACK 0

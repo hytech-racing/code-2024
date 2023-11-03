@@ -1,10 +1,13 @@
 #include <hytech_dashboard.h>
 #include <DashboardCAN.h>
 #include <SAB_lap_times.h>
+#include <SPI.h>
 
 // Definition of display and neopixel globals
 // For some reason, code complains when these are defined in the header file
+SPIClass _spi1(SHARP_MOSI, SHARP_MISO, SHARP_SCK);
 Adafruit_SharpMem _display(SHARP_SCK, SHARP_MOSI, SHARP_SS, 336, 536);
+// Adafruit_SharpMem _display(&_spi1, SHARP_SS, 336, 536);
 Adafruit_NeoPixel _neopixels(NEOPIXEL_COUNT, NEOPIXEL_PIN, NEO_GRBW + NEO_KHZ800);
 
 /* Null, because instance will be initialized on demand. */

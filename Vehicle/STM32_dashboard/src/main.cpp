@@ -1,4 +1,5 @@
 #include "main.h"
+#include "SPI.h"
 
 // initialize/construct singleton object(this was a nightmare to setup and
 // can probably be replaced at some point with traditional class)
@@ -14,6 +15,41 @@ STM32_CAN stm_can( CAN2, DEF);
 CAN_message_t msg;
 //Create dashboard_can object
 DashboardCAN dashboard_can(&stm_can);
+
+DMA_HandleTypeDef hdma_spi1_tx;
+void initDMA(void) {
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA2_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA2_Stream3_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream3_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream3_IRQn);
+
+  hdma_spi1_tx.Instance = DMA2_Stream3;
+  hdma_spi1_tx.Init.Channel = DMA_CHANNEL_3;
+  hdma_spi1_tx.Init.Direction = DMA_MEMORY_TO_PERIPH;
+  hdma_spi1_tx.Init.PeriphInc = DMA_PINC_DISABLE;
+  hdma_spi1_tx.Init.MemInc = DMA_MINC_ENABLE;
+  hdma_spi1_tx.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
+  hdma_spi1_tx.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
+  hdma_spi1_tx.Init.Mode = DMA_NORMAL;
+  hdma_spi1_tx.Init.Priority = DMA_PRIORITY_VERY_HIGH;
+  hdma_spi1_tx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+  if (HAL_DMA_Init(&hdma_spi1_tx) != HAL_OK) {
+    Error_Handler();
+  }
+
+  SPI_HandleTypeDef* SPI_handle = SPI.getHandle();
+
+  // Link SPI and DMA?
+  SPI_handle->hdmatx = &hdma_spi1_tx;
+  hdma_spi1_tx.Parent = SPI_handle;
+
+  HAL_SPI_Transmit_DMA
+
+}
 
 
 void setup(void)
@@ -42,6 +78,7 @@ void setup(void)
 }
 
 void loop(void) {
+  int time = millis();
   // read can messages from CAN bus
   dashboard_can.read_CAN();
 
@@ -53,6 +90,7 @@ void loop(void) {
   
   // refresh dashboard (display and neopixels)
   dashboard->refresh((DashboardCAN*) &dashboard_can);
+  SerialUSB.println(millis() - time);
 }
 
 
