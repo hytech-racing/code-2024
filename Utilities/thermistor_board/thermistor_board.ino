@@ -1,11 +1,14 @@
+// Code to read from 12 separate 8x1 multiplexers. On each tick, this code
+// should select the next set of 12 multiplexers and read them all.
+
 // This is the "counter" that will cycle from 0 to 7 and then back
 uint8_t counter = 0x00;
 
 // Must set these 3 later. Left to right is MSB to LSB.
 const int select_pins[] = {3, 2, 1};
 
-// Must set later.
-const int analog_pins[] = {10, 11, 12, 13, 14, 15, 16, 17};
+// Must set later. 12 separate 8x1 multiplexers (for 96 total thermistors)
+const int analog_pins[] = {14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25};
 
 void setup() {
   
@@ -28,8 +31,8 @@ void loop() {
     digitalWrite(select_pins[i], counter_binary[i] == 0 ? LOW : HIGH);
   }
 
-  int thermistor_readings[8];
-  for (int i = 0; i < 8; i++) {
+  int thermistor_readings[12];
+  for (int i = 0; i < 12; i++) {
     thermistor_readings[i] = analogRead(analog_pins[i]);
   }
 
