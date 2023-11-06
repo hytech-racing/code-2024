@@ -5357,7 +5357,13 @@
               }
             }
           ]
-        },
+        }
+      ]
+    },
+    {
+      "name": "TPMS",
+      "key": "TPMS",
+      "measurements": [
         {
           "name": "roll",
           "key": "TPMS.LF.guage_pressure",
@@ -7439,11 +7445,6 @@
           ]
         }
       ]
-    },
-    {
-      "name": "TPMS",
-      "key": "TPMS",
-      "measurements": []
     }
   ]
 }
