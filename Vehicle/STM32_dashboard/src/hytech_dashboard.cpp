@@ -1,6 +1,7 @@
 #include <hytech_dashboard.h>
 #include <DashboardCAN.h>
 #include <SAB_lap_times.h>
+#include <MCU_load_cells.h>
 
 // Definition of display and neopixel globals
 // For some reason, code complains when these are defined in the header file
@@ -111,7 +112,19 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     _display.drawBitmap(0,0, epd_bitmap_Displaytest, 400, 240, BLACK);
     draw_vertical_pedal_bar(CAN->pedal_readings.get_accelerator_pedal_1(), 9);
     draw_vertical_pedal_bar(CAN->pedal_readings.get_accelerator_pedal_1(), 374);
-    show_lap_times(&(CAN->lap_times));
+    switch(current_state) {
+        case 0:
+            show_lap_times(&(CAN->lap_times));
+            break;
+        case 1:
+            // suspension
+            display_border();
+            display_suspension_data(&(CAN->load_cells));
+            break;
+        case 2:
+            display_border();
+            break;
+    }
     _display.refresh();
 }
 
@@ -124,8 +137,6 @@ void hytech_dashboard::show_lap_times(SAB_lap_times* lap_times) {
     _display.setCursor(40, 70);
     _display.setTextColor(BLACK);
     _display.setTextSize(3);
-    _display.println("Lap Times");
-    _display.setCursor(40, _display.getCursorY());
     switch(lap_times->get_state()) {
         case 0:
             // clear timer
@@ -154,20 +165,11 @@ void hytech_dashboard::show_lap_times(SAB_lap_times* lap_times) {
     times[lap_times->get_time_1_type()] = lap_times->get_time_1();
     times[lap_times->get_time_2_type()] = lap_times->get_time_2();
 
-    switch(current_state) {
-        case 0:
-            format_millis("Curr", current);
-            format_millis("Prev", previous);
-            format_millis("Best", best);
-            break;
-        case 1:
-            _display.print("screen 1");
-            break;
-        case 2:
-            _display.print("screen 2");
-            break;
-    }
-
+    _display.println("Lap Times");
+    _display.setCursor(40, _display.getCursorY());
+    format_millis("Curr", current);
+    format_millis("Prev", previous);
+    format_millis("Best", best);
 }
 
 void hytech_dashboard::restart_current_timer() {
@@ -179,6 +181,50 @@ void hytech_dashboard::increment_state() {
     if(current_state > MAX_STATE) {
         current_state = 0;
     }
+}
+
+void hytech_dashboard::display_border() {
+    _display.drawLine(200, 40, 200, 200, BLACK);
+    _display.drawLine(50, 120, 350, 120, BLACK);
+}
+
+
+void hytech_dashboard::set_cursor(uint8_t quadrant) {
+    _display.setTextSize(3);
+    _display.setTextColor(BLACK);
+    switch(quadrant) {
+        case 1:
+            _display.setCursor(210,40);
+            break;
+        case 2:
+            _display.setCursor(43,40);
+            break;
+        case 3:
+            _display.setCursor(43,130);
+            break;
+        case 4:
+            _display.setCursor(210,130);
+            break;
+    }
+}
+
+void hytech_dashboard::display_suspension_data(MCU_load_cells* load_cells) {
+    set_cursor(1);
+    _display.print("FR: ");
+    _display.println(load_cells->get_FR_load_cell());
+    set_cursor(2);
+    _display.print("FL: ");
+    _display.println(load_cells->get_FL_load_cell());
+    set_cursor(3);
+    _display.print("RL: ");
+    _display.println(load_cells->get_RL_load_cell());
+    set_cursor(4);
+    _display.print("RR: ");
+    _display.println(load_cells->get_RR_load_cell());
+}
+
+void hytech_dashboard::display_tire_data() {
+
 }
 
 void hytech_dashboard::format_millis(String label, uint32_t time) {

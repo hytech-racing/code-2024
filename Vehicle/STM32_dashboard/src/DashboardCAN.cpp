@@ -19,8 +19,8 @@ DashboardCAN::DashboardCAN(STM32_CAN* CAN)
 
 void DashboardCAN::read_CAN()
 {
-  if (_CAN->read(_msg)) {
-    // SerialUSB.println("message received");
+  while (_CAN->read(_msg)) {
+    SerialUSB.println("message received");
     // parse message based on ID
     switch (_msg.id) {
     case ID_MCU_STATUS:
@@ -48,6 +48,9 @@ void DashboardCAN::read_CAN()
     case ID_SAB_LAP_TIMES:
       SerialUSB.println("Received SAB Lap Time");
       lap_times.load(_msg.buf);
+    case ID_MCU_LOAD_CELLS:
+      SerialUSB.println("Received MCU Load Cells");
+      load_cells.load(_msg.buf);
     default:
       break;
     }

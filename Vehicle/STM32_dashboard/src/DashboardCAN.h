@@ -36,6 +36,8 @@ class DashboardCAN {
         BMS_voltages bms_voltages{};
         MCU_pedal_readings pedal_readings{};
         SAB_lap_times lap_times{};
+        MCU_load_cells load_cells{};
+        
 
         // constructor takes pointer to STM32_CAN object
         // can dereference with &

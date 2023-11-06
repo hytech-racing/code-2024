@@ -18,15 +18,15 @@ void Dashboard_Controls::update(DashboardCAN* CAN) {
   if (btn_safe_ctrl.isPressed())  {
     CAN->dashboard_status.toggle_mode_btn();
     if(!previousState) {
-      SerialUSB.println("state incrementing");
-      SerialUSB.println("Previous state false");
+      // SerialUSB.println("state incrementing");
+      // SerialUSB.println("Previous state false");
       hytech_dashboard::getInstance()->increment_state();
       previousState = true;
     }
     SerialUSB.println("BTN SAFE CTRL PRESSED");
     hytech_dashboard::getInstance()->set_neopixel(1, LED_YELLOW);
   } else {
-    SerialUSB.println("Previous state reset");
+    // SerialUSB.println("Previous state reset");
     previousState = false;
   }
   if (btn_mc_cycle.isPressed())    {
