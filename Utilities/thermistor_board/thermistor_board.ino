@@ -1,18 +1,28 @@
 // Code to read from 12 separate 8x1 multiplexers. On each tick, this code
 // should select the next set of 12 multiplexers and read them all.
 
-// This is the "counter" that will cycle from 0 to 7 and then back
-uint8_t counter = 0x00;
+#include <cmath>
+
+// Delay between each read cycle (to allow analog signal to settle).
+const int delay_milliseconds = 1000;
 
 // Must set these 3 later. Left to right is MSB to LSB.
 const int select_pins[] = {0, 1, LED_BUILTIN};
 const int number_of_select_pins = sizeof(select_pins)/sizeof(select_pins[0]);
 
-// Must set later. 12 separate 8x1 multiplexers (for 96 total thermistors)
+// Must set later. 12 separate 8x1 multiplexers (for 96 total thermistors).
 const int analog_pins[] = {14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25};
 const int number_of_analog_pins = sizeof(analog_pins)/sizeof(analog_pins[0]);
 
+// Creates an output array for thermistor readings.
+int thermistor_readings[number_of_analog_pins * (int) pow(2.0, number_of_select_pins)];
+
+// This is the "counter" that will count upwards indefinitely
+int counter = 0;
+
 void setup() {
+  
+  Serial.begin(9600);
 
   for (int i : select_pins) {
     pinMode(i, OUTPUT);
@@ -27,26 +37,43 @@ void setup() {
 void loop() {
   // Declares a new array to convert 'counter' back into binary using the bitwise AND operator.
   // This array will have the format [0, 0, 0] or [0, 1, 0], etc, where the MSB is on the left and LSB is on the right.
-  int counter_binary[] = {(counter & 0x04) == 0x00 ? 0 : 1, (counter & 0x02) == 0x00 ? 0 : 1, (counter & 0x01) == 0x00 ? 0 : 1};
+  int selected_pin = counter % (int) pow(2.0, number_of_select_pins);
+  int counter_binary[] = {(counter & 0x00000004) == 0 ? 0 : 1, (counter & 0x00000002) == 0 ? 0 : 1, (counter & 0x00000001) == 0 ? 0 : 1};
 
   // digitalWrite(select_pins[2], counter_binary[2]);
   for (int i = 0; i < number_of_select_pins; i++) {
     digitalWrite(select_pins[i], counter_binary[i] == 0 ? LOW : HIGH);
   }
 
-  int thermistor_readings[number_of_analog_pins];
   for (int i = 0; i < number_of_analog_pins; i++) {
-    thermistor_readings[i] = analogRead(analog_pins[i]);
+    // Writes data into the thermistor_readings array in their respective slots, such that
+    // the multiplexer referenced by analog_pins[n] will have its data stored contiguously
+    // in thermistor_readings in slots 0-11, 12-23, 24-35, etc.
+
+    // Puts garbage data in the specified slot (temporary)
+    thermistor_readings[i * (int) pow(2.0, number_of_select_pins) + selected_pin] = i * (int) pow(2.0, number_of_select_pins) + selected_pin;
+
+    // Actual code (uncomment when thermistors are connected)
+    // thermistor_readings[i * (int) pow(2.0, number_of_select_pins) + counter] = analogRead(analogPins[i]);
   }
 
-  // WRITE VALUES TO FILE HERE
+  // Prints the entire batch of data once all thermistors have been read
+  if (selected_pin == 0) {
+    printDataToSerial();
+  }
 
-  // increment counter but keep in the range [0, 7]
   counter++;
-  if (counter > 7) {
-    counter = 0;
-    // Any other data logging stuff should occur here
-  }
+  delay(delay_milliseconds); // Will likely need some delay here for analog inputs to settle.
+}
 
-  delay(100); // Will likely need some delay here for analog inputs to settle. Less than 500, though.
+void printDataToSerial() {
+  Serial.print(counter * delay_milliseconds); //Prints time elapsed (MS) in the leftmost column
+  Serial.print(",");
+
+  for (int i = 0; i < sizeof(thermistor_readings)/sizeof(thermistor_readings[0]); i++) {
+    Serial.print(thermistor_readings[i]);
+    Serial.print(",");
+  }
+  Serial.println("");
+
 }
