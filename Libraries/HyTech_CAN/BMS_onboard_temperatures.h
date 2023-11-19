@@ -40,9 +40,9 @@ public:
 #endif
 
 private:
-    int16_t average_temperature;    // @Parse @Scale(100) @Unit(C)
-    int16_t low_temperature;        // @Parse @Scale(100) @Unit(C)
-    int16_t high_temperature;       // @Parse @Scale(100) @Unit(C)
+    int16_t average_temperature;    // @Parse @Name(average_temperature) @Scale(100) @Unit(C)
+    int16_t low_temperature;        // @Parse @Name(low_temperature) @Scale(100) @Unit(C)
+    int16_t high_temperature;       // @Parse @Name(high_temperature) @Scale(100) @Unit(C)
 };
 
 #pragma pack(pop)

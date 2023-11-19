@@ -47,8 +47,8 @@ public:
 #endif
 
 private:
-    uint32_t voltage; //@Parse @Scale(65536) @Unit(V)
-    uint32_t current; //@Parse @Scale(65536) @Unit(A)
+    uint32_t voltage; //@Parse @Name(voltage) @Scale(65536) @Unit(V)
+    uint32_t current; //@Parse @Name(current) @Scale(65536) @Unit(A)
 };
 
 #pragma pack(pop) 

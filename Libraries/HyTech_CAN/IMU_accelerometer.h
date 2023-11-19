@@ -23,12 +23,9 @@ public:
     inline void set_vert_accel(int16_t vert_accel) { this->vert_accel = vert_accel; }
 
 private:
-    // @Parse @Unit(m/s/s) @Scale(102)
-    int16_t lat_accel;
-    // @Parse @Unit(m/s/s) @Scale(102)
-    int16_t long_accel;
-    // @Parse @Unit(m/s/s) @Scale(102)
-    int16_t vert_accel;
+    int16_t lat_accel; // @Parse @Name(lat_accel) @Unit(m/s/s) @Scale(102)
+    int16_t long_accel; // @Parse @Name(long_accel) @Unit(m/s/s) @Scale(102)
+    int16_t vert_accel; // @Parse @Name(vert_accel)@Unit(m/s/s) @Scale(102)
     
 };
 
