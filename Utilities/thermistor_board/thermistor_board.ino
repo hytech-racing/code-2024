@@ -4,10 +4,10 @@
 #include <cmath>
 
 // Delay between each read cycle (to allow analog signal to settle).
-const int delay_milliseconds = 1000;
+const int delay_milliseconds = 250;
 
 // Must set these 3 later. Left to right is MSB to LSB.
-const int select_pins[] = {0, 1, LED_BUILTIN};
+const int select_pins[] = {0, 1, 2};
 const int number_of_select_pins = sizeof(select_pins)/sizeof(select_pins[0]);
 
 // Must set later. 12 separate 8x1 multiplexers (for 96 total thermistors).
@@ -32,6 +32,8 @@ void setup() {
     pinMode(i, INPUT_PULLUP);
   }
 
+  pinMode(LED_BUILTIN, OUTPUT);
+
 }
 
 void loop() {
@@ -44,6 +46,9 @@ void loop() {
   for (int i = 0; i < number_of_select_pins; i++) {
     digitalWrite(select_pins[i], counter_binary[i] == 0 ? LOW : HIGH);
   }
+  
+  // Make the LED_BUILTIN blink every time the next batch is sampled (by making it blink with the LSB of counter_binary)
+  digitalWrite(LED_BUILTIN, counter_binary[number_of_select_pins-1] == 0 ? LOW : HIGH);
 
   for (int i = 0; i < number_of_analog_pins; i++) {
     // Writes data into the thermistor_readings array in their respective slots, such that
@@ -70,7 +75,7 @@ void printDataToSerial() {
   Serial.print(counter * delay_milliseconds); //Prints time elapsed (MS) in the leftmost column
   Serial.print(",");
 
-  for (int i = 0; i < sizeof(thermistor_readings)/sizeof(thermistor_readings[0]); i++) {
+  for (u_int i = 0; i < sizeof(thermistor_readings)/sizeof(thermistor_readings[0]); i++) {
     Serial.print(thermistor_readings[i]);
     Serial.print(",");
   }
