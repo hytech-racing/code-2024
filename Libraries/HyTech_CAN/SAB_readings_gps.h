@@ -23,9 +23,9 @@ public:
     inline void set_gps_longitude(int32_t reading) { gps_longitude = reading; }
 
 private:
-    // @Parse @Scale(1000000)
+    // @Parse @Name(gps_latitude) @Scale(1000000) @Unit(deg)
     int32_t gps_latitude;
-    // @Parse @Scale(1000000)
+    // @Parse @Name(gps_longitude) @Scale(1000000) @Unit(deg)
     int32_t gps_longitude;
 };
 

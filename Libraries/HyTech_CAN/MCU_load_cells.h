@@ -28,10 +28,10 @@ public:
 
 
 private:
-    uint16_t FL_load_cell; //in lbs
-    uint16_t FR_load_cell; //in lbs
-    uint16_t RL_load_cell; //in lbs
-    uint16_t RR_load_cell; //in lbs
+    uint16_t FL_load_cell; // @Parse @Name(FL_load_cell) @Scale(1) @Unit(lb)
+    uint16_t FR_load_cell; // @Parse @Name(FR_load_cell) @Scale(1) @Unit(lb)
+    uint16_t RL_load_cell; // @Parse @Name(RL_load_cell) @Scale(1) @Unit(lb)
+    uint16_t RR_load_cell; // @Parse @Name(RR_load_cell) @Scale(1) @Unit(lb)
 };
 
 #pragma pack(pop)

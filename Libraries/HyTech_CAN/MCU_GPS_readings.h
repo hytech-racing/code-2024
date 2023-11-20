@@ -32,8 +32,8 @@ public:
 #endif
 
 private:
-    int32_t latitude;   // @Parse @Scale(100000)
-    int32_t longitude;  // @Parse @Scale(100000)
+    int32_t latitude;   // @Parse @Name(latitude) @Scale(100000) @Unit(deg)
+    int32_t longitude;  // @Parse @Name(longitude) @Scale(100000) @Unit(deg)
 };
 
 #pragma pack(pop)

@@ -63,9 +63,9 @@ public:
 
 private:
     uint8_t group_id_ic_id;
-    int16_t temperature_0; // @Parse @Name(therm_0) @Scale(100) @Unit(C)
-    int16_t temperature_1; // @Parse @Name(therm_1) @Scale(100) @Unit(C)
-    int16_t temperature_2; // @Parse @Name(therm_2) @Scale(100) @Unit(C)
+    int16_t temperature_0; // @Parse @Name(temps_0) @Scale(100) @Unit(C)
+    int16_t temperature_1; // @Parse @Name(temps_1) @Scale(100) @Unit(C)
+    int16_t temperature_2; // @Parse @Name(temps_2) @Scale(100) @Unit(C)
 };
 
 #pragma pack(pop)

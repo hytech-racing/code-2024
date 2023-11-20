@@ -24,11 +24,11 @@ public:
     inline void set_roll(int16_t roll) { this->roll = roll; }
 
 private:
-    // @Parse @Unit(DEG/S) @Scale(3)
+    // @Parse @Name(yaw) @Unit(DEG/S) @Scale(3)
     int16_t yaw;
-    // @Parse @Unit(DEG/S) @Scale(3)
+    // @Parse @Name(pitch) @Unit(DEG/S) @Scale(3)
     int16_t pitch;
-    // @Parse @Unit(DEG/S) @Scale(3)
+    // @Parse @Name(roll) @Unit(DEG/S) @Scale(3)
     int16_t roll;
 
 };

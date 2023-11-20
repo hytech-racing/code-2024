@@ -20,8 +20,8 @@ public:
     inline void set_gps_longitude(int32_t reading) { longitude = reading;}
 
 private:
-    int32_t latitude;
-    int32_t longitude;
+    int32_t latitude; // @Parse @Name(latitude) @Scale(10000000.0) @Unit(deg)
+    int32_t longitude; // @Parse @Name(longitude) @Scale(10000000.0) @Unit(deg)
 };
 
 #pragma pack(pop)

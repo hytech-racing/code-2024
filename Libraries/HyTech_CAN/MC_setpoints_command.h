@@ -37,7 +37,7 @@ private:
     uint16_t control_word;
     int16_t speed_setpoint; //in rpm
     int16_t pos_torque_limit; //in 0.1% Mn
-    int16_t neg_torque_limit;
+    int16_t neg_torque_limit; 
 };
 
 #pragma pack(pop)

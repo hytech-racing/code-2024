@@ -35,7 +35,7 @@ public:
 #endif
 
 private:
-    uint8_t gain;
+    uint8_t gain; // @Parse @Name(voltage_gain) @Scale(1) @Unit(V)
     uint8_t flags; //@Parse @Flaglist(overvoltage, overpower, logging)
 };
 
