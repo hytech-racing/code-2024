@@ -4,9 +4,10 @@ import csv
 # GLOBAL CONSTANTS
 fileNamePrefix = "thermistor-data"
 batch_size = 10 # Number of readings that get buffered between file prints
+number_of_multiplexers = 12
+thermistors_per_multiplexer = 8
 endless_mode = False # Program will never self-terminate if this is True
 total_lines_of_data = 100 # How many batches of data should the program read before it quits? (This only applies when endlessMode == False)
-number_of_thermistors = 96
 
 # Sets up serial port
 arduino_port = "/dev/cu.usbmodem104812901" #serial port of arduino
@@ -23,8 +24,9 @@ serial.readline() #flushes current data (incomplete lines)
 # Write the file header
 with open(fileName, 'w', encoding='UTF8', newline='') as f:
     f.write("Timestamp (ms),")
-    for i in range(number_of_thermistors):
-        f.write("thm" + str(i) + ",")
+    for i in range(number_of_multiplexers):
+        for j in range(thermistors_per_multiplexer):
+            f.write("M" + str(i) + "-T" + str(j) + ',')
     f.write('\n')
 file.close()
 
