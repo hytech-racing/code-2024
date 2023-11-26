@@ -88,7 +88,7 @@ Metro timer_read_imu = Metro(20);
 
 Metro timer_inverter_enable = Metro(5000);
 Metro timer_reset_inverter = Metro(5000);
-Metro timer_watchdog_timer = Metro(10);
+Metro timer_watchdog_timer = Metro(7);
 
 elapsedMillis pedal_implausability_duration;
 
@@ -287,6 +287,12 @@ void loop() {
     Serial.println(mcu_load_cells.get_FR_load_cell());
     Serial.println(mcu_load_cells.get_RL_load_cell());
     Serial.println(mcu_load_cells.get_RR_load_cell());
+    Serial.println("SUS POTS");
+    Serial.println(mcu_front_potentiometers.get_pot1());
+    Serial.println(mcu_front_potentiometers.get_pot3());
+    Serial.println(mcu_rear_potentiometers.get_pot4());
+    Serial.println(mcu_rear_potentiometers.get_pot6());
+    
     Serial.println(torque_setpoint_array[0]);
     Serial.println(torque_setpoint_array[1]);
     Serial.println(torque_setpoint_array[2]);

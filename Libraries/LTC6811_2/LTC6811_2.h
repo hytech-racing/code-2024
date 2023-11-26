@@ -92,6 +92,7 @@ public:
     void spi_write_reg(uint8_t *cmd, uint8_t *cmd_pec, uint8_t *data, uint8_t *data_pec);
     void spi_read_reg(uint8_t *cmd, uint8_t* cmd_pec, uint8_t *data_in);
     void spi_cmd(uint8_t *cmd, uint8_t* cmd_pec);
+    void spi_set_chip_select(uint8_t cs);
     void write_register_group(uint16_t cmd_code, const uint8_t *buffer);
     void read_register_group(uint16_t cmd_code, uint8_t *data);
     void non_register_cmd(uint16_t cmd_code);
@@ -112,6 +113,7 @@ private:
     bool pec_error;
     uint8_t  adc_mode;
     uint8_t discharge_permitted;
+    uint8_t chip_select = 10;
     uint8_t adc_state = 0; // 0: wait to begin voltage conversions; 1: adcs converting voltage values; 2: wait to begin gpio conversions; 3: adcs converting GPIO values
     elapsedMillis adc_timer = 0; // timer that determines wait time for ADCs to finish their conversions
 };

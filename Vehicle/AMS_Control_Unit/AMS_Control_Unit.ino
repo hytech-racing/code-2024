@@ -1,10 +1,10 @@
 /* ACU CONTROL UNIT CODE
-   The AMS Control Unit code is used to control and communicate with Analog Devices LTC6811-2 battery stack monitors, per the HyTech Racing HT06 Accumulator Design.
+   The AMS Control Unit code is used to control and communicate with Analog Devices LTC6811-2 battery stack monitors, per the HyTech Racing HT06-HT07 Accumulator Design.
    It also handles CAN communications with the mainECU and energy meter and drives a watchdog timer on the ACU.
    See LTC6811_2.cpp and LTC6811-2 Datasheet provided by Analog Devices for more details.
-   Author: Zekun Li, Liwei Sun
-   Version: 1.05
-   Since: 05/29/2022
+   Authors: Zekun Li, Liwei Sun
+   Version: 1.10
+   Since: 04/23/2023
 */
 
 
@@ -19,6 +19,8 @@
 #define TOTAL_IC 12                 // Number of LTC6811-2 ICs that are used in the accumulator
 #define EVEN_IC_CELLS 12           // Number of cells monitored by ICs with even addresses
 #define ODD_IC_CELLS 9             // Number of cells monitored by ICS with odd addresses
+#define CHIP_SELECT_GROUP_ONE 9   // Chip select for first LTC6820 corresponding to first group of cells 
+#define CHIP_SELECT_GROUP_TWO 10  // Chip select for second LTC6820 corresponding to second group of cells 
 #define THERMISTORS_PER_IC 4       // Number of cell temperature monitoring thermistors connected to each IC
 #define MAX_SUCCESSIVE_FAULTS 20   // Number of successive faults permitted before AMS fault is broadcast over CAN
 #define MIN_VOLTAGE 30000          // Minimum allowable single cell voltage in units of 100μV
@@ -113,12 +115,23 @@ void setup() {
   // put your setup code here, to run once:
   pinMode(6, OUTPUT);
   pinMode(5, OUTPUT);
+  
+  
+  
   digitalWrite(6, HIGH); //write Teensy_OK pin high
+
+  //chip select defines
+  pinMode(CHIP_SELECT_GROUP_ONE, OUTPUT); 
+  pinMode(CHIP_SELECT_GROUP_TWO, OUTPUT); 
+  digitalWrite(CHIP_SELECT_GROUP_ONE, HIGH);
+  digitalWrite(CHIP_SELECT_GROUP_TWO, HIGH);
+  
   pulse_timer.begin(ams_ok_pulse, 50000); //timer to pulse pin 5 every 50 milliseconds
   Serial.begin(115200);
   SPI.begin();
   TELEM_CAN.begin();
   TELEM_CAN.setBaudRate(500000);
+//  TELEM_CAN.setBaudRate(1000000);    // Test CAN capacity 1,000,000 baud
   ENERGY_METER_CAN.begin();
   ENERGY_METER_CAN.setBaudRate(500000);
   ENERGY_METER_CAN.enableMBInterrupts();
@@ -132,6 +145,25 @@ void setup() {
   // add 12 (TOTAL_IC) instances of LTC6811_2 to the object array, each addressed appropriately
   for (int i = 0; i < TOTAL_IC; i++) {
     ic[i] = LTC6811_2(i);
+    switch(i) {
+      case 2:
+      case 3:
+      case 4:
+      case 5:
+      case 10:
+      case 11:
+        ic[i].spi_set_chip_select(CHIP_SELECT_GROUP_TWO);
+        break;
+
+      case 0:
+      case 1:
+      case 6:
+      case 7:
+      case 8:
+      case 9:
+        ic[i].spi_set_chip_select(CHIP_SELECT_GROUP_ONE);
+        break;
+    }
   }
   bms_status.set_state(BMS_STATE_DISCHARGING);
   parse_CAN_CCU_status();
@@ -166,7 +198,6 @@ void loop() {
 
 inline void forward_CAN_em() {
   if (timer_CAN_em_forward.check()) {
-
     em_measurement.write(msg.buf);
     msg.id = ID_EM_MEASUREMENT;
     msg.len = sizeof(em_measurement);
@@ -448,7 +479,7 @@ void parse_CAN_CCU_status() {
 }
 
 void parse_energy_meter_can_message(const CAN_message_t& RX_msg) {
-   CAN_message_t rx_msg = RX_msg;
+  static CAN_message_t rx_msg = RX_msg;
   switch (rx_msg.id) {
     case ID_EM_MEASUREMENT:   em_measurement.load_from_emeter(rx_msg.buf);    break;
     case ID_EM_STATUS:        em_status.load(rx_msg.buf);         break;
