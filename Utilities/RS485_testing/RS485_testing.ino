@@ -23,7 +23,7 @@
 
 #include <ArduinoRS485.h>
 #include "Metro.h"
-//#define SEND
+#define SEND
 void sendRS();
 void readRS();
 
@@ -38,6 +38,7 @@ void setup() {
   Serial.begin(9600);
   RS485.begin(9600);
   pinMode(13, OUTPUT);
+  pinMode(2, OUTPUT);
   // enable transmission, can be disabled with: RS485.endTransmission();
   #ifdef SEND
     RS485.beginTransmission();
@@ -62,14 +63,24 @@ void loop() {
 
 void sendRS() {
   if (send_or_receive.check()) {
+    RS485.noReceive();
+    RS485.beginTransmission();
     RS485.write("lolxd");
-    digitalWrite(13, toggle);
-    toggle = !toggle;
+    RS485.endTransmission();
+    //digitalWrite(13, toggle);
+    //toggle = !toggle;
+  }
+  RS485.receive();
+  if (RS485.available()) {
+  Serial.println(RS485.read());
+  digitalWrite(13, toggle);
+  toggle = !toggle;
   }
 }
 void readRS() {
+   RS485.receive();
    if (RS485.available()) {
-    Serial.write(RS485.read());
+    Serial.println(RS485.read());
     digitalWrite(13, toggle);
     toggle = !toggle;
   }

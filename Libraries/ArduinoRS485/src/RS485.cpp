@@ -64,15 +64,15 @@ void RS485Class::begin(unsigned long baudrate, uint16_t config, int predelay, in
   _predelay = _predelay == 0 ? predelay : _predelay;
   _postdelay = _postdelay == 0 ? postdelay : _postdelay;
 
-  // if (_dePin > -1) {
-  //   pinMode(_dePin, OUTPUT);
-  //   digitalWrite(_dePin, LOW);
-  // }
+  if (_dePin > -1) {
+    pinMode(_dePin, OUTPUT);
+    digitalWrite(_dePin, LOW);
+  }
 
-  // if (_rePin > -1) {
-  //   pinMode(_rePin, OUTPUT);
-  //   digitalWrite(_rePin, HIGH);
-  // }
+  if (_rePin > -1) {
+    pinMode(_rePin, OUTPUT);
+    digitalWrite(_rePin, HIGH);
+  }
 
   _transmisionBegun = false;
 
@@ -88,15 +88,15 @@ void RS485Class::end()
 {
   _serial->end();
 
-  // if (_dePin > -1) {
-  //   digitalWrite(_dePin, LOW);
-  //   pinMode(_dePin, INPUT);
-  // }
+  if (_dePin > -1) {
+    digitalWrite(_dePin, LOW);
+    pinMode(_dePin, INPUT);
+  }
   
-  // if (_rePin > -1) {
-  //   digitalWrite(_rePin, LOW);
-  //   pinMode(_rePin, INPUT);
-  // }
+  if (_rePin > -1) {
+    digitalWrite(_rePin, LOW);
+    pinMode(_rePin, INPUT);
+  }
 }
 
 int RS485Class::available()
@@ -148,26 +148,26 @@ void RS485Class::endTransmission()
 {
   _serial->flush();
 
-  // if (_dePin > -1) {
+  if (_dePin > -1) {
 if (_postdelay) delayMicroseconds(_postdelay);
-  //   digitalWrite(_dePin, LOW);
-  // }
+    digitalWrite(_dePin, LOW);
+  }
 
   _transmisionBegun = false;
 }
 
 void RS485Class::receive()
 {
-  // if (_rePin > -1) {
-  //   digitalWrite(_rePin, LOW);
-  // }
+  if (_rePin > -1) {
+    digitalWrite(_rePin, LOW);
+  }
 }
 
 void RS485Class::noReceive()
 {
-  // if (_rePin > -1) {
-  //   digitalWrite(_rePin, HIGH);
-  // }
+  if (_rePin > -1) {
+    digitalWrite(_rePin, HIGH);
+  }
 }
 
 void RS485Class::sendBreak(unsigned int duration)
@@ -206,5 +206,5 @@ void RS485Class::setDelays(int predelay, int postdelay)
 #ifdef RS485_SERIAL_PORT
 RS485Class RS485(RS485_SERIAL_PORT, RS485_DEFAULT_TX_PIN, RS485_DEFAULT_DE_PIN, RS485_DEFAULT_RE_PIN);
 #else
-RS485Class RS485(SERIAL_PORT_HARDWARE4, 20, RS485_DEFAULT_DE_PIN, RS485_DEFAULT_RE_PIN);
+RS485Class RS485(SERIAL_PORT_HARDWARE, 1, RS485_DEFAULT_DE_PIN, RS485_DEFAULT_RE_PIN);
 #endif

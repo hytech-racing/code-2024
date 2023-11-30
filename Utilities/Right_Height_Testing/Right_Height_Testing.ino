@@ -69,7 +69,7 @@ uint16_t writeData(uint16_t addr, eRegIndex_t reg, uint16_t data)
 float  dist;
 volatile uint16_t cr = 0;
 void setup() {
-  ModbusRTUClient.begin(19200);
+  ModbusRTUClient.begin(115200);
   Serial.begin(9600);
   cr |= MEASURE_MODE_BIT;//Set bit2 , Set to trigger mode
   cr &= ~(uint16_t)TEMP_CPT_SEL_BIT;//Select internal temperature compensation
@@ -81,12 +81,12 @@ void setup() {
 }
 
 void loop() {
-//  cr |= MEASURE_TRIG_BIT;//Set trig bit
-//  writeData(SLAVE_ADDR, eControl, cr); //Write the value to the control register and trigger a ranging
-//  delay(300);//Delay of 300ms(minimum delay should be greater than 30ms) is to wait for the completion of ranging
-//  dist = (float)readData(SLAVE_ADDR, eDistance) / 10;//Read distance register, one LSB is 0.1mm
-//
-//  Serial.print("distance = ");
-//  Serial.print(dist, 1);
-//  Serial.println("mm");
+  cr |= MEASURE_TRIG_BIT;//Set trig bit
+  writeData(SLAVE_ADDR, eControl, cr); //Write the value to the control register and trigger a ranging
+  delay(50);//Delay of 300ms(minimum delay should be greater than 30ms) is to wait for the completion of ranging
+  dist = (float)readData(SLAVE_ADDR, eDistance) / 10;//Read distance register, one LSB is 0.1mm
+
+  Serial.print("distance = ");
+  Serial.print(dist, 1);
+  Serial.println("mm");
 }
