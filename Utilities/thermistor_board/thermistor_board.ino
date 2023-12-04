@@ -56,10 +56,10 @@ void loop() {
     // in thermistor_readings in slots 0-11, 12-23, 24-35, etc.
 
     // Puts garbage data in the specified slot (temporary)
-    thermistor_readings[i * (int) pow(2.0, number_of_select_pins) + selected_pin] = i * (int) pow(2.0, number_of_select_pins) + selected_pin;
+    // thermistor_readings[i * (int) pow(2.0, number_of_select_pins) + selected_pin] = i * (int) pow(2.0, number_of_select_pins) + selected_pin;
 
     // Actual code (uncomment when thermistors are connected)
-    // thermistor_readings[i * (int) pow(2.0, number_of_select_pins) + counter] = analogRead(analogPins[i]);
+    thermistor_readings[i * (int) pow(2.0, number_of_select_pins) + selected_pin] = analogRead(analog_pins[i]);
   }
 
   // Prints the entire batch of data once all thermistors have been read
@@ -72,7 +72,7 @@ void loop() {
 }
 
 void printDataToSerial() {
-  Serial.print(counter * delay_milliseconds); //Prints time elapsed (MS) in the leftmost column
+  Serial.print(counter * delay_milliseconds / 1000); //Prints time elapsed (MS) in the leftmost column
   Serial.print(",");
 
   for (u_int i = 0; i < sizeof(thermistor_readings)/sizeof(thermistor_readings[0]); i++) {

@@ -10,7 +10,8 @@ endless_mode = False # Program will never self-terminate if this is True
 total_lines_of_data = 100 # How many batches of data should the program read before it quits? (This only applies when endlessMode == False)
 
 # Sets up serial port
-arduino_port = "/dev/cu.usbmodem104812901" #serial port of arduino
+# arduino_port = "/dev/cu.usbmodem104812901" #serial port of arduino
+arduino_port = "/dev/cu.usbmodem122442101"
 baud = 9600
 fileName = "thermistor-data.csv"
 serial = serial.Serial(arduino_port, baud)
@@ -23,7 +24,7 @@ serial.readline() #flushes current data (incomplete lines)
 
 # Write the file header
 with open(fileName, 'w', encoding='UTF8', newline='') as f:
-    f.write("Timestamp (ms),")
+    f.write("Timestamp (sec),")
     for i in range(number_of_multiplexers):
         for j in range(thermistors_per_multiplexer):
             f.write("M" + str(i) + "-T" + str(j) + ',')
