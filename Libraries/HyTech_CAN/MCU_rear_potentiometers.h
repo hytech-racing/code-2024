@@ -25,9 +25,9 @@ public:
     inline void set_pot6(const uint16_t value)                       { this->pot6 = value; }
 
 private:
-    uint16_t pot4; // @Parse @Name(pot4) @Scale(0.059312 + 3.0 ) @Unit(lb)
-    uint16_t pot5; // @Parse @Name(pot5) @Scale(0.059312 + 3.0 ) @Unit(lb)
-    uint16_t pot6; // @Parse @Name(pot6) @Scale(0.059312 + 3.0 ) @Unit(lb)
+    uint16_t pot4; // @Parse @Name(pot4) @Scale(* 0.059312 + 3.0) @Unit(lb)
+    uint16_t pot5; // @Parse @Name(pot5) @Scale(* 0.059312 + 3.0) @Unit(lb)
+    uint16_t pot6; // @Parse @Name(pot6) @Scale(* 0.059312 + 3.0) @Unit(lb)
 };
 
 #pragma pack(pop)

@@ -60,10 +60,10 @@ public:
 #endif
 
 private:
-	uint8_t state;          // @Parse @Hex
-    uint16_t error_flags;   // @Parse @Flagset @Hex
-    int16_t current;        // @Parse @Scale(100) @Unit(A)
-    uint8_t flags;          // @Parse @Hex @Flaglist(shutdown_g_above_threshold, shutdown_h_above_threshold)
+	uint8_t state;          // @Parse @Name(state) @Scale(1) @Unit()
+    uint16_t error_flags;   // @Parse @Flagset
+    int16_t current;        // @Parse @Name(current) @Scale(100) @Unit(A)
+    uint8_t flags;          // @Parse @Flaglist(shutdown_g_above_threshold, shutdown_h_above_threshold)
 };
 
 #pragma pack(pop)

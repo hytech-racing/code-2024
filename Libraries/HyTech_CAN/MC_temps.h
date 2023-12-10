@@ -20,10 +20,10 @@ public:
   inline uint16_t get_igbt_temp()      const { return igbt_temp; }
   inline uint16_t get_diagnostic_number()     const { return diagnostic_number; }
 private: // all temps in 0.1C
-    int16_t motor_temp; // @Parse @Name(motor_temp) @Scale(10) @Unit(C)
+    int16_t motor_temp;    //                 @Parse @Name(motor_temp) @Scale(10) @Unit(C)
     int16_t inverter_temp; //cold plate temp, @Parse @Name(inverter_temp) @Scale(10) @Unit(C)
-    uint16_t diagnostic_number; // @Parse @Name(diagnostic_number) @Scale(1) @Unit("")
-    int16_t igbt_temp; // @Parse @Name(ight_temp) @Scale(10) @Unit(C)
+    uint16_t diagnostic_number; //            @Parse @Name(diagnostic_number) @Scale(1) @Unit()
+    int16_t igbt_temp; //                     @Parse @Name(ight_temp) @Scale(10) @Unit(C)
     
 };
 

@@ -30,13 +30,13 @@ public:
     inline void set_brake_pedal_2(uint16_t reading)  { brake_pedal_2  = reading; }
 
 private:
-    // @Parse @Name(accelerator_pedal_1) @Scale(.001)
+    // @Parse @Name(accelerator_pedal_1) @Scale(1000/NOMINAL_TORQUE) @Unit()
     uint16_t accelerator_pedal_1;
-    // @Parse @Name(accelerator_pedal_2) @Scale(.001)
+    // @Parse @Name(accelerator_pedal_2) @Scale(1000/NOMINAL_TORQUE) @Unit()
     uint16_t accelerator_pedal_2;
-    // @Parse @Name(accelerator_pedal_3) @Scale(.001)
+    // @Parse @Name(brake_pedal_1) @Scale(1000/NOMINAL_TORQUE) @Unit()
     uint16_t brake_pedal_1;
-    // @Parse @Name(accelerator_pedal_4) @Scale(.001)
+    // @Parse @Name(brake_pedal_2) @Scale(1000/NOMINAL_TORQUE) @Unit()
     uint16_t brake_pedal_2;
 };
 

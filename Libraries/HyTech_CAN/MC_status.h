@@ -33,9 +33,9 @@ public:
 
 private:
     uint16_t status_word;
-    int16_t speed; //speed in rpm
-    int16_t torque_current; //torque in 0.1% mn
-    int16_t magnetizing_current; //torque current in 0.1A
+    int16_t speed; //speed in rpm                         @Parse @Name(speed) @Scale(1) @Unit(rpm)
+    int16_t torque_current; //torque in 0.1% mn           @Parse @Name(torque_current) @Scale(1000/NOMINAL_TORQUE) @Unit(Nm)
+    int16_t magnetizing_current; //torque current in 0.1A @Parse @Name(magnetizing_current) @Scale(10) @Unit(A)
 };
 
 #pragma pack(pop)

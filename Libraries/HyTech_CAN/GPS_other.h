@@ -20,8 +20,8 @@ public:
     inline void set_gps_accuracy(uint32_t reading) { accuracy = reading;}
 
 private:
-    int32_t msl; // @Parse @Name(msl) @Scale(1000) @Unit(m)
-    uint32_t accuracy; // @Parse @Name(acc) @Scale(1000) @Unit(m)
+    uint32_t msl; // @Parse @Name(msl) @Scale(1000.0) @Unit(m)
+    uint32_t accuracy; // @Parse @Name(acc) @Scale(1000.0) @Unit(m)
 };
 
 #pragma pack(pop)

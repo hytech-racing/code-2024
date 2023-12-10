@@ -28,13 +28,13 @@ public:
 
 private:
 
-    // @Parse @Unit(A) @Scale(5000)
+    // @Parse @Name(steering_1) @Unit() @Scale((2**13)/180)
     int16_t steering_1; // signed int, >0 is turning right, <0 is turning left, (2^14)/2 is +180 degrees out of digital sensor
-	// @Parse @Unit(A) @Scale(5000)
+	// @Parse @Name(steering_2) @Unit() @Scale(1)
     uint16_t steering_2; // unsigned int, 0-5V out of analog steering wheel sensor
-    // @Parse @Unit(C) @Scale(100)
+    // @Parse @Name(hall_effect) @Unit(A) @Scale(100)
     int16_t hall_effect_current;
-    // @Parse @Unit(V) @Scale(2500)
+    // @Parse @Name(glv_battery_voltage) @Unit(V) @Scale(2500)
     uint16_t glv_battery_voltage;
 };
 

@@ -64,9 +64,9 @@ public:
 
 private:
 	uint8_t ic_id_group_id;
-    uint16_t voltage_0; // @Parse @Name(voltage_0) @Scale(10000) @Unit(V)
-    uint16_t voltage_1; // @Parse @Name(voltage_1) @Scale(10000) @Unit(V)
-    uint16_t voltage_2; // @Parse @Name(voltage_2) @Scale(10000) @Unit(V)
+    uint16_t voltage_0; // @Parse @Name(voltage) @Scale(10000) @Unit(V)
+    uint16_t voltage_1; // @Parse @Name(voltage) @Scale(10000) @Unit(V)
+    uint16_t voltage_2; // @Parse @Name(voltage) @Scale(10000) @Unit(V)
 };
 
 #pragma pack(pop)

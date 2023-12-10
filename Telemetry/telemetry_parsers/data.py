@@ -763,7 +763,7 @@ class MC4_energy(data):
         return [(arr, cols, units, directory)]
     MESSAGE_DICT[0xAB] = (parse_MC4_energy, "MC4_energy")
 
-class MC1_Fts_command(data):
+class MC1_setpoints_command(data):
     def parse(data, id = None, time = None):
         msg_id = 0xB0
         if id is not None:

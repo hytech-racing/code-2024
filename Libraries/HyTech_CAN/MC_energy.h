@@ -20,9 +20,9 @@ public:
   inline int16_t get_feedback_torque()      const { return feedback_torque; }
 
 private:
-  uint16_t dc_bus_voltage; //dc bus voltage in 1V @Parse @Name(dc_bus_voltage) @Scale(1) @Unit(V)
-  uint32_t actual_power;//power calculated from motor torque and speed, in 1W @Parse @Name(actual_power) @Scale(1) @Unit(W)
-  int16_t feedback_torque;// torque feedback value in units 0.1% nominal torque (9.8Nm) @Parse @Name(feedback_torque) @Scale(1) @Unit(Nm)
+  uint16_t dc_bus_voltage; //dc bus voltage in 1V                                       @Parse @Name(dc_bus_voltage) @Scale(1) @Unit(V)
+  uint32_t actual_power;//power calculated from motor torque and speed, in 1W           @Parse @Name(actual_power) @Scale(1) @Unit(W)
+  int16_t feedback_torque;// torque feedback value in units 0.1% nominal torque (9.8Nm) @Parse @Name(feedback_torque) @Scale(1000/NOMINAL_TORQUE) @Unit(Nm)
 };
 
 #pragma pack(pop)
