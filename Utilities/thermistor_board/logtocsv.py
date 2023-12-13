@@ -3,46 +3,77 @@ import math
 import datetime;
 import csv
 
-# GLOBAL CONSTANTS
+
+
+##### GLOBAL CONSTANTS #####
+
+ARDUINO_PORT = "/dev/cu.usbmodem122442101"
+
+# Name of the "latest" log file. All data is saved two places-- the timestamped file, and to LATEST_LOG
+LATEST_LOG = "data/latest.csv"
+
+# File name prefix. Data will be saved to "fileNamePrefix" + timestamp
 fileNamePrefix = "thermistor-data"
-batch_size = 4 # Number of readings that get buffered between file prints
+
+# Number of readings that get buffered between file prints
+BATCH_SIZE = 4
+
 number_of_multiplexers = 12
 thermistors_per_multiplexer = 8
-endless_mode = False # Program will never self-terminate if this is True
-total_lines_of_data = 100 # How many batches of data should the program read before it quits? (This only applies when endlessMode == False)
+
+# Program will never self-terminate if this is True
+ENDLESS_MODE = False
+
+# How many batches of data should the program read before it quits? (This only applies when endlessMode == False)
+TOTAL_LINES_OF_DATA = 100
+
+# Unknown resistance data
+RESISTANCE_DATA = []
+for i in range(96):
+    f.append(0)
+
+
 
 # Sets up serial port
-# arduino_port = "/dev/cu.usbmodem104812901" #serial port of arduino
-arduino_port = "/dev/cu.usbmodem122442101"
 baud = 9600
 BETA = 3500
-FILE_NAME = "data/" + fileNamePrefix + str(datetime.datetime.now()) + ".csv"
-LATEST_LOG = "data/latest.csv"
-serial = serial.Serial(arduino_port, baud)
-print("Connected to Arudino port: " + arduino_port)
+FILE_NAME = "data/" + fileNamePrefix + "_" + str(datetime.datetime.now()).replace(" ", "_") + ".csv"
+serial = serial.Serial(ARDUINO_PORT, baud)
+print("Connected to Arudino port: " + ARDUINO_PORT)
 file = open(FILE_NAME, "w")
 print("Created file")
 serial.readline() #flushes current data (incomplete lines)
 
-def convertDigitalToTemp(digital):
-    if digital == 1023:
+
+
+def convertDigitalToTemp(analogRead, index):
+    if analogRead >= 1023:
         return -1
 
+    ##### INSERT DIGITAL TO CELSIUS HERE
     #resistance = 10000
     #kelvin = 1 / ((1/298.15) + (1/BETA) * math.log(resistance / 10000)  ) # 10kOhm at 25 celsius
     #celsius = kelvin - 273.15
     #return celsius
 
-    return -1
+    totalResistance = (analogRead * 3300) / (1023 - analogRead)
+
+    thermistorResistance = totalResistance - RESISTANCE_DATA[index]
+    
+    kelvin = (298.15 * 3492) / (3492 + 298.15 * math.log(thermistorResistance / 10000))
+    celsius = kelvin - 273.15
+
+    #return celsius
+    return totalResistance
 
 def convertDigitalLineToTemp(line):
     dataElements = line.split(",")
     outputLine = dataElements[0] + ","
-#    for i in range(len(dataElements)):
-#        print(dataElements[i] + ",")
     for i in range(1, len(dataElements) - 1):
-        outputLine += str(convertDigitalToTemp(int(dataElements[i]))) + ","
+        outputLine += str(convertDigitalToTemp(int(dataElements[i]), i - 1)) + ","
     return outputLine
+
+
 
 # Write the file header
 def openFile(fileName):
@@ -56,7 +87,6 @@ def openFile(fileName):
 
 openFile(FILE_NAME)
 openFile(LATEST_LOG)
-
 
 def write_to_file(sensor_data, fileName):
     with open(fileName, 'a', encoding='UTF8', newline='') as f:
@@ -73,7 +103,7 @@ def write_to_file(sensor_data, fileName):
 # Write the actual data periodically
 line = 0
 thermistor_data = []
-while endless_mode or line < total_lines_of_data:
+while ENDLESS_MODE or line < TOTAL_LINES_OF_DATA:
     getData = serial.readline()
     dataString = getData.decode('utf-8')
     print(dataString)
@@ -81,10 +111,12 @@ while endless_mode or line < total_lines_of_data:
 
     line = line + 1
     
-    if line % batch_size == 0:
+    if line % BATCH_SIZE == 0:
         write_to_file(thermistor_data, FILE_NAME)
         write_to_file(thermistor_data, LATEST_LOG)
         thermistor_data = []
     
 
+
 print("Data logging complete! Logged " + str(line) + " lines. Saved to " + FILE_NAME)
+print("If you want the data to be logged indefinitely, then enable ENDLESS_MODE to true")

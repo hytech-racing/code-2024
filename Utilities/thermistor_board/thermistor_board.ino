@@ -6,11 +6,11 @@
 // Delay between each read cycle (to allow analog signal to settle).
 const int delay_milliseconds = 250;
 
-// Must set these 3 later. Left to right is MSB to LSB.
+// Left to right is MSB to LSB.
 const int select_pins[] = {4, 3, 2}; // 2 is LSB, 4, is MSB
 const int number_of_select_pins = sizeof(select_pins)/sizeof(select_pins[0]);
 
-// Must set later. 12 separate 8x1 multiplexers (for 96 total thermistors).
+// 12 separate 8x1 multiplexers (for 96 total thermistors).
 const int analog_pins[] = {17, 16, 19, 18, 21, 20, 23, 22, 25, 24, 15, 14};
 const int number_of_analog_pins = sizeof(analog_pins)/sizeof(analog_pins[0]);
 
@@ -72,6 +72,7 @@ void loop() {
 }
 
 void printDataToSerial() {
+
   Serial.print(counter * delay_milliseconds / 1000); //Prints time elapsed (MS) in the leftmost column
   Serial.print(",");
 
