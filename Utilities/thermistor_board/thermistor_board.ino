@@ -25,12 +25,14 @@ int counter = 0;
 // SD card constants
 Sd2Card card;
 File myFile;
-const char* FILE_NAME = "data.csv";
+char* FILE_NAME;
 const int chipSelect BUILTIN_SDCARD;
 
 
 
 void setup() {
+
+  FILE_NAME = "data_" + std::time() + ".csv"; //I'm not sure if this is valid or not. I'm intending to add seconds_since_epoch to the file name in order to prevent data from being overwritten.
   
   Serial.begin(9600);
 
@@ -46,7 +48,7 @@ void setup() {
 
   // Initializes SD card
   card.init(SPI_HALF_SPEED, chipSelect);
-  SD.remove(FILE_NAME); //Erases the file if it already exists. BE CAREFUL.
+  SD.remove(FILE_NAME); // Erases the file if it already exists. This SHOULDN'T ever be an issue, since the data is timestamped, but it might.
 
   printHeaderToSD(); //Puts the header into the CSV
 
@@ -70,9 +72,6 @@ void loop() {
     // Writes data into the thermistor_readings array in their respective slots, such that
     // the multiplexer referenced by analog_pins[n] will have its data stored contiguously
     // in thermistor_readings in slots 0-11, 12-23, 24-35, etc.
-
-    // Puts garbage data in the specified slot (temporary)
-    // thermistor_readings[i * (int) pow(2.0, number_of_select_pins) + selected_pin] = i * (int) pow(2.0, number_of_select_pins) + selected_pin;
 
     // Actual code (uncomment when thermistors are connected)
     thermistor_readings[i * (int) pow(2.0, number_of_select_pins) + selected_pin] = analogRead(analog_pins[i]);
