@@ -93,7 +93,7 @@ void printDataToSerial() {
   Serial.print(",");
 
   for (u_int i = 0; i < sizeof(thermistor_readings)/sizeof(thermistor_readings[0]); i++) {
-    Serial.print(thermistor_readings[i]);
+    Serial.print(convertAnalogToCelsius(thermistor_readings[i]));
     Serial.print(",");
   }
   Serial.println("");
@@ -131,12 +131,29 @@ void printDataToSD() {
   myFile.print(",");
 
   for (u_int i = 0; i < sizeof(thermistor_readings)/sizeof(thermistor_readings[0]); i++) {
-    myFile.print(thermistor_readings[i]);
+    myFile.print(convertAnalogToCelsius(thermistor_readings[i]));
     myFile.print(",");
   }
 
   myFile.println("");
 
   myFile.close();
+
+}
+
+double convertAnalogToCelsius(int analog) {
+
+  if (analog >= 1023) {
+    return -1;
+  }
+
+  int BETA = 3492;
+
+  int totalResistance = (analog * 3300) / (1023 - analog);
+  double kelvin = (298.15 * BETA) / (BETA + 298.15 * std::log(totalResistance / 10000)/std::log(M_E));
+
+  double celsius = kelvin - 273.15;
+
+  return celsius;
 
 }
