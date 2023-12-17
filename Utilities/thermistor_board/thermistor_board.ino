@@ -2,6 +2,8 @@
 // should select the next set of 12 multiplexers and read them all.
 
 #include <cmath>
+#include <SD.h>
+#include <SPI.h>
 
 // Delay between each read cycle (to allow analog signal to settle).
 const int delay_milliseconds = 250;
@@ -20,6 +22,14 @@ int thermistor_readings[number_of_analog_pins * (int) pow(2.0, number_of_select_
 // This is the "counter" that will count upwards indefinitely
 int counter = 0;
 
+// SD card constants
+Sd2Card card;
+File myFile;
+const char* FILE_NAME = "data.csv";
+const int chipSelect BUILTIN_SDCARD;
+
+
+
 void setup() {
   
   Serial.begin(9600);
@@ -33,6 +43,12 @@ void setup() {
   }
 
   pinMode(LED_BUILTIN, OUTPUT);
+
+  // Initializes SD card
+  card.init(SPI_HALF_SPEED, chipSelect);
+  SD.remove(FILE_NAME); //Erases the file if it already exists. BE CAREFUL.
+
+  printHeaderToSD(); //Puts the header into the CSV
 
 }
 
@@ -65,6 +81,7 @@ void loop() {
   // Prints the entire batch of data once all thermistors have been read
   if (selected_pin == 0) {
     printDataToSerial();
+    printDataToSD();
   }
 
   counter++;
@@ -73,7 +90,7 @@ void loop() {
 
 void printDataToSerial() {
 
-  Serial.print(counter * delay_milliseconds / 1000); //Prints time elapsed (MS) in the leftmost column
+  Serial.print(counter * delay_milliseconds / 1000); //Prints time elapsed (sec) in the leftmost column
   Serial.print(",");
 
   for (u_int i = 0; i < sizeof(thermistor_readings)/sizeof(thermistor_readings[0]); i++) {
@@ -81,5 +98,46 @@ void printDataToSerial() {
     Serial.print(",");
   }
   Serial.println("");
+
+}
+
+void printHeaderToSD() {
+
+  myFile = SD.open(FILE_NAME, FILE_WRITE);
+
+  myFile.print("Time (S),");
+
+  for (int m = 0; m < 12; i++) {
+    for (int t = 0; t < 8; t++) {
+      myFile.print("M");
+      myFile.print(m);
+      myFile.print("-T");
+      myFile.print(t);
+      myFile.print(",");
+    }
+  }
+
+  myFile.println("");
+
+  myFile.close();
+
+}
+
+void printDataToSD() {
+
+  // Open the file
+  myFile = SD.open(FILE_NAME, FILE_WRITE);
+
+  myFile.print(counter * delay_milliseconds / 1000); //Prints time elapsed (sec) in the leftmost column
+  myFile.print(",");
+
+  for (u_int i = 0; i < sizeof(thermistor_readings)/sizeof(thermistor_readings[0]); i++) {
+    myFile.print(thermistor_readings[i]);
+    myFile.print(",");
+  }
+
+  myFile.println("");
+
+  myFile.close();
 
 }
