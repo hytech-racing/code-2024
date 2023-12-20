@@ -4,6 +4,9 @@
 #include <cmath>
 #include <SD.h>
 #include <SPI.h>
+#include <TimeLib.h>
+#include <iostream>
+#include <string.h>
 
 // Delay between each read cycle (to allow analog signal to settle).
 const int delay_milliseconds = 250;
@@ -25,14 +28,14 @@ int counter = 0;
 // SD card constants
 Sd2Card card;
 File myFile;
-char* FILE_NAME;
-const int chipSelect BUILTIN_SDCARD;
+String FILE_NAME;
 
 
 
 void setup() {
 
-  FILE_NAME = "data_" + std::time() + ".csv"; //I'm not sure if this is valid or not. I'm intending to add seconds_since_epoch to the file name in order to prevent data from being overwritten.
+  //I'm not sure if this is valid or not. I'm intending to add seconds_since_epoch to the file name in order to prevent data from being overwritten.
+  FILE_NAME = strcat(strcat("data_", std::to_string(now()).c_str()), ".csv"); 
   
   Serial.begin(9600);
 
@@ -47,8 +50,8 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
 
   // Initializes SD card
-  card.init(SPI_HALF_SPEED, chipSelect);
-  SD.remove(FILE_NAME); // Erases the file if it already exists. This SHOULDN'T ever be an issue, since the data is timestamped, but it might.
+  card.init(SPI_HALF_SPEED, BUILTIN_SDCARD);
+  SD.remove(FILE_NAME.c_str()); // Erases the file if it already exists. This SHOULDN'T ever be an issue, since the data is timestamped, but it might.
 
   printHeaderToSD(); //Puts the header into the CSV
 
@@ -102,11 +105,11 @@ void printDataToSerial() {
 
 void printHeaderToSD() {
 
-  myFile = SD.open(FILE_NAME, FILE_WRITE);
+  myFile = SD.open(FILE_NAME.c_str(), FILE_WRITE);
 
   myFile.print("Time (S),");
 
-  for (int m = 0; m < 12; i++) {
+  for (int m = 0; m < 12; m++) {
     for (int t = 0; t < 8; t++) {
       myFile.print("M");
       myFile.print(m);
@@ -125,7 +128,7 @@ void printHeaderToSD() {
 void printDataToSD() {
 
   // Open the file
-  myFile = SD.open(FILE_NAME, FILE_WRITE);
+  myFile = SD.open(FILE_NAME.c_str(), FILE_WRITE);
 
   myFile.print(counter * delay_milliseconds / 1000); //Prints time elapsed (sec) in the leftmost column
   myFile.print(",");
