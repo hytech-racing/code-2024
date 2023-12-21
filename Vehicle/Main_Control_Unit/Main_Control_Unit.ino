@@ -1,8 +1,8 @@
 /*
    Teensy 4.1 Main Control Unit code
    Written by Liwei Sun which is why the code is so bad
-
-   Rev 12
+   and Eric Galluzzi, so why its even worse!
+   Rev 15
 */
 
 #include <stdint.h>
@@ -27,10 +27,10 @@
   #define Debug_println(x)
   #define Debug_printf(x)
 #else
-  #define Debug_begin(x) Serial./begin(x)
-  #define Debug_print(x)  Serial./print(x)
-  #define Debug_println(x) Serial./println(x)
-  #define Debug_printf(x,y) Serial./printf(x, y)
+  #define Debug_begin(x) Serial.begin(x)
+  #define Debug_print(x)  Serial.print(x)
+  #define Debug_println(x) Serial.println(x)
+  #define Debug_printf(x,y) Serial.printf(x, y)
 #endif
 
 #include "drivers.h"
@@ -56,8 +56,8 @@
 MCU_pedal_readings mcu_pedal_readings;
 MCU_status mcu_status{};
 MCU_load_cells mcu_load_cells{};
-MCU_front_potentiometers mcu_front_potentiometers;
-MCU_rear_potentiometers mcu_rear_potentiometers;
+MCU_potentiometers mcu_front_potentiometers;
+
 MCU_analog_readings mcu_analog_readings{};
 
 MC_status mc_status[4];
@@ -301,6 +301,7 @@ void loop() {
 }
 
 
+//comms cpp
 
 inline void send_CAN_inverter_setpoints() {
   if (timer_CAN_inverter_setpoints_send.check()) {
@@ -354,14 +355,11 @@ inline void send_CAN_mcu_load_cells() {
 
 inline void send_CAN_mcu_potentiometers() {
   if (timer_CAN_mcu_potentiometers_send.check()) {
-    mcu_front_potentiometers.write(msg.buf);
-    msg.id = ID_MCU_FRONT_POTS;
-    msg.len = sizeof(mcu_front_potentiometers);
+    mcu_potentiometers.write(msg.buf);
+    msg.id = ID_MCU_POTS;
+    msg.len = sizeof(mcu_potentiometers);
     TELEM_CAN.write(msg);
-    mcu_rear_potentiometers.write(msg.buf);
-    msg.id = ID_MCU_REAR_POTS;
-    msg.len = sizeof(mcu_rear_potentiometers);
-    TELEM_CAN.write(msg);
+
   }
 }
 
@@ -383,6 +381,8 @@ inline void send_CAN_mcu_analog_readings() {
     TELEM_CAN.write(msg);
   }
 }
+
+//SM cpp
 inline void state_machine() {
   switch (mcu_status.get_state()) {
     case MCU_STATE::STARTUP: break;
@@ -501,8 +501,65 @@ inline void state_machine() {
 }
 
 /* Shared state functinality */
+void set_state(MCU_STATE new_state) {
+  if (mcu_status.get_state() == new_state) {
+    return;
+  }
 
+  // exit logic
+  switch (mcu_status.get_state()) {
+    case MCU_STATE::STARTUP: break;
+    case MCU_STATE::TRACTIVE_SYSTEM_NOT_ACTIVE: break;
+    case MCU_STATE::TRACTIVE_SYSTEM_ACTIVE: break;
+    case MCU_STATE::ENABLING_INVERTER:
+      timer_inverter_enable.reset();
+      break;
+    case MCU_STATE::WAITING_READY_TO_DRIVE_SOUND:
+      // make dashboard stop buzzer
+      mcu_status.set_activate_buzzer(false);
+      mcu_status.write(msg.buf);
+      msg.id = ID_MCU_STATUS;
+      msg.len = sizeof(mcu_status);
+      TELEM_CAN.write(msg);
+      break;
+    case MCU_STATE::READY_TO_DRIVE: {
+        inverter_startup_state = INVERTER_STARTUP_STATE::WAIT_SYSTEM_READY;
+        break;
+      }
+  }
 
+  mcu_status.set_state(new_state);
+
+  // entry logic
+  switch (new_state) {
+    case MCU_STATE::STARTUP: break;
+    case MCU_STATE::TRACTIVE_SYSTEM_NOT_ACTIVE: break;
+    case MCU_STATE::TRACTIVE_SYSTEM_ACTIVE: {
+        inverter_startup_state = INVERTER_STARTUP_STATE::WAIT_SYSTEM_READY;
+        break;
+      }
+    case MCU_STATE::ENABLING_INVERTER: {
+        Debug_println("MCU Sent enable command");
+        timer_inverter_enable.reset();
+        break;
+      }
+    case MCU_STATE::WAITING_READY_TO_DRIVE_SOUND:
+      // make dashboard sound buzzer
+      mcu_status.set_activate_buzzer(true);
+      mcu_status.write(msg.buf);
+      msg.id = ID_MCU_STATUS;
+      msg.len = sizeof(mcu_status);
+      TELEM_CAN.write(msg);
+
+      timer_ready_sound.reset();
+      Debug_println("RTDS enabled");
+      break;
+    case MCU_STATE::READY_TO_DRIVE:
+      Debug_println("Ready to drive");
+      break;
+  }
+}
+//SM manager (determine relationship with SM CPP)
 bool check_TS_over_HV_threshold() {
   for (uint8_t inv = 0; inv < 4; inv++) {
     if (mc_energy[inv].get_dc_bus_voltage() < MIN_HV_VOLTAGE) {
@@ -555,6 +612,9 @@ inline void software_shutdown() {
 
 }
 
+
+
+//comms.cpp
 /* Parse incoming CAN messages */
 void parse_telem_can_message(const CAN_message_t &RX_msg) {
   CAN_message_t rx_msg = RX_msg;
@@ -644,65 +704,8 @@ inline void power_off_inverter() {
 
 
 /* Handle changes in state */
-void set_state(MCU_STATE new_state) {
-  if (mcu_status.get_state() == new_state) {
-    return;
-  }
 
-  // exit logic
-  switch (mcu_status.get_state()) {
-    case MCU_STATE::STARTUP: break;
-    case MCU_STATE::TRACTIVE_SYSTEM_NOT_ACTIVE: break;
-    case MCU_STATE::TRACTIVE_SYSTEM_ACTIVE: break;
-    case MCU_STATE::ENABLING_INVERTER:
-      timer_inverter_enable.reset();
-      break;
-    case MCU_STATE::WAITING_READY_TO_DRIVE_SOUND:
-      // make dashboard stop buzzer
-      mcu_status.set_activate_buzzer(false);
-      mcu_status.write(msg.buf);
-      msg.id = ID_MCU_STATUS;
-      msg.len = sizeof(mcu_status);
-      TELEM_CAN.write(msg);
-      break;
-    case MCU_STATE::READY_TO_DRIVE: {
-        inverter_startup_state = INVERTER_STARTUP_STATE::WAIT_SYSTEM_READY;
-        break;
-      }
-  }
-
-  mcu_status.set_state(new_state);
-
-  // entry logic
-  switch (new_state) {
-    case MCU_STATE::STARTUP: break;
-    case MCU_STATE::TRACTIVE_SYSTEM_NOT_ACTIVE: break;
-    case MCU_STATE::TRACTIVE_SYSTEM_ACTIVE: {
-        inverter_startup_state = INVERTER_STARTUP_STATE::WAIT_SYSTEM_READY;
-        break;
-      }
-    case MCU_STATE::ENABLING_INVERTER: {
-        Debug_println("MCU Sent enable command");
-        timer_inverter_enable.reset();
-        break;
-      }
-    case MCU_STATE::WAITING_READY_TO_DRIVE_SOUND:
-      // make dashboard sound buzzer
-      mcu_status.set_activate_buzzer(true);
-      mcu_status.write(msg.buf);
-      msg.id = ID_MCU_STATUS;
-      msg.len = sizeof(mcu_status);
-      TELEM_CAN.write(msg);
-
-      timer_ready_sound.reset();
-      Debug_println("RTDS enabled");
-      break;
-    case MCU_STATE::READY_TO_DRIVE:
-      Debug_println("Ready to drive");
-      break;
-  }
-}
-
+//math.cpp for operations related to thermistors, mapping, current and whatnot, powerlimiting
 inline float float_map(float x, float in_min, float in_max, float out_min, float out_max)
 {
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
@@ -1123,33 +1126,7 @@ inline void set_inverter_torques() {
     temp_lim_factor = max(min(1.0, temp_lim_factor), 0.2);
 
     accu_lim_factor = min(temp_lim_factor, voltage_lim_factor);
-    //mech_power /= 1000.0;
-
-    //      float current = (ADC1.read_channel(ADC_CURRENT_CHANNEL) - ADC1.read_channel(ADC_REFERENCE_CHANNEL));
-    //      current = ((((current / 819.0) / .1912) / 4.832) - 2.5) * 1000) / 6.67;
-
-    //
-    //      float dc_power = (mc_energy[0].get_dc_bus_voltage() * current) / 1000; //mc dc bus voltage
-
-    //sum up kilowatts to align
-    //if mech_power is at 63 kW, it's requesting 80 kW from the motor
-    //2 kW safety factor for the more accurate motor readings.
-    //as our effiecency increases say 68 kW would be drawing 80kW from the motor
-    //as our efficiency decreases say 60 kW would be drawing 80kW from the motor
-    //so if efficency is at 60kW and we want 63, we'd be drawing more from the battery triggering a safety problem
-    //so if efficency is at 68 kW, 63 would be drawing less power, which is fine but wasted power.
-    //if HV DC bus is over 80 kW, it's a violation!
-    // 1 kW as a second safety factor.
-    //if (mech_power > MECH_POWER_LIMIT) {
-      // mdiff = MECH_POWER_LIMIT / mech_power;
-      // diff = MECH_POWER_LIMIT / mech_power;
-    //}
-    //      if (dc_power > DC_POWER_LIMIT) {
-    //        ediff = DC_POWER_LIMIT / dc_power;
-    //      }
-    //      if (mech_power > MECH_POWER_LIMIT && dc_power > DC_POWER_LIMIT) {
-    //        diff = (ediff <= mdiff) ? ediff : mdiff;
-    //      }
+  
     torque_setpoint_array[0] = (uint16_t) (min((float) torque_setpoint_array[0], max_allowed_torque(max_front_power / 2.0, (float) mc_status[0].get_speed())) * accu_lim_factor);
     torque_setpoint_array[1] = (uint16_t) (min((float) torque_setpoint_array[1], max_allowed_torque(max_front_power / 2.0, (float) mc_status[1].get_speed())) * accu_lim_factor);
     torque_setpoint_array[2] = (uint16_t) (min((float) torque_setpoint_array[2], max_allowed_torque(max_rear_power / 2.0, (float) mc_status[2].get_speed())) * accu_lim_factor);
@@ -1194,6 +1171,7 @@ inline void set_inverter_torques() {
 
 }
 
+//sensors.cpp work with torque vectoing
 inline void begin_all_adcs() {
   // configure PIN mode
   pinMode(ADC_CS, OUTPUT);
@@ -1202,25 +1180,27 @@ inline void begin_all_adcs() {
   digitalWrite(ADC_CS, HIGH);
   // initialize SPI interface for MCP3208
   SPI.begin();
+}
+
 
 inline void read_all_adcs() {
   if (timer_read_all_adcs.check()) {
-    //have someone create thermistor struct
+    //have someone create thermistor struct for each section (total
+    //they only need to be in can so doesn't really affect me. 
+  
     mcu_thermistor_readings.set_therm_fl(analog_read(THERM_FL));
     mcu_thermistor_readings.set_therm_fr(analog_read(THERM_FR));
     mcu_analog_readings.set_steering_2(analog_read(STEERING_2));
     //teensy adc's
 
-    SPI.beginTransaction(settings);
+    
     
     prev_load_cell_readings[0] = mcu_load_cells.get_FL_load_cell();
     prev_load_cell_readings[1] = mcu_load_cells.get_FR_load_cell();
     
 
     uint16_t adc_inputs[8];
-    //create an adc feature that lets us sample all channels built off of an old library
-    //maybe abstract away begin transaction if possible
-    adc.read_all_channels(&adc_inputs[0]);
+    read_all_adc_channels(&adc, adc_inputs);
     mcu_pedal_readings.set_accelerator_pedal_1(adc_inputs[ADC_ACCEL_1_CHANNEL]);
     mcu_pedal_readings.set_accelerator_pedal_2(adc_inputs[ADC_ACCEL_2_CHANNEL]);
     mcu_pedal_readings.set_brake_pedal_1(adc_inputs[ADC_BRAKE_1_CHANNEL]);
@@ -1239,12 +1219,10 @@ inline void read_all_adcs() {
     mcu_analog_readings.set_hall_effect_current((uint16_t)current * 100);
 
     
-    uint16_t FL_inputs[4]; //only two are usable,
+    uint16_t FL_inputs[4]; //only two are usable, since CB only connects inputs at 1 and 0. 
     uint16_t FR_inputs[4]; 
-    //everything here should be based off of ltc6820
-    //fixme
-    acd_fl.read_all_channels(&FL_inputs[0]);
-    adc_fr.read_all_channels(&FR_inputs[0]);
+    read_all_adc_channels(&acd_fl, FL_inputs);
+    read_all_adc_channels(&adc_fr, FR_inputs);
     mcu_load_cells.set_FL_load_cell((uint16_t)((fl_inputs[ADC_FL_LOAD_CELL_CHANNEL]*LOAD_CELL1_SLOPE + LOAD_CELL1_OFFSET) * (1 - load_cell_alpha) + prev_load_cell_readings[0]*load_cell_alpha));
     mcu_load_cells.set_FR_load_cell((uint16_t)((fr_inputs[ADC_FR_LOAD_CELL_CHANNEL]*LOAD_CELL2_SLOPE + LOAD_CELL2_OFFSET) * (1 - load_cell_alpha) + prev_load_cell_readings[1]*load_cell_alpha));
     mcu_potentiometers.set_pot1(fl_inputs[SUS_POT_FL]);
@@ -1253,13 +1231,36 @@ inline void read_all_adcs() {
   }
 }
 
+inline void read_all_adc_channels(MCP3204* adc, uint16_t* buf) {
+  SPI.beginTransaction(SPISettings);
+  for(int i = 0; i < 4; i++) {
+    buf[i] = adc->read(i);
+  }
+  SPI.endTransaction();
+}
+
+inline void read_all_adc_channels(MCP3208* adc, uint16_t* buf) { //doubt this will work since 3208 might be same class as 3204
+  buf[1] = adc->read_channel(1);
+  for (int i = 0; i < 8; i++) {
+    buf[i] = adc->read(i);
+  } 
+  SPI.endTransaction();
+}
+
 inline void brake_outputs() {
   mcu_status.set_brake_pedal_active(mcu_pedal_readings.get_brake_pedal_1() >= BRAKE_ACTIVE);
   digitalWrite(BRAKE_LIGHT_CTRL, mcu_status.get_brake_pedal_active());
   mcu_status.set_mech_brake_active(mcu_pedal_readings.get_brake_pedal_1() >= BRAKE_THRESHOLD_MECH_BRAKE_1); //define in driver_constraints.h (70%)
 }
 
+//write me (sensors/comms)
 inline void read_steering_rs422();
+
+//write me
+inline void get_thermistor_temperature(); 
+
+
+//inverers.cpp
 bool check_all_inverters_system_ready() {
   for (uint8_t inv = 0; inv < 4; inv++) {
     if (! mc_status[inv].get_system_ready()) {
@@ -1379,6 +1380,7 @@ inline void reset_inverters() {
   }
 }
 
+//monitoring cpp
 /* Read shutdown system values */
 inline void read_status_values() {
   /* Measure shutdown circuits' input */
@@ -1473,6 +1475,7 @@ inline void calculate_pedal_implausibilities() {
   }
 }
 
+//math used by torque vectoring 
 inline float max_allowed_torque(float maxwatts, float rpm) {
   float angularspeed = (abs(rpm) + 1) / 60 * 2 * 3.1415;
   float maxnm = min(maxwatts / angularspeed, 20);
