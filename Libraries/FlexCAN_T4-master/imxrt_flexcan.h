@@ -158,8 +158,6 @@ typedef volatile uint32_t vuint32_t;
 *
 *********************************************************************/
 
-#define FLEXCAN0_BASE			(0x40024000L)
-
 /* Register read/write macros */
 #define FLEXCAN0_MCR                   (*(vuint32_t*)(FLEXCAN0_BASE))
 #define FLEXCAN0_CTRL1                  (*(vuint32_t*)(FLEXCAN0_BASE+4))
