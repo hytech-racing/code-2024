@@ -1,9 +1,16 @@
-/*
-   Teensy 4.1 Main Control Unit code
-   Written by Liwei Sun which is why the code is so bad
-   and Eric Galluzzi, so why its even worse!
-   Rev 15
-*/
+/**
+ * @file Main_Control_Unit.ino
+ * @author Liwei Sun, Mikhail Allen, Eric Galluzzi
+ * @brief Teensy 4.1 Main Control Unit code Rev15
+ * @version 0.1
+ * @date 2023-12-21
+ * 
+ * @copyright Copyright (c) 2023
+ * 
+ *
+ */
+
+
 
 #include <stdint.h>
 #include <FlexCAN_T4.h>
