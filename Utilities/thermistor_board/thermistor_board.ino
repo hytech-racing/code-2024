@@ -152,7 +152,7 @@ double convertAnalogToCelsius(int analog) {
 
   int BETA = 3492;
 
-  int totalResistance = (analog * 3300) / (1023 - analog);
+  double totalResistance = (analog * 3300) / (double)(1023 - analog);
   double kelvin = (298.15 * BETA) / (BETA + 298.15 * std::log(totalResistance / 10000)/std::log(M_E));
 
   double celsius = kelvin - 273.15;
