@@ -35,7 +35,7 @@ String FILE_NAME;
 void setup() {
 
   //I'm not sure if this is valid or not. I'm intending to add seconds_since_epoch to the file name in order to prevent data from being overwritten.
-  FILE_NAME = strcat(strcat("data_", std::to_string(now()).c_str()), ".csv"); 
+  FILE_NAME = strcat(strcat("data_", String(now()).c_str()), ".csv"); 
   
   Serial.begin(9600);
 
