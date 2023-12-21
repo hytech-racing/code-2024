@@ -7,6 +7,7 @@
 #include <TimeLib.h>
 #include <iostream>
 #include <string.h>
+#define BETA 3492
 
 // Delay between each read cycle (to allow analog signal to settle).
 const int delay_milliseconds = 250;
@@ -149,8 +150,6 @@ double convertAnalogToCelsius(int analog) {
   if (analog >= 1023) {
     return -1;
   }
-
-  int BETA = 3492;
 
   double totalResistance = (analog * 3300) / (double)(1023 - analog);
   double kelvin = (298.15 * BETA) / (BETA + 298.15 * std::log(totalResistance / 10000)/std::log(M_E));
