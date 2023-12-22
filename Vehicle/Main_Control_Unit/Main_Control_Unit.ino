@@ -26,7 +26,7 @@
 #include "Metro.h"
 
 
-//reduce serial overhead on real modes
+//reduce serial overhead on real modes debug handler 
 #define DEBUG 
 #ifndef DEBUG
   #define Debug_begin(x)

@@ -62,7 +62,7 @@
 #define ID_IMU_GYROSCOPE                                            0x91
 #define ID_SAB_READINGS_FRONT                                       0x92
 #define ID_SAB_READINGS_REAR                                        0x93
-
+#define ID_SAB_CB                                                   0x94
 
 //TireTempSensors
 #define ID_TPMS_LF                                                  0x424
