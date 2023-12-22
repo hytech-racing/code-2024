@@ -43,6 +43,13 @@ class CAN_Handler {
      * @param RX_msg 
      */
     static void parse_telem_can_message(const CAN_message_t &RX_msg);
+    void send_CAN_mcu_status();
+    void send_CAN_mcu_pedal_readings();
+    void send_CAN_mcu_load_cells();
+    void send_CAN_mcu_potentiometers();
+    void send_CAN_mcu_analog_readings();
+    void send_CAN_inverter_setpoints();
+    
     public:
     /**
      * @brief Construct a new can handler object
@@ -56,5 +63,11 @@ class CAN_Handler {
      * 
      */
     void CAN_poll();
+
+    /**
+     * @brief write out to CAN BUS during ECU operation
+     * 
+     */
+    void CAN_write();
     
 }

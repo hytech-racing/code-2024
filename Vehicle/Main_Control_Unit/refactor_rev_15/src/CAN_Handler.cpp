@@ -97,3 +97,83 @@ void CAN_Handler::parse_telem_can_message(const CAN_message_t &RX_msg)
       ht_data->mcu_potentiometers.set_pot4(ht_data->sab_cb.get_pot4());
 
 }
+}
+
+void CAN_Handler::send_CAN_inverter_setpoints() {
+  if (timer_CAN_inverter_setpoints_send.check()) {
+    ht_data->mc_setpoints_command[0].write(msg.buf);
+    msg.id = ID_MC1_SETPOINTS_COMMAND;
+    msg.len = sizeof(ht_data->mc_setpoints_command[0]);
+    INV_CAN.write(msg);
+
+    ht_data->mc_setpoints_command[1].write(msg.buf);
+    msg.id = ID_MC2_SETPOINTS_COMMAND;
+    msg.len = sizeof(ht_data->mc_setpoints_command[1]);
+    INV_CAN.write(msg);
+
+    ht_data->mc_setpoints_command[2].write(msg.buf);
+    msg.id = ID_MC3_SETPOINTS_COMMAND;
+    msg.len = sizeof(ht_data->mc_setpoints_command[2]);
+    INV_CAN.write(msg);
+
+    ht_data->mc_setpoints_command[3].write(msg.buf);
+    msg.id = ID_MC4_SETPOINTS_COMMAND;
+    msg.len = sizeof(ht_data->mc_setpoints_command[3]);
+    INV_CAN.write(msg);
+  }
+}
+void CAN_Handler::send_CAN_mcu_status() {
+  if (timer_CAN_mcu_status_send.check()) {
+    // Send Main Control Unit status message
+    ht_data->mcu_status.write(msg.buf);
+    msg.id = ID_MCU_STATUS;
+    msg.len = sizeof(ht_data->mcu_status);
+    TELEM_CAN.write(msg);
+  }
+}
+void CAN_Handler::send_CAN_mcu_pedal_readings() {
+  if (timer_CAN_mcu_pedal_readings_send.check()) {
+    ht_data->mcu_pedal_readings.write(msg.buf);
+    msg.id = ID_MCU_PEDAL_READINGS;
+    msg.len = sizeof(ht_data->mcu_pedal_readings);
+    TELEM_CAN.write(msg);
+  }
+}
+
+void CAN_Handler::send_CAN_mcu_load_cells() {
+  if (timer_CAN_mcu_load_cells_send.check()) {
+    ht_data->mcu_load_cells.write(msg.buf);
+    msg.id = ID_MCU_LOAD_CELLS;
+    msg.len = sizeof(ht_data->mcu_load_cells);
+    TELEM_CAN.write(msg);
+  }
+}
+
+void CAN_Handler::send_CAN_mcu_potentiometers() {
+  if (timer_CAN_mcu_potentiometers_send.check()) {
+    ht_data->mcu_potentiometers.write(msg.buf);
+    msg.id = ID_MCU_POTS;
+    msg.len = sizeof(ht_data->mcu_potentiometers);
+    TELEM_CAN.write(msg);
+
+  }
+}
+
+//might not be necessary (Calculations done on acu)
+// void CAN_Handler::send_CAN_bms_coulomb_counts() {
+//   if (timer_CAN_coloumb_count_send.check()) {
+//     ht_data->bms_coulomb_counts.write(msg.buf);
+//     msg.id = ID_BMS_COULOMB_COUNTS;
+//     msg.len = sizeof(ht_data->bms_coulomb_counts);
+//     TELEM_CAN.write(msg);
+//   }
+// }
+
+void CAN_Handler::send_CAN_mcu_analog_readings() {
+  if (timer_CAN_mcu_analog_readings_send.check()) {
+    ht_data->mcu_analog_readings.write(msg.buf);
+    msg.id = ID_MCU_ANALOG_READINGS;
+    msg.len = sizeof(ht_data->mcu_analog_readings);
+    TELEM_CAN.write(msg);
+  }
+}
