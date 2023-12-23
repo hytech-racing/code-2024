@@ -1,12 +1,15 @@
 <!DOCTYPE html>
+
 <html>
 <head>
     <title>Open MCT Tutorials</title>
     <script src="node_modules/openmct/dist/openmct.js"></script>
+
     <script src="lib/http.js"></script>
     <script src="dictionary-plugin.js"></script>
     <script src="historical-telemetry-plugin.js"></script>
     <script src="realtime-telemetry-plugin.js"></script>
+
     <!-- import paho MQTT library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js" type="text/javascript"></script>
     <script>
@@ -164,7 +167,7 @@
             openmct.install(openmct.plugins.Espresso());
     
             openmct.install(DictionaryPlugin());
-            //openmct.install(HistoricalTelemetryPlugin());
+            openmct.install(HistoricalTelemetryPlugin());
             openmct.install(RealtimeTelemetryPlugin());
     
             openmct.start();

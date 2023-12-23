@@ -1,8 +1,11 @@
 /**
  * Basic Realtime telemetry plugin using websockets.
  */
+
 function RealtimeTelemetryPlugin() {
+
     return function (openmct) {
+
 
         var client = new Paho.MQTT.Client('localhost', 80, "/", "unique_ID");
         var globalChannels = [];
@@ -29,6 +32,7 @@ function RealtimeTelemetryPlugin() {
                     id: Date.now(),
                 });
             }
+            console.log(message.payloadString)
         };
 
         var provider = {
@@ -44,7 +48,7 @@ function RealtimeTelemetryPlugin() {
                 client.connect({onSuccess: myClientConnected});
 
                 return function unsubscribe() {
-                    delete listener[(domainObject.identifier.key)];
+                    //delete listener[(domainObject.identifier.key)];
                     //client.unsubscribe(domainObject.identifier.key);
                     client.disconnect();
                 };

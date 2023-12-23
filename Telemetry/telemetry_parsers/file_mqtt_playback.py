@@ -1,5 +1,5 @@
 
-from parsers import MESSAGE_DICT
+
 import paho.mqtt.client as mqtt
 import struct
 import numpy as np
@@ -7,6 +7,7 @@ from cobs import cobs
 import serial
 import time
 import vector_parser_api as vp
+from parsers import MESSAGE_DICT
 import threading
 import pandas as pd
 
