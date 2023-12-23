@@ -13,10 +13,16 @@
 #include <HyTech_CAN.h>
 #include "MCU_rev15_dfs.h";
 /**
- * @brief Structure to hold htX data
+ * @brief Structure to hold htX data (singleton)
  * 
  */
-struct HT_Data {
+class HT_Data {
+    private:
+    HT_Data();
+    HT_Data(const HT_Data&);
+    HT_Data& operator=(const HT_Data&);
+    static HT_Data ht_data;
+    public:
     MCU_pedal_readings mcu_pedal_readings;
     MCU_status mcu_status{};
     MCU_load_cells mcu_load_cells{};
@@ -41,7 +47,7 @@ struct HT_Data {
     SAB_CB sab_cb{};
     //SAB_thermistor_readings_1 sab_thermistor_readings_1{};
     //SAB_thermistor_readings_2 sab_thermistor_readings_2{};
-
+    static HT_Data* getInstance();
 };
 
 HT_Data::HT_Data() {
@@ -54,3 +60,7 @@ HT_Data::HT_Data() {
 
 
 //HT_Data ht_data;
+HT_Data HT_Data::ht_data;
+HT_Data* HT_Data::getInstance() {
+    return &ht_data;
+}

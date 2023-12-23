@@ -10,7 +10,7 @@
         #define START_ACCELERATOR_PEDAL_1 1370  // Position to start acceleration //1140 + pressure 1151
         #define END_ACCELERATOR_PEDAL_1 2108    // Position to max out acceleration //1905
         #define MAX_ACCELERATOR_PEDAL_1 2400    // High accelerator implausibility threshold
-
+//accel 2 is a negative slop
         #define MIN_ACCELERATOR_PEDAL_2 500    // Low accelerator implausibility threshold
         #define START_ACCELERATOR_PEDAL_2 680  // Position to start acceleration 560 + pressure 570
         #define END_ACCELERATOR_PEDAL_2 1050    // Position to max out acceleration 948
@@ -36,5 +36,6 @@
     #error "Driver required"
 #endif
 
+//fixme
 #define HALF_ACCELERATOR_PEDAL_1 ((START_ACCELERATOR_PEDAL_1 + END_ACCELERATOR_PEDAL_1)/2)
 #define HALF_ACCELERATOR_PEDAL_2 ((START_ACCELERATOR_PEDAL_2 + END_ACCELERATOR_PEDAL_2)/2)

@@ -1,16 +1,16 @@
 #include "CAN_Handler.h"
 
-CAN_Handler::CAN_Handler(HT_Data* _ht_data, Inverter_Control* _inverter_control) {
-   ht_data = _ht_data;
-   inverter_control = _inverter_control;
+CAN_Handler::CAN_Handler() {
+   ht_data = HT_Data::getInstance();
+   inverter_control = Inverter_Control::getInstance();
    initCAN();
 }
 
 void CAN_Handler::initCAN() {
   INV_CAN.begin();
-  INV_CAN.setBaudRate(500000);
+  INV_CAN.setBaudRate(TELEM_BAUD_RATE);
   TELEM_CAN.begin();
-  TELEM_CAN.setBaudRate(500000);
+  TELEM_CAN.setBaudRate(INVERTER_BAUD_RATE);
   
   INV_CAN.enableMBInterrupts();
   TELEM_CAN.enableMBInterrupts();
@@ -81,7 +81,7 @@ void CAN_Handler::parse_telem_can_message(const CAN_message_t &RX_msg)
         ht_data->mcu_status.toggle_launch_ctrl_active();
       }
       if (ht_data->dashboard_status.get_mc_cycle_btn()) {
-        inverter_restart = true; //inverter data to write to
+        inverter_control->set_inverter_restart(true); //inverter data to write to
         timer_reset_inverter.reset();
       }
       // eliminate all action buttons to not process twice
@@ -176,4 +176,12 @@ void CAN_Handler::send_CAN_mcu_analog_readings() {
     msg.len = sizeof(ht_data->mcu_analog_readings);
     TELEM_CAN.write(msg);
   }
+}
+
+void CAN_Handler::send_CAN_buzzer_data() {
+    ht_data->mcu_status.set_activate_buzzer(false);
+    ht_data->mcu_status.write(msg.buf);
+    msg.id = ID_MCU_STATUS;
+    msg.len = sizeof(ht_data->mcu_status);
+    TELEM_CAN.write(msg);
 }

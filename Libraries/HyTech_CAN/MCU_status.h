@@ -20,7 +20,9 @@ enum class INVERTER_STARTUP_STATE
 {
   WAIT_SYSTEM_READY             = 0,
   WAIT_QUIT_DC_ON               = 1,
-  WAIT_QUIT_INVERTER_ON         = 2
+  WAIT_QUIT_INVERTER_ON         = 2,
+  ALL_INVERTERS_QUIT_INVERTER_ON =3,
+  ALL_INVERTERS_DISABLED        =4
 };
 #pragma pack(push,1)
 

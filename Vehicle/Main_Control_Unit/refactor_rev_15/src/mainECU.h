@@ -25,22 +25,29 @@
 #include "MCU_rev15_dfs.h"
 #include "driver_constants.h"
 #include "drivers.h"
-
+#include "Sensor_Aq.h"
+#include "CAN_Handler.h"
+#include "Status_Manager.h"
 
 
 class MainECU {
     private:
-
-        HT_Data ht_data;
+        //make this a singleton
+        //could lowkey make everything a singleton for ease of access
+        HT_Data* ht_data; //add this in the constructor
         Sensor_Aq sensor_aq;
         CAN_Handler can_handler;
-        Inverter_Control inverter_control;
+        Inverter_Control* inverter_control;
         Torque_Vectoring torque_vectoring;
-        Status_Manager torque_vectoring;
-        MCU_STATE mainECU_state;
-
+        Status_Manager status_manager;
+        MCU_STATE mcu_state;
+        void set_state(MCU_STATE new_state);
+        void state_machine();
     public:
-
+        MainECU();
+        void loop();
+        
+        
 
 
 };

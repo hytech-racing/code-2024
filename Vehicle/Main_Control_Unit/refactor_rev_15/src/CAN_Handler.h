@@ -21,7 +21,7 @@
 class CAN_Handler {
     private:
     static HT_Data* ht_data;
-    static Inverter_Control inverter_control;
+    static Inverter_Control* inverter_control;
     FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> INV_CAN;
     FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> TELEM_CAN;
     CAN_message_t msg;
@@ -54,10 +54,8 @@ class CAN_Handler {
     /**
      * @brief Construct a new can handler object
      * 
-     * @param _ht_data pointer to htX data
-     * @param _inverter_control pointer to inverter control data
      */
-    CAN_Handler(HT_Data* _ht_data, Inverter_Control* _inverter_control);
+    CAN_Handler();
     /**
      * @brief poll CAN events during ECU operation
      * 
@@ -69,5 +67,6 @@ class CAN_Handler {
      * 
      */
     void CAN_write();
+    void send_CAN_buzzer_data();
     
 }

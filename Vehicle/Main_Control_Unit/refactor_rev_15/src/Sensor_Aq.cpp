@@ -14,9 +14,8 @@
  * @brief Construct a new Sensor_Aq::Sensor_Aq object
  *          initializes adc and rs422 objects
  */
-Sensor_Aq::Sensor_Aq(HT_Data* _ht_data) {
-    ht_data = _ht_data;
-    begin_all_adcs();
+Sensor_Aq::Sensor_Aq() : adc(ADC_VREF, ADC_CS), adc_fl(ADC_VREF, FL_CS), adc_fr(ADC_VREF, FR_CS), settings(ADC_SPI_SPEED, MSBFIRST, SPI_MODE0) {
+    ht_data = HT_Data::getInstance();
     begin_steering_rs422();
     pinMode(ECU_CLK, OUTPUT);
     pinMode(ECU_SDI, INPUT);
@@ -25,13 +24,6 @@ Sensor_Aq::Sensor_Aq(HT_Data* _ht_data) {
     pinMode(THERM_FL, INPUT);
     pinMode(STEERING_2, INPUT); 
 }  
-
-void Sensor_Aq::begin_all_adcs() {
-    adc = MCP3208(ADC_VREF, ADC_CS);
-    adc_fl =  MCP3204(ADC_VREF, FL_CS);
-    adc_fr = MCP3204(ADC_VREF, FR_CS);
-    settings = SPISettings(ADC_SPI_SPEED, MSBFIRST, SPI_MODE0);
-}
 void Sensor_Aq::begin_steering_rs422() {
     //Steering_Top.begin();
 }
@@ -43,10 +35,10 @@ void Sensor_Aq:: read_all_adc_channels(uint16_t* ecu, uint16_t* fl, uint16_t* fr
   ecu[1] = adc.read(MCP3208::Channel::SINGLE_1);
   ecu[2] = adc.read(MCP3208::Channel::SINGLE_2);
   ecu[3] = adc.read(MCP3208::Channel::SINGLE_3);
-  ecu[4] = adc.read(MCP3208::Channel::SINGLE_0);
-  ecu[5] = adc.read(MCP3208::Channel::SINGLE_1);
-  ecu[6] = adc.read(MCP3208::Channel::SINGLE_2);
-  ecu[7] = adc.read(MCP3208::Channel::SINGLE_3);
+  ecu[4] = adc.read(MCP3208::Channel::SINGLE_4);
+  ecu[5] = adc.read(MCP3208::Channel::SINGLE_5);
+  ecu[6] = adc.read(MCP3208::Channel::SINGLE_6);
+  ecu[7] = adc.read(MCP3208::Channel::SINGLE_7);
   fl[0] = adc_fl.read(MCP3204::Channel::SINGLE_0);
   fl[1] = adc_fl.read(MCP3204::Channel::SINGLE_1);
   fl[2] = adc_fl.read(MCP3204::Channel::SINGLE_2);

@@ -18,17 +18,12 @@
 #define STEERING_SERIAL 5
 class Sensor_Aq {
     private:
-    static HT_Data* ht_data;
+    HT_Data* ht_data;
     MCP3208 adc;
     MCP3204 adc_fl;
     MCP3204 adc_fr;
     SPISettings settings;
     // STEERING_RS422 Steering_Top(STEERING_SERIAL);
-    /**
-     * @brief init SPI on adc's
-     * 
-     */
-    void begin_all_adcs();
     /**
      * @brief init rs422 for steering sensor
      * 
@@ -54,7 +49,11 @@ class Sensor_Aq {
     void read_steering_rs422();
 
     public:
-    Sensor_Aq(HT_Data* _ht_data);
+    /**
+     * @brief Construct a new Sensor_Aq object
+     * 
+     */
+    Sensor_Aq();
 
     /**
      * @brief sample the adcs, public interface
