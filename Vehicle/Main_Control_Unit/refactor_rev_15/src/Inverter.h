@@ -22,22 +22,29 @@ class Inverter {
      * @param isFront is it a front or rear inverter
      * @param isLeft is it a left or right inverter
      */
-    Inverter(bool isFront, bool isLeft);
+    Inverter(bool isFront, bool isLeft) {
+        this->isFront = isFront;
+        this->isLeft = isLeft;
+    }
     /**
      * @brief is inverter a front or rear
      * 
      * @return true 
      * @return false 
      */
-    bool is_front(); 
+    bool is_front() {
+        return isFront;
+    }; 
     /**
      * @brief is inverter a left or right
      * 
      * @return true 
      * @return false 
      */
-    bool is_left();
-    
+    bool is_left() {
+        return isLeft;
+    }
+
     MC_status mc_status;
     MC_temps mc_temp;
     MC_energy mc_energy;

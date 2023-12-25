@@ -22,7 +22,8 @@ class Torque_Vectoring {
     private:
     HT_Data* ht_data;
     Inverter_Control* inverter_control;
-    
+    int16_t torque_setpoint_array[NUM_INVERTERS];
+    int16_t speed_setpoint_array[NUM_INVERTERS] = {0, 0, 0, 0};
 
     float max_torque;
     //design for implausabilities lolz
@@ -43,7 +44,7 @@ class Torque_Vectoring {
         uint16_t val;
     } brake [NUM_APPS] = {{&MCU_pedal_readings::get_brake_pedal_1, START_BRAKE_PEDAL_1, END_BRAKE_PEDAL_1, 0}, {&MCU_pedal_readings::get_brake_pedal_2, START_BRAKE_PEDAL_2, END_BRAKE_PEDAL_2, 0}};
 
-    
+    uint16_t (MCU_load_cells::*load_cell[NUM_LOAD_CELLS])() const = {&MCU_load_cells::get_FL_load_cell, &MCU_load_cells::get_FR_load_cell, &MCU_load_cells::get_RL_load_cell, &MCU_load_cells::get_RR_load_cell };
     
     float rear_power_balance;
     float front_power_balance;
@@ -131,27 +132,27 @@ class Torque_Vectoring {
      * @brief safe_mode (no vectoring and whatnot)
      * 
      */
-    void safe_mode();
+    void safe_mode(int accel, int brake, float max_front_power, float max_rear_power);
     /**
      * @brief Mikhail nissan mode
      * 
      */
-    void nissan_mode();
+    void nissan_mode(int accel, int brake);
     /**
      * @brief launch control mode
      * 
      */
-    void launch_control();
+    void launch_control(int accel, int brake, float max_front_power, float max_rear_power, float launch_rate_target);
     /**
-     * @brief endurance mode
+     * @brief endurance mode (pasted from )
      * 
      */
-    void endurance_mode();
+    void endurance_mode(int accel, int brake, int avg_speed);
     /**
      * @brief load cell torque vectoring
      * 
      */
-    void load_cell_mode();
+    void load_cell_mode(int accel, int brake);
     //Torque_Vectoring()
 
 };

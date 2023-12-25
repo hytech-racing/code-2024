@@ -4,14 +4,13 @@
  *
  * @param _ht_data pointer to ht_data struct
  */
-Inverter_Control::Inverter_Control() : inverters {Inverter(true, true), Inverter(true, false), Inverter(false, true), Inverter(false, false)}
+Inverter_Control::Inverter_Control() : inverters{Inverter(true, true), Inverter(true, false), Inverter(false, true), Inverter(false, false)}
 {
     ht_data = HT_Data::getInstance();
     inverter_restart = false;
     inverter_startup_state = INVERTER_STARTUP_STATE::ALL_INVERTERS_DISABLED;
     front_inv = true;
     rear_inv = true;
-    
 }
 Inverter_Control Inverter_Control::inverter_control;
 Inverter_Control *Inverter_Control::getInstance()
@@ -22,7 +21,7 @@ Inverter_Control *Inverter_Control::getInstance()
 void Inverter_Control::init_inverters()
 {
     set_all_inverters_disabled();
-// change to input if comparator is PUSH PULL
+    // change to input if comparator is PUSH PULL
     pinMode(INVERTER_EN, OUTPUT);
     pinMode(INVERTER_24V_EN, OUTPUT);
     digitalWrite(INVERTER_24V_EN, HIGH);
@@ -38,13 +37,15 @@ void Inverter_Control::set_inverter_restart(bool _inverter_restart)
 {
     inverter_restart = _inverter_restart;
 }
-void Inverter_Control::set_inv_state(INVERTER_STARTUP_STATE new_inv_state) {
-    if (new_inv_state == inverter_startup_state) return;
+void Inverter_Control::set_inv_state(INVERTER_STARTUP_STATE new_inv_state)
+{
+    if (new_inv_state == inverter_startup_state)
+        return;
     inverter_startup_state = new_inv_state;
-    if (new_inv_state == INVERTER_STARTUP_STATE::ALL_INVERTERS_DISABLED) {
+    if (new_inv_state == INVERTER_STARTUP_STATE::ALL_INVERTERS_DISABLED)
+    {
         set_all_inverters_disabled();
     }
-    
 }
 void Inverter_Control::inv_state_machine()
 {
@@ -76,10 +77,10 @@ void Inverter_Control::inv_state_machine()
         break;
     case INVERTER_STARTUP_STATE::ALL_INVERTERS_QUIT_INVERTER_ON:
         if (check_all_inverters_error())
-           set_inv_state(INVERTER_STARTUP_STATE::ALL_INVERTERS_DISABLED); 
+            set_inv_state(INVERTER_STARTUP_STATE::ALL_INVERTERS_DISABLED);
         break;
     case INVERTER_STARTUP_STATE::ALL_INVERTERS_DISABLED:
-        //entry logic could be fixed a lil
+        // entry logic could be fixed a lil
         break;
     }
 }
@@ -244,7 +245,7 @@ void Inverter_Control::set_all_inverters_dc_on(bool input)
 {
     for (uint8_t inv = 0; inv < NUM_INVERTERS; inv++)
     {
-       inverters[inv].mc_setpoints_command.set_hv_enable(input);
+        inverters[inv].mc_setpoints_command.set_hv_enable(input);
     }
 }
 
@@ -269,7 +270,7 @@ void Inverter_Control::set_all_inverters_inverter_enable(bool input)
 {
     for (uint8_t inv = 0; inv < NUM_INVERTERS; inv++)
     {
-        inverters[inv]mc_setpoints_command.set_inverter_enable(input);
+        inverters[inv].mc_setpoints_command.set_inverter_enable(input);
     }
 }
 /**
@@ -326,14 +327,17 @@ INVERTER_STARTUP_STATE Inverter_Control::get_inverter_state()
     return inverter_startup_state;
 }
 
-bool Inverter_Control::get_if_fronts() {
+bool Inverter_Control::get_if_fronts()
+{
     return front_inv;
 }
-    
-    bool Inverter_Control::get_if_rears() {
-        return rear_inv;
-    }
 
-    Inverter* Inverter_Control::get_inverter(int inv) {
-        return &inverters[inv];
-    }
+bool Inverter_Control::get_if_rears()
+{
+    return rear_inv;
+}
+
+Inverter *Inverter_Control::get_inverter(int inv)
+{
+    return &inverters[inv];
+}

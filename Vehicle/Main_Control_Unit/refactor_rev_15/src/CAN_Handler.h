@@ -18,6 +18,7 @@
 #include "debugging_utils.h"
 #define TELEM_BAUD_RATE 500000
 #define INVERTER_BAUD_RATE 500000
+
 class CAN_Handler {
     private:
     static HT_Data* ht_data;
@@ -69,4 +70,4 @@ class CAN_Handler {
     void CAN_write();
     void send_CAN_buzzer_data();
     
-}
+};

@@ -11,15 +11,12 @@ Torque_Vectoring::Torque_Vectoring()
 
     total_torque = 0;
     total_load_cells = 0;
-
+    load_cell_alpha = 0.95;
     attesa_def_split = 0.85;
     attesa_alt_split = 0.5;
-    fr_slip_clamped;
+
     fr_slip_factor = 2.5; // Factor of 5 causes 50/50 split at 20% r/f slip. Lower values allow more slip
-    f_torque;
-    r_torque;
-    rear_lr_slip_clamped;
-    lsd_right_split; // Fraction of rear axle torque going to rear right wheel
+    // Fraction of rear axle torque going to rear right wheel
     lsd_slip_factor = 0.5;
 
     avg_speed = 0.0;
@@ -38,8 +35,6 @@ Torque_Vectoring::Torque_Vectoring()
     launch_state = NOT_READY;
     launch_speed_target = 0;
     launch_rate_target = 0.0;
-
-    
 }
 
 void Torque_Vectoring::set_inverter_torques(int state)
@@ -47,16 +42,16 @@ void Torque_Vectoring::set_inverter_torques(int state)
     max_torque = ht_data->mcu_status.get_max_torque() / 0.0098; // max possible value for torque multiplier, unit in 0.1% nominal torque
     int avg_accel = 0;
     int avg_brake = 0;
-    for (int i = 0; i < NUM_APPS;i++) {
+    for (int i = 0; i < NUM_APPS; i++)
+    {
         accel[i].val = min(max_torque, map(round((ht_data->mcu_pedal_readings.*accel[i].get_accel)()), accel[i].start, accel[i].end, 0, 2140));
         avg_accel += accel[i].val;
     }
-    
+
     for (int i = 0; i < NUM_BRAKES; i++)
     {
         brake[i].val = map(round((ht_data->mcu_pedal_readings.*brake[i].get_brake)()), brake[i].start, brake[i].end, 0, 2140);
         avg_brake += brake[i].val;
-    
     }
     avg_accel /= NUM_APPS;
     avg_brake /= NUM_BRAKES;
@@ -65,35 +60,185 @@ void Torque_Vectoring::set_inverter_torques(int state)
     int avg_speed = 0.0;
     for (int i = 0; i < NUM_INVERTERS; i++)
         avg_speed += ((float)inverter_control->get_inverter(i)->mc_status.get_speed()) / 4.0;
-    float steering_angle = ht_data->mcu_analog_readings.get_steering_2() * steering_calibration_slope + steering_calibration_offset;
-    
 
-    switch(state) {
-        case 0: {
+    steering_angle = ht_data->mcu_analog_readings.get_steering_2() * steering_calibration_slope + steering_calibration_offset;
 
+    switch (state)
+    {
+    case 0:
+    {
+        safe_mode(avg_accel, avg_brake, 19000.0, 36000.0);
+
+        break;
+    }
+    case 1:
+    {
+        load_cell_mode(avg_accel, avg_brake);
+        break;
+    }
+    case 2:
+    {
+        launch_control(avg_accel, avg_brake, 21760.0, 41230.0, 11.76);
+        break;
+    }
+    case 3:
+    {
+        launch_control(avg_accel, avg_brake, 21760.0, 41230.0, 12.74);
+        break;
+    }
+    case 4:
+    {
+        endurance_mode(avg_accel, avg_brake, avg_speed);
+        break;
+    }
+    case 5:
+    {
+        safe_mode(avg_accel, avg_brake, 21760.0, 41240.0);
+        break;
+    }
+    default:
+    {
+        break;
+    }
+    }
+}
+
+void Torque_Vectoring::safe_mode(int accel, int brake, float max_front_power, float max_rear_power)
+{
+    float max_front_power = 19000.0;
+    float max_rear_power = 36000.0;
+    for (int i = 0; i < NUM_INVERTERS; i++)
+    {
+        torque_setpoint_array[i] = accel - brake;
+        int balance = front_power_balance;
+        if (!inverter_control->get_inverter(i)->is_front())
+        {
+            balance = rear_power_balance;
+        }
+        torque_setpoint_array[i] = (int16_t)(torque_setpoint_array[i] * balance);
+    }
+}
+
+void Torque_Vectoring::nissan_mode(int accel, int brake)
+{
+}
+void Torque_Vectoring::endurance_mode(int accel, int brake)
+{
+    float max_front_power = 19000.0;
+    float max_rear_power = 36000.0;
+    int32_t total_torque = NUM_LOAD_CELLS * (accel - brake);
+
+    int32_t total_load_cells = 0;
+    //derating
+    int16_t start_derating_rpm = 2000;
+    int16_t end_derating_rpm = 20000;
+    float derating_factor = float_map(avg_speed, start_derating_rpm, end_derating_rpm, 1.0, 0.0);
+    derating_factor = min(1.0, max(0.0, derating_factor));
+    for (int i = 0; i < NUM_LOAD_CELLS; i++)
+    {
+        total_load_cells += (ht_data->mcu_load_cells.*load_cell[i])();
+    }
+    for (int i = 0; i < NUM_INVERTERS; i++)
+    {
+        speed_setpoint_array[i] = MAX_ALLOWED_SPEED;
+        torque_setpoint_array[i] = (int16_t)((float)(ht_data->mcu_load_cells.*load_cell[i])() / (float)total_load_cells * (float)total_torque * derating_factor);
+        if (accel < brake && !inverter_control->get_inverter(i)->is_front())
+        {
+            torque_setpoint_array[i] = (int16_t)((float)(ht_data->mcu_load_cells.*load_cell[i])() / (float)total_load_cells * (float)total_torque / 2.0);
+        }
+    }
+
+}
+void Torque_Vectoring::launch_control(int accel, int brake, float max_front_power, float max_rear_power, float launch_rate_target)
+{
+    uint16_t max_speed = 0;
+    float launch_speed_target = 0;
+    for (int i = 0; i < NUM_INVERTERS; i++)
+    {
+        max_speed = max(max_speed, inverter_control->get_inverter(i)->mc_status.get_speed());
+    }
+
+
+    switch (launch_state)
+    {
+    case NOT_READY:
+    {
+        for (int i = 0; i < NUM_INVERTERS; i++)
+        {
+            torque_setpoint_array[i] = (int16_t)(-1 * brake);
+            speed_setpoint_array[i] = 0;
+        }
+        time_since_launch = 0;
+        // To enter launch_ready, the following conditions must be true:
+        // 1. Pedals are not pressed
+        // 2. Speed is zero
+        if (accel < LAUNCH_READY_ACCEL_THRESHOLD && brake < LAUNCH_READY_BRAKE_THRESHOLD && max_speed < LAUNCH_READY_SPEED_THRESHOLD)
+        {
+            launch_state = READY;
+        }
+        break;
+    }
+
+    case READY:
+    {
+        for (int i = 0; i < NUM_INVERTERS; i++)
+        {
+            torque_setpoint_array[i] = 0;
+            speed_setpoint_array[i] = 0;
+        }
+        time_since_launch = 0;
+        
+        // Revert to launch_not_ready if brake is pressed or speed is too high
+        if (brake >= LAUNCH_READY_BRAKE_THRESHOLD || max_speed >= LAUNCH_READY_SPEED_THRESHOLD)
+        {
+            launch_state = NOT_READY;
+        }
+        else if (accel >= LAUNCH_GO_THRESHOLD)
+        {
+            launch_state = LAUNCH;
+        }
+        break;
+    }
+    case LAUNCH:
+    {
+        if (accel <= LAUNCH_STOP_THRESHOLD || brake >= LAUNCH_READY_BRAKE_THRESHOLD)
+        {
+            launch_state = NOT_READY;
             break;
         }
-        case 1: {
-            
-            break;
+
+        launch_speed_target = (int16_t)((float)time_since_launch / 1000.0 * launch_rate_target * 60.0 / 1.2767432544 * 11.86);
+        launch_speed_target += 1500; //wth is this?
+        launch_speed_target = min(20000, max(0, launch_speed_target));
+
+        for (int i = 0; i < NUM_INVERTERS; i++)
+        {
+            torque_setpoint_array[i] = 2142;
+            speed_setpoint_array[i] = launch_speed_target;
         }
-        case 2: {
-            
-            break;
+        break;
+    }
+    }
+}
+void Torque_Vectoring::load_cell_mode(int accel, int brake)
+{
+    float max_front_power = 19000.0;
+    float max_rear_power = 36000.0;
+    int32_t total_torque = NUM_LOAD_CELLS * (accel - brake);
+
+    int32_t total_load_cells = 0;
+    for (int i = 0; i < NUM_LOAD_CELLS; i++)
+    {
+        total_load_cells += (ht_data->mcu_load_cells.*load_cell[i])();
+    }
+    for (int i = 0; i < NUM_INVERTERS; i++)
+    {
+        speed_setpoint_array[i] = MAX_ALLOWED_SPEED;
+        torque_setpoint_array[i] = (int16_t)((float)(ht_data->mcu_load_cells.*load_cell[i])() / (float)total_load_cells * (float)total_torque);
+        if (accel < brake && !inverter_control->get_inverter(i)->is_front())
+        {
+            torque_setpoint_array[i] = (int16_t)((float)(ht_data->mcu_load_cells.*load_cell[i])() / (float)total_load_cells * (float)total_torque / 2.0);
         }
-        case 3: {
-            
-            break;
-        }
-        case 4: {
-            
-            break;
-        }
-        case 5: {
-            
-            break;
-        }
-        default:{ break};
     }
 }
 
