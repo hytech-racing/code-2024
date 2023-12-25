@@ -120,6 +120,9 @@
 #define MECH_POWER_LIMIT 63
 #define DC_POWER_LIMIT 79
 
+#define NUM_APPS 2
+#define NUM_BRAKES 2
+#define NUM_LOAD_CELLS 4
 #define REGEN_OFF_START_THRESHOLD 1540
 
 float load_cell_alpha = 0.95; //temp until i find a place

@@ -14,19 +14,43 @@
 #include "debugging_utils.h"
 #include "HT_Data.h"
 #include "MCU_rev15_dfs.h"
-
+#include "Inverter.h"
+#define NUM_INVERTERS 4
 class Inverter_Control
 {
 private:
     HT_Data *ht_data;
     bool inverter_restart;
     INVERTER_STARTUP_STATE inverter_startup_state;
-    
     Inverter_Control();
     Inverter_Control(const Inverter_Control&);
     Inverter_Control& operator=(const Inverter_Control&);
     static Inverter_Control inverter_control;
+    bool front_inv;
+    bool rear_inv;
+    Inverter inverters[NUM_INVERTERS];
 public:
+/**
+ * @brief Get if there are front inverters (ht07)
+ * 
+ * @return true 
+ * @return false 
+ */
+    bool get_if_fronts();
+    /**
+     * @brief Get if there are rear inverters
+     * 
+     * @return true 
+     * @return false 
+     */
+    bool get_if_rears();
+    /**
+     * @brief Get a pointer to inverter
+     * 
+     * @param inv 
+     * @return Inverter* 
+     */
+    Inverter* get_inverter(int inv);
     /**
      * @brief get instance of Inverter_Control object
      * 

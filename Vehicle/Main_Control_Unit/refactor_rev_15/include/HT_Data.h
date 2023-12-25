@@ -33,11 +33,6 @@ class HT_Data {
     //MCU_thermistor_readings mcu_thermistor_readings{};
     MCU_analog_readings mcu_analog_readings{};
 
-    MC_status mc_status[4];
-    MC_temps mc_temps[4];
-    MC_energy mc_energy[4];
-    MC_setpoints_command mc_setpoints_command[4];
-
     // Inbound CAN messages
     BMS_coulomb_counts bms_coulomb_counts{};
     BMS_status bms_status{};

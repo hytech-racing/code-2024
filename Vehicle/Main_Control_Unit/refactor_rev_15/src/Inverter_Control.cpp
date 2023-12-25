@@ -4,11 +4,14 @@
  *
  * @param _ht_data pointer to ht_data struct
  */
-Inverter_Control::Inverter_Control()
+Inverter_Control::Inverter_Control() : inverters {Inverter(true, true), Inverter(true, false), Inverter(false, true), Inverter(false, false)}
 {
     ht_data = HT_Data::getInstance();
     inverter_restart = false;
     inverter_startup_state = INVERTER_STARTUP_STATE::ALL_INVERTERS_DISABLED;
+    front_inv = true;
+    rear_inv = true;
+    
 }
 Inverter_Control Inverter_Control::inverter_control;
 Inverter_Control *Inverter_Control::getInstance()
@@ -19,7 +22,7 @@ Inverter_Control *Inverter_Control::getInstance()
 void Inverter_Control::init_inverters()
 {
     set_all_inverters_disabled();
-    // change to input if comparator is PUSH PULL
+// change to input if comparator is PUSH PULL
     pinMode(INVERTER_EN, OUTPUT);
     pinMode(INVERTER_24V_EN, OUTPUT);
     digitalWrite(INVERTER_24V_EN, HIGH);
@@ -88,9 +91,9 @@ void Inverter_Control::inv_state_machine()
  */
 bool Inverter_Control::check_all_inverters_system_ready()
 {
-    for (uint8_t inv = 0; inv < 4; inv++)
+    for (uint8_t inv = 0; inv < NUM_INVERTERS; inv++)
     {
-        if (!ht_data->mc_status[inv].get_system_ready())
+        if (!inverters[inv].mc_status.get_system_ready())
         {
             return false;
         }
@@ -106,9 +109,9 @@ bool Inverter_Control::check_all_inverters_system_ready()
  */
 bool Inverter_Control::check_all_inverters_quit_dc_on()
 {
-    for (uint8_t inv = 0; inv < 4; inv++)
+    for (uint8_t inv = 0; inv < NUM_INVERTERS; inv++)
     {
-        if (!ht_data->mc_status[inv].get_quit_dc_on())
+        if (!inverters[inv].mc_status.get_quit_dc_on())
         {
             return false;
         }
@@ -123,9 +126,9 @@ bool Inverter_Control::check_all_inverters_quit_dc_on()
  */
 bool Inverter_Control::check_all_inverters_quit_inverter_on()
 {
-    for (uint8_t inv = 0; inv < 4; inv++)
+    for (uint8_t inv = 0; inv < NUM_INVERTERS; inv++)
     {
-        if (!ht_data->mc_status[inv].get_quit_inverter_on())
+        if (!inverters[inv].mc_status.get_quit_inverter_on())
         {
             return false;
         }
@@ -141,9 +144,9 @@ bool Inverter_Control::check_all_inverters_quit_inverter_on()
 uint8_t Inverter_Control::check_all_inverters_error()
 {
     uint8_t error_list = 0; // last 4 bits correspond to error bit in status word of each inverter, inverter 1 is rightmost bit;
-    for (uint8_t inv = 0; inv < 4; inv++)
+    for (uint8_t inv = 0; inv < NUM_INVERTERS; inv++)
     {
-        if (ht_data->mc_status[inv].get_error())
+        if (inverters[inv].mc_status.get_error())
         {
             error_list = error_list | (0x01 << inv);
         }
@@ -165,11 +168,11 @@ uint8_t Inverter_Control::check_all_inverters_error()
  */
 void Inverter_Control::set_all_inverters_no_torque()
 {
-    for (uint8_t inv = 0; inv < 4; inv++)
+    for (uint8_t inv = 0; inv < NUM_INVERTERS; inv++)
     {
-        ht_data->mc_setpoints_command[inv].set_speed_setpoint(0);
-        ht_data->mc_setpoints_command[inv].set_pos_torque_limit(0);
-        ht_data->mc_setpoints_command[inv].set_neg_torque_limit(0);
+        inverters[inv].mc_setpoints_command.set_speed_setpoint(0);
+        inverters[inv].mc_setpoints_command.set_pos_torque_limit(0);
+        inverters[inv].mc_setpoints_command.set_neg_torque_limit(0);
     }
 }
 
@@ -186,18 +189,18 @@ void Inverter_Control::set_all_inverters_torque_limit(int limit)
 
     if (limit >= 0)
     {
-        for (uint8_t inv = 0; inv < 4; inv++)
+        for (uint8_t inv = 0; inv < NUM_INVERTERS; inv++)
         {
-            ht_data->mc_setpoints_command[inv].set_pos_torque_limit(limit);
-            ht_data->mc_setpoints_command[inv].set_neg_torque_limit(0);
+            inverters[inv].mc_setpoints_command.set_pos_torque_limit(limit);
+            inverters[inv].mc_setpoints_command.set_neg_torque_limit(0);
         }
     }
     else
     {
-        for (uint8_t inv = 0; inv < 4; inv++)
+        for (uint8_t inv = 0; inv < NUM_INVERTERS; inv++)
         {
-            ht_data->mc_setpoints_command[inv].set_pos_torque_limit(0);
-            ht_data->mc_setpoints_command[inv].set_neg_torque_limit(limit);
+            inverters[inv].mc_setpoints_command.set_pos_torque_limit(0);
+            inverters[inv].mc_setpoints_command.set_neg_torque_limit(limit);
         }
     }
 }
@@ -209,9 +212,9 @@ void Inverter_Control::set_all_inverters_torque_limit(int limit)
  */
 void Inverter_Control::set_all_inverters_speed_setpoint(int setpoint)
 {
-    for (uint8_t inv = 0; inv < 4; inv++)
+    for (uint8_t inv = 0; inv < NUM_INVERTERS; inv++)
     {
-        ht_data->mc_setpoints_command[inv].set_speed_setpoint(setpoint);
+        inverters[inv].mc_setpoints_command.set_speed_setpoint(setpoint);
     }
 }
 
@@ -221,15 +224,15 @@ void Inverter_Control::set_all_inverters_speed_setpoint(int setpoint)
  */
 void Inverter_Control::set_all_inverters_disabled()
 {
-    for (uint8_t inv = 0; inv < 4; inv++)
+    for (uint8_t inv = 0; inv < NUM_INVERTERS; inv++)
     {
-        ht_data->mc_setpoints_command[inv].set_inverter_enable(false);
-        ht_data->mc_setpoints_command[inv].set_hv_enable(false);
-        ht_data->mc_setpoints_command[inv].set_driver_enable(false);
-        ht_data->mc_setpoints_command[inv].set_remove_error(false);
-        ht_data->mc_setpoints_command[inv].set_speed_setpoint(0);
-        ht_data->mc_setpoints_command[inv].set_pos_torque_limit(0);
-        ht_data->mc_setpoints_command[inv].set_neg_torque_limit(0);
+        inverters[inv].mc_setpoints_command.set_inverter_enable(false);
+        inverters[inv].mc_setpoints_command.set_hv_enable(false);
+        inverters[inv].mc_setpoints_command.set_driver_enable(false);
+        inverters[inv].mc_setpoints_command.set_remove_error(false);
+        inverters[inv].mc_setpoints_command.set_speed_setpoint(0);
+        inverters[inv].mc_setpoints_command.set_pos_torque_limit(0);
+        inverters[inv].mc_setpoints_command.set_neg_torque_limit(0);
     }
 }
 /**
@@ -239,9 +242,9 @@ void Inverter_Control::set_all_inverters_disabled()
  */
 void Inverter_Control::set_all_inverters_dc_on(bool input)
 {
-    for (uint8_t inv = 0; inv < 4; inv++)
+    for (uint8_t inv = 0; inv < NUM_INVERTERS; inv++)
     {
-        ht_data->mc_setpoints_command[inv].set_hv_enable(input);
+       inverters[inv].mc_setpoints_command.set_hv_enable(input);
     }
 }
 
@@ -252,9 +255,9 @@ void Inverter_Control::set_all_inverters_dc_on(bool input)
  */
 void Inverter_Control::set_all_inverters_driver_enable(bool input)
 {
-    for (uint8_t inv = 0; inv < 4; inv++)
+    for (uint8_t inv = 0; inv < NUM_INVERTERS; inv++)
     {
-        ht_data->mc_setpoints_command[inv].set_driver_enable(input);
+        inverters[inv].mc_setpoints_command.set_driver_enable(input);
     }
 }
 /**
@@ -264,9 +267,9 @@ void Inverter_Control::set_all_inverters_driver_enable(bool input)
  */
 void Inverter_Control::set_all_inverters_inverter_enable(bool input)
 {
-    for (uint8_t inv = 0; inv < 4; inv++)
+    for (uint8_t inv = 0; inv < NUM_INVERTERS; inv++)
     {
-        ht_data->mc_setpoints_command[inv].set_inverter_enable(input);
+        inverters[inv]mc_setpoints_command.set_inverter_enable(input);
     }
 }
 /**
@@ -277,15 +280,15 @@ void Inverter_Control::reset_inverters()
 {
     if (inverter_restart)
     {
-        uint8_t reset_bit = !ht_data->mc_setpoints_command[0].get_remove_error();
-        if (timer_reset_inverter.Inverter_Control::check())
+        uint8_t reset_bit = !inverters[0].mc_setpoints_command.get_remove_error();
+        if (timer_reset_inverter.check())
         {
             inverter_restart = false;
             reset_bit = 0;
         }
-        for (uint8_t inv = 0; inv < 4; inv++)
+        for (uint8_t inv = 0; inv < NUM_INVERTERS; inv++)
         {
-            ht_data->mc_setpoints_command[inv].set_remove_error(reset_bit);
+            inverters[inv].mc_setpoints_command.set_remove_error(reset_bit);
         }
     }
 }
@@ -308,9 +311,9 @@ MCU_STATE Inverter_Control::check_TS_active(MCU_STATE mcu_state)
 
 bool Inverter_Control::check_TS_over_HV_threshold()
 {
-    for (uint8_t inv = 0; inv < 4; inv++)
+    for (uint8_t inv = 0; inv < NUM_INVERTERS; inv++)
     {
-        if (ht_data->mc_energy[inv].get_dc_bus_voltage() < MIN_HV_VOLTAGE)
+        if (inverters[inv].mc_energy.get_dc_bus_voltage() < MIN_HV_VOLTAGE)
         {
             return false;
         }
@@ -322,3 +325,15 @@ INVERTER_STARTUP_STATE Inverter_Control::get_inverter_state()
 {
     return inverter_startup_state;
 }
+
+bool Inverter_Control::get_if_fronts() {
+    return front_inv;
+}
+    
+    bool Inverter_Control::get_if_rears() {
+        return rear_inv;
+    }
+
+    Inverter* Inverter_Control::get_inverter(int inv) {
+        return &inverters[inv];
+    }

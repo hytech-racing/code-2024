@@ -19,6 +19,7 @@ Metro timer_CAN_mcu_pedal_readings_send = Metro(50);
 Metro timer_CAN_mcu_analog_readings_send = Metro(50);
 Metro timer_CAN_mcu_load_cells_send = Metro(20);
 Metro timer_CAN_mcu_potentiometers_send = Metro(20);
+Metro timer_CAN_inverter_telem_send = Metro(200);
 
 Metro timer_ready_sound = Metro(2000); // Time to play RTD sound
 
