@@ -46,7 +46,6 @@
 #endif
 #endif
 
-
 #define RS485_DEFAULT_PRE_DELAY 50
 #define RS485_DEFAULT_POST_DELAY 50
 
