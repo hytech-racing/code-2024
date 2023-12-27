@@ -8,6 +8,7 @@
  * @copyright Copyright (c) 2023
  * 
  */
+#pragma once
 #include "MCU_rev15_dfs.h"
 #include "HT_Data.h"
 #include "timer_utils.h"

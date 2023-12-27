@@ -8,11 +8,12 @@
  * @copyright Copyright (c) 2023
  * 
  */
+#pragma once
 #ifndef DEBUG
   #define Debug_begin(x)
   #define Debug_print(x)
   #define Debug_println(x)
-  #define Debug_printf(x)
+  #define Debug_printf(x,y)
 #else
   #define Debug_begin(x) Serial.begin(x)
   #define Debug_print(x)  Serial.print(x)

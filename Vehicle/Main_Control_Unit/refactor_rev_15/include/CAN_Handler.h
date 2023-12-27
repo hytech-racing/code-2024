@@ -1,5 +1,5 @@
 /**
- * @file Sensor_Aq.h
+ * @file CAN_Handler.h
  * @author Eric Galluzzi
  * @brief All interfacing for CAN data transmission (TELEM and INV)
  * @version 0.1
@@ -8,7 +8,8 @@
  * @copyright Copyright (c) 2023
  * 
  */
-#pragma once
+#ifndef CAN_HANDLER_H
+#define CAN_HANDLER_H
 #include "MCU_rev15_dfs.h"
 #include "HT_Data.h"
 #include "Inverter_Control.h"
@@ -71,3 +72,4 @@ class CAN_Handler {
     void send_CAN_buzzer_data();
     
 };
+#endif //CAN_HANDLER_H

@@ -9,7 +9,8 @@
  *
  */
 
-#pragma once;
+#ifndef INVERTER_CONTROL_H
+#define INVERTER_CONTROL_H
 #include "timer_utils.h"
 #include "debugging_utils.h"
 #include "HT_Data.h"
@@ -88,13 +89,13 @@ public:
      * @return true 
      * @return false 
      */
-    bool Inverter_Control::get_inverter_restart();
+    bool get_inverter_restart();
     /**
      * @brief setter for inverter restart
      * 
      * @param _inverter_restart true or false
      */
-    void  Inverter_Control::set_inverter_restart(bool _inverter_restart);
+    void set_inverter_restart(bool _inverter_restart);
     /**
      * @brief Set the inv state object
      * 
@@ -192,3 +193,4 @@ public:
      */
     void debugInverters();
 };
+#endif // INVERTER_CONTROL_H

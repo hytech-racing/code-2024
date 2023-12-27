@@ -8,7 +8,9 @@
  * @copyright Copyright (c) 2023
  * 
  */
-#pragma once
+#ifndef TIMER_UTILS_H
+#define TIMER_UTILS_H
+
 #include "FlexCAN_T4.h"
 #include "Metro.h"
 
@@ -40,3 +42,4 @@ Metro timer_debug2 = Metro(1000);
 // this allows me to set the interval as 0 once a fault has occurred, leading to continuous faulting
 // until a CAN message comes in which resets the timer and the interval
 Metro timer_bms_heartbeat = Metro(0, 1);
+#endif // TIMER_UTILS_H

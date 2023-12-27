@@ -251,12 +251,12 @@
 //     Debug_println(dashboard_status.get_dial_state());
 //   }
 // }
-#pragma once
-#include "mainECU.h"
+
+#include "Arduino.h"
 void setup() {
 
 }
 
 void loop() {
-  
+  delay(1000);
 }

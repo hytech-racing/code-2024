@@ -9,9 +9,10 @@
  * 
  */
 
-#pragma once
+#ifndef HT_DATA_H
+#define HT_DATA_H
 #include <HyTech_CAN.h>
-#include "MCU_rev15_dfs.h";
+#include "MCU_rev15_dfs.h"
 /**
  * @brief Structure to hold htX data (singleton)
  * 
@@ -59,3 +60,4 @@ HT_Data HT_Data::ht_data;
 HT_Data* HT_Data::getInstance() {
     return &ht_data;
 }
+#endif  // HT_DATA_H

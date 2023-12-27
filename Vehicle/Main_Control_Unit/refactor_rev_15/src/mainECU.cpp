@@ -8,7 +8,6 @@
  * @copyright Copyright (c) 2023
  *
  */
-#pragma once
 #include "mainECU.h"
 MainECU::MainECU() : sensor_aq(), can_handler(), torque_vectoring(), status_manager()
 {

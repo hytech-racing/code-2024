@@ -73,7 +73,7 @@ void CAN_Handler::parse_telem_can_message(const CAN_message_t &RX_msg)
     {
     case ID_BMS_TEMPERATURES:
         ht_data->bms_temperatures.load(rx_msg.buf);
-        ht_data->filtered_max_cell_temp *cell_temp_alpha + (1.0 - cell_temp_alpha) * (ht_data->bms_temperatures.get_high_temperature() / 100.0);
+        ht_data->filtered_max_cell_temp = ht_data->filtered_max_cell_temp *cell_temp_alpha + (1.0 - cell_temp_alpha) * (ht_data->bms_temperatures.get_high_temperature() / 100.0);
         break;
     case ID_BMS_VOLTAGES:
         ht_data->bms_voltages.load(rx_msg.buf);
@@ -250,7 +250,7 @@ void CAN_Handler::CAN_write() {
     send_CAN_inverter_setpoints();
     send_CAN_mcu_analog_readings();
     send_CAN_mcu_load_cells();
-    send_CAN_mcu_pedal_readings():
+    send_CAN_mcu_pedal_readings();
     send_CAN_mcu_potentiometers();
     send_CAN_mcu_status();
 }

@@ -90,7 +90,7 @@ bool Status_Manager::valid_pedals() {
     return pedal_implausability_duration <= 100;
 }
 bool Status_Manager::valid_HV(){
-    return ht_data->mcu_status.get_bms_ok_high() && ht_data->mcu_status.get_imd_ok_high()
+    return ht_data->mcu_status.get_bms_ok_high() && ht_data->mcu_status.get_imd_ok_high();
 }
 void Status_Manager::calculate_pedal_implausibilities()
 {

@@ -8,7 +8,7 @@
  * @copyright Copyright (c) 2023
  * 
  */
-
+#pragma once
 #include "HyTech_CAN.h"
 
 class Inverter {

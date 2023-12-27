@@ -132,10 +132,10 @@ void Torque_Vectoring::set_inverter_torques(int state)
             float speed_in_rpm = (float)inverter_control->get_inverter(i)->mc_status.get_speed();
             mech_power += 2 * 3.1415 * torque_in_nm * speed_in_rpm / 60.0;
         }
-        voltage_lim_factor = float_map(filtered_min_cell_voltage, 3.5, 3.2, 1.0, 0.2);
+        voltage_lim_factor = float_map(ht_data->filtered_min_cell_voltage, 3.5, 3.2, 1.0, 0.2);
         voltage_lim_factor = max(min(1.0, voltage_lim_factor), 0.2);
 
-        temp_lim_factor = float_map(filtered_max_cell_temp, 50.0, 58.0, 1.0, 0.2);
+        temp_lim_factor = float_map(ht_data->filtered_max_cell_temp, 50.0, 58.0, 1.0, 0.2);
         temp_lim_factor = max(min(1.0, temp_lim_factor), 0.2);
 
         accu_lim_factor = min(temp_lim_factor, voltage_lim_factor);
@@ -201,7 +201,7 @@ void Torque_Vectoring::set_inverter_torques(int state)
             }
             else
             {
-                int balance = front_brake_balance;
+                balance = front_brake_balance;
                 if (!inverter_control->get_inverter(i)->is_front())
                 {
                     balance = rear_brake_balance;
