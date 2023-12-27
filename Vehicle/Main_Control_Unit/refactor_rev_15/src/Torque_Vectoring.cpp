@@ -13,7 +13,9 @@ Torque_Vectoring::Torque_Vectoring()
 
     total_torque = 0;
     total_load_cells = 0;
-    load_cell_alpha = 0.95;
+    // load_cell_alpha = 0.95;
+    // cell_voltage_alpha  0.8;
+    // cell_temp_alpha  0.8;
     // attesa_def_split = 0.85;
     // attesa_alt_split = 0.5;
 

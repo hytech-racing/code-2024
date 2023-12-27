@@ -126,8 +126,8 @@
 #define NUM_LOAD_CELLS 4
 #define REGEN_OFF_START_THRESHOLD 1540
 
-float load_cell_alpha = 0.95; //temp until i find a place
+// #define load_cell_alpha 0.95; //temp until i find a place
 
-float cell_voltage_alpha = 0.8;
-float cell_temp_alpha = 0.8;
+// #define cell_voltage_alpha  0.8;
+// #define cell_temp_alpha  0.8;
 #endif

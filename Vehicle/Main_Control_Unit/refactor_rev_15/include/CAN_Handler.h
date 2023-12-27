@@ -19,13 +19,15 @@
 #include "debugging_utils.h"
 #define TELEM_BAUD_RATE 500000
 #define INVERTER_BAUD_RATE 500000
-
+const float cell_voltage_alpha = 0.8;
+const float cell_temp_alpha = 0.8;
 class CAN_Handler {
     private:
     static HT_Data* ht_data;
     static Inverter_Control* inverter_control;
     FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> INV_CAN;
     FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> TELEM_CAN;
+    
     CAN_message_t msg;
     /**
      * @brief initialize CAN buses

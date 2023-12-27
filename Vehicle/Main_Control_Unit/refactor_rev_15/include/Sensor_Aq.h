@@ -14,6 +14,7 @@
 #include "MCU_rev15_dfs.h"
 #include "HT_Data.h"
 #include "timer_utils.h"
+const float load_cell_alpha = 0.95;
 
 #define STEERING_SERIAL 5
 class Sensor_Aq {
@@ -23,6 +24,7 @@ class Sensor_Aq {
     MCP3204 adc_fl;
     MCP3204 adc_fr;
     SPISettings settings;
+    
     // STEERING_RS422 Steering_Top(STEERING_SERIAL);
     /**
      * @brief init rs422 for steering sensor

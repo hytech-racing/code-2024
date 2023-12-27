@@ -94,6 +94,9 @@ class Torque_Vectoring {
     const uint16_t LAUNCH_STOP_THRESHOLD = 600;
     float launch_rate_target;
 
+    
+    
+
     int16_t max_speed;
 
     public:
