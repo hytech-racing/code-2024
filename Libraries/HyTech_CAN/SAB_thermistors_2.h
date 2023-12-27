@@ -26,9 +26,9 @@ public:
 
 private: 
     //no free bytes
-    uint16_t thermistor7;
-    uint16_t thermistor8;
-    uint16_t thermistor9;
+    uint16_t thermistor7; //rear forward thermistor (on left side)
+    uint16_t thermistor8; //rear left thermistor
+    uint16_t thermistor9; //rear right thermistor
 };
 
 #pragma pack(pop)

@@ -23,8 +23,8 @@ public:
     inline void set_thermistor2(const uint16_t value)                       { this->thermistor2 = value; }
 
 private:
-    uint16_t thermistor1;
-    uint16_t thermistor2;
+    uint16_t thermistor1; //front left thermistor
+    uint16_t thermistor2; //front right thermistor
 };
 
 #pragma pack(pop)
