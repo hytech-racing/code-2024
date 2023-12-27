@@ -28,6 +28,7 @@
 #include "Sensor_Aq.h"
 #include "CAN_Handler.h"
 #include "Status_Manager.h"
+#include "Torque_Vectoring.h"
 
 
 class MainECU {

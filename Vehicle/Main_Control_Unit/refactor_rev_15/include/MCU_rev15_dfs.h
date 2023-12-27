@@ -126,5 +126,7 @@
 #define REGEN_OFF_START_THRESHOLD 1540
 
 float load_cell_alpha = 0.95; //temp until i find a place
-float cell_temp_alpha = 0.8;
+float filtered_min_cell_voltage = 3.5;
 float cell_voltage_alpha = 0.8;
+float filtered_max_cell_temp = 40.0;
+float cell_temp_alpha = 0.8;

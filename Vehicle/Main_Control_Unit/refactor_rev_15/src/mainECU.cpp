@@ -133,6 +133,7 @@ void MainECU::set_state(MCU_STATE new_state)
     case MCU_STATE::READY_TO_DRIVE:
     {
         inverter_control->set_inv_state(INVERTER_STARTUP_STATE::ALL_INVERTERS_DISABLED);
+        torque_vectoring.set_inverter_torques(ht_data->dashboard_status.get_dial_state());
         break;
     }
     }
@@ -186,5 +187,14 @@ void MainECU::loop() {
     status_manager.status_poll();
     state_machine();
     inverter_control->inv_state_machine();
+    if (timer_debug.check())
+  {
+    inverter_control->debugInverters();
+    torque_vectoring.debugPedals();
+    torque_vectoring.debugLoadCells();
+    status_manager.debugPOTS();
+    torque_vectoring.debugTorque();
+    
+  }
     
 }

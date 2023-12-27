@@ -341,3 +341,22 @@ Inverter *Inverter_Control::get_inverter(int inv)
 {
     return &inverters[inv];
 }
+
+void Inverter_Control::debugInverters() {
+    Debug_println("ERROR");
+    Debug_println(check_all_inverters_error());
+    Debug_println(get_inverter(0)->mc-energy.get_dc_bus_voltage);
+
+    for (int i = 0; i < NUM_INVERTERS; i++) {
+        Debug_println(get_inverter(i)->mc_temp.get_diagnostic_number);
+
+    }
+    Debug_println();
+    Debug_println("MOTOR TEMPS");
+    for (int i = 0; i < NUM_INVERTERS; i++) {
+        Debug_println(get_inverter(i)->mc_temp.get_motor_temp);
+
+    }
+
+    Debug_println(get_inverter(3).get_igbt_temp());
+}

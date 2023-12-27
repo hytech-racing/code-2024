@@ -178,3 +178,18 @@ void Status_Manager::calculate_apps_brake_implausabilities()
         pedal_implausability_duration = 0;
     }
 }
+
+void Status_Manager::debugPOTS() {
+    Debug_println("SUS POTS");
+    Debug_println(ht_data->mcu_potentiometers.get_pot1());
+    Debug_println(ht_data->mcu_potentiometers.get_pot2());
+    Debug_println(ht_data->mcu_potentiometers.get_pot3());
+    Debug_println(ht_data->mcu_potentiometers.get_pot4());
+    Debug_println();
+}
+void Status_Manager::debugDash() {
+    Debug_println("DIAL");
+    Debug_println(ht_data->dashboard_status.get_dial_state());
+    Debug_println();
+}
+

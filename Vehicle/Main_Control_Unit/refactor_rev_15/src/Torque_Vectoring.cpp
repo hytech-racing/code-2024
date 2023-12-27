@@ -2,6 +2,8 @@
 Torque_Vectoring::Torque_Vectoring()
 {
     ht_data = HT_Data::getInstance();
+    ht_data->mcu_status.set_max_torque(TORQUE_3);
+    ht_data->mcu_status.set_torque_mode(3);
     inverter_control = Inverter_Control::getInstance();
 
     rear_power_balance = 0.66;
@@ -12,24 +14,24 @@ Torque_Vectoring::Torque_Vectoring()
     total_torque = 0;
     total_load_cells = 0;
     load_cell_alpha = 0.95;
-    attesa_def_split = 0.85;
-    attesa_alt_split = 0.5;
+    // attesa_def_split = 0.85;
+    // attesa_alt_split = 0.5;
 
-    fr_slip_factor = 2.5; // Factor of 5 causes 50/50 split at 20% r/f slip. Lower values allow more slip
-    // Fraction of rear axle torque going to rear right wheel
-    lsd_slip_factor = 0.5;
+    // fr_slip_factor = 2.5; // Factor of 5 causes 50/50 split at 20% r/f slip. Lower values allow more slip
+    // // Fraction of rear axle torque going to rear right wheel
+    // lsd_slip_factor = 0.5;
 
     avg_speed = 0.0;
     start_derating_rpm = 2000;
     end_derating_rpm = 20000;
 
-    hairpin_rpm_factor = 0.0;
+    // hairpin_rpm_factor = 0.0;
 
     steering_calibration_slope = -0.111;
     steering_calibration_offset = 260.0;
-    // positive steering angle is to the left
-    hairpin_reallocation = 0.0;
-    hairpin_steering_factor = 0.0;
+    //positive steering angle is to the left
+    // hairpin_reallocation = 0.0;
+    // hairpin_steering_factor = 0.0;
     max_front_power = 0.0;
     max_rear_power = 0.0;
     launch_state = NOT_READY;
@@ -67,12 +69,14 @@ void Torque_Vectoring::set_inverter_torques(int state)
     {
     case 0:
     {
+        launch_state = NOT_READY;
         safe_mode(avg_accel, avg_brake, 19000.0, 36000.0);
 
         break;
     }
     case 1:
     {
+        launch_state = NOT_READY;
         load_cell_mode(avg_accel, avg_brake);
         break;
     }
@@ -88,16 +92,19 @@ void Torque_Vectoring::set_inverter_torques(int state)
     }
     case 4:
     {
+        launch_state = NOT_READY;
         endurance_mode(avg_accel, avg_brake, avg_speed);
         break;
     }
     case 5:
     {
+        launch_state = NOT_READY;
         safe_mode(avg_accel, avg_brake, 21760.0, 41240.0);
         break;
     }
     default:
     {
+        launch_state = NOT_READY;
         break;
     }
     }
@@ -106,7 +113,7 @@ void Torque_Vectoring::set_inverter_torques(int state)
     bool over_limit = true;
     for (int i = 0; i < NUM_INVERTERS; i++)
     {
-        if (inverter_control->get_inverter(i)->get_pos_torque_limit() <= 0)
+        if (inverter_control->get_inverter(i)->mc_setpoints_command.get_pos_torque_limit() <= 0)
         {
             over_limit = false;
             break;
@@ -119,10 +126,10 @@ void Torque_Vectoring::set_inverter_torques(int state)
         float temp_lim_factor = 1.0;
         float accu_lim_factor = 1.0;
 
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < NUM_INVERTERS; i++)
         {
-            float torque_in_nm = 9.8 * ((float)mc_setpoints_command[i].get_pos_torque_limit()) / 1000.0;
-            float speed_in_rpm = (float)mc_status[i].get_speed();
+            float torque_in_nm = 9.8 * ((float)inverter_control->get_inverter(i)->mc_setpoints_command.get_pos_torque_limit()) / 1000.0;
+            float speed_in_rpm = (float)inverter_control->get_inverter(i)->mc_status.get_speed();
             mech_power += 2 * 3.1415 * torque_in_nm * speed_in_rpm / 60.0;
         }
         voltage_lim_factor = float_map(filtered_min_cell_voltage, 3.5, 3.2, 1.0, 0.2);
@@ -135,7 +142,7 @@ void Torque_Vectoring::set_inverter_torques(int state)
         for (int i = 0; i < NUM_INVERTERS; i++)
         {
             Inverter *inv = inverter_control->get_inverter(i);
-            power = max_front_power;
+            float power = max_front_power;
             if (!inv->is_front())
             {
                 power = max_rear_power;
@@ -173,6 +180,7 @@ void Torque_Vectoring::set_inverter_torques(int state)
             }
         }
     }
+}
 
     void Torque_Vectoring::safe_mode(int accel, int brake, float max_front_power, float max_rear_power)
     {
@@ -203,10 +211,10 @@ void Torque_Vectoring::set_inverter_torques(int state)
         }
     }
 
-    void Torque_Vectoring::nissan_mode(int accel, int brake)
-    {
-    }
-    void Torque_Vectoring::endurance_mode(int accel, int brake)
+    // void Torque_Vectoring::nissan_mode(int accel, int brake)
+    // {
+    // }
+    void Torque_Vectoring::endurance_mode(int accel, int brake, int avg_speed)
     {
         this->max_front_power = 19000.0;
         this->max_rear_power = 36000.0;
@@ -336,4 +344,36 @@ void Torque_Vectoring::set_inverter_torques(int state)
     float Torque_Vectoring::float_map(float x, float in_min, float in_max, float out_min, float out_max)
     {
         return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+    }
+    void Torque_Vectoring::debugPedals() {
+        Debug_println("ACCEL");
+        for (int i = 0; i < NUM_APPS; i++) {
+            Debug_println((ht_data->mcu_pedal_readings.*accel[i].get_accel)());
+        }
+        Debug_println("BRAKES");
+        for (int i = 0; i < NUM_BRAKES; i++) {
+            Debug_println((ht_data->mcu_pedal_readings.*brake[i].get_brake)());
+        }
+        // calculate_pedal_implausibilities();
+    //    Debug_println(mcu_status.get_no_accel_implausability());
+    //    Debug_println(mcu_status.get_no_brake_implausability());
+    //    Debug_println(mcu_status.get_no_accel_brake_implausability());
+    //    int brake1 = map(round(mcu_pedal_readings.get_brake_pedal_1()), START_BRAKE_PEDAL_1, END_BRAKE_PEDAL_1, 0, 2140);
+    //    int brake2 = map(round(mcu_pedal_readings.get_brake_pedal_2()), START_BRAKE_PEDAL_2, END_BRAKE_PEDAL_2, 0, 2140);
+    //    Debug_println(brake1);
+    //    Debug_println(brake2);
+    }
+    void Torque_Vectoring::debugLoadCells() {
+         Debug_println();
+         Debug_println("LOAD CELLS");
+         for (int i = 0; i < NUM_LOAD_CELLS; i++) {
+            Debug_println((ht_data->mcu_load_cells.*load_cell[i])());
+         }
+    }
+    void Torque_Vectoring::debugTorque() {
+         Debug_println();
+         Debug_println("TORQUE SETPOINTS");
+        for (int i = 0; i < NUM_LOAD_CELLS; i++) {
+            Debug_println(torque_setpoint_array[i]);
+         }
     }

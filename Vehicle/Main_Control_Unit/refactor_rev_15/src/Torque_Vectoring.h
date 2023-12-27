@@ -54,28 +54,28 @@ class Torque_Vectoring {
     int32_t total_load_cells;
     float front_load_total;
     float rear_load_total;
-    float attesa_def_split;
-    float attesa_alt_split;
-    float fr_slip_clamped;
-    float fr_slip_factor;
-    float f_torque;
-    float r_torque;
-    float rear_lr_slip_clamped;
-    float lsd_right_split;
-    float lsd_slip_factor;
+    // float attesa_def_split;
+    // float attesa_alt_split;
+    // float fr_slip_clamped;
+    // float fr_slip_factor;
+    // float f_torque;
+    // float r_torque;
+    // float rear_lr_slip_clamped;
+    // float lsd_right_split;
+    // float lsd_slip_factor;
     float avg_speed;
     int16_t start_derating_rpm;
     int16_t end_derating_rpm;
-    const float hairpin_rpm_limit = 5600.0;
-    const float harpin_rpm_full = 2800.0;
-    float hairpin_rpm_factor;
-    const float hairpin_steering_min = 80.0;  // degrees
-    const float hairpin_steering_max = 120.0; // degr
+    // const float hairpin_rpm_limit = 5600.0;
+    // const float harpin_rpm_full = 2800.0;
+    // float hairpin_rpm_factor;
+    // const float hairpin_steering_min = 80.0;  // degrees
+    // const float hairpin_steering_max = 120.0; // degr
     float steering_calibration_slope;
     float steering_calibration_offset;
     float steering_angle;
-    float hairpin_reallocation;
-    float hairpin_steering_factor;
+    // float hairpin_reallocation;
+    // float hairpin_steering_factor;
     enum LAUNCH_STATE
     {
     NOT_READY,
@@ -127,7 +127,11 @@ class Torque_Vectoring {
      * @param state 
      */
     void set_inverter_torques(int state);
-
+    /**
+     * @brief Set the inverter torques regen only
+     * 
+     */
+    void set_inverter_torques_regen_only();
     /**
      * @brief safe_mode (no vectoring and whatnot)
      * 
@@ -154,5 +158,19 @@ class Torque_Vectoring {
      */
     void load_cell_mode(int accel, int brake);
     //Torque_Vectoring()
-
+    /**
+     * @brief print load cell vals to serial
+     * 
+     */
+    void debugLoadCells();
+    /**
+     * @brief print pedal vals to serial
+     * 
+     */
+    void debugPedals();
+    /**
+     * @brief print torque setpoints to serial
+     * 
+     */
+    void debugTorque();
 };

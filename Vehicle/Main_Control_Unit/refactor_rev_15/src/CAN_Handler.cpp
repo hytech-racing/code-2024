@@ -241,3 +241,16 @@ void CAN_Handler::send_CAN_buzzer_data()
     msg.len = sizeof(ht_data->mcu_status);
     TELEM_CAN.write(msg);
 }
+void CAN_Handler::CAN_poll()
+{
+    INV_CAN.events();
+    TELEM_CAN.events();
+}
+void CAN_Handler::CAN_write() {
+    send_CAN_inverter_setpoints();
+    send_CAN_mcu_analog_readings();
+    send_CAN_mcu_load_cells();
+    send_CAN_mcu_pedal_readings():
+    send_CAN_mcu_potentiometers();
+    send_CAN_mcu_status();
+}

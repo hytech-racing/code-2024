@@ -186,4 +186,9 @@ public:
      */
     void reset_inverters();
     void power_off_inverter();
+    /**
+     * @brief serial print statements
+     * 
+     */
+    void debugInverters();
 };

@@ -78,5 +78,16 @@ class Status_Manager {
      * @return false 
      */
     bool valid_HV();
+
+    /**
+     * @brief serialize POTS
+     * 
+     */
+    void debugPOTS();
+    /**
+     * @brief debug dashboard (dial only currently)
+     * 
+     */
+    void debugDash();
    
 };
