@@ -179,6 +179,10 @@ void MainECU::set_state(MCU_STATE new_state)
     }
 }
 void MainECU::loop() {
+    //todos
+    /*
+    make every class a singleton
+    */
     sensor_aq.sampleADCs();
     sensor_aq.sampleSteeringTop();
     can_handler.CAN_poll();

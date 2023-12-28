@@ -1,0 +1,36 @@
+\doxysection{Status\+\_\+\+Manager.\+h}
+\hypertarget{_status___manager_8h_source}{}\label{_status___manager_8h_source}\index{include/Status\_Manager.h@{include/Status\_Manager.h}}
+\mbox{\hyperlink{_status___manager_8h}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ "{}MCU\_rev15\_dfs.h"{}}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{_h_t___data_8h}{HT\_Data.h}}"{}}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{timer__utils_8h}{timer\_utils.h}}"{}}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{debugging__utils_8h}{debugging\_utils.h}}"{}}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#include\ "{}driver\_constants.h"{}}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_status___manager}{Status\_Manager}}\ \{}
+\DoxyCodeLine{00019\ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00020\ \ \ \ \ \mbox{\hyperlink{class_h_t___data}{HT\_Data}}*\ ht\_data;}
+\DoxyCodeLine{00021\ \ \ \ \ \textcolor{keywordtype}{void}\ calculate\_accel\_implausabilities();}
+\DoxyCodeLine{00022\ \ \ \ \ \textcolor{keywordtype}{void}\ calculate\_bse\_implausabilities();}
+\DoxyCodeLine{00023\ \ \ \ \ \textcolor{keywordtype}{void}\ calculate\_apps\_brake\_implausabilities();}
+\DoxyCodeLine{00024\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00029\ \ \ \ \ \mbox{\hyperlink{class_status___manager_a3d96846bddfd1fb91eb443d93ded57cd}{Status\_Manager}}();}
+\DoxyCodeLine{00034\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_status___manager_a85560a90bfc4ae752dca77b1cd68160d}{status\_poll}}();}
+\DoxyCodeLine{00041\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{class_status___manager_a679309d8333041dfdbe827f33eb25b47}{ready\_to\_drive}}();}
+\DoxyCodeLine{00047\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_status___manager_a8e532ec6afe68475b91277c5a51bd567}{activate\_buzzer}}(\textcolor{keywordtype}{bool}\ on);}
+\DoxyCodeLine{00052\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_status___manager_a20f2a9736974a5c15c75a35be11eb8d5}{software\_shutdown}}();}
+\DoxyCodeLine{00057\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_status___manager_aeaba6d55dea8626034de8f8eebd0f35e}{brake\_outputs}}();}
+\DoxyCodeLine{00062\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_status___manager_a02a382e97b1db1324e8e4f76083de1af}{read\_status\_values}}();}
+\DoxyCodeLine{00067\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_status___manager_ad0a49f6f03481ad1ce506e88e78b9d88}{calculate\_pedal\_implausibilities}}();}
+\DoxyCodeLine{00074\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{class_status___manager_adbe6395f9155e24f0cec1e6884293646}{valid\_pedals}}();}
+\DoxyCodeLine{00081\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{class_status___manager_aefa706668ed1e2b2801f60be8e0f868b}{valid\_HV}}();}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00087\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_status___manager_ab6ace98356ba471e28470f4a159734c6}{debugPOTS}}();}
+\DoxyCodeLine{00092\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_status___manager_ab4d44f225d6f4bd8429db742269e34bf}{debugDash}}();}
+\DoxyCodeLine{00093\ \ \ \ }
+\DoxyCodeLine{00094\ \};}
+
+\end{DoxyCode}

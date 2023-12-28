@@ -1,0 +1,40 @@
+\doxysection{HT\+\_\+\+Data.\+h}
+\hypertarget{_h_t___data_8h_source}{}\label{_h_t___data_8h_source}\index{include/HT\_Data.h@{include/HT\_Data.h}}
+\mbox{\hyperlink{_h_t___data_8h}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ }
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#ifndef\ HT\_DATA\_H}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#define\ HT\_DATA\_H}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ <HyTech\_CAN.h>}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ "{}MCU\_rev15\_dfs.h"{}}}
+\DoxyCodeLine{00020\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_h_t___data}{HT\_Data}}\ \{}
+\DoxyCodeLine{00021\ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00022\ \ \ \ \ \mbox{\hyperlink{class_h_t___data}{HT\_Data}}();}
+\DoxyCodeLine{00023\ \ \ \ \ \mbox{\hyperlink{class_h_t___data}{HT\_Data}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{class_h_t___data}{HT\_Data}}\&);}
+\DoxyCodeLine{00024\ \ \ \ \ \mbox{\hyperlink{class_h_t___data}{HT\_Data}}\&\ operator=(\textcolor{keyword}{const}\ \mbox{\hyperlink{class_h_t___data}{HT\_Data}}\&);}
+\DoxyCodeLine{00025\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{class_h_t___data}{HT\_Data}}\ ht\_data;}
+\DoxyCodeLine{00026\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00027\ \ \ \ \ MCU\_pedal\_readings\ mcu\_pedal\_readings;}
+\DoxyCodeLine{00028\ \ \ \ \ MCU\_status\ mcu\_status\{\};}
+\DoxyCodeLine{00029\ \ \ \ \ MCU\_load\_cells\ mcu\_load\_cells\{\};}
+\DoxyCodeLine{00030\ \ \ \ \ uint16\_t\ prev\_load\_cell\_readings[4]\ =\ \{0,\ 0,\ 0,\ 0\};}
+\DoxyCodeLine{00031\ \ \ \ \ \textcolor{keywordtype}{float}\ filtered\_max\_cell\_temp\ =\ 40.0;}
+\DoxyCodeLine{00032\ \ \ \ \ \textcolor{keywordtype}{float}\ filtered\_min\_cell\_voltage\ =\ 3.5;}
+\DoxyCodeLine{00033\ \ \ \ \ MCU\_potentiometers\ mcu\_potentiometers\{\};}
+\DoxyCodeLine{00034\ \ \ \ \ \textcolor{comment}{//MCU\_thermistor\_readings\ mcu\_thermistor\_readings\{\};}}
+\DoxyCodeLine{00035\ \ \ \ \ MCU\_analog\_readings\ mcu\_analog\_readings\{\};}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ \ \textcolor{comment}{//\ Inbound\ CAN\ messages}}
+\DoxyCodeLine{00038\ \ \ \ \ BMS\_coulomb\_counts\ bms\_coulomb\_counts\{\};}
+\DoxyCodeLine{00039\ \ \ \ \ BMS\_status\ bms\_status\{\};}
+\DoxyCodeLine{00040\ \ \ \ \ BMS\_temperatures\ bms\_temperatures\{\};}
+\DoxyCodeLine{00041\ \ \ \ \ BMS\_voltages\ bms\_voltages\{\};}
+\DoxyCodeLine{00042\ \ \ \ \ Dashboard\_status\ dashboard\_status\{\};}
+\DoxyCodeLine{00043\ \ \ \ \ SAB\_CB\ sab\_cb\{\};}
+\DoxyCodeLine{00044\ \ \ \ \ \textcolor{comment}{//SAB\_thermistor\_readings\_1\ sab\_thermistor\_readings\_1\{\};}}
+\DoxyCodeLine{00045\ \ \ \ \ \textcolor{comment}{//SAB\_thermistor\_readings\_2\ sab\_thermistor\_readings\_2\{\};}}
+\DoxyCodeLine{00046\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{class_h_t___data}{HT\_Data}}*\ getInstance();}
+\DoxyCodeLine{00047\ \};}
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#endif\ \ }\textcolor{comment}{//\ HT\_DATA\_H}}
+
+\end{DoxyCode}

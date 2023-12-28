@@ -1,0 +1,114 @@
+\doxysection{Torque\+\_\+\+Vectoring.\+h}
+\hypertarget{_torque___vectoring_8h_source}{}\label{_torque___vectoring_8h_source}\index{include/Torque\_Vectoring.h@{include/Torque\_Vectoring.h}}
+\mbox{\hyperlink{_torque___vectoring_8h}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ "{}MCU\_rev15\_dfs.h"{}}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{_h_t___data_8h}{HT\_Data.h}}"{}}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ "{}stdint.h"{}}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{_inverter___control_8h}{Inverter\_Control.h}}"{}}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#include\ "{}driver\_constants.h"{}}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include\ <cmath>}}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_torque___vectoring}{Torque\_Vectoring}}\ \{}
+\DoxyCodeLine{00022\ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00023\ \ \ \ \ \mbox{\hyperlink{class_h_t___data}{HT\_Data}}*\ ht\_data;}
+\DoxyCodeLine{00024\ \ \ \ \ \mbox{\hyperlink{class_inverter___control}{Inverter\_Control}}*\ inverter\_control;}
+\DoxyCodeLine{00025\ \ \ \ \ int16\_t\ torque\_setpoint\_array[NUM\_INVERTERS];}
+\DoxyCodeLine{00026\ \ \ \ \ int16\_t\ speed\_setpoint\_array[NUM\_INVERTERS]\ =\ \{0,\ 0,\ 0,\ 0\};}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \ \ \ \ \textcolor{keywordtype}{float}\ max\_torque;}
+\DoxyCodeLine{00029\ \ \ \ \ \textcolor{comment}{//design\ for\ implausabilities\ lolz}}
+\DoxyCodeLine{00030\ \ \ \ \ \textcolor{keyword}{struct\ }Accel\ \{}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ uint16\_t\ (MCU\_pedal\_readings::*get\_accel)()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ start;}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ end;}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ uint16\_t\ val;}
+\DoxyCodeLine{00035\ \ \ \ \ \}\ accel[NUM\_APPS]\ =\ \{\{\&MCU\_pedal\_readings::get\_accelerator\_pedal\_1,\ START\_ACCELERATOR\_PEDAL\_1,\ END\_ACCELERATOR\_PEDAL\_1,\ 0\},\ \{\&MCU\_pedal\_readings::get\_accelerator\_pedal\_2,\ START\_ACCELERATOR\_PEDAL\_2,\ END\_ACCELERATOR\_PEDAL\_2,\ 0\}\};}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00037\ \ \ \ \ \textcolor{comment}{//\ \}}}
+\DoxyCodeLine{00038\ \ \ \ \ \textcolor{comment}{//\ uint16\_t\ (MCU\_pedal\_readings::*get\_accel[NUM\_APPS])()\ const\ =\ \{\ \&MCU\_pedal\_readings::get\_accelerator\_pedal\_1,\ \&MCU\_pedal\_readings::get\_accelerator\_pedal\_2\};}}
+\DoxyCodeLine{00039\ \ \ \ \ \textcolor{comment}{//\ uint16\_t\ (MCU\_pedal\_readings::*get\_brake[NUM\_APPS])()\ const\ =\ \{\ \&MCU\_pedal\_readings::get\_brake\_pedal\_1,\ \&MCU\_pedal\_readings::get\_brake\_pedal\_2\};}}
+\DoxyCodeLine{00040\ \ \ \ \ \textcolor{keyword}{struct\ }Brake\ \{}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ uint16\_t\ (MCU\_pedal\_readings::*get\_brake)()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ uint16\_t\ start;}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ uint16\_t\ end;}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ uint16\_t\ val;}
+\DoxyCodeLine{00045\ \ \ \ \ \}\ brake\ [NUM\_APPS]\ =\ \{\{\&MCU\_pedal\_readings::get\_brake\_pedal\_1,\ START\_BRAKE\_PEDAL\_1,\ END\_BRAKE\_PEDAL\_1,\ 0\},\ \{\&MCU\_pedal\_readings::get\_brake\_pedal\_2,\ START\_BRAKE\_PEDAL\_2,\ END\_BRAKE\_PEDAL\_2,\ 0\}\};}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \ uint16\_t\ (MCU\_load\_cells::*load\_cell[NUM\_LOAD\_CELLS])()\ \textcolor{keyword}{const}\ =\ \{\&MCU\_load\_cells::get\_FL\_load\_cell,\ \&MCU\_load\_cells::get\_FR\_load\_cell,\ \&MCU\_load\_cells::get\_RL\_load\_cell,\ \&MCU\_load\_cells::get\_RR\_load\_cell\ \};}
+\DoxyCodeLine{00048\ \ \ \ \ }
+\DoxyCodeLine{00049\ \ \ \ \ \textcolor{keywordtype}{float}\ rear\_power\_balance;}
+\DoxyCodeLine{00050\ \ \ \ \ \textcolor{keywordtype}{float}\ front\_power\_balance;}
+\DoxyCodeLine{00051\ \ \ \ \ \textcolor{keywordtype}{float}\ rear\_brake\_balance;}
+\DoxyCodeLine{00052\ \ \ \ \ \textcolor{keywordtype}{float}\ front\_brake\_balance;}
+\DoxyCodeLine{00053\ \ \ \ \ int32\_t\ total\_torque;}
+\DoxyCodeLine{00054\ \ \ \ \ int32\_t\ total\_load\_cells;}
+\DoxyCodeLine{00055\ \ \ \ \ \textcolor{keywordtype}{float}\ front\_load\_total;}
+\DoxyCodeLine{00056\ \ \ \ \ \textcolor{keywordtype}{float}\ rear\_load\_total;}
+\DoxyCodeLine{00057\ \ \ \ \ \textcolor{comment}{//\ float\ attesa\_def\_split;}}
+\DoxyCodeLine{00058\ \ \ \ \ \textcolor{comment}{//\ float\ attesa\_alt\_split;}}
+\DoxyCodeLine{00059\ \ \ \ \ \textcolor{comment}{//\ float\ fr\_slip\_clamped;}}
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{comment}{//\ float\ fr\_slip\_factor;}}
+\DoxyCodeLine{00061\ \ \ \ \ \textcolor{comment}{//\ float\ f\_torque;}}
+\DoxyCodeLine{00062\ \ \ \ \ \textcolor{comment}{//\ float\ r\_torque;}}
+\DoxyCodeLine{00063\ \ \ \ \ \textcolor{comment}{//\ float\ rear\_lr\_slip\_clamped;}}
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{comment}{//\ float\ lsd\_right\_split;}}
+\DoxyCodeLine{00065\ \ \ \ \ \textcolor{comment}{//\ float\ lsd\_slip\_factor;}}
+\DoxyCodeLine{00066\ \ \ \ \ \textcolor{keywordtype}{float}\ avg\_speed;}
+\DoxyCodeLine{00067\ \ \ \ \ int16\_t\ start\_derating\_rpm;}
+\DoxyCodeLine{00068\ \ \ \ \ int16\_t\ end\_derating\_rpm;}
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{comment}{//\ const\ float\ hairpin\_rpm\_limit\ =\ 5600.0;}}
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{comment}{//\ const\ float\ harpin\_rpm\_full\ =\ 2800.0;}}
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{comment}{//\ float\ hairpin\_rpm\_factor;}}
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{comment}{//\ const\ float\ hairpin\_steering\_min\ =\ 80.0;\ \ //\ degrees}}
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{comment}{//\ const\ float\ hairpin\_steering\_max\ =\ 120.0;\ //\ degr}}
+\DoxyCodeLine{00074\ \ \ \ \ \textcolor{keywordtype}{float}\ steering\_calibration\_slope;}
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{keywordtype}{float}\ steering\_calibration\_offset;}
+\DoxyCodeLine{00076\ \ \ \ \ \textcolor{keywordtype}{float}\ steering\_angle;}
+\DoxyCodeLine{00077\ \ \ \ \ \textcolor{comment}{//\ float\ hairpin\_reallocation;}}
+\DoxyCodeLine{00078\ \ \ \ \ \textcolor{comment}{//\ float\ hairpin\_steering\_factor;}}
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{keyword}{enum}\ LAUNCH\_STATE}
+\DoxyCodeLine{00080\ \ \ \ \ \{}
+\DoxyCodeLine{00081\ \ \ \ \ NOT\_READY,}
+\DoxyCodeLine{00082\ \ \ \ \ READY,}
+\DoxyCodeLine{00083\ \ \ \ \ LAUNCH}
+\DoxyCodeLine{00084\ \ \ \ \ \};}
+\DoxyCodeLine{00085\ \ \ \ \ \textcolor{keywordtype}{float}\ max\_front\_power;}
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{keywordtype}{float}\ max\_rear\_power;}
+\DoxyCodeLine{00087\ \ \ \ \ LAUNCH\_STATE\ launch\_state;}
+\DoxyCodeLine{00088\ \ \ \ \ int16\_t\ launch\_speed\_target;}
+\DoxyCodeLine{00089\ \ \ \ \ elapsedMillis\ time\_since\_launch;}
+\DoxyCodeLine{00090\ \ \ \ \ \textcolor{keyword}{const}\ uint16\_t\ LAUNCH\_READY\_ACCEL\_THRESHOLD\ =\ 100;}
+\DoxyCodeLine{00091\ \ \ \ \ \textcolor{keyword}{const}\ uint16\_t\ LAUNCH\_READY\_BRAKE\_THRESHOLD\ =\ 300;}
+\DoxyCodeLine{00092\ \ \ \ \ \textcolor{keyword}{const}\ int16\_t\ LAUNCH\_READY\_SPEED\_THRESHOLD\ =\ 500;}
+\DoxyCodeLine{00093\ \ \ \ \ \textcolor{keyword}{const}\ uint16\_t\ LAUNCH\_GO\_THRESHOLD\ =\ 900;}
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{keyword}{const}\ uint16\_t\ LAUNCH\_STOP\_THRESHOLD\ =\ 600;}
+\DoxyCodeLine{00095\ \ \ \ \ \textcolor{keywordtype}{float}\ launch\_rate\_target;}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \ \ \ \ }
+\DoxyCodeLine{00098\ \ \ \ \ }
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \ \ \ \ int16\_t\ max\_speed;}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00110\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{float}\ \mbox{\hyperlink{class_torque___vectoring_a58f0ec84a8393c856be75043b053f970}{max\_allowed\_torque}}(\textcolor{keywordtype}{float}\ maxwatts,\ \textcolor{keywordtype}{float}\ rpm);}
+\DoxyCodeLine{00121\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{float}\ \mbox{\hyperlink{class_torque___vectoring_a80ee4e65d112d6b992e4fab67c0021d4}{float\_map}}(\textcolor{keywordtype}{float}\ x,\ \textcolor{keywordtype}{float}\ in\_min,\ \textcolor{keywordtype}{float}\ in\_max,\ \textcolor{keywordtype}{float}\ out\_min,\ \textcolor{keywordtype}{float}\ out\_max);}
+\DoxyCodeLine{00126\ \ \ \ \ \mbox{\hyperlink{class_torque___vectoring_a99fd3c9cd254b0b61823554fd7fb65f2}{Torque\_Vectoring}}();}
+\DoxyCodeLine{00132\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_torque___vectoring_a0e819ea7eff28c4a7035d06533efbf20}{set\_inverter\_torques}}(\textcolor{keywordtype}{int}\ state);}
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_torque___vectoring_ae1c953701595b2c2f44dd17fdc0cb495}{set\_inverter\_torques\_regen\_only}}();}
+\DoxyCodeLine{00142\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_torque___vectoring_a53d5b0851e10a7b103d57010a5b12cc0}{safe\_mode}}(\textcolor{keywordtype}{int}\ accel,\ \textcolor{keywordtype}{int}\ brake,\ \textcolor{keywordtype}{float}\ max\_front\_power,\ \textcolor{keywordtype}{float}\ max\_rear\_power);}
+\DoxyCodeLine{00147\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_torque___vectoring_a107359918c03f1d07ff13eb39b62d8a6}{nissan\_mode}}(\textcolor{keywordtype}{int}\ accel,\ \textcolor{keywordtype}{int}\ brake);}
+\DoxyCodeLine{00152\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_torque___vectoring_a0b573fb76560f7ad15851380a626e4e0}{launch\_control}}(\textcolor{keywordtype}{int}\ accel,\ \textcolor{keywordtype}{int}\ brake,\ \textcolor{keywordtype}{float}\ max\_front\_power,\ \textcolor{keywordtype}{float}\ max\_rear\_power,\ \textcolor{keywordtype}{float}\ launch\_rate\_target);}
+\DoxyCodeLine{00157\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_torque___vectoring_a5358caceb5e331c820aa9cd206b08123}{endurance\_mode}}(\textcolor{keywordtype}{int}\ accel,\ \textcolor{keywordtype}{int}\ brake,\ \textcolor{keywordtype}{int}\ avg\_speed);}
+\DoxyCodeLine{00162\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_torque___vectoring_a10cdff5a106231fbfbc97e1b9b1ab046}{load\_cell\_mode}}(\textcolor{keywordtype}{int}\ accel,\ \textcolor{keywordtype}{int}\ brake);}
+\DoxyCodeLine{00163\ \ \ \ \ \textcolor{comment}{//Torque\_Vectoring()}}
+\DoxyCodeLine{00168\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_torque___vectoring_a0fd5475674327414dfee0ace78a3962e}{debugLoadCells}}();}
+\DoxyCodeLine{00173\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_torque___vectoring_ae8fe6906958611deb8ddbf7b22f7bc95}{debugPedals}}();}
+\DoxyCodeLine{00178\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_torque___vectoring_aae8e056599eae5682306278895f0369d}{debugTorque}}();}
+\DoxyCodeLine{00179\ \};}
+
+\end{DoxyCode}

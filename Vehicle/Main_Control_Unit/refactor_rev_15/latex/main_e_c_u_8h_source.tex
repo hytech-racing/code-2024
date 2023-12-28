@@ -1,0 +1,50 @@
+\doxysection{main\+ECU.\+h}
+\hypertarget{main_e_c_u_8h_source}{}\label{main_e_c_u_8h_source}\index{include/mainECU.h@{include/mainECU.h}}
+\mbox{\hyperlink{main_e_c_u_8h}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <stdint.h>}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ <FlexCAN\_T4.h>}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ <HyTech\_CAN.h>}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#define\ \_USE\_MATH\_DEFINES}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#include\ <cmath>}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include\ <time.h>}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#include\ <deque>}}
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#include\ <Mcp320x.h>}}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ "{}kinetis\_flexcan.h"{}}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{timer__utils_8h}{timer\_utils.h}}"{}}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{debugging__utils_8h}{debugging\_utils.h}}"{}}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{_h_t___data_8h}{HT\_Data.h}}"{}}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ "{}MCU\_rev15\_dfs.h"{}}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ "{}driver\_constants.h"{}}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ "{}drivers.h"{}}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{_sensor___aq_8h}{Sensor\_Aq.h}}"{}}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{_c_a_n___handler_8h}{CAN\_Handler.h}}"{}}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{_status___manager_8h}{Status\_Manager.h}}"{}}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{_torque___vectoring_8h}{Torque\_Vectoring.h}}"{}}}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_main_e_c_u}{MainECU}}\ \{}
+\DoxyCodeLine{00034\ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \textcolor{comment}{//make\ this\ a\ singleton}}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \textcolor{comment}{//could\ lowkey\ make\ everything\ a\ singleton\ for\ ease\ of\ access}}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_h_t___data}{HT\_Data}}*\ ht\_data;\ \textcolor{comment}{//add\ this\ in\ the\ constructor}}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_sensor___aq}{Sensor\_Aq}}\ sensor\_aq;}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_c_a_n___handler}{CAN\_Handler}}\ can\_handler;}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_inverter___control}{Inverter\_Control}}*\ inverter\_control;}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_torque___vectoring}{Torque\_Vectoring}}\ torque\_vectoring;}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_status___manager}{Status\_Manager}}\ status\_manager;}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ MCU\_STATE\ mcu\_state;}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ set\_state(MCU\_STATE\ new\_state);}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ state\_machine();}
+\DoxyCodeLine{00046\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_main_e_c_u}{MainECU}}();}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ loop();}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \};}
+
+\end{DoxyCode}

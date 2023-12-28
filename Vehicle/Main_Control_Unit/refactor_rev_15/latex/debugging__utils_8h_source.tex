@@ -1,0 +1,19 @@
+\doxysection{debugging\+\_\+utils.\+h}
+\hypertarget{debugging__utils_8h_source}{}\label{debugging__utils_8h_source}\index{include/debugging\_utils.h@{include/debugging\_utils.h}}
+\mbox{\hyperlink{debugging__utils_8h}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#ifndef\ DEBUG}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\ \ \#define\ Debug\_begin(x)}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\ \ \#define\ Debug\_print(x)}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\ \ \#define\ Debug\_println(x)}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\ \ \#define\ Debug\_printf(x,y)}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\ \ \#define\ Debug\_begin(x)\ Serial.begin(x)}}
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\ \ \#define\ Debug\_print(x)\ \ Serial.print(x)}}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\ \ \#define\ Debug\_println(x)\ Serial.println(x)}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\ \ \#define\ Debug\_printf(x,y)\ Serial.printf(x,\ y)}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

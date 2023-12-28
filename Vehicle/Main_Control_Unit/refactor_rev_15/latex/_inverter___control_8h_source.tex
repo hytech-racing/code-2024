@@ -1,0 +1,65 @@
+\doxysection{Inverter\+\_\+\+Control.\+h}
+\hypertarget{_inverter___control_8h_source}{}\label{_inverter___control_8h_source}\index{include/Inverter\_Control.h@{include/Inverter\_Control.h}}
+\mbox{\hyperlink{_inverter___control_8h}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ }
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#ifndef\ INVERTER\_CONTROL\_H}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#define\ INVERTER\_CONTROL\_H}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{timer__utils_8h}{timer\_utils.h}}"{}}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{debugging__utils_8h}{debugging\_utils.h}}"{}}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{_h_t___data_8h}{HT\_Data.h}}"{}}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include\ "{}MCU\_rev15\_dfs.h"{}}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{_inverter_8h}{Inverter.h}}"{}}}
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#define\ NUM\_INVERTERS\ 4}}
+\DoxyCodeLine{00020\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_inverter___control}{Inverter\_Control}}}
+\DoxyCodeLine{00021\ \{}
+\DoxyCodeLine{00022\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00023\ \ \ \ \ \mbox{\hyperlink{class_h_t___data}{HT\_Data}}\ *ht\_data;}
+\DoxyCodeLine{00024\ \ \ \ \ \textcolor{keywordtype}{bool}\ inverter\_restart;}
+\DoxyCodeLine{00025\ \ \ \ \ INVERTER\_STARTUP\_STATE\ inverter\_startup\_state;}
+\DoxyCodeLine{00026\ \ \ \ \ \mbox{\hyperlink{class_inverter___control}{Inverter\_Control}}();}
+\DoxyCodeLine{00027\ \ \ \ \ \mbox{\hyperlink{class_inverter___control}{Inverter\_Control}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{class_inverter___control}{Inverter\_Control}}\&);}
+\DoxyCodeLine{00028\ \ \ \ \ \mbox{\hyperlink{class_inverter___control}{Inverter\_Control}}\&\ operator=(\textcolor{keyword}{const}\ \mbox{\hyperlink{class_inverter___control}{Inverter\_Control}}\&);}
+\DoxyCodeLine{00029\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{class_inverter___control}{Inverter\_Control}}\ inverter\_control;}
+\DoxyCodeLine{00030\ \ \ \ \ \textcolor{keywordtype}{bool}\ front\_inv;}
+\DoxyCodeLine{00031\ \ \ \ \ \textcolor{keywordtype}{bool}\ rear\_inv;}
+\DoxyCodeLine{00032\ \ \ \ \ \mbox{\hyperlink{class_inverter}{Inverter}}\ inverters[NUM\_INVERTERS];}
+\DoxyCodeLine{00033\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00040\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{class_inverter___control_afeafd8ad8f5ddd8ae190581075c85b93}{get\_if\_fronts}}();}
+\DoxyCodeLine{00047\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{class_inverter___control_a522c5218fd443404977d9d8e1a889f18}{get\_if\_rears}}();}
+\DoxyCodeLine{00054\ \ \ \ \ \mbox{\hyperlink{class_inverter}{Inverter}}*\ \mbox{\hyperlink{class_inverter___control_a23888141f7bd9143d5bacd387b14e831}{get\_inverter}}(\textcolor{keywordtype}{int}\ inv);}
+\DoxyCodeLine{00059\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{class_inverter___control}{Inverter\_Control}}*\ \mbox{\hyperlink{class_inverter___control_a6d262ce9010d900453f34be81c0c6b7c}{getInstance}}();}
+\DoxyCodeLine{00065\ \ \ \ \ INVERTER\_STARTUP\_STATE\ \mbox{\hyperlink{class_inverter___control_a666c07ba91b339fc2a7464d865cec309}{get\_inverter\_state}}();}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_inverter___control_acf8207d4a3da5d8e95d0ac50dd29955d}{init\_inverters}}();}
+\DoxyCodeLine{00078\ \ \ \ \ MCU\_STATE\ \mbox{\hyperlink{class_inverter___control_a7d421f32e8014dbf76204af032174105}{check\_TS\_active}}(MCU\_STATE\ mcu\_state);}
+\DoxyCodeLine{00085\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{class_inverter___control_a7f9aa85e63209d2c04f4622cd908d270}{check\_TS\_over\_HV\_threshold}}();}
+\DoxyCodeLine{00092\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{class_inverter___control_a7676d12f374e743f6522fd0771bc2848}{get\_inverter\_restart}}();}
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_inverter___control_a8de2c47dc4dafd7c46cb46bc6df67f93}{set\_inverter\_restart}}(\textcolor{keywordtype}{bool}\ \_inverter\_restart);}
+\DoxyCodeLine{00104\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_inverter___control_ac4a6e6f3c3594b41c22ed822266bcfe4}{set\_inv\_state}}(INVERTER\_STARTUP\_STATE\ new\_inv\_state);}
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_inverter___control_a7fea271147ea095c3bec11b58305e9e3}{inv\_state\_machine}}();}
+\DoxyCodeLine{00116\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{class_inverter___control_ad7c4349743d04db8ebce9fc8a5b47ca9}{check\_all\_inverters\_system\_ready}}();}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00124\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{class_inverter___control_af04a32277673f2fce89538020279e67a}{check\_all\_inverters\_quit\_dc\_on}}();}
+\DoxyCodeLine{00131\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{class_inverter___control_a669d85b7327677bdd2a02bb091d3eef2}{check\_all\_inverters\_quit\_inverter\_on}}();}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00138\ \ \ \ \ uint8\_t\ \mbox{\hyperlink{class_inverter___control_a9b2237980ec1c509450ad31964a56e7a}{check\_all\_inverters\_error}}();}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00144\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_inverter___control_a19138857e7f6fcb8ad89c5f3ce539af9}{set\_all\_inverters\_no\_torque}}();}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00151\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_inverter___control_a8681d3f6820744dd0448d6b41fe46454}{set\_all\_inverters\_torque\_limit}}(\textcolor{keywordtype}{int}\ limit);}
+\DoxyCodeLine{00152\ }
+\DoxyCodeLine{00158\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_inverter___control_aecdb5ae00451eac38510c1f0b3a70950}{set\_all\_inverters\_speed\_setpoint}}(\textcolor{keywordtype}{int}\ setpoint);}
+\DoxyCodeLine{00159\ }
+\DoxyCodeLine{00164\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_inverter___control_a6e3557a4d665b41b8d86c0546e5fec6a}{set\_all\_inverters\_disabled}}();}
+\DoxyCodeLine{00170\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_inverter___control_ab02cdeba3e279ee094cd208c5465588b}{set\_all\_inverters\_dc\_on}}(\textcolor{keywordtype}{bool}\ input);}
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00177\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_inverter___control_a557d4d8afedd57e1ef2e8f7131dfd02f}{set\_all\_inverters\_driver\_enable}}(\textcolor{keywordtype}{bool}\ input);}
+\DoxyCodeLine{00183\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_inverter___control_a09acdea3a0c52bfce6fe14532117ea91}{set\_all\_inverters\_inverter\_enable}}(\textcolor{keywordtype}{bool}\ input);}
+\DoxyCodeLine{00188\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_inverter___control_a1eb8463dfbf7e6439e51723bb6a0de6e}{reset\_inverters}}();}
+\DoxyCodeLine{00189\ \ \ \ \ \textcolor{keywordtype}{void}\ power\_off\_inverter();}
+\DoxyCodeLine{00194\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_inverter___control_a7e262bd8d36e6fa8c309cd2984a316be}{debugInverters}}();}
+\DoxyCodeLine{00195\ \};}
+\DoxyCodeLine{00196\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ INVERTER\_CONTROL\_H}}
+
+\end{DoxyCode}

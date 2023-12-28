@@ -1,0 +1,106 @@
+\doxysection{Status\+\_\+\+Manager Class Reference}
+\hypertarget{class_status___manager}{}\label{class_status___manager}\index{Status\_Manager@{Status\_Manager}}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{class_status___manager_a3d96846bddfd1fb91eb443d93ded57cd}\label{class_status___manager_a3d96846bddfd1fb91eb443d93ded57cd} 
+{\bfseries Status\+\_\+\+Manager} ()
+\begin{DoxyCompactList}\small\item\em Construct a new \doxylink{class_status___manager}{Status\+\_\+\+Manager} object. \end{DoxyCompactList}\item 
+\Hypertarget{class_status___manager_a85560a90bfc4ae752dca77b1cd68160d}\label{class_status___manager_a85560a90bfc4ae752dca77b1cd68160d} 
+void {\bfseries status\+\_\+poll} ()
+\begin{DoxyCompactList}\small\item\em poll all maintenance functions \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{class_status___manager_a679309d8333041dfdbe827f33eb25b47}{ready\+\_\+to\+\_\+drive}} ()
+\begin{DoxyCompactList}\small\item\em checks if brake and start button are simultanously pressed \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{class_status___manager_a8e532ec6afe68475b91277c5a51bd567}{activate\+\_\+buzzer}} (bool on)
+\begin{DoxyCompactList}\small\item\em activate\+\_\+buzzer \end{DoxyCompactList}\item 
+\Hypertarget{class_status___manager_a20f2a9736974a5c15c75a35be11eb8d5}\label{class_status___manager_a20f2a9736974a5c15c75a35be11eb8d5} 
+void {\bfseries software\+\_\+shutdown} ()
+\begin{DoxyCompactList}\small\item\em handle software shutdown \end{DoxyCompactList}\item 
+\Hypertarget{class_status___manager_aeaba6d55dea8626034de8f8eebd0f35e}\label{class_status___manager_aeaba6d55dea8626034de8f8eebd0f35e} 
+void {\bfseries brake\+\_\+outputs} ()
+\begin{DoxyCompactList}\small\item\em brake outputs \end{DoxyCompactList}\item 
+\Hypertarget{class_status___manager_a02a382e97b1db1324e8e4f76083de1af}\label{class_status___manager_a02a382e97b1db1324e8e4f76083de1af} 
+void {\bfseries read\+\_\+status\+\_\+values} ()
+\begin{DoxyCompactList}\small\item\em read shutdown status values \end{DoxyCompactList}\item 
+\Hypertarget{class_status___manager_ad0a49f6f03481ad1ce506e88e78b9d88}\label{class_status___manager_ad0a49f6f03481ad1ce506e88e78b9d88} 
+void {\bfseries calculate\+\_\+pedal\+\_\+implausibilities} ()
+\begin{DoxyCompactList}\small\item\em calculate implausabilities for pedals \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{class_status___manager_adbe6395f9155e24f0cec1e6884293646}{valid\+\_\+pedals}} ()
+\begin{DoxyCompactList}\small\item\em implausability under a certain duration \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{class_status___manager_aefa706668ed1e2b2801f60be8e0f868b}{valid\+\_\+\+HV}} ()
+\begin{DoxyCompactList}\small\item\em BMS and IMD monitoring. \end{DoxyCompactList}\item 
+\Hypertarget{class_status___manager_ab6ace98356ba471e28470f4a159734c6}\label{class_status___manager_ab6ace98356ba471e28470f4a159734c6} 
+void {\bfseries debug\+POTS} ()
+\begin{DoxyCompactList}\small\item\em serialize POTS \end{DoxyCompactList}\item 
+\Hypertarget{class_status___manager_ab4d44f225d6f4bd8429db742269e34bf}\label{class_status___manager_ab4d44f225d6f4bd8429db742269e34bf} 
+void {\bfseries debug\+Dash} ()
+\begin{DoxyCompactList}\small\item\em debug dashboard (dial only currently) \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Member Function Documentation}
+\Hypertarget{class_status___manager_a8e532ec6afe68475b91277c5a51bd567}\label{class_status___manager_a8e532ec6afe68475b91277c5a51bd567} 
+\index{Status\_Manager@{Status\_Manager}!activate\_buzzer@{activate\_buzzer}}
+\index{activate\_buzzer@{activate\_buzzer}!Status\_Manager@{Status\_Manager}}
+\doxysubsubsection{\texorpdfstring{activate\_buzzer()}{activate\_buzzer()}}
+{\footnotesize\ttfamily void Status\+\_\+\+Manager\+::activate\+\_\+buzzer (\begin{DoxyParamCaption}\item[{bool}]{on }\end{DoxyParamCaption})}
+
+
+
+activate\+\_\+buzzer 
+
+
+\begin{DoxyParams}{Parameters}
+{\em on} & \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_status___manager_a679309d8333041dfdbe827f33eb25b47}\label{class_status___manager_a679309d8333041dfdbe827f33eb25b47} 
+\index{Status\_Manager@{Status\_Manager}!ready\_to\_drive@{ready\_to\_drive}}
+\index{ready\_to\_drive@{ready\_to\_drive}!Status\_Manager@{Status\_Manager}}
+\doxysubsubsection{\texorpdfstring{ready\_to\_drive()}{ready\_to\_drive()}}
+{\footnotesize\ttfamily bool Status\+\_\+\+Manager\+::ready\+\_\+to\+\_\+drive (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+checks if brake and start button are simultanously pressed 
+
+\begin{DoxyReturn}{Returns}
+true 
+
+false 
+\end{DoxyReturn}
+\Hypertarget{class_status___manager_aefa706668ed1e2b2801f60be8e0f868b}\label{class_status___manager_aefa706668ed1e2b2801f60be8e0f868b} 
+\index{Status\_Manager@{Status\_Manager}!valid\_HV@{valid\_HV}}
+\index{valid\_HV@{valid\_HV}!Status\_Manager@{Status\_Manager}}
+\doxysubsubsection{\texorpdfstring{valid\_HV()}{valid\_HV()}}
+{\footnotesize\ttfamily bool Status\+\_\+\+Manager\+::valid\+\_\+\+HV (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+BMS and IMD monitoring. 
+
+\begin{DoxyReturn}{Returns}
+true 
+
+false 
+\end{DoxyReturn}
+\Hypertarget{class_status___manager_adbe6395f9155e24f0cec1e6884293646}\label{class_status___manager_adbe6395f9155e24f0cec1e6884293646} 
+\index{Status\_Manager@{Status\_Manager}!valid\_pedals@{valid\_pedals}}
+\index{valid\_pedals@{valid\_pedals}!Status\_Manager@{Status\_Manager}}
+\doxysubsubsection{\texorpdfstring{valid\_pedals()}{valid\_pedals()}}
+{\footnotesize\ttfamily bool Status\+\_\+\+Manager\+::valid\+\_\+pedals (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+implausability under a certain duration 
+
+\begin{DoxyReturn}{Returns}
+true 
+
+false 
+\end{DoxyReturn}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+include/\mbox{\hyperlink{_status___manager_8h}{Status\+\_\+\+Manager.\+h}}\item 
+src/\mbox{\hyperlink{_status___manager_8cpp}{Status\+\_\+\+Manager.\+cpp}}\end{DoxyCompactItemize}

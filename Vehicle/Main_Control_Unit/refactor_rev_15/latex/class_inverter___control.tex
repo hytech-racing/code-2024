@@ -1,0 +1,344 @@
+\doxysection{Inverter\+\_\+\+Control Class Reference}
+\hypertarget{class_inverter___control}{}\label{class_inverter___control}\index{Inverter\_Control@{Inverter\_Control}}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+bool \mbox{\hyperlink{class_inverter___control_afeafd8ad8f5ddd8ae190581075c85b93}{get\+\_\+if\+\_\+fronts}} ()
+\begin{DoxyCompactList}\small\item\em Get if there are front inverters (ht07) \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{class_inverter___control_a522c5218fd443404977d9d8e1a889f18}{get\+\_\+if\+\_\+rears}} ()
+\begin{DoxyCompactList}\small\item\em Get if there are rear inverters. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{class_inverter}{Inverter}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{class_inverter___control_a23888141f7bd9143d5bacd387b14e831}{get\+\_\+inverter}} (int inv)
+\begin{DoxyCompactList}\small\item\em Get a pointer to inverter. \end{DoxyCompactList}\item 
+INVERTER\+\_\+\+STARTUP\+\_\+\+STATE \mbox{\hyperlink{class_inverter___control_a666c07ba91b339fc2a7464d865cec309}{get\+\_\+inverter\+\_\+state}} ()
+\begin{DoxyCompactList}\small\item\em Get the inverter state object. \end{DoxyCompactList}\item 
+\Hypertarget{class_inverter___control_acf8207d4a3da5d8e95d0ac50dd29955d}\label{class_inverter___control_acf8207d4a3da5d8e95d0ac50dd29955d} 
+void {\bfseries init\+\_\+inverters} ()
+\begin{DoxyCompactList}\small\item\em initialize inverters \end{DoxyCompactList}\item 
+MCU\+\_\+\+STATE \mbox{\hyperlink{class_inverter___control_a7d421f32e8014dbf76204af032174105}{check\+\_\+\+TS\+\_\+active}} (MCU\+\_\+\+STATE mcu\+\_\+state)
+\begin{DoxyCompactList}\small\item\em check TS is active \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{class_inverter___control_a7f9aa85e63209d2c04f4622cd908d270}{check\+\_\+\+TS\+\_\+over\+\_\+\+HV\+\_\+threshold}} ()
+\begin{DoxyCompactList}\small\item\em check if TS is below or above threshold \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{class_inverter___control_a7676d12f374e743f6522fd0771bc2848}{get\+\_\+inverter\+\_\+restart}} ()
+\begin{DoxyCompactList}\small\item\em getter method for inverter restart state \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{class_inverter___control_a8de2c47dc4dafd7c46cb46bc6df67f93}{set\+\_\+inverter\+\_\+restart}} (bool \+\_\+inverter\+\_\+restart)
+\begin{DoxyCompactList}\small\item\em setter for inverter restart \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{class_inverter___control_ac4a6e6f3c3594b41c22ed822266bcfe4}{set\+\_\+inv\+\_\+state}} (INVERTER\+\_\+\+STARTUP\+\_\+\+STATE new\+\_\+inv\+\_\+state)
+\begin{DoxyCompactList}\small\item\em Set the inv state object. \end{DoxyCompactList}\item 
+\Hypertarget{class_inverter___control_a7fea271147ea095c3bec11b58305e9e3}\label{class_inverter___control_a7fea271147ea095c3bec11b58305e9e3} 
+void {\bfseries inv\+\_\+state\+\_\+machine} ()
+\begin{DoxyCompactList}\small\item\em inverter\+\_\+state\+\_\+machine handler \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{class_inverter___control_ad7c4349743d04db8ebce9fc8a5b47ca9}{check\+\_\+all\+\_\+inverters\+\_\+system\+\_\+ready}} ()
+\begin{DoxyCompactList}\small\item\em are all inverters system ready \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{class_inverter___control_af04a32277673f2fce89538020279e67a}{check\+\_\+all\+\_\+inverters\+\_\+quit\+\_\+dc\+\_\+on}} ()
+\begin{DoxyCompactList}\small\item\em are all inverters \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{class_inverter___control_a669d85b7327677bdd2a02bb091d3eef2}{check\+\_\+all\+\_\+inverters\+\_\+quit\+\_\+inverter\+\_\+on}} ()
+\item 
+uint8\+\_\+t \mbox{\hyperlink{class_inverter___control_a9b2237980ec1c509450ad31964a56e7a}{check\+\_\+all\+\_\+inverters\+\_\+error}} ()
+\begin{DoxyCompactList}\small\item\em check if inverters have any errors \end{DoxyCompactList}\item 
+\Hypertarget{class_inverter___control_a19138857e7f6fcb8ad89c5f3ce539af9}\label{class_inverter___control_a19138857e7f6fcb8ad89c5f3ce539af9} 
+void {\bfseries set\+\_\+all\+\_\+inverters\+\_\+no\+\_\+torque} ()
+\begin{DoxyCompactList}\small\item\em Set the all inverters no torque object. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{class_inverter___control_a8681d3f6820744dd0448d6b41fe46454}{set\+\_\+all\+\_\+inverters\+\_\+torque\+\_\+limit}} (int limit)
+\begin{DoxyCompactList}\small\item\em Set the all inverters torque limit object. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{class_inverter___control_aecdb5ae00451eac38510c1f0b3a70950}{set\+\_\+all\+\_\+inverters\+\_\+speed\+\_\+setpoint}} (int setpoint)
+\begin{DoxyCompactList}\small\item\em Set the all inverters speed setpoint object. \end{DoxyCompactList}\item 
+\Hypertarget{class_inverter___control_a6e3557a4d665b41b8d86c0546e5fec6a}\label{class_inverter___control_a6e3557a4d665b41b8d86c0546e5fec6a} 
+void {\bfseries set\+\_\+all\+\_\+inverters\+\_\+disabled} ()
+\begin{DoxyCompactList}\small\item\em Set the all inverters disabled object. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{class_inverter___control_ab02cdeba3e279ee094cd208c5465588b}{set\+\_\+all\+\_\+inverters\+\_\+dc\+\_\+on}} (bool input)
+\begin{DoxyCompactList}\small\item\em Set the all inverters dc on object. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{class_inverter___control_a557d4d8afedd57e1ef2e8f7131dfd02f}{set\+\_\+all\+\_\+inverters\+\_\+driver\+\_\+enable}} (bool input)
+\begin{DoxyCompactList}\small\item\em Set the all inverters driver enable object. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{class_inverter___control_a09acdea3a0c52bfce6fe14532117ea91}{set\+\_\+all\+\_\+inverters\+\_\+inverter\+\_\+enable}} (bool input)
+\begin{DoxyCompactList}\small\item\em Set the all inverters inverter enable object. \end{DoxyCompactList}\item 
+\Hypertarget{class_inverter___control_a1eb8463dfbf7e6439e51723bb6a0de6e}\label{class_inverter___control_a1eb8463dfbf7e6439e51723bb6a0de6e} 
+void {\bfseries reset\+\_\+inverters} ()
+\begin{DoxyCompactList}\small\item\em reset the inverters if flag is true \end{DoxyCompactList}\item 
+\Hypertarget{class_inverter___control_a1fae55c649e37f09b4efd6f67bd7c121}\label{class_inverter___control_a1fae55c649e37f09b4efd6f67bd7c121} 
+void {\bfseries power\+\_\+off\+\_\+inverter} ()
+\item 
+\Hypertarget{class_inverter___control_a7e262bd8d36e6fa8c309cd2984a316be}\label{class_inverter___control_a7e262bd8d36e6fa8c309cd2984a316be} 
+void {\bfseries debug\+Inverters} ()
+\begin{DoxyCompactList}\small\item\em serial print statements \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{class_inverter___control_a6d262ce9010d900453f34be81c0c6b7c}\label{class_inverter___control_a6d262ce9010d900453f34be81c0c6b7c} 
+static \mbox{\hyperlink{class_inverter___control}{Inverter\+\_\+\+Control}} \texorpdfstring{$\ast$}{*} {\bfseries get\+Instance} ()
+\begin{DoxyCompactList}\small\item\em get instance of \doxylink{class_inverter___control}{Inverter\+\_\+\+Control} object \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Member Function Documentation}
+\Hypertarget{class_inverter___control_a9b2237980ec1c509450ad31964a56e7a}\label{class_inverter___control_a9b2237980ec1c509450ad31964a56e7a} 
+\index{Inverter\_Control@{Inverter\_Control}!check\_all\_inverters\_error@{check\_all\_inverters\_error}}
+\index{check\_all\_inverters\_error@{check\_all\_inverters\_error}!Inverter\_Control@{Inverter\_Control}}
+\doxysubsubsection{\texorpdfstring{check\_all\_inverters\_error()}{check\_all\_inverters\_error()}}
+{\footnotesize\ttfamily uint8\+\_\+t Inverter\+\_\+\+Control\+::check\+\_\+all\+\_\+inverters\+\_\+error (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+check if inverters have any errors 
+
+Inverter\+\_\+\+Control\+::check if inverters have any errors.
+
+\begin{DoxyReturn}{Returns}
+uint8\+\_\+t which inverters have errors 
+\end{DoxyReturn}
+\Hypertarget{class_inverter___control_af04a32277673f2fce89538020279e67a}\label{class_inverter___control_af04a32277673f2fce89538020279e67a} 
+\index{Inverter\_Control@{Inverter\_Control}!check\_all\_inverters\_quit\_dc\_on@{check\_all\_inverters\_quit\_dc\_on}}
+\index{check\_all\_inverters\_quit\_dc\_on@{check\_all\_inverters\_quit\_dc\_on}!Inverter\_Control@{Inverter\_Control}}
+\doxysubsubsection{\texorpdfstring{check\_all\_inverters\_quit\_dc\_on()}{check\_all\_inverters\_quit\_dc\_on()}}
+{\footnotesize\ttfamily bool Inverter\+\_\+\+Control\+::check\+\_\+all\+\_\+inverters\+\_\+quit\+\_\+dc\+\_\+on (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+are all inverters 
+
+\begin{DoxyReturn}{Returns}
+true 
+
+false 
+\end{DoxyReturn}
+\Hypertarget{class_inverter___control_a669d85b7327677bdd2a02bb091d3eef2}\label{class_inverter___control_a669d85b7327677bdd2a02bb091d3eef2} 
+\index{Inverter\_Control@{Inverter\_Control}!check\_all\_inverters\_quit\_inverter\_on@{check\_all\_inverters\_quit\_inverter\_on}}
+\index{check\_all\_inverters\_quit\_inverter\_on@{check\_all\_inverters\_quit\_inverter\_on}!Inverter\_Control@{Inverter\_Control}}
+\doxysubsubsection{\texorpdfstring{check\_all\_inverters\_quit\_inverter\_on()}{check\_all\_inverters\_quit\_inverter\_on()}}
+{\footnotesize\ttfamily bool Inverter\+\_\+\+Control\+::check\+\_\+all\+\_\+inverters\+\_\+quit\+\_\+inverter\+\_\+on (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+\begin{DoxyReturn}{Returns}
+true 
+
+false 
+\end{DoxyReturn}
+\Hypertarget{class_inverter___control_ad7c4349743d04db8ebce9fc8a5b47ca9}\label{class_inverter___control_ad7c4349743d04db8ebce9fc8a5b47ca9} 
+\index{Inverter\_Control@{Inverter\_Control}!check\_all\_inverters\_system\_ready@{check\_all\_inverters\_system\_ready}}
+\index{check\_all\_inverters\_system\_ready@{check\_all\_inverters\_system\_ready}!Inverter\_Control@{Inverter\_Control}}
+\doxysubsubsection{\texorpdfstring{check\_all\_inverters\_system\_ready()}{check\_all\_inverters\_system\_ready()}}
+{\footnotesize\ttfamily bool Inverter\+\_\+\+Control\+::check\+\_\+all\+\_\+inverters\+\_\+system\+\_\+ready (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+are all inverters system ready 
+
+\begin{DoxyReturn}{Returns}
+true 
+
+false 
+\end{DoxyReturn}
+\Hypertarget{class_inverter___control_a7d421f32e8014dbf76204af032174105}\label{class_inverter___control_a7d421f32e8014dbf76204af032174105} 
+\index{Inverter\_Control@{Inverter\_Control}!check\_TS\_active@{check\_TS\_active}}
+\index{check\_TS\_active@{check\_TS\_active}!Inverter\_Control@{Inverter\_Control}}
+\doxysubsubsection{\texorpdfstring{check\_TS\_active()}{check\_TS\_active()}}
+{\footnotesize\ttfamily MCU\+\_\+\+STATE Inverter\+\_\+\+Control\+::check\+\_\+\+TS\+\_\+active (\begin{DoxyParamCaption}\item[{MCU\+\_\+\+STATE}]{mcu\+\_\+state }\end{DoxyParamCaption})}
+
+
+
+check TS is active 
+
+\begin{DoxyReturn}{Returns}
+true 
+
+false 
+\end{DoxyReturn}
+\Hypertarget{class_inverter___control_a7f9aa85e63209d2c04f4622cd908d270}\label{class_inverter___control_a7f9aa85e63209d2c04f4622cd908d270} 
+\index{Inverter\_Control@{Inverter\_Control}!check\_TS\_over\_HV\_threshold@{check\_TS\_over\_HV\_threshold}}
+\index{check\_TS\_over\_HV\_threshold@{check\_TS\_over\_HV\_threshold}!Inverter\_Control@{Inverter\_Control}}
+\doxysubsubsection{\texorpdfstring{check\_TS\_over\_HV\_threshold()}{check\_TS\_over\_HV\_threshold()}}
+{\footnotesize\ttfamily bool Inverter\+\_\+\+Control\+::check\+\_\+\+TS\+\_\+over\+\_\+\+HV\+\_\+threshold (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+check if TS is below or above threshold 
+
+\begin{DoxyReturn}{Returns}
+true 
+
+false 
+\end{DoxyReturn}
+\Hypertarget{class_inverter___control_afeafd8ad8f5ddd8ae190581075c85b93}\label{class_inverter___control_afeafd8ad8f5ddd8ae190581075c85b93} 
+\index{Inverter\_Control@{Inverter\_Control}!get\_if\_fronts@{get\_if\_fronts}}
+\index{get\_if\_fronts@{get\_if\_fronts}!Inverter\_Control@{Inverter\_Control}}
+\doxysubsubsection{\texorpdfstring{get\_if\_fronts()}{get\_if\_fronts()}}
+{\footnotesize\ttfamily bool Inverter\+\_\+\+Control\+::get\+\_\+if\+\_\+fronts (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Get if there are front inverters (ht07) 
+
+\begin{DoxyReturn}{Returns}
+true 
+
+false 
+\end{DoxyReturn}
+\Hypertarget{class_inverter___control_a522c5218fd443404977d9d8e1a889f18}\label{class_inverter___control_a522c5218fd443404977d9d8e1a889f18} 
+\index{Inverter\_Control@{Inverter\_Control}!get\_if\_rears@{get\_if\_rears}}
+\index{get\_if\_rears@{get\_if\_rears}!Inverter\_Control@{Inverter\_Control}}
+\doxysubsubsection{\texorpdfstring{get\_if\_rears()}{get\_if\_rears()}}
+{\footnotesize\ttfamily bool Inverter\+\_\+\+Control\+::get\+\_\+if\+\_\+rears (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Get if there are rear inverters. 
+
+\begin{DoxyReturn}{Returns}
+true 
+
+false 
+\end{DoxyReturn}
+\Hypertarget{class_inverter___control_a23888141f7bd9143d5bacd387b14e831}\label{class_inverter___control_a23888141f7bd9143d5bacd387b14e831} 
+\index{Inverter\_Control@{Inverter\_Control}!get\_inverter@{get\_inverter}}
+\index{get\_inverter@{get\_inverter}!Inverter\_Control@{Inverter\_Control}}
+\doxysubsubsection{\texorpdfstring{get\_inverter()}{get\_inverter()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{class_inverter}{Inverter}} \texorpdfstring{$\ast$}{*} Inverter\+\_\+\+Control\+::get\+\_\+inverter (\begin{DoxyParamCaption}\item[{int}]{inv }\end{DoxyParamCaption})}
+
+
+
+Get a pointer to inverter. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em inv} & \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Inverter\texorpdfstring{$\ast$}{*} 
+\end{DoxyReturn}
+\Hypertarget{class_inverter___control_a7676d12f374e743f6522fd0771bc2848}\label{class_inverter___control_a7676d12f374e743f6522fd0771bc2848} 
+\index{Inverter\_Control@{Inverter\_Control}!get\_inverter\_restart@{get\_inverter\_restart}}
+\index{get\_inverter\_restart@{get\_inverter\_restart}!Inverter\_Control@{Inverter\_Control}}
+\doxysubsubsection{\texorpdfstring{get\_inverter\_restart()}{get\_inverter\_restart()}}
+{\footnotesize\ttfamily bool Inverter\+\_\+\+Control\+::get\+\_\+inverter\+\_\+restart (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+getter method for inverter restart state 
+
+\begin{DoxyReturn}{Returns}
+true 
+
+false 
+\end{DoxyReturn}
+\Hypertarget{class_inverter___control_a666c07ba91b339fc2a7464d865cec309}\label{class_inverter___control_a666c07ba91b339fc2a7464d865cec309} 
+\index{Inverter\_Control@{Inverter\_Control}!get\_inverter\_state@{get\_inverter\_state}}
+\index{get\_inverter\_state@{get\_inverter\_state}!Inverter\_Control@{Inverter\_Control}}
+\doxysubsubsection{\texorpdfstring{get\_inverter\_state()}{get\_inverter\_state()}}
+{\footnotesize\ttfamily INVERTER\+\_\+\+STARTUP\+\_\+\+STATE Inverter\+\_\+\+Control\+::get\+\_\+inverter\+\_\+state (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Get the inverter state object. 
+
+\begin{DoxyReturn}{Returns}
+INVERTER\+\_\+\+STARTUP\+\_\+\+STATE 
+\end{DoxyReturn}
+\Hypertarget{class_inverter___control_ab02cdeba3e279ee094cd208c5465588b}\label{class_inverter___control_ab02cdeba3e279ee094cd208c5465588b} 
+\index{Inverter\_Control@{Inverter\_Control}!set\_all\_inverters\_dc\_on@{set\_all\_inverters\_dc\_on}}
+\index{set\_all\_inverters\_dc\_on@{set\_all\_inverters\_dc\_on}!Inverter\_Control@{Inverter\_Control}}
+\doxysubsubsection{\texorpdfstring{set\_all\_inverters\_dc\_on()}{set\_all\_inverters\_dc\_on()}}
+{\footnotesize\ttfamily void Inverter\+\_\+\+Control\+::set\+\_\+all\+\_\+inverters\+\_\+dc\+\_\+on (\begin{DoxyParamCaption}\item[{bool}]{input }\end{DoxyParamCaption})}
+
+
+
+Set the all inverters dc on object. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em input} & \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_inverter___control_a557d4d8afedd57e1ef2e8f7131dfd02f}\label{class_inverter___control_a557d4d8afedd57e1ef2e8f7131dfd02f} 
+\index{Inverter\_Control@{Inverter\_Control}!set\_all\_inverters\_driver\_enable@{set\_all\_inverters\_driver\_enable}}
+\index{set\_all\_inverters\_driver\_enable@{set\_all\_inverters\_driver\_enable}!Inverter\_Control@{Inverter\_Control}}
+\doxysubsubsection{\texorpdfstring{set\_all\_inverters\_driver\_enable()}{set\_all\_inverters\_driver\_enable()}}
+{\footnotesize\ttfamily void Inverter\+\_\+\+Control\+::set\+\_\+all\+\_\+inverters\+\_\+driver\+\_\+enable (\begin{DoxyParamCaption}\item[{bool}]{input }\end{DoxyParamCaption})}
+
+
+
+Set the all inverters driver enable object. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em input} & ... \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_inverter___control_a09acdea3a0c52bfce6fe14532117ea91}\label{class_inverter___control_a09acdea3a0c52bfce6fe14532117ea91} 
+\index{Inverter\_Control@{Inverter\_Control}!set\_all\_inverters\_inverter\_enable@{set\_all\_inverters\_inverter\_enable}}
+\index{set\_all\_inverters\_inverter\_enable@{set\_all\_inverters\_inverter\_enable}!Inverter\_Control@{Inverter\_Control}}
+\doxysubsubsection{\texorpdfstring{set\_all\_inverters\_inverter\_enable()}{set\_all\_inverters\_inverter\_enable()}}
+{\footnotesize\ttfamily void Inverter\+\_\+\+Control\+::set\+\_\+all\+\_\+inverters\+\_\+inverter\+\_\+enable (\begin{DoxyParamCaption}\item[{bool}]{input }\end{DoxyParamCaption})}
+
+
+
+Set the all inverters inverter enable object. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em input} & ... \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_inverter___control_aecdb5ae00451eac38510c1f0b3a70950}\label{class_inverter___control_aecdb5ae00451eac38510c1f0b3a70950} 
+\index{Inverter\_Control@{Inverter\_Control}!set\_all\_inverters\_speed\_setpoint@{set\_all\_inverters\_speed\_setpoint}}
+\index{set\_all\_inverters\_speed\_setpoint@{set\_all\_inverters\_speed\_setpoint}!Inverter\_Control@{Inverter\_Control}}
+\doxysubsubsection{\texorpdfstring{set\_all\_inverters\_speed\_setpoint()}{set\_all\_inverters\_speed\_setpoint()}}
+{\footnotesize\ttfamily void Inverter\+\_\+\+Control\+::set\+\_\+all\+\_\+inverters\+\_\+speed\+\_\+setpoint (\begin{DoxyParamCaption}\item[{int}]{setpoint }\end{DoxyParamCaption})}
+
+
+
+Set the all inverters speed setpoint object. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em setpoint} & \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_inverter___control_a8681d3f6820744dd0448d6b41fe46454}\label{class_inverter___control_a8681d3f6820744dd0448d6b41fe46454} 
+\index{Inverter\_Control@{Inverter\_Control}!set\_all\_inverters\_torque\_limit@{set\_all\_inverters\_torque\_limit}}
+\index{set\_all\_inverters\_torque\_limit@{set\_all\_inverters\_torque\_limit}!Inverter\_Control@{Inverter\_Control}}
+\doxysubsubsection{\texorpdfstring{set\_all\_inverters\_torque\_limit()}{set\_all\_inverters\_torque\_limit()}}
+{\footnotesize\ttfamily void Inverter\+\_\+\+Control\+::set\+\_\+all\+\_\+inverters\+\_\+torque\+\_\+limit (\begin{DoxyParamCaption}\item[{int}]{limit }\end{DoxyParamCaption})}
+
+
+
+Set the all inverters torque limit object. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em limit} & torque limit \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_inverter___control_ac4a6e6f3c3594b41c22ed822266bcfe4}\label{class_inverter___control_ac4a6e6f3c3594b41c22ed822266bcfe4} 
+\index{Inverter\_Control@{Inverter\_Control}!set\_inv\_state@{set\_inv\_state}}
+\index{set\_inv\_state@{set\_inv\_state}!Inverter\_Control@{Inverter\_Control}}
+\doxysubsubsection{\texorpdfstring{set\_inv\_state()}{set\_inv\_state()}}
+{\footnotesize\ttfamily void Inverter\+\_\+\+Control\+::set\+\_\+inv\+\_\+state (\begin{DoxyParamCaption}\item[{INVERTER\+\_\+\+STARTUP\+\_\+\+STATE}]{new\+\_\+inv\+\_\+state }\end{DoxyParamCaption})}
+
+
+
+Set the inv state object. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em new\+\_\+inv\+\_\+state} & \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_inverter___control_a8de2c47dc4dafd7c46cb46bc6df67f93}\label{class_inverter___control_a8de2c47dc4dafd7c46cb46bc6df67f93} 
+\index{Inverter\_Control@{Inverter\_Control}!set\_inverter\_restart@{set\_inverter\_restart}}
+\index{set\_inverter\_restart@{set\_inverter\_restart}!Inverter\_Control@{Inverter\_Control}}
+\doxysubsubsection{\texorpdfstring{set\_inverter\_restart()}{set\_inverter\_restart()}}
+{\footnotesize\ttfamily void Inverter\+\_\+\+Control\+::set\+\_\+inverter\+\_\+restart (\begin{DoxyParamCaption}\item[{bool}]{\+\_\+inverter\+\_\+restart }\end{DoxyParamCaption})}
+
+
+
+setter for inverter restart 
+
+
+\begin{DoxyParams}{Parameters}
+{\em \+\_\+inverter\+\_\+restart} & true or false \\
+\hline
+\end{DoxyParams}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+include/\mbox{\hyperlink{_inverter___control_8h}{Inverter\+\_\+\+Control.\+h}}\item 
+src/Inverter\+\_\+\+Control.\+cpp\end{DoxyCompactItemize}

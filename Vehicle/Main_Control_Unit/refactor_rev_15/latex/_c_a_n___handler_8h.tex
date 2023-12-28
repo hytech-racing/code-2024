@@ -1,0 +1,54 @@
+\doxysection{include/\+CAN\+\_\+\+Handler.h File Reference}
+\hypertarget{_c_a_n___handler_8h}{}\label{_c_a_n___handler_8h}\index{include/CAN\_Handler.h@{include/CAN\_Handler.h}}
+
+
+All interfacing for CAN data transmission (TELEM and INV)  
+
+
+{\ttfamily \#include "{}MCU\+\_\+rev15\+\_\+dfs.\+h"{}}\newline
+{\ttfamily \#include "{}HT\+\_\+\+Data.\+h"{}}\newline
+{\ttfamily \#include "{}Inverter\+\_\+\+Control.\+h"{}}\newline
+{\ttfamily \#include $<$Flex\+CAN\+\_\+\+T4.\+h$>$}\newline
+{\ttfamily \#include $<$Hy\+Tech\+\_\+\+CAN.\+h$>$}\newline
+{\ttfamily \#include "{}timer\+\_\+utils.\+h"{}}\newline
+{\ttfamily \#include "{}debugging\+\_\+utils.\+h"{}}\newline
+\doxysubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{class_c_a_n___handler}{CAN\+\_\+\+Handler}}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{_c_a_n___handler_8h_af0d79293ff328eeb4dacc9d978983370}\label{_c_a_n___handler_8h_af0d79293ff328eeb4dacc9d978983370} 
+\#define {\bfseries TELEM\+\_\+\+BAUD\+\_\+\+RATE}~500000
+\item 
+\Hypertarget{_c_a_n___handler_8h_a5e1a327fc54ed247405357bfffc9ffde}\label{_c_a_n___handler_8h_a5e1a327fc54ed247405357bfffc9ffde} 
+\#define {\bfseries INVERTER\+\_\+\+BAUD\+\_\+\+RATE}~500000
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{_c_a_n___handler_8h_a974e1c918d0bc9b0a745b39f31e33967}\label{_c_a_n___handler_8h_a974e1c918d0bc9b0a745b39f31e33967} 
+const float {\bfseries cell\+\_\+voltage\+\_\+alpha} = 0.\+8
+\item 
+\Hypertarget{_c_a_n___handler_8h_af23f844cf558a9749cfdf31b1847765c}\label{_c_a_n___handler_8h_af23f844cf558a9749cfdf31b1847765c} 
+const float {\bfseries cell\+\_\+temp\+\_\+alpha} = 0.\+8
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+All interfacing for CAN data transmission (TELEM and INV) 
+
+\begin{DoxyAuthor}{Author}
+Eric Galluzzi 
+\end{DoxyAuthor}
+\begin{DoxyVersion}{Version}
+0.\+1 
+\end{DoxyVersion}
+\begin{DoxyDate}{Date}
+2023-\/12-\/21
+\end{DoxyDate}
+\begin{DoxyCopyright}{Copyright}
+Copyright (c) 2023 
+\end{DoxyCopyright}

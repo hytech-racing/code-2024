@@ -1,0 +1,31 @@
+\doxysection{Inverter.\+h}
+\hypertarget{_inverter_8h_source}{}\label{_inverter_8h_source}\index{include/Inverter.h@{include/Inverter.h}}
+\mbox{\hyperlink{_inverter_8h}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ "{}HyTech\_CAN.h"{}}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_inverter}{Inverter}}\ \{}
+\DoxyCodeLine{00015\ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00016\ \ \ \ \ \textcolor{keywordtype}{bool}\ isFront;}
+\DoxyCodeLine{00017\ \ \ \ \ \textcolor{keywordtype}{bool}\ isLeft;}
+\DoxyCodeLine{00018\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00025\ \ \ \ \ \mbox{\hyperlink{class_inverter_a78ab5f21df9d53acd116eb3766f3f63c}{Inverter}}(\textcolor{keywordtype}{bool}\ isFront,\ \textcolor{keywordtype}{bool}\ isLeft)\ \{}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ this-\/>isFront\ =\ isFront;}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ this-\/>isLeft\ =\ isLeft;}
+\DoxyCodeLine{00028\ \ \ \ \ \}}
+\DoxyCodeLine{00035\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{class_inverter_ac705bc772ea67b348b819901ff9a2735}{is\_front}}()\ \{}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ isFront;}
+\DoxyCodeLine{00037\ \ \ \ \ \};\ }
+\DoxyCodeLine{00044\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{class_inverter_a02462e6ad72379f81acb0b806327355c}{is\_left}}()\ \{}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ isLeft;}
+\DoxyCodeLine{00046\ \ \ \ \ \}}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \ \ \ \ MC\_status\ mc\_status;}
+\DoxyCodeLine{00049\ \ \ \ \ MC\_temps\ mc\_temp;}
+\DoxyCodeLine{00050\ \ \ \ \ MC\_energy\ mc\_energy;}
+\DoxyCodeLine{00051\ \ \ \ \ MC\_setpoints\_command\ mc\_setpoints\_command;}
+\DoxyCodeLine{00052\ \};}
+
+\end{DoxyCode}

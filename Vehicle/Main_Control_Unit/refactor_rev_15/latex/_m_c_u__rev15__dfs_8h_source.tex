@@ -1,0 +1,139 @@
+\doxysection{MCU\+\_\+rev15\+\_\+dfs.\+h}
+\hypertarget{_m_c_u__rev15__dfs_8h_source}{}\label{_m_c_u__rev15__dfs_8h_source}\index{include/MCU\_rev15\_dfs.h@{include/MCU\_rev15\_dfs.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ MCU\_REV15\_DFS\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ MCU\_REV15\_DFS\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00005\ \textcolor{comment}{//ECU\ defines}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#define\ DRIVER\ DEFAULT\_DRIVER}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#define\ TORQUE\_1\ 10}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#define\ TORQUE\_2\ 15}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#define\ TORQUE\_3\ 21}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#define\ MAX\_ALLOWED\_SPEED\ 20000}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ set\ to\ true\ or\ false\ for\ debugging}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#define\ DEBUG\ false}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#define\ BMS\_DEBUG\_ENABLE\ false}}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ *\ Teensy\ Pin\ definitions}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#define\ INVERTER\_EN\ 9}}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#define\ INVERTER\_24V\_EN\ 7}}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#define\ MC\_MAX\_SPEED\ 20000}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#define\ BRAKE\_LIGHT\_CTRL\ 6}}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#define\ ECU\_CLK\ 13\ }}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#define\ ECU\_SDI\ 12}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#define\ ECU\_SDO\ 11}}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#define\ CAN\_ECU\_RX2\ 0}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#define\ CAN\_ECU\_TX2\ 1}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#define\ CAN\_ECU\_RX3\ 30}}
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#define\ CAN\_ECU\_TX3\ 31}}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#define\ ADC\_CS\ 34}}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#define\ FL\_CS\ 33}}
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#define\ FR\_CS\ 29}}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#define\ ADC\_VREF\ 3300}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#define\ INTERTIA\_SENSE\ 20}}
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#define\ SOFTWARE\_OK\_READ\ 25\ }\textcolor{comment}{//\ SHDN\_F\_READ\ Watchdog\ Combined}}
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#define\ BOTS\_SENSE\_OK\_READ\ 26\ }\textcolor{comment}{//\ SHDN\_G\_READ}}
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\#define\ BOTS\_OK\_READ\ 24\ \ }\textcolor{comment}{//\ SHDN\_B\_READ}}
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\#define\ IMD\_OK\_READ\ 10\ }\textcolor{comment}{//\ SHDN\_C\_READ}}
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#define\ BMS\_OK\_READ\ 16\ }\textcolor{comment}{//\ SHDN\_D\_READ}}
+\DoxyCodeLine{00049\ \textcolor{preprocessor}{\#define\ BSPD\_OK\_READ\ 39\ }\textcolor{comment}{//\ SHDN\_E\_READ}}
+\DoxyCodeLine{00050\ \textcolor{preprocessor}{\#define\ SOFTWARE\_OK\ 8}}
+\DoxyCodeLine{00051\ \textcolor{comment}{//\ digital\ outputs}}
+\DoxyCodeLine{00052\ \textcolor{preprocessor}{\#define\ WATCHDOG\_INPUT\ 32}}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00055\ \textcolor{comment}{\ *\ ADC\ pin\ definitions}}
+\DoxyCodeLine{00056\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00057\ \textcolor{preprocessor}{\#define\ ADC\_BRAKE\_1\_CHANNEL\ 5}}
+\DoxyCodeLine{00058\ \textcolor{preprocessor}{\#define\ ADC\_BRAKE\_2\_CHANNEL\ 3}}
+\DoxyCodeLine{00059\ \textcolor{preprocessor}{\#define\ ADC\_ACCEL\_1\_CHANNEL\ 2}}
+\DoxyCodeLine{00060\ \textcolor{preprocessor}{\#define\ ADC\_ACCEL\_2\_CHANNEL\ 1}}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \textcolor{preprocessor}{\#define\ ADC\_STEERING\_1\_CHANNEL\ 7}}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \textcolor{preprocessor}{\#define\ ADC\_GLV\_READ\_CHANNEL\ 4}}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \textcolor{preprocessor}{\#define\ ADC\_CURRENT\_CHANNEL\ 6}}
+\DoxyCodeLine{00067\ \textcolor{preprocessor}{\#define\ ADC\_REFERENCE\_CHANNEL\ 0}}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \textcolor{preprocessor}{\#define\ ADC\_FL\_LOAD\_CELL\_CHANNEL\ 2}}
+\DoxyCodeLine{00070\ \textcolor{preprocessor}{\#define\ ADC\_FR\_LOAD\_CELL\_CHANNEL\ 2}}
+\DoxyCodeLine{00071\ \textcolor{preprocessor}{\#define\ SUS\_POT\_FL\ 1}}
+\DoxyCodeLine{00072\ \textcolor{preprocessor}{\#define\ SUS\_POT\_FR\ 1}}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \textcolor{preprocessor}{\#define\ THERM\_FR\ 41}}
+\DoxyCodeLine{00075\ \textcolor{preprocessor}{\#define\ THERM\_FL\ 38}}
+\DoxyCodeLine{00076\ \textcolor{preprocessor}{\#define\ STEERING\_2\ 40}}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00079\ \textcolor{comment}{\ *\ Shutdown\ read\ thresholds}}
+\DoxyCodeLine{00080\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \textcolor{preprocessor}{\#define\ SHUTDOWN\_HIGH\ 350\ }\textcolor{comment}{//teensy\ ADC\ reading\ when\ the\ shutdown\ lines\ are\ at\ 5V}}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00086\ \textcolor{comment}{\ *\ Other\ constants}}
+\DoxyCodeLine{00087\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00088\ \textcolor{preprocessor}{\#define\ MIN\_HV\_VOLTAGE\ 60\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{//\ Volts\ in\ V\ *\ 1\ -\/\ Used\ to\ check\ if\ Accumulator\ is\ energized}}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \textcolor{preprocessor}{\#define\ ALPHA\ 0.9772\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{//\ parameter\ for\ the\ sowftware\ filter\ used\ on\ ADC\ pedal\ channels}}
+\DoxyCodeLine{00092\ \textcolor{preprocessor}{\#define\ ADC\_SPI\_SPEED\ 1000000\ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00093\ \textcolor{preprocessor}{\#define\ TORQUE\_ADJUSTMENT\_VOLTAGE\ 3.5242\ }}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \textcolor{preprocessor}{\#define\ LOAD\_CELL1\_OFFSET\ -\/33.98}}
+\DoxyCodeLine{00097\ \textcolor{preprocessor}{\#define\ LOAD\_CELL1\_SLOPE\ 0.1711}}
+\DoxyCodeLine{00098\ \textcolor{preprocessor}{\#define\ LOAD\_CELL2\_OFFSET\ -\/35.59}}
+\DoxyCodeLine{00099\ \textcolor{preprocessor}{\#define\ LOAD\_CELL2\_SLOPE\ 0.1762}}
+\DoxyCodeLine{00100\ \textcolor{preprocessor}{\#define\ LOAD\_CELL3\_OFFSET\ -\/33.59}}
+\DoxyCodeLine{00101\ \textcolor{preprocessor}{\#define\ LOAD\_CELL3\_SLOPE\ 0.192}}
+\DoxyCodeLine{00102\ \textcolor{preprocessor}{\#define\ LOAD\_CELL4\_OFFSET\ -\/64.5}}
+\DoxyCodeLine{00103\ \textcolor{preprocessor}{\#define\ LOAD\_CELL4\_SLOPE\ 0.1954}}
+\DoxyCodeLine{00104\ \textcolor{comment}{//}}
+\DoxyCodeLine{00105\ \textcolor{comment}{//\ \#define\ LOAD\_CELL1\_OFFSET\ 0}}
+\DoxyCodeLine{00106\ \textcolor{comment}{//\ \#define\ LOAD\_CELL1\_SLOPE\ 1}}
+\DoxyCodeLine{00107\ \textcolor{comment}{//\ \#define\ LOAD\_CELL2\_OFFSET\ 0}}
+\DoxyCodeLine{00108\ \textcolor{comment}{//\ \#define\ LOAD\_CELL2\_SLOPE\ 1}}
+\DoxyCodeLine{00109\ \textcolor{comment}{//\ \#define\ LOAD\_CELL3\_OFFSET\ 0}}
+\DoxyCodeLine{00110\ \textcolor{comment}{//\ \#define\ LOAD\_CELL3\_SLOPE\ 1}}
+\DoxyCodeLine{00111\ \textcolor{comment}{//\ \#define\ LOAD\_CELL4\_OFFSET\ 0}}
+\DoxyCodeLine{00112\ \textcolor{comment}{//\ \#define\ LOAD\_CELL4\_SLOPE\ 1}}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \textcolor{preprocessor}{\#define\ BMS\_HEARTBEAT\_TIMEOUT\ 30000}}
+\DoxyCodeLine{00115\ \textcolor{preprocessor}{\#define\ DASH\_HEARTBEAT\_TIMEOUT\ 1000}}
+\DoxyCodeLine{00116\ \textcolor{preprocessor}{\#define\ TIMER\_SOFTWARE\_ENABLE\ 100}}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \textcolor{preprocessor}{\#define\ PACK\_CHARGE\_CRIT\_TOTAL\_THRESHOLD\ 420}}
+\DoxyCodeLine{00119\ \textcolor{preprocessor}{\#define\ PACK\_CHARGE\_CRIT\_LOWEST\_CELL\_THRESHOLD\ 35000}}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \textcolor{preprocessor}{\#define\ MECH\_POWER\_LIMIT\ 63}}
+\DoxyCodeLine{00122\ \textcolor{preprocessor}{\#define\ DC\_POWER\_LIMIT\ 79}}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \textcolor{preprocessor}{\#define\ NUM\_APPS\ 2}}
+\DoxyCodeLine{00125\ \textcolor{preprocessor}{\#define\ NUM\_BRAKES\ 2}}
+\DoxyCodeLine{00126\ \textcolor{preprocessor}{\#define\ NUM\_LOAD\_CELLS\ 4}}
+\DoxyCodeLine{00127\ \textcolor{preprocessor}{\#define\ REGEN\_OFF\_START\_THRESHOLD\ 1540}}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \textcolor{comment}{//\ \#define\ load\_cell\_alpha\ 0.95;\ //temp\ until\ i\ find\ a\ place}}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \textcolor{comment}{//\ \#define\ cell\_voltage\_alpha\ \ 0.8;}}
+\DoxyCodeLine{00132\ \textcolor{comment}{//\ \#define\ cell\_temp\_alpha\ \ 0.8;}}
+\DoxyCodeLine{00133\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

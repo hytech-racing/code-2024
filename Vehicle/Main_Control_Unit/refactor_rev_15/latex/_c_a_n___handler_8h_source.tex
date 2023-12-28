@@ -1,0 +1,48 @@
+\doxysection{CAN\+\_\+\+Handler.\+h}
+\hypertarget{_c_a_n___handler_8h_source}{}\label{_c_a_n___handler_8h_source}\index{include/CAN\_Handler.h@{include/CAN\_Handler.h}}
+\mbox{\hyperlink{_c_a_n___handler_8h}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#ifndef\ CAN\_HANDLER\_H}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#define\ CAN\_HANDLER\_H}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ "{}MCU\_rev15\_dfs.h"{}}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{_h_t___data_8h}{HT\_Data.h}}"{}}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{_inverter___control_8h}{Inverter\_Control.h}}"{}}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#include\ <FlexCAN\_T4.h>}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include\ <HyTech\_CAN.h>}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{timer__utils_8h}{timer\_utils.h}}"{}}}
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{debugging__utils_8h}{debugging\_utils.h}}"{}}}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#define\ TELEM\_BAUD\_RATE\ 500000}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#define\ INVERTER\_BAUD\_RATE\ 500000}}
+\DoxyCodeLine{00022\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\ cell\_voltage\_alpha\ =\ 0.8;}
+\DoxyCodeLine{00023\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\ cell\_temp\_alpha\ =\ 0.8;}
+\DoxyCodeLine{00024\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_c_a_n___handler}{CAN\_Handler}}\ \{}
+\DoxyCodeLine{00025\ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00026\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{class_h_t___data}{HT\_Data}}*\ ht\_data;}
+\DoxyCodeLine{00027\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{class_inverter___control}{Inverter\_Control}}*\ inverter\_control;}
+\DoxyCodeLine{00028\ \ \ \ \ FlexCAN\_T4<CAN2,\ RX\_SIZE\_256,\ TX\_SIZE\_16>\ INV\_CAN;}
+\DoxyCodeLine{00029\ \ \ \ \ FlexCAN\_T4<CAN3,\ RX\_SIZE\_256,\ TX\_SIZE\_16>\ TELEM\_CAN;}
+\DoxyCodeLine{00030\ \ \ \ \ }
+\DoxyCodeLine{00031\ \ \ \ \ CAN\_message\_t\ msg;}
+\DoxyCodeLine{00036\ \ \ \ \ \textcolor{keywordtype}{void}\ initCAN();}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00043\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ parse\_inv\_can\_message(\textcolor{keyword}{const}\ CAN\_message\_t\ \&RX\_msg);}
+\DoxyCodeLine{00049\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ parse\_telem\_can\_message(\textcolor{keyword}{const}\ CAN\_message\_t\ \&RX\_msg);}
+\DoxyCodeLine{00050\ \ \ \ \ \textcolor{keywordtype}{void}\ send\_CAN\_mcu\_status();}
+\DoxyCodeLine{00051\ \ \ \ \ \textcolor{keywordtype}{void}\ send\_CAN\_mcu\_pedal\_readings();}
+\DoxyCodeLine{00052\ \ \ \ \ \textcolor{keywordtype}{void}\ send\_CAN\_mcu\_load\_cells();}
+\DoxyCodeLine{00053\ \ \ \ \ \textcolor{keywordtype}{void}\ send\_CAN\_mcu\_potentiometers();}
+\DoxyCodeLine{00054\ \ \ \ \ \textcolor{keywordtype}{void}\ send\_CAN\_mcu\_analog\_readings();}
+\DoxyCodeLine{00055\ \ \ \ \ \textcolor{keywordtype}{void}\ send\_CAN\_inverter\_setpoints();}
+\DoxyCodeLine{00056\ \ \ \ \ }
+\DoxyCodeLine{00057\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00062\ \ \ \ \ \mbox{\hyperlink{class_c_a_n___handler_a5704476eb28c5a626b5af4bc7546f017}{CAN\_Handler}}();}
+\DoxyCodeLine{00067\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_c_a_n___handler_a1b5fa7ea2089b4e2e26f825dec395ffe}{CAN\_poll}}();}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_c_a_n___handler_a1448be5ac3348b66fa33c7c432d7730d}{CAN\_write}}();}
+\DoxyCodeLine{00074\ \ \ \ \ \textcolor{keywordtype}{void}\ send\_CAN\_buzzer\_data();}
+\DoxyCodeLine{00075\ \ \ \ \ }
+\DoxyCodeLine{00076\ \};}
+\DoxyCodeLine{00077\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//CAN\_HANDLER\_H}}
+
+\end{DoxyCode}

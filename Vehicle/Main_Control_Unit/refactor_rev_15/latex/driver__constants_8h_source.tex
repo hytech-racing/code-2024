@@ -1,0 +1,47 @@
+\doxysection{driver\+\_\+constants.\+h}
+\hypertarget{driver__constants_8h_source}{}\label{driver__constants_8h_source}\index{include/driver\_constants.h@{include/driver\_constants.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}drivers.h"{}}}
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#ifdef\ DRIVER}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\ \ \ \ \#if\ DRIVER\ ==\ DEFAULT\_DRIVER}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\ \ \ \ \ \ \#define\ BRAKE\_ACTIVE\ 2200\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{//\ Threshold\ for\ brake\ pedal\ active\ \ }}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#define\ MIN\_ACCELERATOR\_PEDAL\_1\ 1000\ \ \ \ }\textcolor{comment}{//\ Low\ accelerator\ implausibility\ threshold}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#define\ START\_ACCELERATOR\_PEDAL\_1\ 1370\ \ }\textcolor{comment}{//\ Position\ to\ start\ acceleration\ //1140\ +\ pressure\ 1151}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#define\ END\_ACCELERATOR\_PEDAL\_1\ 2108\ \ \ \ }\textcolor{comment}{//\ Position\ to\ max\ out\ acceleration\ //1905}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#define\ MAX\_ACCELERATOR\_PEDAL\_1\ 2400\ \ \ \ }\textcolor{comment}{//\ High\ accelerator\ implausibility\ threshold}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//accel\ 2\ is\ a\ negative\ slop}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#define\ MIN\_ACCELERATOR\_PEDAL\_2\ 500\ \ \ \ }\textcolor{comment}{//\ Low\ accelerator\ implausibility\ threshold}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#define\ START\_ACCELERATOR\_PEDAL\_2\ 680\ \ }\textcolor{comment}{//\ Position\ to\ start\ acceleration\ 560\ +\ pressure\ 570}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#define\ END\_ACCELERATOR\_PEDAL\_2\ 1050\ \ \ \ }\textcolor{comment}{//\ Position\ to\ max\ out\ acceleration\ 948}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#define\ MAX\_ACCELERATOR\_PEDAL\_2\ 1250\ \ \ }\textcolor{comment}{//\ High\ accelerator\ implausibility\ threshold}}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#define\ MIN\_BRAKE\_PEDAL\_1\ 1876\ \ \ \ }\textcolor{comment}{//\ Low\ brale\ implausibility\ threshold}}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#define\ START\_BRAKE\_PEDAL\_1\ 2100\ \ }\textcolor{comment}{//\ Position\ to\ start\ brake\ //\ 2078\ +\ pressure}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#define\ END\_BRAKE\_PEDAL\_1\ 2490\ \ \ \ }\textcolor{comment}{//\ Position\ to\ max\ out\ brake\ 2718\ +-\/5}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#define\ MAX\_BRAKE\_PEDAL\_1\ 2950}}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00024\ \textcolor{comment}{//brake\ 2\ is\ negative\ slope}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#define\ MIN\_BRAKE\_PEDAL\_2\ 2300\ \ \ \ }\textcolor{comment}{//\ Low\ brake\ implausibility\ threshold}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#define\ START\_BRAKE\_PEDAL\_2\ 2010\ \ }\textcolor{comment}{//\ Position\ to\ start\ brake\ //2045\ -\/\ pressure\ }}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#define\ END\_BRAKE\_PEDAL\_2\ 1630\ \ \ \ }\textcolor{comment}{//\ Position\ to\ max\ out\ brake\ //1410\ +-\/\ 5}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#define\ MAX\_BRAKE\_PEDAL\_2\ 1100}}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#define\ BRAKE\_THRESHOLD\_MECH\_BRAKE\_1\ 2350\ }\textcolor{comment}{//\ brake\ 1,\ mech\ brake\ threshold\ +-\/5}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#define\ BRAKE\_THRESHOLD\_MECH\_BRAKE\_2\ 1766\ }\textcolor{comment}{//\ brake\ 2,\ mech\ brake\ threshold\ +-\/5}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\ \ \ \ \#else}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#error\ "{}Bad\ driver\ definition"{}}}
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\ \ \ \ \#error\ "{}Driver\ required"{}}}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \textcolor{comment}{//fixme}}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#define\ HALF\_ACCELERATOR\_PEDAL\_1\ ((START\_ACCELERATOR\_PEDAL\_1\ +\ END\_ACCELERATOR\_PEDAL\_1)/2)}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#define\ HALF\_ACCELERATOR\_PEDAL\_2\ ((START\_ACCELERATOR\_PEDAL\_2\ +\ END\_ACCELERATOR\_PEDAL\_2)/2)}}
+
+\end{DoxyCode}

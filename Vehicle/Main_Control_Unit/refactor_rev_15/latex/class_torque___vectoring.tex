@@ -1,0 +1,114 @@
+\doxysection{Torque\+\_\+\+Vectoring Class Reference}
+\hypertarget{class_torque___vectoring}{}\label{class_torque___vectoring}\index{Torque\_Vectoring@{Torque\_Vectoring}}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{class_torque___vectoring_a99fd3c9cd254b0b61823554fd7fb65f2}\label{class_torque___vectoring_a99fd3c9cd254b0b61823554fd7fb65f2} 
+{\bfseries Torque\+\_\+\+Vectoring} ()
+\begin{DoxyCompactList}\small\item\em Construct a new \doxylink{class_torque___vectoring}{Torque\+\_\+\+Vectoring} object. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{class_torque___vectoring_a0e819ea7eff28c4a7035d06533efbf20}{set\+\_\+inverter\+\_\+torques}} (int state)
+\begin{DoxyCompactList}\small\item\em Set the inverter torques based on current state passed in. \end{DoxyCompactList}\item 
+\Hypertarget{class_torque___vectoring_ae1c953701595b2c2f44dd17fdc0cb495}\label{class_torque___vectoring_ae1c953701595b2c2f44dd17fdc0cb495} 
+void {\bfseries set\+\_\+inverter\+\_\+torques\+\_\+regen\+\_\+only} ()
+\begin{DoxyCompactList}\small\item\em Set the inverter torques regen only. \end{DoxyCompactList}\item 
+\Hypertarget{class_torque___vectoring_a53d5b0851e10a7b103d57010a5b12cc0}\label{class_torque___vectoring_a53d5b0851e10a7b103d57010a5b12cc0} 
+void {\bfseries safe\+\_\+mode} (int accel, int brake, float max\+\_\+front\+\_\+power, float max\+\_\+rear\+\_\+power)
+\begin{DoxyCompactList}\small\item\em safe\+\_\+mode (no vectoring and whatnot) \end{DoxyCompactList}\item 
+\Hypertarget{class_torque___vectoring_a107359918c03f1d07ff13eb39b62d8a6}\label{class_torque___vectoring_a107359918c03f1d07ff13eb39b62d8a6} 
+void {\bfseries nissan\+\_\+mode} (int accel, int brake)
+\begin{DoxyCompactList}\small\item\em Mikhail nissan mode. \end{DoxyCompactList}\item 
+\Hypertarget{class_torque___vectoring_a0b573fb76560f7ad15851380a626e4e0}\label{class_torque___vectoring_a0b573fb76560f7ad15851380a626e4e0} 
+void {\bfseries launch\+\_\+control} (int accel, int brake, float max\+\_\+front\+\_\+power, float max\+\_\+rear\+\_\+power, float launch\+\_\+rate\+\_\+target)
+\begin{DoxyCompactList}\small\item\em launch control mode \end{DoxyCompactList}\item 
+\Hypertarget{class_torque___vectoring_a5358caceb5e331c820aa9cd206b08123}\label{class_torque___vectoring_a5358caceb5e331c820aa9cd206b08123} 
+void {\bfseries endurance\+\_\+mode} (int accel, int brake, int avg\+\_\+speed)
+\begin{DoxyCompactList}\small\item\em endurance mode (pasted from ) \end{DoxyCompactList}\item 
+\Hypertarget{class_torque___vectoring_a10cdff5a106231fbfbc97e1b9b1ab046}\label{class_torque___vectoring_a10cdff5a106231fbfbc97e1b9b1ab046} 
+void {\bfseries load\+\_\+cell\+\_\+mode} (int accel, int brake)
+\begin{DoxyCompactList}\small\item\em load cell torque vectoring \end{DoxyCompactList}\item 
+\Hypertarget{class_torque___vectoring_a0fd5475674327414dfee0ace78a3962e}\label{class_torque___vectoring_a0fd5475674327414dfee0ace78a3962e} 
+void {\bfseries debug\+Load\+Cells} ()
+\begin{DoxyCompactList}\small\item\em print load cell vals to serial \end{DoxyCompactList}\item 
+\Hypertarget{class_torque___vectoring_ae8fe6906958611deb8ddbf7b22f7bc95}\label{class_torque___vectoring_ae8fe6906958611deb8ddbf7b22f7bc95} 
+void {\bfseries debug\+Pedals} ()
+\begin{DoxyCompactList}\small\item\em print pedal vals to serial \end{DoxyCompactList}\item 
+\Hypertarget{class_torque___vectoring_aae8e056599eae5682306278895f0369d}\label{class_torque___vectoring_aae8e056599eae5682306278895f0369d} 
+void {\bfseries debug\+Torque} ()
+\begin{DoxyCompactList}\small\item\em print torque setpoints to serial \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static float \mbox{\hyperlink{class_torque___vectoring_a58f0ec84a8393c856be75043b053f970}{max\+\_\+allowed\+\_\+torque}} (float maxwatts, float rpm)
+\begin{DoxyCompactList}\small\item\em calculating max torque output (power limiting) \end{DoxyCompactList}\item 
+static float \mbox{\hyperlink{class_torque___vectoring_a80ee4e65d112d6b992e4fab67c0021d4}{float\+\_\+map}} (float x, float in\+\_\+min, float in\+\_\+max, float out\+\_\+min, float out\+\_\+max)
+\begin{DoxyCompactList}\small\item\em linear map number to a float \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Member Function Documentation}
+\Hypertarget{class_torque___vectoring_a80ee4e65d112d6b992e4fab67c0021d4}\label{class_torque___vectoring_a80ee4e65d112d6b992e4fab67c0021d4} 
+\index{Torque\_Vectoring@{Torque\_Vectoring}!float\_map@{float\_map}}
+\index{float\_map@{float\_map}!Torque\_Vectoring@{Torque\_Vectoring}}
+\doxysubsubsection{\texorpdfstring{float\_map()}{float\_map()}}
+{\footnotesize\ttfamily float Torque\+\_\+\+Vectoring\+::float\+\_\+map (\begin{DoxyParamCaption}\item[{float}]{x,  }\item[{float}]{in\+\_\+min,  }\item[{float}]{in\+\_\+max,  }\item[{float}]{out\+\_\+min,  }\item[{float}]{out\+\_\+max }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+linear map number to a float 
+
+
+\begin{DoxyParams}{Parameters}
+{\em x} & \\
+\hline
+{\em in\+\_\+min} & \\
+\hline
+{\em in\+\_\+max} & \\
+\hline
+{\em out\+\_\+min} & \\
+\hline
+{\em out\+\_\+max} & \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+float 
+\end{DoxyReturn}
+\Hypertarget{class_torque___vectoring_a58f0ec84a8393c856be75043b053f970}\label{class_torque___vectoring_a58f0ec84a8393c856be75043b053f970} 
+\index{Torque\_Vectoring@{Torque\_Vectoring}!max\_allowed\_torque@{max\_allowed\_torque}}
+\index{max\_allowed\_torque@{max\_allowed\_torque}!Torque\_Vectoring@{Torque\_Vectoring}}
+\doxysubsubsection{\texorpdfstring{max\_allowed\_torque()}{max\_allowed\_torque()}}
+{\footnotesize\ttfamily float Torque\+\_\+\+Vectoring\+::max\+\_\+allowed\+\_\+torque (\begin{DoxyParamCaption}\item[{float}]{maxwatts,  }\item[{float}]{rpm }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+calculating max torque output (power limiting) 
+
+
+\begin{DoxyParams}{Parameters}
+{\em maxwatts} & \\
+\hline
+{\em rpm} & \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+float 
+\end{DoxyReturn}
+\Hypertarget{class_torque___vectoring_a0e819ea7eff28c4a7035d06533efbf20}\label{class_torque___vectoring_a0e819ea7eff28c4a7035d06533efbf20} 
+\index{Torque\_Vectoring@{Torque\_Vectoring}!set\_inverter\_torques@{set\_inverter\_torques}}
+\index{set\_inverter\_torques@{set\_inverter\_torques}!Torque\_Vectoring@{Torque\_Vectoring}}
+\doxysubsubsection{\texorpdfstring{set\_inverter\_torques()}{set\_inverter\_torques()}}
+{\footnotesize\ttfamily void Torque\+\_\+\+Vectoring\+::set\+\_\+inverter\+\_\+torques (\begin{DoxyParamCaption}\item[{int}]{state }\end{DoxyParamCaption})}
+
+
+
+Set the inverter torques based on current state passed in. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em state} & \\
+\hline
+\end{DoxyParams}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+include/\mbox{\hyperlink{_torque___vectoring_8h}{Torque\+\_\+\+Vectoring.\+h}}\item 
+src/Torque\+\_\+\+Vectoring.\+cpp\end{DoxyCompactItemize}

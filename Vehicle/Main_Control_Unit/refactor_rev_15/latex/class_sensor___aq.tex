@@ -1,0 +1,58 @@
+\doxysection{Sensor\+\_\+\+Aq Class Reference}
+\hypertarget{class_sensor___aq}{}\label{class_sensor___aq}\index{Sensor\_Aq@{Sensor\_Aq}}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{class_sensor___aq_a3b1568f26a72fc8992076c28395860a9}{Sensor\+\_\+\+Aq}} ()
+\begin{DoxyCompactList}\small\item\em Construct a new \doxylink{class_sensor___aq}{Sensor\+\_\+\+Aq} object. \end{DoxyCompactList}\item 
+\Hypertarget{class_sensor___aq_ad8f1a28f84766f645f3de09082e61435}\label{class_sensor___aq_ad8f1a28f84766f645f3de09082e61435} 
+void {\bfseries sample\+ADCs} ()
+\begin{DoxyCompactList}\small\item\em sample the adcs, public interface \end{DoxyCompactList}\item 
+\Hypertarget{class_sensor___aq_a7ef987c9e9f4502653456e1e02989cb7}\label{class_sensor___aq_a7ef987c9e9f4502653456e1e02989cb7} 
+void {\bfseries sample\+Steering\+Top} ()
+\begin{DoxyCompactList}\small\item\em sample the top steering sensor \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static double \mbox{\hyperlink{class_sensor___aq_a2132ee41dd194540b0c11b4a4451d54f}{get\+\_\+thermistor\+\_\+temperature}} (uint16\+\_\+t analog)
+\begin{DoxyCompactList}\small\item\em get the thermistor temeprature for a given analog val \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\Hypertarget{class_sensor___aq_a3b1568f26a72fc8992076c28395860a9}\label{class_sensor___aq_a3b1568f26a72fc8992076c28395860a9} 
+\index{Sensor\_Aq@{Sensor\_Aq}!Sensor\_Aq@{Sensor\_Aq}}
+\index{Sensor\_Aq@{Sensor\_Aq}!Sensor\_Aq@{Sensor\_Aq}}
+\doxysubsubsection{\texorpdfstring{Sensor\_Aq()}{Sensor\_Aq()}}
+{\footnotesize\ttfamily Sensor\+\_\+\+Aq\+::\+Sensor\+\_\+\+Aq (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Construct a new \doxylink{class_sensor___aq}{Sensor\+\_\+\+Aq} object. 
+
+Construct a new \doxylink{class_sensor___aq_a3b1568f26a72fc8992076c28395860a9}{Sensor\+\_\+\+Aq\+::\+Sensor\+\_\+\+Aq} object initializes adc and rs422 objects. 
+
+\doxysubsection{Member Function Documentation}
+\Hypertarget{class_sensor___aq_a2132ee41dd194540b0c11b4a4451d54f}\label{class_sensor___aq_a2132ee41dd194540b0c11b4a4451d54f} 
+\index{Sensor\_Aq@{Sensor\_Aq}!get\_thermistor\_temperature@{get\_thermistor\_temperature}}
+\index{get\_thermistor\_temperature@{get\_thermistor\_temperature}!Sensor\_Aq@{Sensor\_Aq}}
+\doxysubsubsection{\texorpdfstring{get\_thermistor\_temperature()}{get\_thermistor\_temperature()}}
+{\footnotesize\ttfamily double Sensor\+\_\+\+Aq\+::get\+\_\+thermistor\+\_\+temperature (\begin{DoxyParamCaption}\item[{uint16\+\_\+t}]{analog }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+get the thermistor temeprature for a given analog val 
+
+
+\begin{DoxyParams}{Parameters}
+{\em analog} & analog reading of thermistor \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+double return celcius 
+\end{DoxyReturn}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+include/\mbox{\hyperlink{_sensor___aq_8h}{Sensor\+\_\+\+Aq.\+h}}\item 
+src/\mbox{\hyperlink{_sensor___aq_8cpp}{Sensor\+\_\+\+Aq.\+cpp}}\end{DoxyCompactItemize}

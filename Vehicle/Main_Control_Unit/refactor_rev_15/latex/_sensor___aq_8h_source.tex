@@ -1,0 +1,38 @@
+\doxysection{Sensor\+\_\+\+Aq.\+h}
+\hypertarget{_sensor___aq_8h_source}{}\label{_sensor___aq_8h_source}\index{include/Sensor\_Aq.h@{include/Sensor\_Aq.h}}
+\mbox{\hyperlink{_sensor___aq_8h}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <stdint.h>}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ <Mcp320x.h>}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ "{}MCU\_rev15\_dfs.h"{}}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{_h_t___data_8h}{HT\_Data.h}}"{}}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{timer__utils_8h}{timer\_utils.h}}"{}}}
+\DoxyCodeLine{00017\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\ load\_cell\_alpha\ =\ 0.95;}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#define\ STEERING\_SERIAL\ 5}}
+\DoxyCodeLine{00020\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_sensor___aq}{Sensor\_Aq}}\ \{}
+\DoxyCodeLine{00021\ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00022\ \ \ \ \ \mbox{\hyperlink{class_h_t___data}{HT\_Data}}*\ ht\_data;}
+\DoxyCodeLine{00023\ \ \ \ \ MCP3208\ adc;}
+\DoxyCodeLine{00024\ \ \ \ \ MCP3204\ adc\_fl;}
+\DoxyCodeLine{00025\ \ \ \ \ MCP3204\ adc\_fr;}
+\DoxyCodeLine{00026\ \ \ \ \ SPISettings\ settings;}
+\DoxyCodeLine{00027\ \ \ \ \ }
+\DoxyCodeLine{00028\ \ \ \ \ \textcolor{comment}{//\ STEERING\_RS422\ Steering\_Top(STEERING\_SERIAL);}}
+\DoxyCodeLine{00033\ \ \ \ \ \textcolor{keywordtype}{void}\ begin\_steering\_rs422();}
+\DoxyCodeLine{00041\ \ \ \ \ \textcolor{keywordtype}{void}\ read\_all\_adc\_channels(uint16\_t*\ ecu,\ uint16\_t*\ fl,\ uint16\_t*\ fr);}
+\DoxyCodeLine{00046\ \ \ \ \ \textcolor{keywordtype}{void}\ read\_all\_adcs();}
+\DoxyCodeLine{00051\ \ \ \ \ \textcolor{keywordtype}{void}\ read\_steering\_rs422();}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00058\ \ \ \ \ \mbox{\hyperlink{class_sensor___aq_a3b1568f26a72fc8992076c28395860a9}{Sensor\_Aq}}();}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_sensor___aq_ad8f1a28f84766f645f3de09082e61435}{sampleADCs}}();}
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_sensor___aq_a7ef987c9e9f4502653456e1e02989cb7}{sampleSteeringTop}}();}
+\DoxyCodeLine{00076\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{class_sensor___aq_a2132ee41dd194540b0c11b4a4451d54f}{get\_thermistor\_temperature}}(uint16\_t\ analog);}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \};\ }
+
+\end{DoxyCode}
