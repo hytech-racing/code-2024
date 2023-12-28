@@ -28,7 +28,7 @@ def initialize_mqtt():
     client.on_connect = on_connect
     #client.on_message = on_message
     client.connect(MQTT_SERVER, MQTT_PORT, 60)
-    client.loop_forever()
+    #client.loop_forever()
 
 
 
