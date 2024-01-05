@@ -1,44 +1,4 @@
-/*
-   Teensy 4.1 Main Control Unit code
-   Written by Liwei Sun which is why the code is so bad
-
-   Rev 12
-*/
-
-#include <stdint.h>
-#include <FlexCAN_T4.h>
-#include <HyTech_CAN.h>
-#define _USE_MATH_DEFINES
-#include <cmath>
-#include <time.h>
-#include <deque>
-
-#include "ADC_SPI.h"
-#include "STEERING_SPI.h"
-#include "kinetis_flexcan.h"
-#include "Metro.h"
-
-// IMU
-#include <ADIS16460.h>
-
-#include "drivers.h"
-
-// constants to define for different operation
-
-#define DRIVER DEFAULT_DRIVER
-#define TORQUE_1 10
-#define TORQUE_2 15
-#define TORQUE_3 21
-#define MAX_ALLOWED_SPEED 20000
-
-// set to true or false for debugging
-#define DEBUG false
-#define BMS_DEBUG_ENABLE false
-
-#include "MCU_rev12_dfs.h"
-
-#include "driver_constants.h"
-
+#include "Main_Control_Unit.h"
 // Call the ADIS16460 IMU class
 ADIS16460 IMU(IMU_CS, IMU_DATAREADY, IMU_RESET); // Chip Select, Data Ready, Reset Pin Assignments
 
@@ -836,7 +796,7 @@ inline void set_inverter_torques() {
   float hairpin_steering_factor = 0.0;
 
   int16_t max_speed;
-
+  float derating_factor;
   switch (dashboard_status.get_dial_state()) {
     case 0:
       for (int i = 0; i < 4; i++) {
@@ -973,7 +933,7 @@ inline void set_inverter_torques() {
 //      max_rear_power = 36000.0;
       max_front_power = 21760.0;
       max_rear_power = 41230.0;
-
+    
       switch (launch_state) {
         case launch_not_ready:
           for (int i = 0; i < 4; i++) {
@@ -1044,7 +1004,7 @@ inline void set_inverter_torques() {
       total_load_cells = mcu_load_cells.get_FL_load_cell() + mcu_load_cells.get_FR_load_cell() + mcu_load_cells.get_RL_load_cell() + mcu_load_cells.get_RR_load_cell();
 
       // Derating
-      float derating_factor = float_map(avg_speed, start_derating_rpm, end_derating_rpm, 1.0, 0.0);
+      derating_factor = float_map(avg_speed, start_derating_rpm, end_derating_rpm, 1.0, 0.0);
       derating_factor = min(1.0, max(0.0, derating_factor));
 
       if (avg_accel >= avg_brake) {
@@ -1060,6 +1020,7 @@ inline void set_inverter_torques() {
       }
       break;
     case 5:
+    {
       for (int i = 0; i < 4; i++) {
         speed_setpoint_array[i] = MAX_ALLOWED_SPEED;
       }
@@ -1086,6 +1047,10 @@ inline void set_inverter_torques() {
         torque_setpoint_array[3] = (int16_t)((float)mcu_load_cells.get_RR_load_cell() / (float)total_load_cells * (float)total_torque / 2.0);
       }
       break;
+    }
+      default:
+        Serial.println("uh oh");
+        break;
   }
 
 

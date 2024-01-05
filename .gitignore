@@ -254,3 +254,5 @@ Telemetry/telemetry_py/*.txt
 *.o
 *.log
 __pycache__/
+
+**/.pio
