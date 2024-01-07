@@ -16,9 +16,19 @@ class STEERING_RS422 {
         STEERING_RS422(uint8_t serial);
         void init(unsigned long baudrate);
         int16_t read_steering();
+        int16_t read_steering_continous();
+        void request_status();
         void set_zero_position(uint16_t position) {  this->zero_position = position;};
         uint16_t get_encoder_position() const { return encoder_position;};
-        void calibrate_steering();    
+        void calibrate_steering(uint32_t pos);    
+        void command_sequence()
+        void save_parameters();
+        void continous_setup(uint16_t period, bool auto_start);
+        void continous_start();
+        void continous_stop();
+        void reset_sensor();
+        void set_zero_position(uint16_t new_zero_position);
+        uint8_t self_calibration();
     private:
         static uint16_t buf;
         HardwareSerial* _serial;

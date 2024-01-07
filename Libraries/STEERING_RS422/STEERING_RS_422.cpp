@@ -42,13 +42,24 @@ void STEERING_RS422::init(unsigned long baudrate) {
     this->set_zero_position(ZERO_POSITION);
 }
 int16_t STEERING_RS422::read_steering() {
-    uint8_t readByte[3] = {0};
-    _serial->write(0x64);
+    
+    request_status();
 
 
     //check if _serial is available and the first byte is ascii "d"
 
+        
+    return read_steering_continous();    
 
+}
+void STEERING_RS422::request_status() {
+    _serial->write(0x64);
+    delay(1);
+}
+int16_t STEERING_RS422::read_steering_continous() {
+    uint8_t readByte[3] = {0};
+
+    //check if _serial is available and the first byte is ascii "d"
     if (_serial->available() >= 4 && _serial->read() == 0x64) {
 
         readByte[0] = _serial->read(); //lower half of steering
@@ -59,11 +70,7 @@ int16_t STEERING_RS422::read_steering() {
         warning = readByte[1] & 1; //if high, some operating conditions are close to limits
         status = readByte[2];
         Serial.println(encoder_position);
-        // if ((MAX_POSITION + (encoder_position - zero_position)) % MAX_POSITION <= (MAX_POSITION / 2)) {
-        //     steering_position = -((MAX_POSITION + (encoder_position - zero_position)) % MAX_POSITION);
-        // } else {
-        //     steering_position = MAX_POSITION - ((MAX_POSITION + (encoder_position - zero_position)) % MAX_POSITION);
-        // }
+        
         steering_position = encoder_position - zero_position ;
         //_serial->clear();
     }
@@ -71,12 +78,28 @@ int16_t STEERING_RS422::read_steering() {
     
 
         
-    return steering_position;    
-
+    return steering_position;   
 }
-
-void STEERING_RS422::calibrate_steering() {
+void STEERING_RS422::set_zero_position(uint16_t new_zero_position) {
+    zero_position = new_zero_position;
+}
+void STEERING_RS422::calibrate_steering(uint32_t pos) {
     //start programming sequence
+    //this sends data to essentially add a zero offset
+    //pos = 0x00000E18
+    command_sequence();
+    _serial->write(0x5A);
+    delay(1);
+    _serial->write(pos &0xFF000000);
+    delay(1);
+    _serial->write(pos &0xFF0000);
+    delay(1);
+    _serial->write(pos &0xFF00);
+    delay(1);
+    _serial->write(pos & 0xFF);
+    delay(1);
+}
+void STEERING_RS422::command_sequence() {
     delay(1);
     _serial->write(0xCD);
     delay(1);
@@ -86,14 +109,79 @@ void STEERING_RS422::calibrate_steering() {
     delay(1);
     _serial->write(0xAB);
     delay(1);
-    _serial->write(0x5A);
+    
+}
+
+void STEERING_RS422::continous_setup(uint16_t period, bool auto_start = 0) {
+    command_sequence();
+    _serial->write(0x54);
     delay(1);
-    _serial->write(0x00);
+    _serial->write((auto_start) ? 0x01 : 0x00);
+    delay(1)
+    _serial->write(0x64);
     delay(1);
-    _serial->write(0x00);
+    //in microseconds
+    _serial(period & 0xFF00);
     delay(1);
-    _serial->write(0x0E);
+    _serial(period & 0xFF);
+
+}
+void STEERING_RS422::continous_start() {
+    command_sequence();
+    _serial->write(0x53);
     delay(1);
-    _serial->write(0x18);
+}
+void STEERING_RS422::continous_stop() {
+    command_sequence();
+    _serial->write(0x50);
     delay(1);
+}
+void STEERING_RS422::save_parameters() {
+    command_sequence();
+    _serial->write(0x63);
+    delay(1);
+}
+void STEERING_RS422::reset_sensor() {
+    command_sequence();
+    _serial->write(0x72);
+    delay(1);
+}
+
+uint8_t STEERING_RS422::self_calibration() {
+    //b6 calibration alr performed
+    //b3 calcualted params out of range
+    //b2 timeout (no complete rotation)
+    //b1 counter bit 1
+    //b0 counter bit 0
+    //check status
+    uint8_t status_flags = 0;
+    //check if calubration was already performed
+    command_sequence();
+    _serial->write(0x69);
+    delay(1);
+    if (_serial->available() && _serial->read() == 0x69) {
+
+        status_flags = _serial->read();
+    }
+    if (status_flags & 0b01000000) {
+        return status_flags;
+    }
+
+    //self calibrate
+    command_sequence();
+    _serial->write(0x41);
+    delay(10000); //10 sec delay()
+    
+    //check status
+    command_sequence();
+    _serial->write(0x69);
+    delay(1);
+    if (_serial->available() && _serial->read() == 0x69) {
+        status_flags = _serial->read();
+    }
+    //check if any errors
+    if (status_flags & 0b0001100) {
+        return status_flags;
+    }
+    return 1;
 }
