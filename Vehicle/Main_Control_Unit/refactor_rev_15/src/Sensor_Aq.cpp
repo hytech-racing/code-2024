@@ -17,9 +17,9 @@
 Sensor_Aq::Sensor_Aq() : adc(ADC_VREF, ADC_CS), adc_fl(ADC_VREF, FL_CS), adc_fr(ADC_VREF, FR_CS), settings(ADC_SPI_SPEED, MSBFIRST, SPI_MODE0) {
     ht_data = HT_Data::getInstance();
     begin_steering_rs422();
-    pinMode(ECU_CLK, OUTPUT);
-    pinMode(ECU_SDI, INPUT);
-    pinMode(ECU_SDO, OUTPUT);
+    // pinMode(ECU_CLK, OUTPUT);
+    // pinMode(ECU_SDI, INPUT);
+    // pinMode(ECU_SDO, OUTPUT);
     pinMode(THERM_FR, INPUT);
     pinMode(THERM_FL, INPUT);
     pinMode(STEERING_2, INPUT); 
@@ -55,8 +55,10 @@ void Sensor_Aq:: read_all_adcs() {
     //mcu_thermistor_readings.set_therm_fr(analogRead(THERM_FR));
     ht_data->mcu_analog_readings.set_steering_2(analogRead(STEERING_2));
     //teensy adc's
-    ht_data->prev_load_cell_readings[0] = ht_data->mcu_load_cells.get_FL_load_cell();
-    ht_data->prev_load_cell_readings[1] = ht_data->mcu_load_cells.get_FR_load_cell();
+
+
+    //function pointers for load cells??
+    
     uint16_t adc_inputs[8];
     uint16_t FL_inputs[4]; //only two are usable, since CB only connects inputs at 1 and 0. 
     uint16_t FR_inputs[4]; 
@@ -78,6 +80,8 @@ void Sensor_Aq:: read_all_adcs() {
     }
     ht_data->mcu_analog_readings.set_hall_effect_current((uint16_t)current * 100);
 
+    ht_data->prev_load_cell_readings[0] = ht_data->mcu_load_cells.get_FL_load_cell();
+    ht_data->prev_load_cell_readings[1] = ht_data->mcu_load_cells.get_FR_load_cell();
     ht_data->mcu_load_cells.set_FL_load_cell((uint16_t)((FL_inputs[ADC_FL_LOAD_CELL_CHANNEL]*LOAD_CELL1_SLOPE + LOAD_CELL1_OFFSET) * (1 - load_cell_alpha) + ht_data->prev_load_cell_readings[0]*load_cell_alpha));
     ht_data->mcu_load_cells.set_FR_load_cell((uint16_t)((FR_inputs[ADC_FR_LOAD_CELL_CHANNEL]*LOAD_CELL2_SLOPE + LOAD_CELL2_OFFSET) * (1 - load_cell_alpha) + ht_data->prev_load_cell_readings[1]*load_cell_alpha));
     ht_data->mcu_potentiometers.set_pot1(FL_inputs[SUS_POT_FL]);

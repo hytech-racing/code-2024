@@ -27,6 +27,7 @@ class Torque_Vectoring {
 
     float max_torque;
     //design for implausabilities lolz
+    //all this could go on HT_DATA, make it easier for loading in data across CAN_COMMS, SENSOR_AQ, and TORQUE_VECTORING, but just the function pointers
     struct Accel {
         uint16_t (MCU_pedal_readings::*get_accel)() const;
         int start;

@@ -1,16 +1,9 @@
-/**
- * @file Main_Control_Unit.ino
- * @author Liwei Sun, Mikhail Allen, Eric Galluzzi
- * @brief Teensy 4.1 Main Control Unit code Rev15
- * @version 0.1
- * @date 2023-12-21
- * 
- * @copyright Copyright (c) 2023
- * 
- *
- */
+/*
+   Teensy 4.1 Main Control Unit code
+   Written by Liwei Sun which is why the code is so bad
 
-
+   Rev 12
+*/
 
 #include <stdint.h>
 #include <FlexCAN_T4.h>
@@ -26,7 +19,7 @@
 #include "Metro.h"
 
 
-//reduce serial overhead on real modes debug handler 
+//reduce serial overhead on real modes
 #define DEBUG 
 #ifndef DEBUG
   #define Debug_begin(x)
@@ -34,10 +27,10 @@
   #define Debug_println(x)
   #define Debug_printf(x)
 #else
-  #define Debug_begin(x) Serial.begin(x)
-  #define Debug_print(x)  Serial.print(x)
-  #define Debug_println(x) Serial.println(x)
-  #define Debug_printf(x,y) Serial.printf(x, y)
+  #define Debug_begin(x) Serial./begin(x)
+  #define Debug_print(x)  Serial./print(x)
+  #define Debug_println(x) Serial./println(x)
+  #define Debug_printf(x,y) Serial./printf(x, y)
 #endif
 
 #include "drivers.h"
@@ -308,7 +301,6 @@ void loop() {
 }
 
 
-//comms cpp
 
 inline void send_CAN_inverter_setpoints() {
   if (timer_CAN_inverter_setpoints_send.check()) {
@@ -388,8 +380,6 @@ inline void send_CAN_mcu_analog_readings() {
     TELEM_CAN.write(msg);
   }
 }
-
-//SM cpp
 inline void state_machine() {
   switch (mcu_status.get_state()) {
     case MCU_STATE::STARTUP: break;
@@ -508,65 +498,8 @@ inline void state_machine() {
 }
 
 /* Shared state functinality */
-void set_state(MCU_STATE new_state) {
-  if (mcu_status.get_state() == new_state) {
-    return;
-  }
 
-  // exit logic
-  switch (mcu_status.get_state()) {
-    case MCU_STATE::STARTUP: break;
-    case MCU_STATE::TRACTIVE_SYSTEM_NOT_ACTIVE: break;
-    case MCU_STATE::TRACTIVE_SYSTEM_ACTIVE: break;
-    case MCU_STATE::ENABLING_INVERTER:
-      timer_inverter_enable.reset();
-      break;
-    case MCU_STATE::WAITING_READY_TO_DRIVE_SOUND:
-      // make dashboard stop buzzer
-      mcu_status.set_activate_buzzer(false);
-      mcu_status.write(msg.buf);
-      msg.id = ID_MCU_STATUS;
-      msg.len = sizeof(mcu_status);
-      TELEM_CAN.write(msg);
-      break;
-    case MCU_STATE::READY_TO_DRIVE: {
-        inverter_startup_state = INVERTER_STARTUP_STATE::WAIT_SYSTEM_READY;
-        break;
-      }
-  }
 
-  mcu_status.set_state(new_state);
-
-  // entry logic
-  switch (new_state) {
-    case MCU_STATE::STARTUP: break;
-    case MCU_STATE::TRACTIVE_SYSTEM_NOT_ACTIVE: break;
-    case MCU_STATE::TRACTIVE_SYSTEM_ACTIVE: {
-        inverter_startup_state = INVERTER_STARTUP_STATE::WAIT_SYSTEM_READY;
-        break;
-      }
-    case MCU_STATE::ENABLING_INVERTER: {
-        Debug_println("MCU Sent enable command");
-        timer_inverter_enable.reset();
-        break;
-      }
-    case MCU_STATE::WAITING_READY_TO_DRIVE_SOUND:
-      // make dashboard sound buzzer
-      mcu_status.set_activate_buzzer(true);
-      mcu_status.write(msg.buf);
-      msg.id = ID_MCU_STATUS;
-      msg.len = sizeof(mcu_status);
-      TELEM_CAN.write(msg);
-
-      timer_ready_sound.reset();
-      Debug_println("RTDS enabled");
-      break;
-    case MCU_STATE::READY_TO_DRIVE:
-      Debug_println("Ready to drive");
-      break;
-  }
-}
-//SM manager (determine relationship with SM CPP)
 bool check_TS_over_HV_threshold() {
   for (uint8_t inv = 0; inv < 4; inv++) {
     if (mc_energy[inv].get_dc_bus_voltage() < MIN_HV_VOLTAGE) {
@@ -619,9 +552,6 @@ inline void software_shutdown() {
 
 }
 
-
-
-//comms.cpp
 /* Parse incoming CAN messages */
 void parse_telem_can_message(const CAN_message_t &RX_msg) {
   CAN_message_t rx_msg = RX_msg;
@@ -711,8 +641,65 @@ inline void power_off_inverter() {
 
 
 /* Handle changes in state */
+void set_state(MCU_STATE new_state) {
+  if (mcu_status.get_state() == new_state) {
+    return;
+  }
 
-//math.cpp for operations related to thermistors, mapping, current and whatnot, powerlimiting
+  // exit logic
+  switch (mcu_status.get_state()) {
+    case MCU_STATE::STARTUP: break;
+    case MCU_STATE::TRACTIVE_SYSTEM_NOT_ACTIVE: break;
+    case MCU_STATE::TRACTIVE_SYSTEM_ACTIVE: break;
+    case MCU_STATE::ENABLING_INVERTER:
+      timer_inverter_enable.reset();
+      break;
+    case MCU_STATE::WAITING_READY_TO_DRIVE_SOUND:
+      // make dashboard stop buzzer
+      mcu_status.set_activate_buzzer(false);
+      mcu_status.write(msg.buf);
+      msg.id = ID_MCU_STATUS;
+      msg.len = sizeof(mcu_status);
+      TELEM_CAN.write(msg);
+      break;
+    case MCU_STATE::READY_TO_DRIVE: {
+        inverter_startup_state = INVERTER_STARTUP_STATE::WAIT_SYSTEM_READY;
+        break;
+      }
+  }
+
+  mcu_status.set_state(new_state);
+
+  // entry logic
+  switch (new_state) {
+    case MCU_STATE::STARTUP: break;
+    case MCU_STATE::TRACTIVE_SYSTEM_NOT_ACTIVE: break;
+    case MCU_STATE::TRACTIVE_SYSTEM_ACTIVE: {
+        inverter_startup_state = INVERTER_STARTUP_STATE::WAIT_SYSTEM_READY;
+        break;
+      }
+    case MCU_STATE::ENABLING_INVERTER: {
+        Debug_println("MCU Sent enable command");
+        timer_inverter_enable.reset();
+        break;
+      }
+    case MCU_STATE::WAITING_READY_TO_DRIVE_SOUND:
+      // make dashboard sound buzzer
+      mcu_status.set_activate_buzzer(true);
+      mcu_status.write(msg.buf);
+      msg.id = ID_MCU_STATUS;
+      msg.len = sizeof(mcu_status);
+      TELEM_CAN.write(msg);
+
+      timer_ready_sound.reset();
+      Debug_println("RTDS enabled");
+      break;
+    case MCU_STATE::READY_TO_DRIVE:
+      Debug_println("Ready to drive");
+      break;
+  }
+}
+
 inline float float_map(float x, float in_min, float in_max, float out_min, float out_max)
 {
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
@@ -1178,7 +1165,6 @@ inline void set_inverter_torques() {
 
 }
 
-//sensors.cpp work with torque vectoing
 inline void begin_all_adcs() {
   // configure PIN mode
   pinMode(ADC_CS, OUTPUT);
@@ -1187,8 +1173,6 @@ inline void begin_all_adcs() {
   digitalWrite(ADC_CS, HIGH);
   // initialize SPI interface for MCP3208
   SPI.begin();
-}
-
 
 inline void read_all_adcs() {
   if (timer_read_all_adcs.check()) {
@@ -1203,7 +1187,7 @@ inline void read_all_adcs() {
     
     
     prev_load_cell_readings[0] = mcu_load_cells.get_FL_load_cell();
-    prev_load_cell_readings[1] = mcu_load_cells.get_FR_load_cell();
+    prev_load_cell_readings[1] = mcu_load_cells.get_FR_load_cell();i
     
 
     uint16_t adc_inputs[8];
@@ -1260,14 +1244,12 @@ inline void brake_outputs() {
   mcu_status.set_mech_brake_active(mcu_pedal_readings.get_brake_pedal_1() >= BRAKE_THRESHOLD_MECH_BRAKE_1); //define in driver_constraints.h (70%)
 }
 
-//write me (sensors/comms)
+//write me
 inline void read_steering_rs422();
 
 //write me
 inline void get_thermistor_temperature(); 
 
-
-//inverers.cpp
 bool check_all_inverters_system_ready() {
   for (uint8_t inv = 0; inv < 4; inv++) {
     if (! mc_status[inv].get_system_ready()) {
@@ -1387,7 +1369,6 @@ inline void reset_inverters() {
   }
 }
 
-//monitoring cpp
 /* Read shutdown system values */
 inline void read_status_values() {
   /* Measure shutdown circuits' input */
@@ -1482,7 +1463,6 @@ inline void calculate_pedal_implausibilities() {
   }
 }
 
-//math used by torque vectoring 
 inline float max_allowed_torque(float maxwatts, float rpm) {
   float angularspeed = (abs(rpm) + 1) / 60 * 2 * 3.1415;
   float maxnm = min(maxwatts / angularspeed, 20);
