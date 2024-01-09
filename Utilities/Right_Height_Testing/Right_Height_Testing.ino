@@ -76,8 +76,6 @@ void setup() {
   cr &= ~(uint16_t)TEMP_CPT_ENABLE_BIT;//enable temperature compensation
   writeData(SLAVE_ADDR, eControl, cr); //Writes the setting value to the control register
   delay(100);
-  cr |= MEASURE_TRIG_BIT;//Set trig bit
-  writeData(SLAVE_ADDR, eControl, cr); //Write the value to the control register and trigger a ranging
 }
 
 void loop() {
