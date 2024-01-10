@@ -19,11 +19,6 @@
 
 #include "RS485.h"
 
-// #define RS485_SERIAL_PORT Serial4
-// #define RS485_TX_PIN 17
-// #define RS485_DE_PIN 18
-// #define RS485_RE_PIN -1    // set as -1 to never bother with it, otherwise set as corresponding pin in use
-
 #ifdef __MBED__
 #include "pinDefinitions.h"
 RS485Class::RS485Class(HardwareSerial& hwSerial, PinName txPin, PinName dePin, PinName rePin) :
@@ -207,15 +202,3 @@ void RS485Class::setDelays(int predelay, int postdelay)
   _predelay = predelay;
   _postdelay = postdelay;
 }
-
-// #ifdef RS485_SERIAL_PORT
-// RS485Class RS485(RS485_SERIAL_PORT, RS485_DEFAULT_TX_PIN, RS485_DEFAULT_DE_PIN, RS485_DEFAULT_RE_PIN);
-// #else
-// RS485Class RS485(SERIAL_PORT_HARDWARE, 1, RS485_DEFAULT_DE_PIN, RS485_DEFAULT_RE_PIN);
-// #endif
-
-// #ifdef RS485_SERIAL_PORT
-// RS485Class RS485(RS485_SERIAL_PORT, RS485_TX_PIN, RS485_DE_PIN, RS485_RE_PIN);
-// #else
-// RS485Class RS485(SERIAL_PORT_HARDWARE, 1, RS485_DEFAULT_DE_PIN, RS485_DEFAULT_RE_PIN);
-// #endif

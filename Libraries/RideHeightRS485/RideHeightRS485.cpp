@@ -11,19 +11,17 @@ RideHeightRS485::RideHeightRS485(uint32_t baudrate)
 void RideHeightRS485::init(uint32_t baudrate)
 {
     this->baudrate = baudrate;
-
-    // begin();
 }
 
 void RideHeightRS485::begin()
 {
     ModbusRTUClient.begin(baudrate);
 
-    cr |= MEASURE_MODE_BIT;                 //Set bit2 , Set to trigger mode
+    cr |= MEASURE_MODE_BIT;                 //Set bit 2 , Set to trigger mode
     cr &= ~(uint16_t)TEMP_CPT_SEL_BIT;      //Select internal temperature compensation
     cr &= ~(uint16_t)TEMP_CPT_ENABLE_BIT;   //enable temperature compensation
 
-    writeData(DEFAULT_SLAVE_ADDR, eControl, cr);    //Writes the setting value to the control register
+    writeData(PUBLIC_ADDR, eControl, cr);    //Writes the setting value to the control register for all sensors
 
     delay(100);
 }
@@ -101,7 +99,7 @@ float RideHeightRS485::readDistance(uint16_t addr)
 */
 float RideHeightRS485::readTemp(uint16_t addr)
 {
-    temp =  (float)readData(addr, eInternalTempreture) / 10.0;    //Read the temperature register, one LSB is 0.1℃
+    temp =  (float)readData(addr, eInternalTemperature) / 10.0;    //Read the temperature register, one LSB is 0.1℃
 
     return temp;
 }

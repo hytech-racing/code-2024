@@ -32,8 +32,8 @@ typedef enum {
   eComBaudrate,
   eComParityStop,
   eDistance,
-  eInternalTempreture,
-  eExternTempreture,
+  eInternalTemperature,
+  eExternTemperature,
   eControl,
   eNoise
 } eRegIndex_t;
@@ -49,7 +49,7 @@ public:
     float readDistance(uint16_t addr=DEFAULT_SLAVE_ADDR);
     float readTemp(uint16_t addr=DEFAULT_SLAVE_ADDR);
     void setAddress(uint16_t currAddr=PUBLIC_ADDR, uint16_t newAddr=DEFAULT_SLAVE_ADDR);
-    void setBaudrate(uint16_t addr=DEFAULT_SLAVE_ADDR, uint16_t baudrateIndex=8);
+    void setBaudrate(uint16_t addr=PUBLIC_ADDR, uint16_t baudrateIndex=8);
 
 private:
     static uint32_t baudrates[8];
