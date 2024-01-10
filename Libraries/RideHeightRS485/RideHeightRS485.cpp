@@ -1,18 +1,18 @@
 #include "RideHeightRS485.h"
 
 // static baudrate array
-uint16_t RideHeightRS485::baudrates[8] = {2400, 4800, 9600, 14400, 19200, 38400, 57600, 115200};
+uint32_t RideHeightRS485::baudrates[8] = {2400, 4800, 9600, 14400, 19200, 38400, 57600, 115200};
 
-RideHeightRS485::RideHeightRS485(uint16_t baudrate)
+RideHeightRS485::RideHeightRS485(uint32_t baudrate)
 {
     init(baudrate);
 }
 
-void RideHeightRS485::init(uint16_t baudrate)
+void RideHeightRS485::init(uint32_t baudrate)
 {
     this->baudrate = baudrate;
 
-    begin();
+    // begin();
 }
 
 void RideHeightRS485::begin()
@@ -23,7 +23,7 @@ void RideHeightRS485::begin()
     cr &= ~(uint16_t)TEMP_CPT_SEL_BIT;      //Select internal temperature compensation
     cr &= ~(uint16_t)TEMP_CPT_ENABLE_BIT;   //enable temperature compensation
 
-    writeData(PUBLIC_ADDR, eControl, cr);    //Writes the setting value to the control register
+    writeData(DEFAULT_SLAVE_ADDR, eControl, cr);    //Writes the setting value to the control register
 
     delay(100);
 }
@@ -81,7 +81,7 @@ uint16_t RideHeightRS485::writeData(uint16_t addr, eRegIndex_t reg, uint16_t dat
 *@param addr: address of the sensor to be read from
 *@return distance read
 */
-float RideHeightRS485::readDistance(uint16_t addr=DEFAULT_SLAVE_ADDR)
+float RideHeightRS485::readDistance(uint16_t addr)
 {
     cr |= MEASURE_TRIG_BIT;           //Set trig bit
 
@@ -99,7 +99,7 @@ float RideHeightRS485::readDistance(uint16_t addr=DEFAULT_SLAVE_ADDR)
 *@param addr: address of the sensor to be read from
 *@return temperature read
 */
-float RideHeightRS485::readTemp(uint16_t addr=DEFAULT_SLAVE_ADDR)
+float RideHeightRS485::readTemp(uint16_t addr)
 {
     temp =  (float)readData(addr, eInternalTempreture) / 10.0;    //Read the temperature register, one LSB is 0.1℃
 
@@ -112,7 +112,7 @@ float RideHeightRS485::readTemp(uint16_t addr=DEFAULT_SLAVE_ADDR)
 *@param currAddr: sensor address prior to revision
 *@param newAddr: new address to be set
 */
-void RideHeightRS485::setAddress(uint16_t currAddr=PUBLIC_ADDR, uint16_t newAddr)
+void RideHeightRS485::setAddress(uint16_t currAddr, uint16_t newAddr)
 {
     writeData(currAddr, eAddr, newAddr);    //Writes the new address value to the register
 }
@@ -123,7 +123,7 @@ void RideHeightRS485::setAddress(uint16_t currAddr=PUBLIC_ADDR, uint16_t newAddr
 *@param addr: address of the target sensor
 *@param baudrateIndex: values map to different baudrates per sensor register specification
 */
-void RideHeightRS485::setBaudrate(uint16_t addr=DEFAULT_SLAVE_ADDR, uint16_t baudrateIndex)
+void RideHeightRS485::setBaudrate(uint16_t addr, uint16_t baudrateIndex)
 {
     //Writes the new baud rate value to the corresponding register
     if (writeData(addr, eComBaudrate, baudrateIndex))

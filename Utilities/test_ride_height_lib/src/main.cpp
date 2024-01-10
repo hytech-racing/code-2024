@@ -1,19 +1,23 @@
 #include <Arduino.h>
 #include "RideHeightRS485.h"
 
-// put function declarations here:
-int myFunction(int, int);
 
+RideHeightRS485 ride_height_sensor(115200);
 void setup() {
-  // put your setup code here, to run once:
-  int result = myFunction(2, 3);
+
+  Serial.begin(9600);
+
+  ride_height_sensor.begin();
+
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
+
+  float dist = ride_height_sensor.readDistance();
+
+  Serial.print("Distance = ");
+  Serial.print(dist, 1);
+  Serial.println("mm");
+  
 }
 
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
-}
