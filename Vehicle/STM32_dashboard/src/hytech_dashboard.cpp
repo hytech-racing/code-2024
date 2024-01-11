@@ -5,7 +5,7 @@
 
 // Definition of display and neopixel globals
 // For some reason, code complains when these are defined in the header file
-Adafruit_SharpMem _display(SHARP_SCK, SHARP_MOSI, SHARP_SS, 400, 240);
+Adafruit_SharpMem _display(SHARP_SCK, SHARP_MOSI, SHARP_SS, 320, 240);
 Adafruit_NeoPixel _neopixels(NEOPIXEL_COUNT, NEOPIXEL_PIN, NEO_GRBW + NEO_KHZ800);
 
 /* Null, because instance will be initialized on demand. */
@@ -70,7 +70,7 @@ void hytech_dashboard::startup() {
 
     // display template
     _display.clearDisplay();
-    _display.drawBitmap(0,0, epd_bitmap_Displaytest, 400, 240, BLACK);
+    _display.drawBitmap(0,0, epd_bitmap_hytech_dashboard, 400, 240, BLACK);
 
     // brake pedal
     //9,40,17,143
@@ -109,7 +109,7 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
 
     // refresh display
     _display.clearDisplayBuffer();
-    _display.drawBitmap(0,0, epd_bitmap_Displaytest, 400, 240, BLACK);
+    _display.drawBitmap(0,0, epd_bitmap_hytech_dashboard, 400, 240, BLACK);
     draw_vertical_pedal_bar(CAN->pedal_readings.get_accelerator_pedal_1(), 9);
     draw_vertical_pedal_bar(CAN->pedal_readings.get_accelerator_pedal_1(), 374);
     switch(current_state) {
