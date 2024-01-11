@@ -86,7 +86,7 @@ float RideHeightRS485::readDistance(uint16_t addr)
     writeData(addr, eControl, cr);    //Write the value to the control register and trigger a ranging
     delay(60);                        //Delay of 300ms(minimum delay should be greater than 30ms) is to wait for the completion of ranging
 
-    dist = (float)readData(addr, eDistance) / 10;    //Read distance register, one LSB is 0.1mm
+    dist = (float)readData(addr, eDistance) / 10.0;    //Read distance register, one LSB is 0.1mm
 
     return dist;
 }
