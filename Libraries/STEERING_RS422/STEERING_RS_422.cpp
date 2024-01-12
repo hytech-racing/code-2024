@@ -117,13 +117,13 @@ void STEERING_RS422::continous_setup(uint16_t period, bool auto_start = 0) {
     _serial->write(0x54);
     delay(1);
     _serial->write((auto_start) ? 0x01 : 0x00);
-    delay(1)
+    delay(1);
     _serial->write(0x64);
     delay(1);
     //in microseconds
-    _serial(period & 0xFF00);
+    _serial->write(period & 0xFF00);
     delay(1);
-    _serial(period & 0xFF);
+    _serial->write(period & 0xFF);
 
 }
 void STEERING_RS422::continous_start() {
@@ -147,6 +147,7 @@ void STEERING_RS422::reset_sensor() {
     delay(1);
 }
 
+/*
 uint8_t STEERING_RS422::self_calibration() {
     //b6 calibration alr performed
     //b3 calcualted params out of range
@@ -184,4 +185,4 @@ uint8_t STEERING_RS422::self_calibration() {
         return status_flags;
     }
     return 1;
-}
+} */
