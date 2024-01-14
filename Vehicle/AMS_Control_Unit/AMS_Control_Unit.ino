@@ -25,6 +25,7 @@
 #define MAX_VOLTAGE 42000          // Maxiumum allowable single cell voltage in units of 100μV
 #define MAX_TOTAL_VOLTAGE 5330000  // Maximum allowable pack total voltage in units of 100μV
 #define MAX_THERMISTOR_VOLTAGE 26225   // Maximum allowable pack temperature corresponding to 60C in units 100μV
+#define TOTAL_PACK_CAPACITY 283500     // Total capacity of cells in parallel
 #define BALANCE_ON true
 #define BALANCE_COOL 6000             // Sets balancing duty cycle as 33.3%
 #define BALANCE_STANDARD 4000         // Sets balancing duty cycle as 50%
@@ -57,6 +58,9 @@ uint16_t max_thermistor_voltage = 0;
 uint16_t min_thermistor_voltage = 65535;
 uint16_t max_board_temp_voltage = 0;
 uint16_t min_board_temp_voltage = 65535;
+uint16_t CC_shunt_resistor;
+float SOC_initial;
+float pack_ref_current;
 float total_board_temps = 0;
 float total_thermistor_temps = 0;
 Metro charging_timer = Metro(5000); // Timer to check if charger is still talking to ACU
@@ -65,6 +69,7 @@ Metro print_timer = Metro(500);
 Metro balance_timer(BALANCE_STANDARD);
 Metro timer_CAN_em_forward(100);
 IntervalTimer pulse_timer;    //AMS ok pulse timer
+IntervalTimer CC_timer; //coulomb counter pulse timer
 bool next_pulse = true; //AMS ok pulse
 uint8_t can_voltage_ic = 0; //counter for the current IC data to send for detailed voltage CAN message
 uint8_t can_voltage_group = 0; // counter for current group data to send for detailed voltage CAN message
@@ -243,6 +248,28 @@ void read_voltages() {
       }
     }
     voltage_fault_check();
+  }
+}
+
+void coulomb_counter() {
+  void integrator() {
+    pack_ref_current = analogRead(A2) / CC_shunt_resistor;
+    float pack_current = pack_ref_current;
+    float change_in_SOC = (pack_current * 2) / TOTAL_PACK_CAPACITY;
+    if (bms_status.get_state() == BMS_STATE_CHARGING) {
+      SOC_initial += change_in_SOC;
+    } else {
+      SOC_initial -= change_in_SOC;
+    }
+  }
+  CC_timer.begin(integrator(), 2);
+  if (SOC_initial >= 1) {
+    SOC_initial = 1;
+    CC_timer.end();
+  } else if (SOC_initial <= 0) {
+    SOC_intial = 0;
+    CC_timer.end();
+  }
   }
 }
 
