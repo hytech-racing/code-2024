@@ -2,7 +2,7 @@
 #include "STEERING_RS422.h"
 #include "Metro.h"
 
-//STEERING_RS422 steering(5);
+STEERING_RS422 steering(5);
 Metro read_steering_timer(20);
 void setup() {
   // put your setup code here, to run once:
@@ -15,7 +15,9 @@ void setup() {
 }
 bool out;
 void loop() {
-  if (read_steering_timer.check()) {
+    if (read_steering_timer.check()) {
+
+      steering.read_steering();
       Serial5.write(0x33);
       if (Serial5.available()) {
         char position_high = Serial5.read();

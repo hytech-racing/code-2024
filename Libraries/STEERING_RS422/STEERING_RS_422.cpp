@@ -71,15 +71,33 @@ int16_t STEERING_RS422::read_steering_continous() {
         status = readByte[2];
         Serial.println(encoder_position);
         
-        steering_position = encoder_position - zero_position ;
+        steering_position = encoder_position - zero_position;
+
+        interpret_error_messages(status);
         //_serial->clear();
     }
-
-    
-
-        
     return steering_position;   
 }
+
+void STEERING_RS422::interpret_error_messages(uint8_t status_byte) {
+    if (status_byte & 0x80) {
+            Serial.println("Warning: Limit of lower ride height tolerance. Error: Signal amplitude too high.");
+        }
+    if (status_byte & 0x40) {
+        Serial.println("Warning: Limit of upper ride height tolerance. Error: Signal amplitude low.");
+    }
+    if (status_byte & 0x20) {
+        Serial.println("Warning: The readhead temperature is out of specified range.");
+    }
+    if (status_byte & 0x10) {
+        Serial.println("Warning: Speed too high.");
+    }
+    if (status_byte & 0x08) {
+        Serial.println("Error: Multiturn counter error.");
+    }
+}
+
+
 void STEERING_RS422::set_zero_position(uint16_t new_zero_position) {
     zero_position = new_zero_position;
 }

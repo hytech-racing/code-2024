@@ -23,6 +23,7 @@ class STEERING_RS422 {
         void command_sequence();
         void save_parameters();
         void continous_setup(uint16_t period, bool auto_start);
+        void interpret_error_messages(uint8_t status_byte);
         void continous_start();
         void continous_stop();
         void reset_sensor();
