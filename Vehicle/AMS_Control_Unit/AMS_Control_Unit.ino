@@ -25,7 +25,7 @@
 #define MAX_VOLTAGE 42000          // Maxiumum allowable single cell voltage in units of 100μV
 #define MAX_TOTAL_VOLTAGE 5330000  // Maximum allowable pack total voltage in units of 100μV
 #define MAX_THERMISTOR_VOLTAGE 26225   // Maximum allowable pack temperature corresponding to 60C in units 100μV
-#define TOTAL_PACK_CAPACITY 283500     // Total capacity of cells in parallel
+#define MAX_PACK_CHARGE 48600     // Maximum charge on cells
 #define BALANCE_ON true
 #define BALANCE_COOL 6000             // Sets balancing duty cycle as 33.3%
 #define BALANCE_STANDARD 4000         // Sets balancing duty cycle as 50%
@@ -58,9 +58,9 @@ uint16_t max_thermistor_voltage = 0;
 uint16_t min_thermistor_voltage = 65535;
 uint16_t max_board_temp_voltage = 0;
 uint16_t min_board_temp_voltage = 65535;
-uint16_t CC_shunt_resistor;
-float SOC_initial;
-float pack_ref_current;
+float charge = MAX_PACK_CHARGE;
+float shunt_voltage_input;
+float shunt_current;
 float total_board_temps = 0;
 float total_thermistor_temps = 0;
 Metro charging_timer = Metro(5000); // Timer to check if charger is still talking to ACU
@@ -69,7 +69,6 @@ Metro print_timer = Metro(500);
 Metro balance_timer(BALANCE_STANDARD);
 Metro timer_CAN_em_forward(100);
 IntervalTimer pulse_timer;    //AMS ok pulse timer
-IntervalTimer CC_timer; //coulomb counter pulse timer
 bool next_pulse = true; //AMS ok pulse
 uint8_t can_voltage_ic = 0; //counter for the current IC data to send for detailed voltage CAN message
 uint8_t can_voltage_group = 0; // counter for current group data to send for detailed voltage CAN message
@@ -81,6 +80,7 @@ elapsedMillis can_bms_detailed_temps_timer = 4;
 elapsedMillis can_bms_voltages_timer = 6;
 elapsedMillis can_bms_temps_timer = 8;
 elapsedMillis can_bms_onboard_temps_timer = 10;
+elapsedMicros CC_integrator_timer = 0; // Timer used to provide estimation of pack charge from shunt current
 
 // CONSECUTIVE FAULT COUNTERS: counts successive faults; resets to zero if normal reading breaks fault chain
 unsigned long uv_fault_counter = 0;             // undervoltage fault counter
@@ -128,7 +128,6 @@ void setup() {
   ENERGY_METER_CAN.setBaudRate(500000);
   ENERGY_METER_CAN.enableMBInterrupts();
   ENERGY_METER_CAN.onReceive(parse_energy_meter_can_message);
-
   for (int i = 0; i < 64; i++) { // Fill all filter slots with Charger Control Unit message filter
     TELEM_CAN.setMBFilter(static_cast<FLEXCAN_MAILBOX>(i), ID_CCU_STATUS); // Set CAN mailbox filtering to only watch for charger controller status CAN messages
   }
@@ -153,6 +152,7 @@ void loop() {
   read_voltages();
   read_gpio();
   write_CAN_messages();
+  coulomb_counter();
   if (print_timer.check()) {
     print_voltages();
     print_gpios();
@@ -252,25 +252,12 @@ void read_voltages() {
 }
 
 void coulomb_counter() {
-  void integrator() {
-    pack_ref_current = analogRead(A2) / CC_shunt_resistor;
-    float pack_current = pack_ref_current;
-    float change_in_SOC = (pack_current * 2) / TOTAL_PACK_CAPACITY;
-    if (bms_status.get_state() == BMS_STATE_CHARGING) {
-      SOC_initial += change_in_SOC;
-    } else {
-      SOC_initial -= change_in_SOC;
-    }
-  }
-  CC_timer.begin(integrator(), 2);
-  if (SOC_initial >= 1) {
-    SOC_initial = 1;
-    CC_timer.end();
-  } else if (SOC_initial <= 0) {
-    SOC_intial = 0;
-    CC_timer.end();
-  }
-  }
+  // integrate shunt current over time to count coulombs and provide state of charge
+  shunt_voltage_input = (analogRead(A2) * (9.22 / 5.1)) - 3.3;
+  shunt_current = shunt_voltage_input / 0.005;
+  charge -= (CC_integrator_timer * shunt_current) / 1000000;
+  state_of_charge = charge / MAX_PACK_CHARGE;
+  CC_integrator_timer = 0;
 }
 
 void voltage_fault_check() {
