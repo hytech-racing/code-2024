@@ -58,9 +58,11 @@ uint16_t max_thermistor_voltage = 0;
 uint16_t min_thermistor_voltage = 65535;
 uint16_t max_board_temp_voltage = 0;
 uint16_t min_board_temp_voltage = 65535;
+float pin_voltage_read;
 float charge = MAX_PACK_CHARGE;
 float shunt_voltage_input;
 float shunt_current;
+float state_of_charge;
 float total_board_temps = 0;
 float total_thermistor_temps = 0;
 Metro charging_timer = Metro(5000); // Timer to check if charger is still talking to ACU
@@ -253,11 +255,14 @@ void read_voltages() {
 
 void coulomb_counter() {
   // integrate shunt current over time to count coulombs and provide state of charge
-  shunt_voltage_input = (analogRead(A2) * (9.22 / 5.1)) - 3.3;
+  pin_voltage_read = (analogRead(A2) * 3.3) / 1024;
+  shunt_voltage_input = (pin_voltage_read * (9.22 / 5.1)) - 3.3;
   shunt_current = shunt_voltage_input / 0.005;
   charge -= (CC_integrator_timer * shunt_current) / 1000000;
   state_of_charge = charge / MAX_PACK_CHARGE;
   CC_integrator_timer = 0;
+  Serial.print(state_of_charge);
+  Serial.print('\n');
 }
 
 void voltage_fault_check() {
