@@ -10,29 +10,12 @@ void setup() {
   Serial5.begin(115200);
   //steering.init(115200);
   pinMode(13, OUTPUT);
-  
-  
+  steering.set_zero_position(0);
+  steering.calibrate_steering(0);
 }
 bool out;
 void loop() {
     if (read_steering_timer.check()) {
-
-      steering.read_steering();
-      Serial5.write(0x33);
-      if (Serial5.available()) {
-        char position_high = Serial5.read();
-        char position_low_and_error_warning = Serial.read();
-        uint16_t encoder_position = position_high << 6 | position_low_and_error_warning >> 2;
-        Serial.println(encoder_position);
-//    Serial.println(Serial5.read());
-  }
-      
-//    //Serial.println();
-//    steering.read_steering();
-  }
-  
-
-  
-  // put your main code here, to run repeatedly:
-
+        steering.read_steering();
+    }
 }

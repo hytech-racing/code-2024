@@ -8,7 +8,7 @@
 #define DEFAULT_HARDWARE_SERIAL 5
 
 #define MAX_POSITION 8192
-#define ZERO_POSITION 8180
+#define ZERO_POSITION 0
 
 class STEERING_RS422 {
     public: 
@@ -16,9 +16,9 @@ class STEERING_RS422 {
         STEERING_RS422(uint8_t serial);
         void init(unsigned long baudrate);
         int16_t read_steering();
-        int16_t read_steering_continous();
+        int16_t read_steering_continuous();
         void request_status();
-        uint16_t get_encoder_position() const { return encoder_position;};
+        int16_t get_encoder_position() const { return encoder_position;};
         void calibrate_steering(uint32_t pos);    
         void command_sequence();
         void save_parameters();
@@ -32,7 +32,7 @@ class STEERING_RS422 {
     private:
         static uint16_t buf;
         HardwareSerial* _serial;
-        uint16_t encoder_position;
+        int16_t encoder_position;
         bool error;
         bool warning;
         uint8_t status;

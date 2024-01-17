@@ -5,9 +5,8 @@ STEERING_RS422::STEERING_RS422() {
     STEERING_RS422(DEFAULT_HARDWARE_SERIAL);
 }
 
-//Init STEERING_RS422 using configurable hadware serial port
+//Init STEERING_RS422 using configurable hardware serial port
 STEERING_RS422::STEERING_RS422(uint8_t serial) {
-    
     switch (serial) {
         case 1:
             _serial = &Serial1;
@@ -31,7 +30,6 @@ STEERING_RS422::STEERING_RS422(uint8_t serial) {
             _serial = &Serial7;
             break;
         case 8:
-
             //_serial = &Serial8; //not on teensy 4.0
             break;
     }
@@ -41,31 +39,33 @@ void STEERING_RS422::init(unsigned long baudrate) {
     _serial->begin(baudrate);
     this->set_zero_position(ZERO_POSITION);
 }
+
 int16_t STEERING_RS422::read_steering() {
     
     request_status();
 
-
     //check if _serial is available and the first byte is ascii "d"
-
         
-    return read_steering_continous();    
+    return read_steering_continuous();    
 
 }
+
 void STEERING_RS422::request_status() {
     _serial->write(0x64);
     delay(1);
 }
-int16_t STEERING_RS422::read_steering_continous() {
-    uint8_t readByte[3] = {0};
 
+int16_t STEERING_RS422::read_steering_continuous() {
+    uint8_t readByte[3] = {0};
     //check if _serial is available and the first byte is ascii "d"
     if (_serial->available() >= 4 && _serial->read() == 0x64) {
-
-        readByte[0] = _serial->read(); //lower half of steering
-        readByte[1] = _serial->read(); //upper half of steering
-        readByte[2] = _serial->read(); //error stream 
-        encoder_position = readByte[0] << 6 | readByte[1] >> 2;
+        //between 1350 to -32757 to 23500 
+        //encoder position left aligned, MSB first
+        readByte[0] = _serial->read(); //encoder position b15-b8 of steering
+        readByte[1] = _serial->read(); //encoder position b7-b0 of steering 
+        readByte[2] = _serial->read(); //detailed status b7-b0
+        encoder_position = (int16_t)(((uint16_t)readByte[0]) << 8) | ((uint16_t)readByte[1]);
+        encoder_position = encoder_position >> 2;
         error = readByte[1] & 2; //if high, current data is not valid, previous data is sent
         warning = readByte[1] & 1; //if high, some operating conditions are close to limits
         status = readByte[2];
@@ -97,10 +97,10 @@ void STEERING_RS422::interpret_error_messages(uint8_t status_byte) {
     }
 }
 
-
 void STEERING_RS422::set_zero_position(uint16_t new_zero_position) {
     zero_position = new_zero_position;
 }
+
 void STEERING_RS422::calibrate_steering(uint32_t pos) {
     //start programming sequence
     //this sends data to essentially add a zero offset
@@ -108,15 +108,19 @@ void STEERING_RS422::calibrate_steering(uint32_t pos) {
     command_sequence();
     _serial->write(0x5A);
     delay(1);
-    _serial->write(pos &0xFF000000);
+    // _serial->write(pos &0xFF000000);
+    _serial->write(0);
     delay(1);
-    _serial->write(pos &0xFF0000);
+    // _serial->write(pos &0xFF0000);
+    _serial->write(0);
     delay(1);
-    _serial->write(pos &0xFF00);
+    // _serial->write(pos &0xFF00);
+    _serial->write(0x2C);
     delay(1);
-    _serial->write(pos & 0xFF);
+    _serial->write(0xFE);
     delay(1);
 }
+
 void STEERING_RS422::command_sequence() {
     delay(1);
     _serial->write(0xCD);
