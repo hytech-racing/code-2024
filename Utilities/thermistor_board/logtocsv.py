@@ -28,9 +28,9 @@ ENDLESS_MODE = False
 TOTAL_LINES_OF_DATA = 100
 
 # Unknown resistance data
-RESISTANCE_DATA = []
-for i in range(96):
-    f.append(0)
+#RESISTANCE_DATA = []
+#for i in range(96):
+#    f.append(0)
 
 
 
@@ -47,8 +47,8 @@ serial.readline() #flushes current data (incomplete lines)
 
 
 def convertDigitalToTemp(analogRead, index):
-    if analogRead >= 1023:
-        return -1
+    #if analogRead >= 1023:
+     #   return -1
 
     ##### INSERT DIGITAL TO CELSIUS HERE
     #resistance = 10000
@@ -56,15 +56,16 @@ def convertDigitalToTemp(analogRead, index):
     #celsius = kelvin - 273.15
     #return celsius
 
-    totalResistance = (analogRead * 3300) / (1023 - analogRead)
+    #totalResistance = (analogRead * 3300) / (1023 - analogRead)
 
-    thermistorResistance = totalResistance - RESISTANCE_DATA[index]
+    #thermistorResistance = totalResistance - RESISTANCE_DATA[index]
     
-    kelvin = (298.15 * 3492) / (3492 + 298.15 * math.log(thermistorResistance / 10000))
-    celsius = kelvin - 273.15
+    #kelvin = (298.15 * 3492) / (3492 + 298.15 * math.log(thermistorResistance / 10000))
+    #celsius = kelvin - 273.15
 
     #return celsius
-    return totalResistance
+    #return totalResistance
+    return analogRead
 
 def convertDigitalLineToTemp(line):
     dataElements = line.split(",")
