@@ -2,11 +2,11 @@
 // should select the next set of 12 multiplexers and read them all.
 
 #include <cmath>
-// #include <SD.h>
+#include <SD.h>
 #include <SPI.h>
-// #include <TimeLib.h>
+#include <TimeLib.h>
 #include <iostream>
-#include <string.h>
+// #include <DS1307RTC.h>  // a basic DS1307 library that returns time as a time_t
 #define BETA 3492
 
 // Delay between each read cycle (to allow analog signal to settle).
@@ -27,36 +27,56 @@ int thermistor_readings[number_of_analog_pins * (1<<number_of_select_pins)];
 int counter = 0;
 
 // SD card constants
-// Sd2Card card;
-// File myFile;
-// String FILE_NAME;
+// String FILE_NAME = "thermistorData";
+String FILE_NAME = "testingData_2024-01-21";
 
 
 
 void setup() {
 
-  //I'm not sure if this is valid or not. I'm intending to add seconds_since_epoch to the file name in order to prevent data from being overwritten.
-  // char dataPrefix[] = "data_";
-  // char csvSuffix[] = ".csv";
-  // FILE_NAME = strcat(strcat(dataPrefix, String(now()).c_str()), csvSuffix); 
-  
   Serial.begin(9600);
+  while(!Serial) { // Wait for SD to open
+    ;
+  }
 
+  // setSyncProvider(RTC.get());   // the function to get the time from the RTC
+  // if(timeStatus() != timeSet) {
+  //    Serial.println("Unable to sync with the RTC");
+  // } else {
+  //    Serial.println("RTC has set the system time"); 
+  // }
+
+  //I'm not sure if this is valid or not. I'm intending to add seconds_since_epoch to the file name in order to prevent data from being overwritten.
+  char dataPrefix[] = "thermistorData_";
+  char csvSuffix[] = ".csv";
+  //FILE_NAME = String(dataPrefix) + String(hour()) + "_" + String(minute()) + "_" + String(second()) + String(csvSuffix);
+  FILE_NAME = String(dataPrefix) + FILE_NAME + String(csvSuffix);
+
+  // Set up the MUX selecter pins
   for (int i : select_pins) {
     pinMode(i, OUTPUT);
   }
 
+  // Set up the analog read pins
   for (int i : analog_pins) {
     pinMode(i, INPUT_PULLUP);
   }
 
+  // Indicator light
   pinMode(LED_BUILTIN, OUTPUT);
 
-  // Initializes SD card
-  // card.init(SPI_HALF_SPEED, BUILTIN_SDCARD);
-  // SD.remove(FILE_NAME.c_str()); // Erases the file if it already exists. This SHOULDN'T ever be an issue, since the data is timestamped, but it might.
-
-  // printHeaderToSD(); //Puts the header into the CSV
+  // Initializes SD card (From Example code)
+  Serial.println("Initializing SD card...");
+  // see if the card is present and can be initialized:
+  if (!SD.begin(BUILTIN_SDCARD)) {
+    Serial.println("Card failed, or not present");
+    while (1) {
+      // No SD card, so don't do anything more - stay stuck here
+    }
+  }
+  Serial.println("card initialized.");
+  
+  printHeaderToSD(); //Puts the header into the CSV
 
 }
 
@@ -85,14 +105,11 @@ void loop() {
 
   // Prints the entire batch of data once all thermistors have been read
   if (selected_pin == 0) {
-    printDataToSerial();
-    // printDataToSD();
+    printDataToSDAndSerial();
   }
 
-  // Serial.println("Debug print statement");
-
   counter++;
-  delay(delay_milliseconds); // Will likely need some delay here for analog inputs to settle.
+  delay(delay_milliseconds); // Delays to allow time for data to settle
 }
 
 void printDataToSerial() {
@@ -110,42 +127,52 @@ void printDataToSerial() {
 
 void printHeaderToSD() {
 
-  // myFile = SD.open(FILE_NAME.c_str(), FILE_WRITE);
+  // Builds the header String
+  String headerString = "Time(sec),";
+  for (int m = 0; m < number_of_analog_pins; m++) {
+    for (int t = 0; t < 1<<number_of_select_pins; t++) {
+      headerString += "M" + String(m) + "-T" + String(t) + ",";
+    }
+  }
 
-  // myFile.print("Time (S),");
+  // open the file.
+  File dataFile = SD.open(FILE_NAME.c_str(), FILE_WRITE);
 
-  // for (int m = 0; m < 12; m++) {
-  //   for (int t = 0; t < 8; t++) {
-  //     myFile.print("M");
-  //     myFile.print(m);
-  //     myFile.print("-T");
-  //     myFile.print(t);
-  //     myFile.print(",");
-  //   }
-  // }
-
-  // myFile.println("");
-
-  // myFile.close();
+  // if the file is available, write to it:
+  if (dataFile) {
+    dataFile.println(headerString);
+    dataFile.close();
+    // print to the serial port too:
+    Serial.println("Successfully opened file. \"" + FILE_NAME + "\"");
+    Serial.println(headerString);
+  } else {
+    // if the file isn't open, pop up an error:
+    Serial.println("error opening " + String(FILE_NAME));
+  }
 
 }
 
-void printDataToSD() {
+void printDataToSDAndSerial() {
 
-  // Open the file
-  // myFile = SD.open(FILE_NAME.c_str(), FILE_WRITE);
+  // Builds the data String
+  String dataString = String(counter * delay_milliseconds / 1000) + ",";
+  for (u_int i = 0; i < sizeof(thermistor_readings)/sizeof(thermistor_readings[0]); i++) {
+    dataString += String(convertAnalogToCelsius(thermistor_readings[i])) + ",";
+  }
 
-  // myFile.print(counter * delay_milliseconds / 1000); //Prints time elapsed (sec) in the leftmost column
-  // myFile.print(",");
+  // open the file.
+  File dataFile = SD.open(FILE_NAME.c_str(), FILE_WRITE);
 
-  // for (u_int i = 0; i < sizeof(thermistor_readings)/sizeof(thermistor_readings[0]); i++) {
-  //   myFile.print(convertAnalogToCelsius(thermistor_readings[i]));
-  //   myFile.print(",");
-  // }
-
-  // myFile.println("");
-
-  // myFile.close();
+  // if the file is available, write to it:
+  if (dataFile) {
+    dataFile.println(dataString);
+    dataFile.close();
+    // print to the serial port too:
+    Serial.println(dataString);
+  } else {
+    // if the file isn't open, pop up an error:
+    Serial.println("error opening " + String(FILE_NAME));
+  }
 
 }
 
