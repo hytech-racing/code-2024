@@ -9,15 +9,15 @@
 
 
 // Display defines
-#define SHARP_SCK  PA5
-#define SHARP_MOSI PA7
+#define SHARP_SCK  PC10
+#define SHARP_MOSI PB0
 #define SHARP_SS   PC4
 
 #define BLACK 0
 #define WHITE 1
 
 // Neopixel defines
-#define NEOPIXEL_PIN PA2
+#define NEOPIXEL_PIN PC14
 #define NEOPIXEL_COUNT 13
 
 #define MAX_STATE 2
