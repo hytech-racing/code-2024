@@ -66,15 +66,16 @@
 
 // Constructor to instantiate an instance of MCP23S08 to a specific chip (address)
 
-MCP23S08::MCP23S08(uint8_t address, uint8_t cs) {
-    init(address, cs, SPI_CLOCK_DIV8);
+MCP23S08::MCP23S08(SPIClass *spi, uint8_t address, uint8_t cs) {
+    init(spi, address, cs, SPI_CLOCK_DIV8);
 };
 
-MCP23S08::MCP23S08(uint8_t address, uint8_t cs, unsigned int SPIspeed) {
-    init(address, cs, SPIspeed);
+MCP23S08::MCP23S08(SPIClass *spi, uint8_t address, uint8_t cs, unsigned int SPIspeed) {
+    init(spi, address, cs, SPIspeed);
 };
 
-void MCP23S08::init(uint8_t address, uint8_t cs, unsigned int SPIspeed) {
+void MCP23S08::init(SPIClass *spi, uint8_t address, uint8_t cs, unsigned int SPIspeed) {
+    _spi         = spi;
     _address     = address;
     _cs          = cs;
     _SPIspeed    = SPIspeed;
@@ -92,7 +93,7 @@ void MCP23S08::begin() {
     ::pinMode(_cs, OUTPUT);               // Set Chip Select pin as an output
     ::digitalWrite(_cs, HIGH);            // Set Chip Select HIGH (chip de-selected)
 
-    SPI.begin();                          // Start the SPI bus
+    _spi->begin();                          // Start the SPI bus
 
     byteWrite(IODIR, 0xFF);              // Write the default value (0xFF) in IODIR register
 
@@ -108,13 +109,13 @@ void MCP23S08::begin() {
 // Arguments: register address, the value to write
 
 void MCP23S08::byteWrite(uint8_t reg, uint8_t value) {
-    SPI.beginTransaction(SPISettings (_SPIspeed, MSBFIRST, SPI_MODE0));       // Begin the SPI transaction (default settings from the SPI library)
+    _spi->beginTransaction(SPISettings (_SPIspeed, MSBFIRST, SPI_MODE0));       // Begin the SPI transaction (default settings from the SPI library)
     ::digitalWrite(_cs, LOW);                                                 // Bring the chip select pin LOW
-    SPI.transfer(OPCODE_WRITE | _address << 1);                               // Send the MCP23S08 opcode, chip address, and the write bit
-    SPI.transfer(reg);                                                        // Send the register addreess
-    SPI.transfer(value);                                                      // Send the value to write
+    _spi->transfer(OPCODE_WRITE | _address << 1);                               // Send the MCP23S08 opcode, chip address, and the write bit
+    _spi->transfer(reg);                                                        // Send the register addreess
+    _spi->transfer(value);                                                      // Send the value to write
     ::digitalWrite(_cs, HIGH);                                                // Bring the chip select pin HIGH
-    SPI.endTransaction();                                                     // End the SPI transaction
+    _spi->endTransaction();                                                     // End the SPI transaction
 }
 
 // // Write a word to a register pair, LSB to first register, MSB to next higher value register
@@ -232,13 +233,13 @@ unsigned int MCP23S08::digitalRead(void) {
 uint8_t MCP23S08::byteRead(uint8_t reg) {
     uint8_t reading;                                                          // Initialize a variable to hold the read values to be returned
 
-    SPI.beginTransaction(SPISettings (_SPIspeed, MSBFIRST, SPI_MODE0));  // Begin the SPI transaction (default settings from the SPI library)
+    _spi->beginTransaction(SPISettings (_SPIspeed, MSBFIRST, SPI_MODE0));  // Begin the SPI transaction (default settings from the SPI library)
     ::digitalWrite(_cs, LOW);                                                 // Bring the chip select pin LOW
-    SPI.transfer(OPCODE_READ | _address << 1);                                // Send the MCP23S08 opcode, chip address, and the read bit
-    SPI.transfer(reg);                                                        // Send the register addreess
-    reading =  SPI.transfer(0);                                               // Read the register (0 is dummy data to send)
+    _spi->transfer(OPCODE_READ | _address << 1);                                // Send the MCP23S08 opcode, chip address, and the read bit
+    _spi->transfer(reg);                                                        // Send the register addreess
+    reading =  _spi->transfer(0);                                               // Read the register (0 is dummy data to send)
     ::digitalWrite(_cs, HIGH);                                                // Bring the chip select pin HIGH
-    SPI.endTransaction();                                                     // End the SPI transaction
+    _spi->endTransaction();                                                     // End the SPI transaction
 
     return reading;                                                           // Return the reading
 }

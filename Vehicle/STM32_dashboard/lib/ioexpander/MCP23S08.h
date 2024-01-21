@@ -81,8 +81,8 @@
 
 class MCP23S08 {
   public:
-    MCP23S08(uint8_t, uint8_t);              // Constructor to instantiate a discrete IC as an object, address 0-7, chipSelect any valid pin
-    MCP23S08(uint8_t, uint8_t, unsigned int);
+    MCP23S08(SPIClass*, uint8_t, uint8_t);              // Constructor to instantiate a discrete IC as an object, address 0-7, chipSelect any valid pin
+    MCP23S08(SPIClass*, uint8_t, uint8_t, unsigned int);
     void begin();                            // Start the SPI Bus and write default values to all registers
     //void wordWrite(uint8_t, uint8_t);        // Typically only used internally, but allows the user to write any register pair if needed, so it's public
     void byteWrite(uint8_t, uint8_t);        // Typically only used internally, but allows the user to write any register if needed, so it's public
@@ -98,7 +98,9 @@ class MCP23S08 {
     uint8_t byteRead(uint8_t);               // Reads an individual register and returns the byte. Argument is the register address
     unsigned int digitalRead(void);          // Reads all input  pins at once. Be sure it ignore the value of pins configured as output!
   private:
-    void init(uint8_t, uint8_t, unsigned int);
+    void init(SPIClass*, uint8_t, uint8_t, unsigned int);
+	SPIClass *_spi = nullptr;
+	SPISettings *_spiSetting = nullptr;
     uint8_t _address;                        // Address of the MCP23S08 in use
 	uint8_t _cs;                             // chip select pin
     uint8_t _modeCache;                 // Caches the mode (input/output) configuration of I/O pins
