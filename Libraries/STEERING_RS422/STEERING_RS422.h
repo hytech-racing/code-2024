@@ -8,7 +8,6 @@
 #define DEFAULT_HARDWARE_SERIAL 5
 
 #define MAX_POSITION 8192
-#define ZERO_POSITION 0
 
 class STEERING_RS422 {
     public: 
@@ -22,12 +21,14 @@ class STEERING_RS422 {
         void calibrate_steering(uint32_t pos);    
         void command_sequence();
         void save_parameters();
-        void continous_setup(uint16_t period, bool auto_start);
+        void continuous_setup(uint16_t period, bool auto_start);
         void interpret_error_messages(uint8_t status_byte);
-        void continous_start();
-        void continous_stop();
+        void continuous_start();
+        void continuous_stop();
         void reset_sensor();
         void set_zero_position(uint16_t new_zero_position);
+        void calculate_zero_position();
+        uint16_t return_zero_position();
         //uint8_t self_calibration();
     private:
         static uint16_t buf;
@@ -43,7 +44,6 @@ class STEERING_RS422 {
         r4 - Warning: Speed too high
         */
         uint16_t zero_position;
-        int16_t steering_position; 
 };
 
 #endif

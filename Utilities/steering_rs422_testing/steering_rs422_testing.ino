@@ -10,12 +10,17 @@ void setup() {
   Serial5.begin(115200);
   //steering.init(115200);
   pinMode(13, OUTPUT);
+  
+  //Reset zero position to 0 in order to return unaltered reading from read_steering_continous()
   steering.set_zero_position(0);
-  steering.calibrate_steering(0);
+  steering.calculate_zero_position();
+  steering.calibrate_steering(steering.return_zero_position());
 }
-bool out;
+
+// Uncomment to save current baud rate, position offset, continuous-response settings (period, command, autostart enable command)
+// steering.save_parameters();
 void loop() {
-    if (read_steering_timer.check()) {
-        steering.read_steering();
-    }
+  if (read_steering_timer.check()) {
+    steering.read_steering();
+  }
 }
