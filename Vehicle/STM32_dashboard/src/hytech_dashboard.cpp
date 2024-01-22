@@ -2,7 +2,7 @@
 #include <DashboardCAN.h>
 #include <SAB_lap_times.h>
 #include <MCU_load_cells.h>
-
+#include <MCP23S08.h>
 // Definition of display and neopixel globals
 // For some reason, code complains when these are defined in the header file
 Adafruit_SharpMem _display(SHARP_SCK, SHARP_MOSI, SHARP_SS, 320, 240);
@@ -11,6 +11,13 @@ Adafruit_NeoPixel _neopixels(NEOPIXEL_COUNT, NEOPIXEL_PIN, NEO_GRBW + NEO_KHZ800
 /* Null, because instance will be initialized on demand. */
 
 hytech_dashboard::hytech_dashboard(){}
+
+
+
+
+SPIClass spi(MOSI, MISO, SCLK);
+// TODO change pins
+MCP23S08 _expander(&spi, IO_ADDR, IO_CS);
 
 hytech_dashboard* hytech_dashboard::getInstance() {
     if (_instance == NULL) {
@@ -21,6 +28,13 @@ hytech_dashboard* hytech_dashboard::getInstance() {
 
 // startup function
 void hytech_dashboard::startup() {
+
+    _expander.begin();
+
+    for (int i = 0; i < 8; i++) {
+        _expander.pinMode(i, OUTPUT);
+        _expander.digitalWrite(i, HIGH);
+    }
 
     // begin, clear display, set rotation
     _display.begin();
@@ -36,16 +50,8 @@ void hytech_dashboard::startup() {
     _neopixels.setBrightness(50);
 
     //set init color for every led
-    for (int i = 0; i < NEOPIXEL_COUNT - 1; i++) {
+    for (int i = 0; i < NEOPIXEL_COUNT; i++) {
         _neopixels.setPixelColor(i, LED_INIT);
-        if (i == 3) {
-        // Don't use gen purpose led
-        _neopixels.setPixelColor(i, 0);
-        }
-        if (i == 0 || i == 1) {
-        // sets IMD and AMS lights off on startup as per rules
-        _neopixels.setPixelColor(i, LED_OFF);
-        }
     }
     // write data to neopixels
     _neopixels.show();
@@ -70,7 +76,7 @@ void hytech_dashboard::startup() {
 
     // display template
     _display.clearDisplay();
-    _display.drawBitmap(0,0, epd_bitmap_hytech_dashboard, 400, 240, BLACK);
+    _display.drawBitmap(0,0, epd_bitmap_Displaytest, 400, 240, BLACK);
 
     // brake pedal
     //9,40,17,143
@@ -84,6 +90,8 @@ void hytech_dashboard::startup() {
     _display.fillRect(83, 7, 72, 16, WHITE);
     _display.fillRect(161+2, 5+2, 158-2, 18-2, WHITE);
     _display.refresh();
+
+    pinMode(BUZZER_CTRL, OUTPUT);
 }
 
 // draws white rect top down
@@ -102,14 +110,29 @@ void hytech_dashboard::draw_current_draw_bar(double percent) {
     _display.fillRect(163+156, 5+2, -156, 18-2, WHITE);
 }
 
+void rainbow() {
+
+}
+
+
+
 //refresh dashboard
 void hytech_dashboard::refresh(DashboardCAN* CAN) {
     // update neopixels
+    rainbow();
     _neopixels.show();
+
+    digitalWrite(BUZZER_CTRL, HIGH);
+
+    _expander.digitalWrite(number_encodings[curr_num]);
+    curr_num++;
+    if (curr_num > 9) {curr_num = 0;}
+    delay(200);
+
 
     // refresh display
     _display.clearDisplayBuffer();
-    _display.drawBitmap(0,0, epd_bitmap_hytech_dashboard, 400, 240, BLACK);
+    _display.drawBitmap(0,0, epd_bitmap_hytech_dashboard, 320, 240, BLACK);
     draw_vertical_pedal_bar(CAN->pedal_readings.get_accelerator_pedal_1(), 9);
     draw_vertical_pedal_bar(CAN->pedal_readings.get_accelerator_pedal_1(), 374);
     switch(current_state) {

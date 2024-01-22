@@ -18,7 +18,7 @@
 
 // Neopixel defines
 #define NEOPIXEL_PIN PC14
-#define NEOPIXEL_COUNT 13
+#define NEOPIXEL_COUNT 12
 
 #define MAX_STATE 2
 
@@ -35,6 +35,17 @@ enum LED_LIST { AMS = 0, IMD = 1, MC_ERR = 2, GEN_PURP = 3, INERTIA = 4, BOTS = 
 #define LED_INIT 0xFF007F
 #define LED_BLUE 0xFF
 #define LED_WHITE 0xFFFFFFFF
+
+// MCP IO Expander pin definition //
+#define IO_CS PA15
+#define IO_ADDR 0
+
+// SPI class
+#define MOSI PC1
+#define MISO PC2
+#define SCLK PB10
+
+#define BUZZER_CTRL PC13
 
 //Forward declaration to allow use of DashboardCAN pointer in header
 class DashboardCAN;
@@ -69,6 +80,8 @@ class hytech_dashboard {
             current
         };
         uint8_t current_state = 0;
+        uint8_t number_encodings[11] = {0b01000000, 0b01111001, 0b00100100, 0b00110000, 0b00011001, 0b00010010, 0b00000010, 0b01111000, 0b10000000, 0b00011000, 0b11111111};
+        uint8_t curr_num = 0;
 
         enum Data_Type {
             TIRE = 0,
