@@ -161,11 +161,10 @@ void STEERING_RS422::continuous_setup(uint16_t period, bool auto_start = 0) {
     //1 to enable automatic start after power on of encoder, 0 to disable
     _serial->write((auto_start) ? 0x01 : 0x00);
     delay(1);
-    // 0x33 short position request
-    _serial->write(0x33);
+    _serial->write(0x64);
     delay(1);
     //in microseconds
-    _serial->write(period & 0xFF00);
+    _serial->write(period & 0xFF00 >> 8);
     delay(1);
     _serial->write(period & 0xFF);
 
@@ -184,7 +183,7 @@ void STEERING_RS422::continuous_stop() {
 }
 void STEERING_RS422::save_parameters() {
     command_sequence();
-    //0x63 programming command byte for confiuration parameters save
+    //0x63 programming command byte for configuration parameters save
     _serial->write(0x63);
     delay(1);
 }
