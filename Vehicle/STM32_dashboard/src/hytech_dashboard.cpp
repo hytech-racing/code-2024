@@ -92,6 +92,8 @@ void hytech_dashboard::startup() {
     _display.refresh();
 
     pinMode(BUZZER_CTRL, OUTPUT);
+    pinMode(PA3, OUTPUT);
+    digitalWrite(PA3, HIGH);
 }
 
 // draws white rect top down
@@ -123,6 +125,13 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     _neopixels.show();
 
     digitalWrite(BUZZER_CTRL, HIGH);
+    digitalWrite(PA3, HIGH);
+    delay(1000);
+    digitalWrite(BUZZER_CTRL, LOW);
+    digitalWrite(PA3, LOW);
+
+    delay(1000);
+
 
     _expander.digitalWrite(number_encodings[curr_num]);
     curr_num++;
@@ -207,8 +216,8 @@ void hytech_dashboard::increment_state() {
 }
 
 void hytech_dashboard::display_border() {
-    _display.drawLine(200, 40, 200, 200, BLACK);
-    _display.drawLine(50, 120, 350, 120, BLACK);
+    _display.drawLine(160, 40, 160, 200, BLACK);
+    _display.drawLine(50, 120, 270, 120, BLACK);
 }
 
 

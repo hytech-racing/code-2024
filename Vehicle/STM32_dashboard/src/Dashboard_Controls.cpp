@@ -7,7 +7,7 @@ void Dashboard_Controls::startup() {
     btn_safe_ctrl.begin(BTN_SAFE_CTRL, 10);
     btn_mc_cycle.begin(BTN_MC_CYCLE, 10);
     btn_start.begin(BTN_START, 10);
-    btn_torque_mode.begin(BTN_TORQUE_MODE, 10);
+    // btn_torque_mode.begin(BTN_TORQUE_MODE, 10);
     btn_led_dimmer.begin(BTN_LED_DIMMER, 10);
     btn_restart_timer.begin(BTN_RESTART_TIMER, 10);
 }
