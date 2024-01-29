@@ -23,34 +23,53 @@ void DashboardCAN::read_CAN()
     SerialUSB.println("message received");
     // parse message based on ID
     switch (_msg.id) {
-    case ID_MCU_STATUS:
-      mcu_status.load(_msg.buf);
+
+    case MCU_STATUS_CANID:
+      Unpack_MCU_STATUS_ht_can(&mcu_status, _msg.buf, NULL);
       // reset heartbeat timer if message received from ECU
       heartbeat_timer.reset();
       heartbeat_timer.interval(MCU_HEARTBEAT_TIMEOUT);
       mcu_status_received();
       break;
-    case ID_MCU_ANALOG_READINGS:
-      mcu_analog_readings.load(_msg.buf);
+
+    case MCU_ANALOG_READINGS_CANID:
+      Unpack_MCU_ANALOG_READINGS_ht_can(&mcu_analog_readings, _msg.buf, NULL);
       heartbeat_timer.reset();
       heartbeat_timer.interval(MCU_HEARTBEAT_TIMEOUT);
       mcu_analog_readings_received();
       break;
-    case ID_BMS_VOLTAGES:
-      bms_voltages.load(_msg.buf);
+
+    case BMS_VOLTAGES_CANID:
+      Unpack_BMS_VOLTAGES_ht_can(&bms_voltages, _msg.buf, NULL);
       // include bms timer
       bms_voltages_received();
       break;
-    case ID_MCU_PEDAL_READINGS:
+
+    case MCU_PEDAL_READINGS_CANID:
       SerialUSB.println("Received MCU Pedal Reading");
-      pedal_readings.load(_msg.buf);
+      Unpack_MCU_PEDAL_READINGS_ht_can(&mcu_pedal_readings, _msg.buf, NULL);
       break;
-    case ID_SAB_LAP_TIMES:
-      SerialUSB.println("Received SAB Lap Time");
-      lap_times.load(_msg.buf);
-    case ID_MCU_LOAD_CELLS:
+
+    case MCU_LOAD_CELLS_CANID:
       SerialUSB.println("Received MCU Load Cells");
-      load_cells.load(_msg.buf);
+      Unpack_MCU_LOAD_CELLS_ht_can(&mcu_load_cells, _msg.buf, NULL);
+      break;
+
+    case TCU_LAP_TIMES_CANID:
+      SerialUSB.println("Received TCU lap times");
+      Unpack_TCU_LAP_TIMES_ht_can(&lap_times, _msg.buf, NULL);
+      break;
+
+    case TCU_DRIVER_MSG_CANID:
+      SerialUSB.println("Received TCU drive message");
+      Unpack_TCU_DRIVER_MSG_ht_can(&driver_msg, _msg.buf, NULL);
+      break;
+
+    case DASHBOARD_MCU_STATE_CANID:
+      SerialUSB.println("Received mcu state");
+      Unpack_DASHBOARD_MCU_STATE_ht_can(&dash_mcu_state, _msg.buf, NULL);
+      break;
+
     default:
       break;
     }
@@ -72,7 +91,7 @@ void DashboardCAN::send_status() {
   // }
 
   if (should_send && send_timer.check()) {
-    _msg.id = ID_DASHBOARD_STATUS;
+    _msg.id = DASHBOARD_STATE_CANID;
     //update button flags
     SerialUSB.println("Message Sent");
     _msg.len = sizeof(dashboard_status);

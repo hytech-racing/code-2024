@@ -3,8 +3,9 @@
 
 #include <Metro.h>
 #include <STM32_CAN.h>
-#include <HyTech_CAN.h>
-#include <hytech_dashboard.h>
+// #include "HyTech_CAN.h"
+#include "hytech_dashboard.h"
+#include "ht_can.h"
 
 #define MCU_HEARTBEAT_TIMEOUT 1000
 
@@ -29,14 +30,22 @@ class DashboardCAN {
         uint8_t imd_ams_flags = 0;
         CAN_message_t _msg;
     public:
-        // CAN classes for different messages
-        Dashboard_status dashboard_status{};
-        MCU_status mcu_status{};
-        MCU_analog_readings mcu_analog_readings{};
-        BMS_voltages bms_voltages{};
-        MCU_pedal_readings pedal_readings{};
-        SAB_lap_times lap_times{};
-        MCU_load_cells load_cells{};
+        // CAN structs for different messages
+
+        /* SEND */
+        DASHBOARD_STATE_t dash_state;
+
+        /* RECEIVE */
+        MCU_STATUS_t mcu_status;
+        MCU_ANALOG_READINGS_t mcu_analog_readings;
+        BMS_VOLTAGES_t bms_voltages;
+        MCU_PEDAL_READINGS_t mcu_pedal_readings;
+        MCU_LOAD_CELLS_t mcu_load_cells;
+        
+        TCU_LAP_TIMES_t lap_times;
+        TCU_DRIVER_MSG_t driver_msg;
+        DASHBOARD_MCU_STATE_t dash_mcu_state;
+
         
 
         // constructor takes pointer to STM32_CAN object

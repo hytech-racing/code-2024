@@ -45,7 +45,7 @@ void loop(void) {
   // read can messages from CAN bus
   dashboard_can.read_CAN();
 
-  // update controls (buttons, knobs, etc.)
+  // update controls (buttons, knobs, buzzer etc.)
   dash_controls.update(&dashboard_can);
 
   // send dashboard status message
