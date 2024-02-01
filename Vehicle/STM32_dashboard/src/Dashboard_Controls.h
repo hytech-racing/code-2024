@@ -17,6 +17,11 @@ class DashboardCAN;
 
 class Dashboard_Controls {
     public:
+        /*
+            Consider rewriting this in more of an "interface" style where it holds its own data.
+            The CAN class will interact with the Dashboard_Controls reference to pack data into the CAN message.
+            We will keep this for now for the sake of efficiency (only writing data once)
+        */
         void startup();
         void update(DashboardCAN* CAN);
         DebouncedButton btn_start;

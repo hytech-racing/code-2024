@@ -9,7 +9,21 @@ Adafruit_NeoPixel _neopixels(NEOPIXEL_COUNT, NEOPIXEL_PIN, NEO_GRBW + NEO_KHZ800
 
 hytech_dashboard::hytech_dashboard(){}
 
+/*
 
+    Some notes for architecture of this file. It may be better to eventually move all of these functions
+    into separate classes and use inheritance or just separate the functions and pass display and neopixel
+    references to basic functions.
+
+    For now, we will have the startup and refresh functions at the top of the file.
+    Page draws will be below these. This will be any special page such as the lap times display,
+    the suspension display, etc.
+
+    Other miscellaneous helper functions will go below those, this will be any neopixel setter or calculation
+    functions, as well as shape drawing functions (pedal bar, pack charge, etc.)
+    We can make exceptions for really small helper functions that can go directly below their page draw calls
+
+*/
 
 
 SPIClass spi(MOSI, MISO, SCLK);
@@ -81,6 +95,8 @@ void hytech_dashboard::startup() {
     // 100% -> 40
     // _display.fillRect(9,40, 17, 143, WHITE);
     // draw_vertical_pedal_bar(0, 9);
+
+    // init display and pixels with def. data
     _display.refresh();
 
     // regen bar
@@ -93,47 +109,15 @@ void hytech_dashboard::startup() {
     digitalWrite(PA3, HIGH);
 }
 
-// draws white rect top down
-void hytech_dashboard::draw_vertical_pedal_bar(double val, int initial_x_coord) {
-    // 100%: height of white box = 40
-    //   0%: height of white box = 143 (covering the whole black bar)
-    _display.fillRect(initial_x_coord, 40, 17, (1 - (((double)val - 500) / 1640)) * 143, WHITE);
-    // SerialUSB.println((((double)val - 500) / 1640));
-}
-
-void hytech_dashboard::draw_regen_bar(double percent) {
-    _display.fillRect(83, 7, (1-percent)*72, 16, WHITE);
-}
-
-void hytech_dashboard::draw_current_draw_bar(double percent) {
-    _display.fillRect(163+156, 5+2, -156, 18-2, WHITE);
-}
-
-void rainbow() {
-
-}
-
-
-
 //refresh dashboard
 void hytech_dashboard::refresh(DashboardCAN* CAN) {
     // update neopixels
-    rainbow();
     _neopixels.show();
 
-    digitalWrite(BUZZER_CTRL, HIGH);
-    digitalWrite(PA3, HIGH);
-    delay(1000);
-    digitalWrite(BUZZER_CTRL, LOW);
-    digitalWrite(PA3, LOW);
-
     delay(1000);
 
 
-    _expander.digitalWrite(number_encodings[curr_num]);
-    curr_num++;
-    if (curr_num > 9) {curr_num = 0;}
-    delay(200);
+    _expander.digitalWrite(CAN->dash_state.dial_state);
 
 
     // refresh display
@@ -142,26 +126,35 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     draw_vertical_pedal_bar(CAN->mcu_pedal_readings.accel_pedal_1, 9);
     draw_vertical_pedal_bar(CAN->mcu_pedal_readings.accel_pedal_1, 374);
 
-    switch(current_state) {
+    switch(current_page) {
         case 0:
             show_lap_times(&(CAN->lap_times), &(CAN->driver_msg));
             break;
         case 1:
             // suspension
-            display_border();
             display_suspension_data(&(CAN->mcu_load_cells), &(CAN->sab_load_cells));
             break;
         case 2:
-            display_border();
+            // tires
+            display_tire_data();
             break;
     }
 
     _display.refresh();
 }
 
-//set neopixels
-void hytech_dashboard::set_neopixel(uint16_t id, uint32_t c) {
-    _neopixels.setPixelColor(id, c);
+void hytech_dashboard::increment_page() {
+    current_page++;
+    //clamp upper value
+    current_page %= NUM_PAGES;
+}
+
+void hytech_dashboard::decrement_page() {
+    // adding number of pages would be the same value after modulus
+    // subtracting one will decrement, but will also wraparound when == 0
+    // this prevents overflow when subtracting one from current page
+    current_page += NUM_PAGES - 1;
+    current_page %= NUM_PAGES;
 }
 
 void hytech_dashboard::show_lap_times(TCU_LAP_TIMES_t* lap_times, TCU_DRIVER_MSG_t* driver_msg) {
@@ -208,59 +201,10 @@ void hytech_dashboard::show_lap_times(TCU_LAP_TIMES_t* lap_times, TCU_DRIVER_MSG
     format_millis("Best", best_time);
 }
 
+/* LAP CLOCK HELPERS */
+
 void hytech_dashboard::restart_current_timer() {
     initialTime = millis();
-}
-
-void hytech_dashboard::increment_state() {
-    current_state++;
-    if(current_state > MAX_STATE) {
-        current_state = 0;
-    }
-}
-
-void hytech_dashboard::display_border() {
-    _display.drawLine(160, 40, 160, 200, BLACK);
-    _display.drawLine(50, 120, 270, 120, BLACK);
-}
-
-
-void hytech_dashboard::set_cursor(uint8_t quadrant) {
-    _display.setTextSize(3);
-    _display.setTextColor(BLACK);
-    switch(quadrant) {
-        case 1:
-            _display.setCursor(210,40);
-            break;
-        case 2:
-            _display.setCursor(43,40);
-            break;
-        case 3:
-            _display.setCursor(43,130);
-            break;
-        case 4:
-            _display.setCursor(210,130);
-            break;
-    }
-}
-
-void hytech_dashboard::display_suspension_data(MCU_LOAD_CELLS_t* front_load_cells, SAB_LOAD_CELLS_t* rear_load_cells) {
-    set_cursor(1);
-    _display.print("FR: ");
-    _display.println(front_load_cells->FR_load_cell);
-    set_cursor(2);
-    _display.print("FL: ");
-    _display.println(front_load_cells->FL_load_cell);
-    set_cursor(3);
-    _display.print("RL: ");
-    _display.println(rear_load_cells->RL_load_cell);
-    set_cursor(4);
-    _display.print("RR: ");
-    _display.println(rear_load_cells->RR_load_cell);
-}
-
-void hytech_dashboard::display_tire_data() {
-
 }
 
 void hytech_dashboard::format_millis(String label, uint32_t time) {
@@ -290,4 +234,78 @@ String hytech_dashboard::twoDigits(int number) {
         return String(number/10);
     }
     return String(number);
+}
+
+void hytech_dashboard::display_suspension_data(MCU_LOAD_CELLS_t* front_load_cells, SAB_LOAD_CELLS_t* rear_load_cells) {
+    
+    draw_quadrants();
+
+    set_cursor(1);
+    _display.print("FR: ");
+    _display.println(front_load_cells->FR_load_cell);
+    set_cursor(2);
+    _display.print("FL: ");
+    _display.println(front_load_cells->FL_load_cell);
+    set_cursor(3);
+    _display.print("RL: ");
+    _display.println(rear_load_cells->RL_load_cell);
+    set_cursor(4);
+    _display.print("RR: ");
+    _display.println(rear_load_cells->RR_load_cell);
+}
+
+void hytech_dashboard::display_tire_data() {
+
+    draw_quadrants();
+
+}
+
+/* DISPLAY HELPER FUNCTIONS */
+
+void hytech_dashboard::draw_quadrants() {
+    _display.drawLine(160, 40, 160, 200, BLACK);
+    _display.drawLine(50, 120, 270, 120, BLACK);
+}
+
+
+void hytech_dashboard::set_cursor(uint8_t quadrant) {
+    _display.setTextSize(3);
+    _display.setTextColor(BLACK);
+    switch(quadrant) {
+        case 1:
+            _display.setCursor(210,40);
+            break;
+        case 2:
+            _display.setCursor(43,40);
+            break;
+        case 3:
+            _display.setCursor(43,130);
+            break;
+        case 4:
+            _display.setCursor(210,130);
+            break;
+    }
+}
+
+// draws white rect top down
+void hytech_dashboard::draw_vertical_pedal_bar(double val, int initial_x_coord) {
+    // 100%: height of white box = 40
+    //   0%: height of white box = 143 (covering the whole black bar)
+    _display.fillRect(initial_x_coord, 40, 17, (1 - (((double)val - 500) / 1640)) * 143, WHITE);
+    // SerialUSB.println((((double)val - 500) / 1640));
+}
+
+void hytech_dashboard::draw_regen_bar(double percent) {
+    _display.fillRect(83, 7, (1-percent)*72, 16, WHITE);
+}
+
+void hytech_dashboard::draw_current_draw_bar(double percent) {
+    _display.fillRect(163+156, 5+2, -156, 18-2, WHITE);
+}
+
+/* NEOPIXEL HELPER FUNCTIONS */
+
+//set neopixels
+void hytech_dashboard::set_neopixel(uint16_t id, uint32_t c) {
+    _neopixels.setPixelColor(id, c);
 }
