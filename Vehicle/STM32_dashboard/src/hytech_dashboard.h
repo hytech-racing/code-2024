@@ -68,22 +68,6 @@ class hytech_dashboard {
         void refresh(DashboardCAN* can);
 
         void set_neopixel(uint16_t id, uint32_t c);
-        void draw_vertical_pedal_bar(double val, int initial_x_coord);
-        void draw_regen_bar(double percent);
-        void draw_current_draw_bar(double percent);
-        void draw_quadrants();
-        void show_lap_times(TCU_LAP_TIMES_t* lap_times, TCU_DRIVER_MSG_t* driver_msg);
-        void display_suspension_data(MCU_LOAD_CELLS_t* front_load_cells, SAB_LOAD_CELLS_t* rear_load_cells);
-        void restart_current_timer();
-        void increment_page();
-        void decrement_page();
-        void set_cursor(uint8_t quadrant);
-        void display_tire_data();
-
-
-        uint8_t current_page = 0;
-        uint8_t number_encodings[11] = {0b01000000, 0b01111001, 0b00100100, 0b00110000, 0b00011001, 0b00010010, 0b00000010, 0b01111000, 0b10000000, 0b00011000, 0b11111111};
-        uint8_t curr_num = 0;
 
         enum Data_Type {
             TIRE = 0,
@@ -98,6 +82,9 @@ class hytech_dashboard {
         // Pointer to the one instance of hytech_dashboard
         static hytech_dashboard* _instance;
 
+        uint8_t current_page = 0;
+        uint8_t number_encodings[11] = {0b01000000, 0b01111001, 0b00100100, 0b00110000, 0b00011001, 0b00010010, 0b00000010, 0b01111000, 0b10000000, 0b00011000, 0b11111111};
+        uint8_t curr_num = 0;
 
         uint8_t previousTimerState = 0;
         uint32_t initialTime = 0;
@@ -105,8 +92,21 @@ class hytech_dashboard {
         uint32_t best_time = 0;
         uint32_t prev_time = 0;
         uint32_t target_time = 0;
+
         void format_millis(String label, uint32_t time);
         String twoDigits(int number);
+        
+        void draw_vertical_pedal_bar(double val, int initial_x_coord);
+        void draw_regen_bar(double percent);
+        void draw_current_draw_bar(double percent);
+        void draw_quadrants();
+        void show_lap_times(TCU_LAP_TIMES_t* lap_times, TCU_DRIVER_MSG_t* driver_msg);
+        void display_suspension_data(MCU_LOAD_CELLS_t* front_load_cells, SAB_LOAD_CELLS_t* rear_load_cells);
+        void restart_current_timer();
+        void increment_page();
+        void decrement_page();
+        void set_cursor(uint8_t quadrant);
+        void display_tire_data();
 
 
 };

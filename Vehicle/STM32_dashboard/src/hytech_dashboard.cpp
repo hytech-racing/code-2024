@@ -103,10 +103,6 @@ void hytech_dashboard::startup() {
     _display.fillRect(83, 7, 72, 16, WHITE);
     _display.fillRect(161+2, 5+2, 158-2, 18-2, WHITE);
     _display.refresh();
-
-    pinMode(BUZZER_CTRL, OUTPUT);
-    pinMode(PA3, OUTPUT);
-    digitalWrite(PA3, HIGH);
 }
 
 //refresh dashboard
@@ -116,9 +112,7 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
 
     delay(1000);
 
-
     _expander.digitalWrite(CAN->dash_state.dial_state);
-
 
     // refresh display
     _display.clearDisplayBuffer();

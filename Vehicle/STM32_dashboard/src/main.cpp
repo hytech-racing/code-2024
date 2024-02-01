@@ -52,7 +52,7 @@ void loop(void) {
   dashboard_can.send_status();
   
   // refresh dashboard (display and neopixels)
-  dashboard->refresh((DashboardCAN*) &dashboard_can, &dash_controls);
+  dashboard->refresh((DashboardCAN*) &dashboard_can);
 }
 
 
