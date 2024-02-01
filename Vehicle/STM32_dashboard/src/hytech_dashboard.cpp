@@ -1,8 +1,5 @@
-#include <hytech_dashboard.h>
-#include <DashboardCAN.h>
-#include <SAB_lap_times.h>
-#include <MCU_load_cells.h>
-#include <MCP23S08.h>
+#include "hytech_dashboard.h"
+
 // Definition of display and neopixel globals
 // For some reason, code complains when these are defined in the header file
 Adafruit_SharpMem _display(SHARP_SCK, SHARP_MOSI, SHARP_SS, 320, 240);
@@ -142,21 +139,23 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     // refresh display
     _display.clearDisplayBuffer();
     _display.drawBitmap(0,0, epd_bitmap_hytech_dashboard, 320, 240, BLACK);
-    draw_vertical_pedal_bar(CAN->pedal_readings.get_accelerator_pedal_1(), 9);
-    draw_vertical_pedal_bar(CAN->pedal_readings.get_accelerator_pedal_1(), 374);
+    draw_vertical_pedal_bar(CAN->mcu_pedal_readings.accel_pedal_1, 9);
+    draw_vertical_pedal_bar(CAN->mcu_pedal_readings.accel_pedal_1, 374);
+
     switch(current_state) {
         case 0:
-            show_lap_times(&(CAN->lap_times));
+            show_lap_times(&(CAN->lap_times), &(CAN->driver_msg));
             break;
         case 1:
             // suspension
             display_border();
-            display_suspension_data(&(CAN->load_cells));
+            display_suspension_data(&(CAN->mcu_load_cells), &(CAN->sab_load_cells));
             break;
         case 2:
             display_border();
             break;
     }
+
     _display.refresh();
 }
 
@@ -165,28 +164,28 @@ void hytech_dashboard::set_neopixel(uint16_t id, uint32_t c) {
     _neopixels.setPixelColor(id, c);
 }
 
-void hytech_dashboard::show_lap_times(SAB_lap_times* lap_times) {
+void hytech_dashboard::show_lap_times(TCU_LAP_TIMES_t* lap_times, TCU_DRIVER_MSG_t* driver_msg) {
     _display.setCursor(40, 70);
     _display.setTextColor(BLACK);
     _display.setTextSize(3);
-    switch(lap_times->get_state()) {
+    switch(lap_times->lap_clock_state) {
         case 0:
             // clear timer
             previousTimerState = 0;
-            times[current] = 0;
+            current_time = 0;
             break;
         case 1:
             // start timer
             if(previousTimerState != 1) {
                 initialTime = millis();
             } 
-            times[current] = millis() - initialTime;
+            current_time = millis() - initialTime;
             previousTimerState = 1;
             break;
         case 2:
             // end timer
             if(previousTimerState == 1) {
-                times[current] = millis() - initialTime;
+                current_time = millis() - initialTime;
             }
             previousTimerState = 2;
             break;
@@ -194,14 +193,19 @@ void hytech_dashboard::show_lap_times(SAB_lap_times* lap_times) {
             break;
     }
     
-    times[lap_times->get_time_1_type()] = lap_times->get_time_1();
-    times[lap_times->get_time_2_type()] = lap_times->get_time_2();
+    // add logic -> if best time is  0, current time is best time.
+    // also don't display anything if time is zero. Can be done in formatting
+    // target lap time may be calculated dynamically in the future. For now,
+    // it will just be part of the driver message CAN message sent by pit crew
+    best_time = lap_times->best_lap_time;
+    prev_time = lap_times->prev_lap_time;
+    target_time = driver_msg->target_lap_time;
 
     _display.println("Lap Times");
     _display.setCursor(40, _display.getCursorY());
-    format_millis("Curr", current);
-    format_millis("Prev", previous);
-    format_millis("Best", best);
+    format_millis("Curr", current_time);
+    format_millis("Prev", prev_time);
+    format_millis("Best", best_time);
 }
 
 void hytech_dashboard::restart_current_timer() {
@@ -240,19 +244,19 @@ void hytech_dashboard::set_cursor(uint8_t quadrant) {
     }
 }
 
-void hytech_dashboard::display_suspension_data(MCU_load_cells* load_cells) {
+void hytech_dashboard::display_suspension_data(MCU_LOAD_CELLS_t* front_load_cells, SAB_LOAD_CELLS_t* rear_load_cells) {
     set_cursor(1);
     _display.print("FR: ");
-    _display.println(load_cells->get_FR_load_cell());
+    _display.println(front_load_cells->FR_load_cell);
     set_cursor(2);
     _display.print("FL: ");
-    _display.println(load_cells->get_FL_load_cell());
+    _display.println(front_load_cells->FL_load_cell);
     set_cursor(3);
     _display.print("RL: ");
-    _display.println(load_cells->get_RL_load_cell());
+    _display.println(rear_load_cells->RL_load_cell);
     set_cursor(4);
     _display.print("RR: ");
-    _display.println(load_cells->get_RR_load_cell());
+    _display.println(rear_load_cells->RR_load_cell);
 }
 
 void hytech_dashboard::display_tire_data() {
@@ -260,9 +264,11 @@ void hytech_dashboard::display_tire_data() {
 }
 
 void hytech_dashboard::format_millis(String label, uint32_t time) {
-    int minutes = times[time]/(1000*60);
-    int seconds = (times[time]-minutes*60000)/1000;
-    int milliseconds = times[time] - minutes*60000 - seconds*1000;
+    int minutes = time / (1000 * 60);
+    int seconds = (time - minutes * 60000) / 1000;
+    // Sid put some god damn brackets in this shit ^^ VV idc if you know PEMDAS
+    int milliseconds = time - minutes * 60000 - seconds * 1000;
+
     _display.setCursor(40, _display.getCursorY());
     _display.print(label);
     _display.print(": ");

@@ -15,16 +15,6 @@
 #define DIAL_AUTOCROSS 5
 #define DIAL_ENDURANCE 4
 
-// LED and BUZZER_CTRL pin definition
-#define BUZZER_CTRL 3
-#define LED_MECH_BRAKE 10
-
-// MCP IO Expander pin definition //
-#define IO_CS 10
-#define IO_ADDR 0
-
-#define SHUTDOWN_THERSHOLD 223 // 5V on the line
-
 #define MCU_HEARTBEAT_TIMEOUT 1000
 
 #define LED_MIN_FAULT 1000

@@ -28,7 +28,7 @@ class Dashboard_Controls {
         DebouncedButton btn_left_shifter;
         DebouncedButton btn_right_shifter;
     private:
-        boolean buzzer_active = false;
-        boolean previousState = false;
+        bool buzzer_active = false;
+        bool previousState = false;
         
 };

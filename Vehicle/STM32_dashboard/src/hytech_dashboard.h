@@ -5,7 +5,10 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SharpMem.h>
 #include <Adafruit_NeoPixel.h>
-#include <bitmaps.h>
+#include "bitmaps.h"
+#include "DashboardCAN.h"
+#include "MCP23S08.h"
+#include "ht_can.h"
 
 
 // Display defines
@@ -15,6 +18,9 @@
 
 #define BLACK 0
 #define WHITE 1
+
+// Buzzer pin definition
+#define BUZZER_CTRL PC13
 
 // Neopixel defines
 #define NEOPIXEL_PIN PC14
@@ -45,8 +51,6 @@ enum LED_LIST { AMS = 0, IMD = 1, MC_ERR = 2, GEN_PURP = 3, INERTIA = 4, BOTS = 
 #define MISO PC2
 #define SCLK PB10
 
-#define BUZZER_CTRL PC13
-
 //Forward declaration to allow use of DashboardCAN pointer in header
 class DashboardCAN;
 class SAB_lap_times;
@@ -59,26 +63,23 @@ class hytech_dashboard {
         static hytech_dashboard* getInstance();
         // definitions for public functions
         void startup();
+
         void refresh(DashboardCAN* can);
+
         void set_neopixel(uint16_t id, uint32_t c);
         void draw_vertical_pedal_bar(double val, int initial_x_coord);
         void draw_regen_bar(double percent);
         void draw_current_draw_bar(double percent);
         void display_border();
-        void show_lap_times(SAB_lap_times* can);
-        void display_suspension_data(MCU_load_cells* load_cells);
+        void show_lap_times(TCU_LAP_TIMES_t* lap_times, TCU_DRIVER_MSG_t* driver_msg);
+        void display_suspension_data(MCU_LOAD_CELLS_t* front_load_cells, SAB_LOAD_CELLS_t* rear_load_cells);
         void restart_current_timer();
         void increment_state();
         void decrement_state();
         void set_cursor(uint8_t quadrant);
         void display_tire_data();
 
-        enum Time_Type {
-            previous,
-            best,
-            delta,
-            current
-        };
+
         uint8_t current_state = 0;
         uint8_t number_encodings[11] = {0b01000000, 0b01111001, 0b00100100, 0b00110000, 0b00011001, 0b00010010, 0b00000010, 0b01111000, 0b10000000, 0b00011000, 0b11111111};
         uint8_t curr_num = 0;
@@ -95,12 +96,14 @@ class hytech_dashboard {
         ~hytech_dashboard() { }
         // Pointer to the one instance of hytech_dashboard
         static hytech_dashboard* _instance;
+
+
         uint8_t previousTimerState = 0;
         uint32_t initialTime = 0;
         uint32_t current_time = 0;
         uint32_t best_time = 0;
         uint32_t prev_time = 0;
-        uint32_t times[4] = {0,0,0,0};
+        uint32_t target_time = 0;
         void format_millis(String label, uint32_t time);
         String twoDigits(int number);
 

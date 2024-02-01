@@ -29,20 +29,20 @@ void DashboardCAN::read_CAN()
       // reset heartbeat timer if message received from ECU
       heartbeat_timer.reset();
       heartbeat_timer.interval(MCU_HEARTBEAT_TIMEOUT);
-      mcu_status_received();
+      // mcu_status_received();
       break;
 
     case MCU_ANALOG_READINGS_CANID:
       Unpack_MCU_ANALOG_READINGS_ht_can(&mcu_analog_readings, _msg.buf, NULL);
       heartbeat_timer.reset();
       heartbeat_timer.interval(MCU_HEARTBEAT_TIMEOUT);
-      mcu_analog_readings_received();
+      // mcu_analog_readings_received();
       break;
 
     case BMS_VOLTAGES_CANID:
       Unpack_BMS_VOLTAGES_ht_can(&bms_voltages, _msg.buf, NULL);
       // include bms timer
-      bms_voltages_received();
+      // bms_voltages_received();
       break;
 
     case MCU_PEDAL_READINGS_CANID:
@@ -54,6 +54,10 @@ void DashboardCAN::read_CAN()
       SerialUSB.println("Received MCU Load Cells");
       Unpack_MCU_LOAD_CELLS_ht_can(&mcu_load_cells, _msg.buf, NULL);
       break;
+
+    case SAB_LOAD_CELLS_CANID:
+      SerialUSB.println("Received SAB Load Cells");
+      Unpack_SAB_LOAD_CELLS_ht_can(&sab_load_cells, _msg.buf, NULL);
 
     case TCU_LAP_TIMES_CANID:
       SerialUSB.println("Received TCU lap times");
@@ -108,6 +112,10 @@ void DashboardCAN::send_status() {
 If there is going to be this much LED logic, then this should
 be moved out of DashCAN, possibly to its own neopixel class
 that can handle the color logic and that inherits neopixel stuff
+
+The exception may be with very important LEDs that need to be refreshed
+immediately, but this should be used only if default refresh is decided to
+be too slow. It better not be if it is driving a display.
 
 */
 

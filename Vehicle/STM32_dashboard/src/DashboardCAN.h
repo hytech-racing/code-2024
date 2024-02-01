@@ -41,6 +41,7 @@ class DashboardCAN {
         BMS_VOLTAGES_t bms_voltages;
         MCU_PEDAL_READINGS_t mcu_pedal_readings;
         MCU_LOAD_CELLS_t mcu_load_cells;
+        SAB_LOAD_CELLS_t sab_load_cells;
         
         TCU_LAP_TIMES_t lap_times;
         TCU_DRIVER_MSG_t driver_msg;
@@ -49,7 +50,6 @@ class DashboardCAN {
         
 
         // constructor takes pointer to STM32_CAN object
-        // can dereference with &
         DashboardCAN(STM32_CAN* CAN);
         void read_CAN();
         void send_status();
