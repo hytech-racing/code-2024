@@ -30,7 +30,7 @@ void setup() {
 void loop() {
 
 if (sample.check()) {
-  uint16_t raw = adc.read(MCP3204::Channel::SINGLE_2);
+  uint16_t raw = adc.read(MCP3204::Channel::SINGLE_1);
   uint16_t val = adc.toAnalog(raw);
   Serial.printf("\tTimestamp: %lu : value: %d mV\n", millis(), val);
 }

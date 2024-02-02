@@ -207,7 +207,7 @@ uint16_t MCP320x<T>::transfer(SpiData cmd) const
 {
   SpiData adc;
 
-  // activate ADC with chip select
+  //activate ADC with chip select
   digitalWrite(mCsPin, LOW);
 
   delayMicroseconds(1);
@@ -217,7 +217,7 @@ uint16_t MCP320x<T>::transfer(SpiData cmd) const
   delayMicroseconds(16);
 
   digitalWrite(mCsPin, LOW);
-
+  delayMicroseconds(10);
   // send first command byte
   mSpi->transfer(cmd.hiByte);
   // send second command byte and receive first(msb) 4 bits
