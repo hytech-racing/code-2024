@@ -124,19 +124,19 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     rainbow();
     _neopixels.show();
 
-    digitalWrite(BUZZER_CTRL, HIGH);
+    // digitalWrite(BUZZER_CTRL, HIGH);
     digitalWrite(PA3, HIGH);
-    delay(1000);
+    // delay(1000);
     digitalWrite(BUZZER_CTRL, LOW);
     digitalWrite(PA3, LOW);
 
-    delay(1000);
+    // delay(1000);
 
 
     _expander.digitalWrite(number_encodings[curr_num]);
     curr_num++;
     if (curr_num > 9) {curr_num = 0;}
-    delay(200);
+    // delay(200);
 
 
     // refresh display

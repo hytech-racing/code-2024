@@ -10,7 +10,7 @@ hytech_dashboard* dashboard = hytech_dashboard::getInstance();
 Dashboard_Controls dash_controls = Dashboard_Controls();
 
 //Create STM32_CAN object to pass to DashboardCAN
-STM32_CAN stm_can( CAN2, DEF);
+STM32_CAN stm_can( CAN1, ALT);
 CAN_message_t msg;
 //Create dashboard_can object
 DashboardCAN dashboard_can(&stm_can);
