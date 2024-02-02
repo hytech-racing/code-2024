@@ -14,6 +14,8 @@ Metro timer_light = Metro(3);
 
 void setup() {
     Serial.begin(115200); // Initialize serial for PC communication
+    delay(3000);
+    Serial.print("startup");
     CAN.begin();
     CAN.setBaudRate(500000);
     delay(200);
