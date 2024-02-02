@@ -1,7 +1,9 @@
 name: 'Build Telemetry Dashboard'
 
-on: workflow_dispatch
-
+on: 
+  push:
+    branches:
+      - live-telemetry-dashboard-tauri
 jobs:
   publish-tauri:
     permissions:
