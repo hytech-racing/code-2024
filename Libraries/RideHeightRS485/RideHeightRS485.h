@@ -8,9 +8,9 @@
 // #define RS485_TX_PIN 17
 // #define RS485_DE_PIN 18
 /* test board pinout */
-#define RS485_SERIAL_PORT Serial1
-#define RS485_TX_PIN 1
-#define RS485_DE_PIN 2
+// #define RS485_SERIAL_PORT Serial1
+// #define RS485_TX_PIN 1
+// #define RS485_DE_PIN 2
 #define RS485_RE_PIN -1    // set as -1 to never bother with it, otherwise set as corresponding pin in use
 
 #include <ArduinoModbus.h>

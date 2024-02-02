@@ -44,7 +44,7 @@ uint16_t RideHeightRS485::readData(uint16_t addr, eRegIndex_t reg)
     }
     else
     {
-        data =  ModbusRTUClient.read();
+        data = ModbusRTUClient.read();
     }
 
     return data;

@@ -44,7 +44,9 @@
 #define ID_BMS_READ_WRITE_PARAMETER_COMMAND							0xE0 // TODO define this message
 #define ID_BMS_PARAMETER_RESPONSE									0xE1 // TODO define this message
 #define ID_BMS_COULOMB_COUNTS										0xE2
+
 #define ID_MCU_GPS_READINGS											0xE7
+
 #define ID_MCU_WHEEL_SPEED									    	0xEA
 #define ID_DASHBOARD_STATUS                                         0xEB
 #define ID_GPS_LAT_LONG                                             0xED
@@ -63,6 +65,12 @@
 #define ID_SAB_READINGS_FRONT                                       0x92
 #define ID_SAB_READINGS_REAR                                        0x93
 
+// SAB rev5
+#define ID_VECTORNAV_READINGS                                       0xE3
+#define ID_SAB_THERMISTOR_1                                         0xE4
+#define ID_SAB_THERMiSTOR_2                                         0xE5
+#define ID_RIDE_HEIGHT_DISTANCE                                     0xF0
+#define ID_TCU_STATUS                                               0xE6
 
 //TireTempSensors
 #define ID_TPMS_LF                                                  0x424

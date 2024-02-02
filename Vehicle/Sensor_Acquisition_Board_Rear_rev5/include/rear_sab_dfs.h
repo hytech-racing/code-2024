@@ -8,9 +8,9 @@
 #define ADC2_CS 3
 #define ADC3_CS 10  // default Teensy SPI CS
 // RS485 ride height
-#define RX_485 16
-#define TX_485 17
-#define EN_485 18
+#define RS485_SERIAL_PORT Serial4   // Arduino.h should be included before dfs.h
+#define RS485_TX_PIN 17             // dfs should be included before ride height lib
+#define RS485_DE_PIN 18
 // RS232 VectorNav
 #define TX_232 8
 #define RX_232 7
@@ -20,5 +20,26 @@
 #define VN_GPS_PPS 4
 // Button
 #define PI_SHUTDOWN 14  // debounce
+
+/* Protocol speed */
+#define ADC_SPI_SPEED 2000000
+#define RS485_SERIAL_SPEED 115200
+#define IMU_RS232_SPEED 115200
+
+/* ADC read channels */
+// SAB MCP3208
+#define THERM_3 0
+#define THERM_4 1
+#define THERM_5 2
+#define THERM_6 3
+#define THERM_7 4
+#define THERM_8 5
+#define THERM_9 6
+// CB RL MCP3204
+#define SUS_POT_3 1
+#define RL_LOAD_CELL 2
+// CB RR MCP3204
+#define SUS_POT_4 1
+#define RR_LOAD_CELL 2
 
 
