@@ -110,9 +110,7 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     // update neopixels
     _neopixels.show();
 
-    delay(1000);
-
-    _expander.digitalWrite(CAN->dash_state.dial_state);
+    _expander.digitalWrite(number_encodings[CAN->dash_state.dial_state]);
 
     // refresh display
     _display.clearDisplayBuffer();
