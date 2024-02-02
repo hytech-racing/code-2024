@@ -6,6 +6,9 @@ on:
       - live-telemetry-dashboard-tauri
 jobs:
   publish-tauri:
+    defaults:
+      run:
+        working-directory: ./Telemetry/dashboard
     permissions:
       contents: write
     strategy:
@@ -49,4 +52,4 @@ jobs:
           releaseBody: 'See the assets to download this version and install.'
           releaseDraft: true
           prerelease: false
-          projectPath: './code-2024/code-2024/Telemetry/dashboard'
+          projectPath: './Telemetry/dashboard'
