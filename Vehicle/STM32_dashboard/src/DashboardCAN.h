@@ -35,6 +35,8 @@ class DashboardCAN {
         Metro send_timer = Metro(1000);
         uint8_t imd_ams_flags = 0;
         CAN_message_t _msg;
+
+        uint64_t prev_dash_mcu_state;
     public:
         // CAN structs for different messages
 
@@ -52,6 +54,7 @@ class DashboardCAN {
         TCU_LAP_TIMES_t lap_times;
         TCU_DRIVER_MSG_t driver_msg;
         DASHBOARD_MCU_STATE_t dash_mcu_state;
+        bool mcu_state_update;
 
         
 

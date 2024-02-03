@@ -21,6 +21,7 @@ void Dashboard_Controls::update(DashboardCAN* CAN) {
   DASHBOARD_STATE_t new_state;
 
   if (btn_start.isPressed())
+  Serial.println("Start button pressed.");
     new_state.start_button = true;
 
   if (btn_mark.isPressed())

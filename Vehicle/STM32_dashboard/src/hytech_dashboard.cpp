@@ -309,18 +309,24 @@ void hytech_dashboard::set_neopixel(uint16_t id, uint32_t c) {
 
 void hytech_dashboard::refresh_neopixels(DashboardCAN* CAN) {
 
-    set_neopixel_color(LED_LIST_e::BOTS, CAN->dash_mcu_state.bots_led);
-    set_neopixel_color(LED_LIST_e::LAUNCH_CTRL, CAN->dash_mcu_state.launch_control_led);
-    set_neopixel_color(LED_LIST_e::TORQUE_MODE, CAN->dash_mcu_state.mode_led);
-    set_neopixel_color(LED_LIST_e::BRAKE_ENGAGE, CAN->dash_mcu_state.mechanical_brake_led);
-    set_neopixel_color(LED_LIST_e::COCKPIT_BRB, CAN->dash_mcu_state.cockpit_brb_led);
-    set_neopixel_color(LED_LIST_e::INERTIA, CAN->dash_mcu_state.inertia_status_led);
-    set_neopixel_color(LED_LIST_e::RDY_DRIVE, CAN->dash_mcu_state.start_status_led);
-    set_neopixel_color(LED_LIST_e::MC_ERR, CAN->dash_mcu_state.motor_controller_error_led);
-    set_neopixel_color(LED_LIST_e::IMD, CAN->dash_mcu_state.imd_led);
-    set_neopixel_color(LED_LIST_e::AMS, CAN->dash_mcu_state.ams_led);
+    // only refresh if updates were found in the CAN message
+    if (CAN->mcu_state_update) {
 
-    _neopixels.show();
+        Serial.println("Refreshing Neopixels");
+
+        set_neopixel_color(LED_LIST_e::BOTS, CAN->dash_mcu_state.bots_led);
+        set_neopixel_color(LED_LIST_e::LAUNCH_CTRL, CAN->dash_mcu_state.launch_control_led);
+        set_neopixel_color(LED_LIST_e::TORQUE_MODE, CAN->dash_mcu_state.mode_led);
+        set_neopixel_color(LED_LIST_e::BRAKE_ENGAGE, CAN->dash_mcu_state.mechanical_brake_led);
+        set_neopixel_color(LED_LIST_e::COCKPIT_BRB, CAN->dash_mcu_state.cockpit_brb_led);
+        set_neopixel_color(LED_LIST_e::INERTIA, CAN->dash_mcu_state.inertia_status_led);
+        set_neopixel_color(LED_LIST_e::RDY_DRIVE, CAN->dash_mcu_state.start_status_led);
+        set_neopixel_color(LED_LIST_e::MC_ERR, CAN->dash_mcu_state.motor_controller_error_led);
+        set_neopixel_color(LED_LIST_e::IMD, CAN->dash_mcu_state.imd_led);
+        set_neopixel_color(LED_LIST_e::AMS, CAN->dash_mcu_state.ams_led);
+        
+        _neopixels.show();
+    }
 
 }
 

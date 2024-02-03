@@ -71,8 +71,17 @@ void DashboardCAN::read_CAN()
 
     case DASHBOARD_MCU_STATE_CANID:
       SerialUSB.println("Received mcu state");
-      Unpack_DASHBOARD_MCU_STATE_ht_can(&dash_mcu_state, _msg.buf, NULL);
-      SerialUSB.printf("%d\n", dash_mcu_state.ams_led);
+      // compare cached CAN message of same type to incoming message
+      // If they are the same, don't unpack it, and don't refresh neopixels
+      if (!memcmp(&prev_dash_mcu_state, _msg.buf, sizeof(_msg.buf))) {
+        SerialUSB.println("New message! Unpacking");
+        Unpack_DASHBOARD_MCU_STATE_ht_can(&dash_mcu_state, _msg.buf, NULL);
+        mcu_state_update = true;
+      } else {
+        SerialUSB.println("Same old message.");
+        mcu_state_update = false;
+      }
+      
       break;
 
     default:
