@@ -65,7 +65,7 @@ void hytech_dashboard::startup() {
         _neopixels.setPixelColor(i, LED_INIT);
 
         // AMS and IMD are off according to rules
-        if (i == LED_LIST_e::AMS || i == LED_LIST_e::IMD);
+        if (i == LED_LIST_e::AMS || i == LED_LIST_e::IMD)
             _neopixels.setPixelColor(i, LED_colors_e::OFF);
     }
     // write data to neopixels
