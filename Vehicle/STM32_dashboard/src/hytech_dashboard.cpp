@@ -63,6 +63,10 @@ void hytech_dashboard::startup() {
     //set init color for every led
     for (int i = 0; i < NEOPIXEL_COUNT; i++) {
         _neopixels.setPixelColor(i, LED_INIT);
+
+        // AMS and IMD are off according to rules
+        if (i == LED_LIST_e::AMS || i == LED_LIST_e::IMD);
+            _neopixels.setPixelColor(i, LED_colors_e::OFF);
     }
     // write data to neopixels
     _neopixels.show();
@@ -108,6 +112,7 @@ void hytech_dashboard::startup() {
 //refresh dashboard
 void hytech_dashboard::refresh(DashboardCAN* CAN) {
     // update neopixels
+    refresh_neopixels(CAN);
     _neopixels.show();
 
     _expander.digitalWrite(number_encodings[CAN->dash_state.dial_state]);
@@ -153,6 +158,7 @@ void hytech_dashboard::show_lap_times(TCU_LAP_TIMES_t* lap_times, TCU_DRIVER_MSG
     _display.setCursor(40, 70);
     _display.setTextColor(BLACK);
     _display.setTextSize(3);
+
     switch(lap_times->lap_clock_state) {
         case 0:
             // clear timer
@@ -300,4 +306,45 @@ void hytech_dashboard::draw_current_draw_bar(double percent) {
 //set neopixels
 void hytech_dashboard::set_neopixel(uint16_t id, uint32_t c) {
     _neopixels.setPixelColor(id, c);
+}
+
+void hytech_dashboard::refresh_neopixels(DashboardCAN* CAN) {
+
+    set_neopixel_color(LED_LIST_e::BOTS, CAN->dash_mcu_state.bots_led);
+    set_neopixel_color(LED_LIST_e::LAUNCH_CTRL, CAN->dash_mcu_state.launch_control_led);
+    set_neopixel_color(LED_LIST_e::TORQUE_MODE, CAN->dash_mcu_state.mode_led);
+    set_neopixel_color(LED_LIST_e::BRAKE_ENGAGE, CAN->dash_mcu_state.mechanical_brake_led);
+    set_neopixel_color(LED_LIST_e::COCKPIT_BRB, CAN->dash_mcu_state.cockpit_brb_led);
+    set_neopixel_color(LED_LIST_e::INERTIA, CAN->dash_mcu_state.inertia_status_led);
+    set_neopixel_color(LED_LIST_e::RDY_DRIVE, CAN->dash_mcu_state.start_status_led);
+    set_neopixel_color(LED_LIST_e::MC_ERR, CAN->dash_mcu_state.motor_controller_error_led);
+    set_neopixel_color(LED_LIST_e::IMD, CAN->dash_mcu_state.imd_led);
+    set_neopixel_color(LED_LIST_e::AMS, CAN->dash_mcu_state.ams_led);
+
+}
+
+void hytech_dashboard::set_neopixel_color(LED_LIST_e led, uint8_t state) {
+    uint32_t color;
+    switch (state)
+    {
+    case 0:
+        color = LED_colors_e::OFF;
+        break;
+    case 1:
+        color = LED_colors_e::ON;
+        break;
+    case 2:
+        color = LED_colors_e::YELLOW;
+        break;
+    case 3:
+        color = LED_colors_e::RED;
+        break;
+    
+    default:
+        color = LED_INIT;
+        break;
+    }
+
+    _neopixels.setPixelColor(led, color);
+
 }

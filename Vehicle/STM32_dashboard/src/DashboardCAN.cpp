@@ -72,6 +72,7 @@ void DashboardCAN::read_CAN()
     case DASHBOARD_MCU_STATE_CANID:
       SerialUSB.println("Received mcu state");
       Unpack_DASHBOARD_MCU_STATE_ht_can(&dash_mcu_state, _msg.buf, NULL);
+      SerialUSB.printf("%d\n", dash_mcu_state.ams_led);
       break;
 
     default:
