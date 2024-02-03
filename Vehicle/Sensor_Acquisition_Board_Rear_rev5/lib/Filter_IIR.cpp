@@ -19,5 +19,7 @@ void Filter_IIR::set_alpha(float alpha) {
 }
 
 uint16_t Filter_IIR::filtered_result(uint16_t new_val) {
-    
+    prev_reading = (1 - alpha) * new_val + alpha * prev_reading;
+
+    return prev_reading;
 }

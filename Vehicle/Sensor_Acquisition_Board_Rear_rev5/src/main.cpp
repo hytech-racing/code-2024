@@ -15,6 +15,7 @@
 #include "DebouncedButton.h"
 #include "RideHeightRS485.h"
 #include "ADC_SPI.h"
+#include "Filter_IIR.h"
 
 FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> TELEM_CAN;
 CAN_message_t msg;
@@ -53,7 +54,7 @@ RideHeightRS485 ride_height_sensor(RS485_SERIAL_SPEED);
 // tbd
 
 /* DSP utilities */
-Filter
+Filter_IIR thermistor_iir[TOTAL_THERMISTOR_COUNT] = {THERM_ALPHA, THERM_ALPHA, THERM_ALPHA, THERM_ALPHA, THERM_ALPHA, THERM_ALPHA, THERM_ALPHA};
 
 /* Function prototypes */
 void parse_telem_can_message(const CAN_message_t &RX_msg);
@@ -84,7 +85,8 @@ void loop() {
   TELEM_CAN.events();
   // ADC
   read_all_adcs();
-  // 
+  // IIR filter thermistors
+  
 
 
 }
