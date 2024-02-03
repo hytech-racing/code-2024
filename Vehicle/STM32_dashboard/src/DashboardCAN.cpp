@@ -98,7 +98,7 @@ void DashboardCAN::send_status() {
     //update button flags
     // use HT_CAN pack function, passing in reference to message and length
     // length will be set in pack function. Returns msg id.
-    _msg.id = Pack_DASHBOARD_STATE_ht_can(&dash_state, _msg.buf, &_msg.len, NULL);
+    _msg.id = Pack_DASHBOARD_STATE_ht_can(&dash_state, _msg.buf, &_msg.len, (uint8_t*) &_msg.flags.extended);
     _CAN->write(_msg);
 
     SerialUSB.println("Message Sent");
