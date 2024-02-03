@@ -55,27 +55,47 @@ enum LED_colors_e
 #define MISO PC2
 #define SCLK PB10
 
-//Forward declaration to allow use of DashboardCAN pointer in header
+
 class DashboardCAN;
 class SAB_lap_times;
 class MCU_load_cells;
 
-//Singleton class header
+/*
+    hytech_dashboard handles all interaction with the display components of the dash, including
+    the display, neopixels, and 7-segment. It is architected as a singleton class, which in hindsight
+    was more trouble than it was worth, but why change it now?
+*/
 class hytech_dashboard {
     public:
-        // getInstance function returns the one existing insance of hytech_dashboard
+        /*!
+            Returns the reference to the hytech_dashboard singleton class.
+            @return hytech_dashboard pointer to the singleton
+        */
         static hytech_dashboard* getInstance();
-        // definitions for public functions
+
+        /*
+            The startup function initializes the display devices and runs a short startup animation
+            on the screen. Nothing is acutally starting up during this, but it looks cool.
+        */
         void startup();
 
-        void refresh(DashboardCAN* can);
+        /*!
+            Refreshes the dashboard. This inlcudes the display, neopixels, and 7-segment display.
+            The refresh function is meant to manage calls to the individual components of the dashboard
+            as well as handle the "state" or current page of the display.
 
+            @param CAN a pointer to the system's DashboardCAN reference that is used to access data for display.
+        */
+        void refresh(DashboardCAN* CAN);
+
+        /*!
+            A public setter for neopixels that can be used by other classes in the event that they need
+            to change the value of a neopixel without going through dashboard_CAN.
+
+            @param id the ID of the neopixel
+            @param c the desired color value of the neopixel
+        */
         void set_neopixel(uint16_t id, uint32_t c);
-
-        enum Data_Type {
-            TIRE = 0,
-            SUSPENSION = 1
-        };
     
     private:
         // Private constructor to prevent external instantiation
@@ -85,33 +105,94 @@ class hytech_dashboard {
         // Pointer to the one instance of hytech_dashboard
         static hytech_dashboard* _instance;
 
+        /* current page displayed */
         uint8_t current_page = 0;
+        /* number encodings for use with the IO expander that drives the seven segment display */
         uint8_t number_encodings[11] = {0b01000000, 0b01111001, 0b00100100, 0b00110000, 0b00011001, 0b00010010, 0b00000010, 0b01111000, 0b10000000, 0b00011000, 0b11111111};
         uint8_t curr_num = 0;
-
+        /* the previous timer state used for certain display behaviors when changing state*/
         uint8_t previousTimerState = 0;
+        /* time the lap clock started counting */
         uint32_t initialTime = 0;
+        /* current time? millis?*/
         uint32_t current_time = 0;
+        /* best time as recorded by the TCU*/
         uint32_t best_time = 0;
+        /* previous time as recorded by the TCU*/
         uint32_t prev_time = 0;
+        /* target time as reported by the TCU*/
         uint32_t target_time = 0;
 
+        /* Displays the clock and times in m:s.ms format based on the number of milliseconds*/
         void format_millis(String label, uint32_t time);
+        
+        /* helper function for format_millis that keeps all numbers at two digits*/
         String twoDigits(int number);
         
+        /* helper function that draws the pedal bar */
         void draw_vertical_pedal_bar(double val, int initial_x_coord);
+
+        /* helper function that draws the regen bar based on regen percentage*/
         void draw_regen_bar(double percent);
+
+        /* helper function that draws the regen bar based on current draw percentage*/
         void draw_current_draw_bar(double percent);
+
+        /* helper function that draws quadrants on the display for tire/suspension data */
         void draw_quadrants();
+
+        /*!
+            Draws the lap times page on the display. This function keeps track of the state
+            of the running lap clock, but this is merely a mirror of the state of the clock
+            running on the TCU. Sending can messages every millisecond is a bad idea, so they
+            are only sent on each state change of the clock, or when an updated time is available.
+            This function will also display a target lap time to the driver that is part of the
+            driver_msg architecture.
+
+            @param lap_times* Pointer to the TCU_LAP_TIMES_t struct in dashboard_can
+            @param driver_msg* Pointer to the TCU_DRIVER_MSG_t struct in dashboard_can
+        */
         void show_lap_times(TCU_LAP_TIMES_t* lap_times, TCU_DRIVER_MSG_t* driver_msg);
+
+        /*!
+            Draws the suspension data on the display. This function splits the display into 4 quadrants that
+            are used to display data from the corner boards of the car, most notably suspension travel from
+            the pots and suspension load from the load cells.
+
+            @param front_load_cells A MCU_LOAD_CELLS_t struct from the CAN library that includes data sent from the ECU, gathered from the front corner boards.
+            @param rear_load_cells A SAB_LOAD_CELLS_t struct from the CAN library that includes data sent from the SAB, gathered from the rear corner boards.
+        */
         void display_suspension_data(MCU_LOAD_CELLS_t* front_load_cells, SAB_LOAD_CELLS_t* rear_load_cells);
+
+        /* resets the clock back to current time*/
         void restart_current_timer();
+
+        /* handles increment and rollover for switching pages */
         void increment_page();
+
+        /* handles decrement and rollover for switching pages*/
         void decrement_page();
+
+        /* helper for displaying data in quadrants, sets the print cursor, based on the seleceted quadrant */
         void set_cursor(uint8_t quadrant);
+
+        /*!
+            Draws tire data on the display. Similar to the suspension data, this function segments the display
+            and pulls data from the CAN bus when the TTPMS receiver is connected.
+        */
         void display_tire_data();
 
+        /*!
+            refresh_neopixels handles changing the color of indicator LEDs on the display. This function
+            is separated from the display refresh in the event we want to decouple the refresh rate between
+            the different devices. The Neopixel library has a few caveats to its functionality to do with the
+            lack of a PWM DMA controller, and will basically stop the clock while it writes to neopixels.
+
+            @param can takes in a DashboardCAN pointer to access the data of mainly the dash_mcu_state message to correctly color the neopixels based on car state
+        */
         void refresh_neopixels(DashboardCAN* can);
+
+        /* Helper function for refresh_neopixels that sets the color of pixels with the enumerated color values */
         void set_neopixel_color(LED_LIST_e led, uint8_t state);
 
 

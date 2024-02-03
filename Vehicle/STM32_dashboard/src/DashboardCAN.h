@@ -16,6 +16,12 @@
 
 #define LED_MIN_FAULT 23
 
+/*
+    The DashboardCAN class handles all interaction with the CAN interface through the use
+    of a pointer to the STM32_CAN object corresponding to the main CAN interface. All reading/writing
+    to the CAN bus is handled in this class utilizing ht_can to pack, unpack, and store the data in
+    message-specific structs.
+*/
 class DashboardCAN {
     private:
         // STM32_CAN member variable

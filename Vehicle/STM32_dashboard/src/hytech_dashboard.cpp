@@ -37,7 +37,7 @@ hytech_dashboard* hytech_dashboard::getInstance() {
     return _instance;
 }
 
-// startup function
+
 void hytech_dashboard::startup() {
 
     _expander.begin();
@@ -109,11 +109,10 @@ void hytech_dashboard::startup() {
     _display.refresh();
 }
 
-//refresh dashboard
+
 void hytech_dashboard::refresh(DashboardCAN* CAN) {
     // update neopixels
     refresh_neopixels(CAN);
-    _neopixels.show();
 
     _expander.digitalWrite(number_encodings[CAN->dash_state.dial_state]);
 
@@ -320,6 +319,8 @@ void hytech_dashboard::refresh_neopixels(DashboardCAN* CAN) {
     set_neopixel_color(LED_LIST_e::MC_ERR, CAN->dash_mcu_state.motor_controller_error_led);
     set_neopixel_color(LED_LIST_e::IMD, CAN->dash_mcu_state.imd_led);
     set_neopixel_color(LED_LIST_e::AMS, CAN->dash_mcu_state.ams_led);
+
+    _neopixels.show();
 
 }
 

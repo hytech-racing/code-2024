@@ -32,7 +32,6 @@ void setup(void)
 
   // begin usb serial for STM32
   SerialUSB.begin();
-
   SerialUSB.println("HELLO");
 
   // run startup sequence for dasboard
