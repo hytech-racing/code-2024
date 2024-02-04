@@ -98,25 +98,27 @@ def read_serial_until_double_null(serial_port):
     split_data = data.split(b"\x00")
     
     for byte_msg in split_data:
-        print(len(byte_msg), end=" ")
-        if len(byte_msg) == 16:
-            decoded = cobs.decode(byte_msg)
-            msg_id = decoded[0]
-            print(hex(msg_id), end="")
-            msg_len = decoded[4]
-            msg_data = decoded[5:5+8]
-            #print(decoded)
-            #while len(msg_data) < 8:
-            #    msg_data += b'\x00'
-            #print(len(msg_data))
-            msg_data = np.frombuffer(msg_data, dtype=np.uint64)[0]
-            msg_data = (np.uint64(np.uint64(msg_data) << np.uint16(8*(8-msg_len))) >> np.uint16(8*(8-msg_len)))
-            #print(msg_id)
-            l = MESSAGE_DICT[int(msg_id)][0](msg_data)
-            upload_parsed_data(l)
-            messages_received += 1
-        print("")
-
+        try:    
+            print(len(byte_msg), end=" ")
+            if len(byte_msg) == 16:
+                decoded = cobs.decode(byte_msg)
+                msg_id = decoded[0]
+                print(hex(msg_id), end="")
+                msg_len = decoded[4]
+                msg_data = decoded[5:5+8]
+                #print(decoded)
+                #while len(msg_data) < 8:
+                #    msg_data += b'\x00'
+                #print(len(msg_data))
+                msg_data = np.frombuffer(msg_data, dtype=np.uint64)[0]
+                msg_data = (np.uint64(np.uint64(msg_data) << np.uint16(8*(8-msg_len))) >> np.uint16(8*(8-msg_len)))
+                #print(msg_id)
+                l = MESSAGE_DICT[int(msg_id)][0](msg_data)
+                upload_parsed_data(l)
+                messages_received += 1
+            print("")
+        except:
+            print("rip message not found lol")
     return split_data
 
 MQTT_PORT   = 1883

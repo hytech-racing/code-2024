@@ -1,4 +1,4 @@
-# Pull Request (PR) into Code-2023
+# Pull Request (PR) into Code-2024
 
 ***Delete the below block when actually making your PR!***
 
@@ -17,7 +17,7 @@ Follow HyTech's [Github Software Guidelines](https://gtvault.sharepoint.com/:w:/
 
 ## Checklist
 - [ ] Is this code linked to a new board or board rev?
-- - [ ] Is *there a PR* for that board in `circuits-2023`? If so, please pause until that PR is merged.
+- - [ ] Is *there a PR* for that board in `circuits-2024`? If so, please pause until that PR is merged.
 - [ ] If you made a change or addition or deletion to the CAN library, did you inform the Data Aq lead?
 - [ ] Did you test the code in real-world conditions before submitting?
 - - [ ] Did you *use CPU Speed = 720 MHz (overclock) and Optimize = Fastest* when testing with Teensy 4.x?
