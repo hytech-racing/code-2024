@@ -105,6 +105,8 @@ class hytech_dashboard {
         // Pointer to the one instance of hytech_dashboard
         static hytech_dashboard* _instance;
 
+        Metro pixel_refresh = Metro(100);
+
         /* current page displayed */
         uint8_t current_page = 0;
         /* number encodings for use with the IO expander that drives the seven segment display */

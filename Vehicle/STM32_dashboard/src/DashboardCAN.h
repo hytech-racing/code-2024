@@ -36,7 +36,8 @@ class DashboardCAN {
         uint8_t imd_ams_flags = 0;
         CAN_message_t _msg;
 
-        uint64_t prev_dash_mcu_state;
+        uint64_t prev_dash_mcu_state = 0;
+        DASHBOARD_STATE_t prev_dash_state;
     public:
         // CAN structs for different messages
 
@@ -54,7 +55,8 @@ class DashboardCAN {
         TCU_LAP_TIMES_t lap_times;
         TCU_DRIVER_MSG_t driver_msg;
         DASHBOARD_MCU_STATE_t dash_mcu_state;
-        bool mcu_state_update;
+        bool mcu_state_update = true;
+        bool send_now = false;
 
         
 

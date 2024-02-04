@@ -20,7 +20,7 @@ DashboardCAN::DashboardCAN(STM32_CAN* CAN)
 void DashboardCAN::read_CAN()
 {
   while (_CAN->read(_msg)) {
-    SerialUSB.println("message received");
+    // SerialUSB.println("message received");
     // parse message based on ID
     switch (_msg.id) {
 
@@ -70,15 +70,30 @@ void DashboardCAN::read_CAN()
       break;
 
     case DASHBOARD_MCU_STATE_CANID:
-      SerialUSB.println("Received mcu state");
+      // SerialUSB.println("Received mcu state");
       // compare cached CAN message of same type to incoming message
       // If they are the same, don't unpack it, and don't refresh neopixels
-      if (!memcmp(&prev_dash_mcu_state, _msg.buf, sizeof(_msg.buf))) {
+
+      // for (int i = 0; i < 8; i++) {
+      //   Serial.print("0x");
+      //   if (_msg.buf[i] < 0x10) {
+      //     Serial.print("0"); // Add leading zero for single-digit hex values
+      //   }
+      //   Serial.print(_msg.buf[i], HEX);
+
+      //   if (i < 7) {
+      //     Serial.print(", ");
+      //   }
+      // }
+      // Serial.println();
+
+
+      if (memcmp(&prev_dash_mcu_state, _msg.buf, sizeof(_msg.buf)) != 0) {
         SerialUSB.println("New message! Unpacking");
         Unpack_DASHBOARD_MCU_STATE_ht_can(&dash_mcu_state, _msg.buf, NULL);
+        memcpy(&prev_dash_mcu_state, _msg.buf, sizeof(_msg.buf));
         mcu_state_update = true;
       } else {
-        SerialUSB.println("Same old message.");
         mcu_state_update = false;
       }
       
@@ -104,7 +119,8 @@ void DashboardCAN::send_status() {
   //   should_send = true;
   // }
 
-  if (should_send && send_timer.check()) {
+  if ((should_send && send_timer.check())
+      || memcmp(&dash_state, &prev_dash_state, sizeof(DASHBOARD_STATE_t)) != 0) {
     //update button flags
     // use HT_CAN pack function, passing in reference to message and length
     // length will be set in pack function. Returns msg id.
@@ -112,6 +128,8 @@ void DashboardCAN::send_status() {
     _CAN->write(_msg);
 
     SerialUSB.println("Message Sent");
+    memcpy(&prev_dash_state, &dash_state, sizeof(DASHBOARD_STATE_t));
+    send_now = false;
     send_timer.reset();
   }
 

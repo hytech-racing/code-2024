@@ -65,8 +65,10 @@ void hytech_dashboard::startup() {
         _neopixels.setPixelColor(i, LED_INIT);
 
         // AMS and IMD are off according to rules
-        if (i == LED_LIST_e::AMS || i == LED_LIST_e::IMD)
+        if (i == LED_LIST_e::AMS || i == LED_LIST_e::IMD){
             _neopixels.setPixelColor(i, LED_colors_e::OFF);
+        }
+            
     }
     // write data to neopixels
     _neopixels.show();
@@ -310,7 +312,9 @@ void hytech_dashboard::set_neopixel(uint16_t id, uint32_t c) {
 void hytech_dashboard::refresh_neopixels(DashboardCAN* CAN) {
 
     // only refresh if updates were found in the CAN message
-    if (CAN->mcu_state_update) {
+    // This does not work for some reason on initial message
+    // replace Metro timer if it is figured out
+    if (CAN->mcu_state_update || pixel_refresh.check()) {
 
         Serial.println("Refreshing Neopixels");
 
@@ -326,6 +330,9 @@ void hytech_dashboard::refresh_neopixels(DashboardCAN* CAN) {
         set_neopixel_color(LED_LIST_e::AMS, CAN->dash_mcu_state.ams_led);
         
         _neopixels.show();
+        CAN->mcu_state_update = false;
+
+        pixel_refresh.reset();
     }
 
 }

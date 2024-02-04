@@ -17,39 +17,34 @@ void Dashboard_Controls::startup() {
 }
 
 void Dashboard_Controls::update(DashboardCAN* CAN) {
+  
+  if (btn_start.isPressed()) {
+    SerialUSB.println("Start button pressed.");
+  }
 
-  DASHBOARD_STATE_t new_state;
+  DASHBOARD_STATE_t* s = &CAN->dash_state;
 
-  if (btn_start.isPressed())
-  Serial.println("Start button pressed.");
-    new_state.start_button = true;
+  s->start_button = btn_start.isPressed();
 
-  if (btn_mark.isPressed())
-    new_state.start_button = true;
+  s->mark_button = btn_mark.isPressed();
 
-  if (btn_torque_mode.isPressed())
-    new_state.mark_button = true;
+  s->torque_mode_button = btn_torque_mode.isPressed();
 
-  if (btn_mc_cycle.isPressed())
-    new_state.motor_controller_cycle_button = true;
+  s->motor_controller_cycle_button = btn_mc_cycle.isPressed();
 
-  if (btn_torque_mode.isPressed())
-    new_state.torque_mode_button = true;
+  s->led_dimmer_button = btn_led_dimmer.isPressed();
 
-  if (btn_led_dimmer.isPressed())
-    new_state.led_dimmer_button = true;
+  s->left_shifter_button = btn_left_shifter.isPressed();
 
-  if (btn_left_shifter.isPressed())
-    new_state.left_shifter_button = true;
+  s->right_shifter_button = btn_right_shifter.isPressed();
 
-  if (btn_right_shifter.isPressed())
-    new_state.right_shifter_button = true;
+  
+  digitalWrite(BUZZER_PIN, CAN->dash_mcu_state.drive_buzzer);
+  s->drive_buzzer = CAN->dash_mcu_state.drive_buzzer;
 
-  if (buzzer_active)
-    new_state.drive_buzzer = true;
-
-  //copy new state over previous dash state
-  memcpy(&CAN->dash_state, &new_state, sizeof(DASHBOARD_STATE_t));
+  if (CAN->dash_mcu_state.drive_buzzer) {
+    SerialUSB.println("ACTIVE BUZZER");
+  }
 
   // old code
 
