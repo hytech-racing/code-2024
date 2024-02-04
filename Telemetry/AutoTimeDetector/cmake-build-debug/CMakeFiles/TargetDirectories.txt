@@ -1,0 +1,3 @@
+/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/AutoTimeDetector.dir
+/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/rebuild_cache.dir
