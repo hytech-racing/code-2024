@@ -1,4 +1,5 @@
 #include "DebouncedButton.h"
+#include "Metro.h"
 
 // Button pin definition
 #define BTN_START PC12
@@ -34,5 +35,6 @@ class Dashboard_Controls {
         DebouncedButton btn_right_shifter;
     private:
         bool previousState = false;
+        Metro dimmer = Metro(200);
         
 };

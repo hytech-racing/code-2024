@@ -22,6 +22,11 @@ void Dashboard_Controls::update(DashboardCAN* CAN) {
     SerialUSB.println("Start button pressed.");
   }
 
+  if (btn_led_dimmer.isPressed() && dimmer.check()) {
+    hytech_dashboard::getInstance()->dim_neopixels();
+    dimmer.reset();
+  }
+
   DASHBOARD_STATE_t* s = &CAN->dash_state;
 
   s->start_button = btn_start.isPressed();

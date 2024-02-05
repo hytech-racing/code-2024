@@ -58,7 +58,7 @@ void hytech_dashboard::startup() {
 
     // begin neopixels and set half brightness to not flashbang driver
     _neopixels.begin();
-    _neopixels.setBrightness(50);
+    _neopixels.setBrightness(MIN_BRIGHTNESS);
 
     //set init color for every led
     for (int i = 0; i < NEOPIXEL_COUNT; i++) {
@@ -77,7 +77,7 @@ void hytech_dashboard::startup() {
 
     // for loop that continues to write logo with x offset of i
     // shifts logo left to make room for Hytech Racing words
-    for (int i = 1; i > -142; i-=3) {
+    for (int i = 1; i > -116; i-=3) {
         _display.clearDisplayBuffer();
         _display.drawBitmap(hytech_logo_x + i, hytech_logo_y, epd_bitmap_Hytech_Logo, hytech_logo_size, hytech_logo_size, BLACK);
         _display.refresh();
@@ -86,14 +86,14 @@ void hytech_dashboard::startup() {
     delay(20);
 
     //display "Hytech Racing" on display
-    _display.drawBitmap(hytech_words_x + 53, hytech_words_y, epd_bitmap_HytechWords, hytech_words_x_size, hytech_words_y_size, BLACK);
+    _display.drawBitmap(hytech_words_x + 45, hytech_words_y, epd_bitmap_HytechWords, hytech_words_x_size, hytech_words_y_size, BLACK);
     _display.refresh();
 
     delay(5000);
 
     // display template
     _display.clearDisplay();
-    _display.drawBitmap(0,0, epd_bitmap_Displaytest, 400, 240, BLACK);
+    // _display.drawBitmap(0,0, epd_bitmap_Displaytest, 400, 240, BLACK);
 
     // brake pedal
     //9,40,17,143
@@ -103,12 +103,14 @@ void hytech_dashboard::startup() {
     // draw_vertical_pedal_bar(0, 9);
 
     // init display and pixels with def. data
-    _display.refresh();
+    // _display.refresh();
 
     // regen bar
     _display.fillRect(83, 7, 72, 16, WHITE);
     _display.fillRect(161+2, 5+2, 158-2, 18-2, WHITE);
     _display.refresh();
+
+    current_page = 3;
 }
 
 
@@ -121,8 +123,8 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     // refresh display
     _display.clearDisplayBuffer();
     _display.drawBitmap(0,0, epd_bitmap_hytech_dashboard, 320, 240, BLACK);
-    draw_vertical_pedal_bar(CAN->mcu_pedal_readings.accel_pedal_1, 9);
-    draw_vertical_pedal_bar(CAN->mcu_pedal_readings.accel_pedal_1, 374);
+    draw_vertical_pedal_bar(CAN->mcu_pedal_readings.accel_pedal_1, 17);
+    draw_vertical_pedal_bar(CAN->mcu_pedal_readings.accel_pedal_1, 285);
 
     switch(current_page) {
         case 0:
@@ -135,6 +137,9 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
         case 2:
             // tires
             display_tire_data();
+            break;
+        case 3:
+            display_error();
             break;
     }
 
@@ -254,9 +259,13 @@ void hytech_dashboard::display_suspension_data(MCU_LOAD_CELLS_t* front_load_cell
 }
 
 void hytech_dashboard::display_tire_data() {
-
     draw_quadrants();
+}
 
+void hytech_dashboard::display_error() {
+    set_cursor(2);
+    // _display.fillRoundRect();
+    _display.print("Error");
 }
 
 /* DISPLAY HELPER FUNCTIONS */
@@ -290,7 +299,7 @@ void hytech_dashboard::set_cursor(uint8_t quadrant) {
 void hytech_dashboard::draw_vertical_pedal_bar(double val, int initial_x_coord) {
     // 100%: height of white box = 40
     //   0%: height of white box = 143 (covering the whole black bar)
-    _display.fillRect(initial_x_coord, 40, 17, (1 - (((double)val - 500) / 1640)) * 143, WHITE);
+    _display.fillRect(initial_x_coord, 35, 18, (1 - (((double)val - 500) / 1640)) * 143, WHITE);
     // SerialUSB.println((((double)val - 500) / 1640));
 }
 
@@ -304,6 +313,14 @@ void hytech_dashboard::draw_current_draw_bar(double percent) {
 
 /* NEOPIXEL HELPER FUNCTIONS */
 
+void hytech_dashboard::dim_neopixels() {
+    current_brightness -= STEP_BRIGHTNESS;
+    // set current brightness to 0xFF (255) if less than min brightness - sid :) DO NOT CHANGE
+    if (current_brightness < MIN_BRIGHTNESS) { current_brightness |= 0xFF; }
+    _neopixels.setBrightness(current_brightness);
+    SerialUSB.println(_neopixels.getBrightness());
+}
+
 //set neopixels
 void hytech_dashboard::set_neopixel(uint16_t id, uint32_t c) {
     _neopixels.setPixelColor(id, c);
@@ -316,7 +333,7 @@ void hytech_dashboard::refresh_neopixels(DashboardCAN* CAN) {
     // replace Metro timer if it is figured out
     if (CAN->mcu_state_update || pixel_refresh.check()) {
 
-        Serial.println("Refreshing Neopixels");
+        // Serial.println("Refreshing Neopixels");
 
         set_neopixel_color(LED_LIST_e::BOTS, CAN->dash_mcu_state.bots_led);
         set_neopixel_color(LED_LIST_e::LAUNCH_CTRL, CAN->dash_mcu_state.launch_control_led);

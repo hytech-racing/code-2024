@@ -29,6 +29,11 @@
 
 #define NUM_PAGES 2
 
+#define MAX_BRIGHTNESS 255
+#define MIN_BRIGHTNESS 20
+#define BRIGHTNESS_STEPS 4
+#define STEP_BRIGHTNESS (MAX_BRIGHTNESS - MIN_BRIGHTNESS) / BRIGHTNESS_STEPS
+
 // OFF: OFF, ON: GREEN/OK, YELLOW : WARNING/MISC RED : CRITICAL
 enum LED_LIST_e { BOTS = 0, LAUNCH_CTRL = 1, TORQUE_MODE = 2, BRAKE_ENGAGE = 3, COCKPIT_BRB = 4, INERTIA = 5, 
                 GLV = 6, CRIT_CHARGE = 7, RDY_DRIVE = 8, MC_ERR = 9, IMD = 10, 
@@ -96,6 +101,11 @@ class hytech_dashboard {
             @param c the desired color value of the neopixel
         */
         void set_neopixel(uint16_t id, uint32_t c);
+
+        /**
+         * Sets neopixel brightness. Can be used by other classes when the dimmer button is pressed.
+        */
+        void dim_neopixels();
     
     private:
         // Private constructor to prevent external instantiation
@@ -124,6 +134,8 @@ class hytech_dashboard {
         uint32_t prev_time = 0;
         /* target time as reported by the TCU*/
         uint32_t target_time = 0;
+
+        uint8_t current_brightness = MIN_BRIGHTNESS;
 
         /* Displays the clock and times in m:s.ms format based on the number of milliseconds*/
         void format_millis(String label, uint32_t time);
@@ -183,6 +195,8 @@ class hytech_dashboard {
             and pulls data from the CAN bus when the TTPMS receiver is connected.
         */
         void display_tire_data();
+
+        void display_error();
 
         /*!
             refresh_neopixels handles changing the color of indicator LEDs on the display. This function
