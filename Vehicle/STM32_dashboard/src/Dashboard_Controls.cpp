@@ -22,6 +22,9 @@ void Dashboard_Controls::update(DashboardCAN* CAN) {
     SerialUSB.println("Start button pressed.");
   }
 
+  //open/closed brackets inits all to 0
+  // Dashboard_STATE_t {};
+
   DASHBOARD_STATE_t* s = &CAN->dash_state;
 
   s->start_button = btn_start.isPressed();
