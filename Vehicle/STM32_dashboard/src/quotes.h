@@ -1,6 +1,6 @@
 #include <Arduino.h>
 
-#define NUMBER_OF_MESSAGES 10
+#define NUMBER_OF_MESSAGES 30 
 
 String greetings[NUMBER_OF_MESSAGES] = {
     "Yaaay!",
@@ -33,5 +33,5 @@ String greetings[NUMBER_OF_MESSAGES] = {
     "12345 is a bad password!",
     "May contain nuts!",
     "Should not be played while driving."
-}
+};
 

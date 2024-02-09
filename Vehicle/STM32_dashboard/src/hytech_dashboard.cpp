@@ -92,7 +92,7 @@ void hytech_dashboard::startup() {
     _display.refresh();
 
     _display.setCursor(hytech_logo_x, hytech_logo_y + hytech_logo_size + 30);
-    _display.println(greetings[4]);
+    _display.println(greetings[rand() % NUMBER_OF_MESSAGES]);
 
     delay(5000);
 
@@ -137,7 +137,7 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
             display_speeds();
             break;
         case 4:
-            display_segment_voltages();
+            // display_segment_voltages(&(CAN -> bms_voltages_received));
             break;
         default:
             display_error();
@@ -266,8 +266,6 @@ void hytech_dashboard::display_speeds() {
     _display.setCursor(40, 70);
     _display.setTextColor(BLACK);
     _display.setTextSize(3);
-    _display.println("RPM: ");
-    _display.setCursor(40, _display.getCursorY());
     _display.println("Speed: ");
     _display.setCursor(40, _display.getCursorY());
     _display.println("Pedals:");
@@ -288,11 +286,6 @@ void hytech_dashboard::display_segment_voltages(BMS_VOLTAGES_t* voltages) {
     _display.setCursor(40, _display.getCursorY());
     _display.println("S4: ");
     _display.setCursor(40, _display.getCursorY());
-    _display.println("S5: ");
-    _display.setCursor(40, _display.getCursorY());
-    _display.println("S6: ");
-
-    
 }
 
 void hytech_dashboard::display_error() {
