@@ -196,6 +196,9 @@ class hytech_dashboard {
         */
         void display_tire_data();
 
+        void display_speeds();
+        void display_segment_voltages(BMS_VOLTAGES_t* voltages);
+
         void display_error();
 
         /*!

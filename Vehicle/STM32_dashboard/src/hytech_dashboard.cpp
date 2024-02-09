@@ -1,4 +1,6 @@
 #include "hytech_dashboard.h"
+#include "quotes.h"
+#include "stdlib.h"
 
 // Definition of display and neopixel globals
 // For some reason, code complains when these are defined in the header file
@@ -89,28 +91,13 @@ void hytech_dashboard::startup() {
     _display.drawBitmap(hytech_words_x + 45, hytech_words_y, epd_bitmap_HytechWords, hytech_words_x_size, hytech_words_y_size, BLACK);
     _display.refresh();
 
+    _display.setCursor(hytech_logo_x, hytech_logo_y + hytech_logo_size + 30);
+    _display.println(greetings[4]);
+
     delay(5000);
 
-    // display template
     _display.clearDisplay();
-    // _display.drawBitmap(0,0, epd_bitmap_Displaytest, 400, 240, BLACK);
 
-    // brake pedal
-    //9,40,17,143
-    // 0% -> 143 (height)
-    // 100% -> 40
-    // _display.fillRect(9,40, 17, 143, WHITE);
-    // draw_vertical_pedal_bar(0, 9);
-
-    // init display and pixels with def. data
-    // _display.refresh();
-
-    // regen bar
-    _display.fillRect(83, 7, 72, 16, WHITE);
-    _display.fillRect(161+2, 5+2, 158-2, 18-2, WHITE);
-    _display.refresh();
-
-    current_page = 3;
 }
 
 
@@ -126,19 +113,33 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     draw_vertical_pedal_bar(CAN->mcu_pedal_readings.accel_pedal_1, 17);
     draw_vertical_pedal_bar(CAN->mcu_pedal_readings.accel_pedal_1, 285);
 
+    current_page = 4;
+
     switch(current_page) {
         case 0:
             show_lap_times(&(CAN->lap_times), &(CAN->driver_msg));
+            _display.drawBitmap(40, 40, epd_bitmap_gps, 27, 27, BLACK);
             break;
         case 1:
             // suspension
+            // loadcell, pot
             display_suspension_data(&(CAN->mcu_load_cells), &(CAN->sab_load_cells));
             break;
         case 2:
             // tires
+            //temp,pressure
             display_tire_data();
             break;
         case 3:
+            // groundspeed, wheelspeed/rpm, other useful stuff, current draw
+            // raw pedal value
+            // icon gps lock
+            display_speeds();
+            break;
+        case 4:
+            display_segment_voltages();
+            break;
+        default:
             display_error();
             break;
     }
@@ -148,7 +149,6 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
 
 void hytech_dashboard::increment_page() {
     current_page++;
-    //clamp upper value
     current_page %= NUM_PAGES;
 }
 
@@ -260,6 +260,32 @@ void hytech_dashboard::display_suspension_data(MCU_LOAD_CELLS_t* front_load_cell
 
 void hytech_dashboard::display_tire_data() {
     draw_quadrants();
+}
+
+void hytech_dashboard::display_speeds() {
+    _display.setCursor(40, 70);
+    _display.setTextColor(BLACK);
+    _display.setTextSize(3);
+    _display.println("Speed: ");
+    _display.setCursor(40, _display.getCursorY());
+    _display.println("Pedals:");
+    _display.setCursor(40, _display.getCursorY());
+    _display.println("Current: ");
+    _display.refresh();
+}
+        
+void hytech_dashboard::display_segment_voltages(BMS_VOLTAGES_t* voltages) {
+    _display.setCursor(40, 70);
+    _display.setTextColor(BLACK);
+    _display.setTextSize(3);
+    _display.println("S1: ");
+    _display.setCursor(40, _display.getCursorY());
+    _display.println("S2: ");
+    _display.setCursor(40, _display.getCursorY());
+    _display.println("S3: ");
+    _display.setCursor(40, _display.getCursorY());
+    _display.println("S4: ");
+    _display.setCursor(40, _display.getCursorY());
 }
 
 void hytech_dashboard::display_error() {
