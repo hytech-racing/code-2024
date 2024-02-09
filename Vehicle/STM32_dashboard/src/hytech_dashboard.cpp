@@ -266,6 +266,8 @@ void hytech_dashboard::display_speeds() {
     _display.setCursor(40, 70);
     _display.setTextColor(BLACK);
     _display.setTextSize(3);
+    _display.println("RPM: ");
+    _display.setCursor(40, _display.getCursorY());
     _display.println("Speed: ");
     _display.setCursor(40, _display.getCursorY());
     _display.println("Pedals:");
@@ -286,6 +288,11 @@ void hytech_dashboard::display_segment_voltages(BMS_VOLTAGES_t* voltages) {
     _display.setCursor(40, _display.getCursorY());
     _display.println("S4: ");
     _display.setCursor(40, _display.getCursorY());
+    _display.println("S5: ");
+    _display.setCursor(40, _display.getCursorY());
+    _display.println("S6: ");
+
+    
 }
 
 void hytech_dashboard::display_error() {
