@@ -92,6 +92,8 @@ void hytech_dashboard::startup() {
     _display.refresh();
 
     _display.setCursor(hytech_logo_x, hytech_logo_y + hytech_logo_size + 30);
+    _display.setTextColor(BLACK);
+    _display.setTextSize(3);
     _display.println(greetings[rand() % NUMBER_OF_MESSAGES]);
 
     delay(5000);
