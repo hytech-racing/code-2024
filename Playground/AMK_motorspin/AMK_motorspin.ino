@@ -2,12 +2,16 @@
    Test program that sends and receives CAN messages. Use this to test if CAN Bus is operational.
    Created by Nathan Cheek, December 20, 2017
 */
-#include <HyTech_FlexCAN.h>
+//#include <HyTech_FlexCAN.h>
 #include <HyTech_CAN.h>
+
+#include <FlexCAN_T4.h>
 #include <Metro.h>
 
-FlexCAN CAN(500000);
+// FlexCAN CAN(500000);
+FlexCAN_T4<CAN2> CAN;
 CAN_message_t msg;
+
 Metro timer_can = Metro(20);
 Metro debug_print = Metro(500);
 Metro timer_light = Metro(3);
@@ -28,6 +32,7 @@ int counter2 = 0;
 void setup() {
   Serial.begin(115200); // Initialize serial for PC communication
   CAN.begin();
+  CAN.setBaudRate(500000);
   delay(200);
   Serial.println("CAN transceiver initialized");
   Serial.println("CAN TEST SENDER/RECEIVER");
@@ -99,8 +104,10 @@ void loop() {
     Serial.println(mc_status.get_error());
     Serial.print("speed: ");
     Serial.println(mc_status.get_speed());
-    Serial.print("torque: ");
-    Serial.println(mc_status.get_torque());
+    Serial.print("torque current: ");
+    Serial.println(mc_status.get_torque_current());
+    Serial.print("status: ");
+    Serial.println(mc_status.get_status_word());
     Serial.println();
 
   }
@@ -129,7 +136,7 @@ void loop() {
   if (timer_can.check()) { // Send a message on CAN
 
 
-    msg.id = 0x0B0;
+    msg.id = 0xB3;
     msg.len = sizeof(mc_setpoints_command);
     mc_setpoints_command.write(msg.buf);
     CAN.write(msg);
@@ -168,7 +175,7 @@ void loop() {
       counter2 = 0;
     }
 
-    if (msg.id == 0x0A0) {
+    if (msg.id == 0x0A3) {
       mc_status.load(msg.buf);
     }
 
