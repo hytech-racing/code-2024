@@ -33,6 +33,7 @@ class DashboardCAN {
         // A metro of interval 0 will always be true, triggering
         Metro heartbeat_timer = Metro(2000, 1);
         Metro send_timer = Metro(1000);
+        Metro mcu_state_timer = Metro(1000);
         uint8_t imd_ams_flags = 0;
         CAN_message_t _msg;
 

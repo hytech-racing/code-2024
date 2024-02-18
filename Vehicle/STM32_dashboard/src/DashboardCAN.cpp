@@ -88,11 +88,12 @@ void DashboardCAN::read_CAN()
       // Serial.println();
 
 
-      if (memcmp(&prev_dash_mcu_state, _msg.buf, sizeof(_msg.buf)) != 0) {
+      if (mcu_state_timer.check() || (&prev_dash_mcu_state, _msg.buf, sizeof(_msg.buf)) != 0) {
         SerialUSB.println("New message! Unpacking");
         Unpack_DASHBOARD_MCU_STATE_ht_can(&dash_mcu_state, _msg.buf, NULL);
         memcpy(&prev_dash_mcu_state, _msg.buf, sizeof(_msg.buf));
         mcu_state_update = true;
+        mcu_state_timer.reset();
       } else {
         mcu_state_update = false;
       }

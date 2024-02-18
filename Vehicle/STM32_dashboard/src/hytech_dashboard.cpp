@@ -1,11 +1,17 @@
 #include "hytech_dashboard.h"
 #include "quotes.h"
 #include "stdlib.h"
+#include <random>
+#include <fstream>
 
 // Definition of display and neopixel globals
 // For some reason, code complains when these are defined in the header file
 Adafruit_SharpMem _display(SHARP_SCK, SHARP_MOSI, SHARP_SS, 320, 240);
 Adafruit_NeoPixel _neopixels(NEOPIXEL_COUNT, NEOPIXEL_PIN, NEO_GRBW + NEO_KHZ800);
+
+//PB5 // 
+//PB6 // bots read
+// Pb7 // inertia read
 
 /* Null, because instance will be initialized on demand. */
 
@@ -39,8 +45,33 @@ hytech_dashboard* hytech_dashboard::getInstance() {
     return _instance;
 }
 
+unsigned int generateSeed() {
+    // You can use any source of variability available on your system
+    unsigned int seed = 0;
+
+    // Example: Use the current tick count of the microcontroller
+    // seed ^= HAL_GetTick();
+
+    // Example: Use the memory address of a volatile variable
+    volatile int dummy;
+    // seed ^= reinterpret_cast<unsigned int>(&dummy);
+
+    // Use analog input value
+    seed ^= analogRead(PA3);
+
+    // Add more sources of variability as needed
+
+    return seed;
+}
+
+
+
 
 void hytech_dashboard::startup() {
+
+    pinMode(PB5, INPUT);
+    pinMode(PB6, INPUT);
+    pinMode(PB7, INPUT);
 
     _expander.begin();
 
@@ -52,7 +83,7 @@ void hytech_dashboard::startup() {
     // begin, clear display, set rotation
     _display.begin();
     _display.clearDisplay();
-    _display.setRotation(2);
+    _display.setRotation(0);
 
     // draw Hytech logo in center of screen
     _display.drawBitmap(hytech_logo_x, hytech_logo_y, epd_bitmap_Hytech_Logo, hytech_logo_size, hytech_logo_size, BLACK);
@@ -91,10 +122,21 @@ void hytech_dashboard::startup() {
     _display.drawBitmap(hytech_words_x + 45, hytech_words_y, epd_bitmap_HytechWords, hytech_words_x_size, hytech_words_y_size, BLACK);
     _display.refresh();
 
-    _display.setCursor(hytech_logo_x, hytech_logo_y + hytech_logo_size + 30);
+    unsigned int seed = generateSeed();
+    std::mt19937 gen(seed);
+
+    // Generate a random number between 1 and 100
+    std::uniform_int_distribution<> dis(1, 100000);
+    int randomNumber = dis(gen);
+
+    String greeting = greetings[randomNumber % NUMBER_OF_MESSAGES];
+    int length = greeting.length();
+    _display.setCursor(hytech_logo_x-length*3, hytech_logo_y + hytech_logo_size + 30);
     _display.setTextColor(BLACK);
-    _display.setTextSize(3);
-    _display.println(greetings[rand() % NUMBER_OF_MESSAGES]);
+    _display.setTextSize(2);
+    srand(micros());
+    _display.println(greetings[randomNumber % NUMBER_OF_MESSAGES]);
+    _display.refresh();
 
     delay(5000);
 
@@ -106,6 +148,17 @@ void hytech_dashboard::startup() {
 void hytech_dashboard::refresh(DashboardCAN* CAN) {
     // update neopixels
     refresh_neopixels(CAN);
+
+    // SerialUSB.print("BRB: ");
+    // SerialUSB.println(digitalRead(PB5));
+
+    // SerialUSB.print("BOTS: ");
+    // SerialUSB.println(digitalRead(PB6));
+
+    // SerialUSB.print("INERTIA: ");
+    // SerialUSB.println(digitalRead(PB7));
+
+    // add page to dashboard showing if shutdown tripped
 
     _expander.digitalWrite(number_encodings[CAN->dash_state.dial_state]);
 
