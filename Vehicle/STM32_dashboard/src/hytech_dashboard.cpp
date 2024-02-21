@@ -141,7 +141,7 @@ void hytech_dashboard::startup() {
     delay(5000);
 
     _display.clearDisplay();
-
+    _display.drawBitmap(0,0, epd_bitmap_hytech_dashboard, 320, 240, BLACK);
 }
 
 
@@ -163,41 +163,66 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     _expander.digitalWrite(number_encodings[CAN->dash_state.dial_state]);
 
     // refresh display
+
     _display.clearDisplayBuffer();
     _display.drawBitmap(0,0, epd_bitmap_hytech_dashboard, 320, 240, BLACK);
-    draw_vertical_pedal_bar(CAN->mcu_pedal_readings.accel_pedal_1, 17);
-    draw_vertical_pedal_bar(CAN->mcu_pedal_readings.accel_pedal_1, 285);
+
+
+    // draw_vertical_pedal_bar(CAN->mcu_pedal_readings.accel_pedal_1, 17);
+    // draw_vertical_pedal_bar(CAN->mcu_pedal_readings.accel_pedal_1, 285);
+
+    draw_vertical_pedal_bar(i, 17);
+    draw_vertical_pedal_bar(100-i, 285);
+    draw_battery_bar(i);
+    draw_regen_bar(i);
+    draw_current_draw_bar(i);
+    if (forward) {
+        i+=1;
+    } else {
+        i-=1;
+    }
+    if (forward && i == 100) {
+        forward = false;
+    } else if (!forward && i == 0) {
+        forward = true;
+    }
+
+    // for (int i = 100; i >= 0; i -= 3) {
+    //     draw_vertical_pedal_bar(i, 17);
+    //     _display.refresh();
+    // }
+
 
     current_page = 4;
 
-    switch(current_page) {
-        case 0:
-            show_lap_times(&(CAN->lap_times), &(CAN->driver_msg));
-            _display.drawBitmap(40, 40, epd_bitmap_gps, 27, 27, BLACK);
-            break;
-        case 1:
-            // suspension
-            // loadcell, pot
-            display_suspension_data(&(CAN->mcu_load_cells), &(CAN->sab_load_cells));
-            break;
-        case 2:
-            // tires
-            //temp,pressure
-            display_tire_data();
-            break;
-        case 3:
-            // groundspeed, wheelspeed/rpm, other useful stuff, current draw
-            // raw pedal value
-            // icon gps lock
-            display_speeds();
-            break;
-        case 4:
-            // display_segment_voltages(&(CAN -> bms_voltages_received));
-            break;
-        default:
-            display_error();
-            break;
-    }
+    // switch(current_page) {
+    //     case 0:
+    //         show_lap_times(&(CAN->lap_times), &(CAN->driver_msg));
+    //         _display.drawBitmap(40, 40, epd_bitmap_gps, 27, 27, BLACK);
+    //         break;
+    //     case 1:
+    //         // suspension
+    //         // loadcell, pot
+    //         display_suspension_data(&(CAN->mcu_load_cells), &(CAN->sab_load_cells));
+    //         break;
+    //     case 2:
+    //         // tires
+    //         //temp,pressure
+    //         display_tire_data();
+    //         break;
+    //     case 3:
+    //         // groundspeed, wheelspeed/rpm, other useful stuff, current draw
+    //         // raw pedal value
+    //         // icon gps lock
+    //         display_speeds();
+    //         break;
+    //     case 4:
+    //         // display_segment_voltages(&(CAN -> bms_voltages_received));
+    //         break;
+    //     default:
+    //         display_error();
+    //         break;
+    // }
 
     _display.refresh();
 }
@@ -377,19 +402,39 @@ void hytech_dashboard::set_cursor(uint8_t quadrant) {
 }
 
 // draws white rect top down
-void hytech_dashboard::draw_vertical_pedal_bar(double val, int initial_x_coord) {
-    // 100%: height of white box = 40
-    //   0%: height of white box = 143 (covering the whole black bar)
-    _display.fillRect(initial_x_coord, 35, 18, (1 - (((double)val - 500) / 1640)) * 143, WHITE);
-    // SerialUSB.println((((double)val - 500) / 1640));
+void hytech_dashboard::draw_vertical_pedal_bar(int val, int initial_x_coord) {
+    double ZERO_PERCENT_VAL = 175;
+    val = (val > 100) ? val = 100 : (val < 0) ? val = 0 : val = val;
+    int i = (100-val) * (ZERO_PERCENT_VAL/100.0);
+    _display.fillRect(initial_x_coord, 35, 18, i, WHITE);
 }
 
-void hytech_dashboard::draw_regen_bar(double percent) {
-    _display.fillRect(83, 7, (1-percent)*72, 16, WHITE);
+void hytech_dashboard::draw_regen_bar(int percent) {
+    // 0%: 65
+    // 100%: 0
+    int w = (100-percent) * (60.0/100);
+    _display.fillRect(73, 17, w, 17, WHITE);
 }
 
-void hytech_dashboard::draw_current_draw_bar(double percent) {
-    _display.fillRect(163+156, 5+2, -156, 18-2, WHITE);
+void draw_rectangle_right_corner(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) {
+    for (int16_t i = x; i > x-w; i--) {
+        _display.writeFastVLine(i, y, h, color);
+    }
+    // _display.refresh();
+}
+
+void hytech_dashboard::draw_current_draw_bar(int percent) {
+    // 0%: 100
+    // 100%: 0
+    int w = (100-percent) * (103.0/100);
+    draw_rectangle_right_corner(247, 17, w, 17, WHITE);
+}
+
+void hytech_dashboard::draw_battery_bar(int percent) {
+    // 0%: 59
+    // 100% 0
+    int w = (100-percent) * (59.0/100);
+    draw_rectangle_right_corner(103, 220, w, 8, WHITE);
 }
 
 /* NEOPIXEL HELPER FUNCTIONS */

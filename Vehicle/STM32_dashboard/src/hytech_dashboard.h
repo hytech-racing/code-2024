@@ -72,6 +72,8 @@ class MCU_load_cells;
 */
 class hytech_dashboard {
     public:
+        int i = 0;
+        bool forward = true;
         /*!
             Returns the reference to the hytech_dashboard singleton class.
             @return hytech_dashboard pointer to the singleton
@@ -144,13 +146,15 @@ class hytech_dashboard {
         String twoDigits(int number);
         
         /* helper function that draws the pedal bar */
-        void draw_vertical_pedal_bar(double val, int initial_x_coord);
+        void draw_vertical_pedal_bar(int val, int initial_x_coord);
 
         /* helper function that draws the regen bar based on regen percentage*/
-        void draw_regen_bar(double percent);
+        void draw_regen_bar(int percent);
 
         /* helper function that draws the regen bar based on current draw percentage*/
-        void draw_current_draw_bar(double percent);
+        void draw_current_draw_bar(int percent);
+
+        void draw_battery_bar(int percent);
 
         /* helper function that draws quadrants on the display for tire/suspension data */
         void draw_quadrants();
