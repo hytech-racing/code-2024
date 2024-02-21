@@ -119,6 +119,8 @@ class hytech_dashboard {
 
         Metro pixel_refresh = Metro(100);
 
+        boolean CENTER_ALIGN = true;
+
         /* current page displayed */
         uint8_t current_page = 0;
         /* number encodings for use with the IO expander that drives the seven segment display */

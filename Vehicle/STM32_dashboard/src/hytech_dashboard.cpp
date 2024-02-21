@@ -3,6 +3,8 @@
 #include "stdlib.h"
 #include <random>
 #include <fstream>
+#include <Fonts/FreeSans12pt7b.h>
+#include <Fonts/FreeSansBold12pt7b.h>
 
 // Definition of display and neopixel globals
 // For some reason, code complains when these are defined in the header file
@@ -122,6 +124,8 @@ void hytech_dashboard::startup() {
     _display.drawBitmap(hytech_words_x + 45, hytech_words_y, epd_bitmap_HytechWords, hytech_words_x_size, hytech_words_y_size, BLACK);
     _display.refresh();
 
+    _display.setFont(&FreeSans12pt7b);
+
     unsigned int seed = generateSeed();
     std::mt19937 gen(seed);
 
@@ -133,7 +137,7 @@ void hytech_dashboard::startup() {
     int length = greeting.length();
     _display.setCursor(hytech_logo_x-length*3, hytech_logo_y + hytech_logo_size + 30);
     _display.setTextColor(BLACK);
-    _display.setTextSize(2);
+    _display.setTextSize(1);
     srand(micros());
     _display.println(greetings[randomNumber % NUMBER_OF_MESSAGES]);
     _display.refresh();
@@ -193,36 +197,36 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     // }
 
 
-    current_page = 4;
+    current_page = 0;
 
-    // switch(current_page) {
-    //     case 0:
-    //         show_lap_times(&(CAN->lap_times), &(CAN->driver_msg));
-    //         _display.drawBitmap(40, 40, epd_bitmap_gps, 27, 27, BLACK);
-    //         break;
-    //     case 1:
-    //         // suspension
-    //         // loadcell, pot
-    //         display_suspension_data(&(CAN->mcu_load_cells), &(CAN->sab_load_cells));
-    //         break;
-    //     case 2:
-    //         // tires
-    //         //temp,pressure
-    //         display_tire_data();
-    //         break;
-    //     case 3:
-    //         // groundspeed, wheelspeed/rpm, other useful stuff, current draw
-    //         // raw pedal value
-    //         // icon gps lock
-    //         display_speeds();
-    //         break;
-    //     case 4:
-    //         // display_segment_voltages(&(CAN -> bms_voltages_received));
-    //         break;
-    //     default:
-    //         display_error();
-    //         break;
-    // }
+    switch(current_page) {
+        case 0:
+            show_lap_times(&(CAN->lap_times), &(CAN->driver_msg));
+            _display.drawBitmap(40, 40, epd_bitmap_gps, 27, 27, BLACK);
+            break;
+        case 1:
+            // suspension
+            // loadcell, pot
+            display_suspension_data(&(CAN->mcu_load_cells), &(CAN->sab_load_cells));
+            break;
+        case 2:
+            // tires
+            //temp,pressure
+            display_tire_data();
+            break;
+        case 3:
+            // groundspeed, wheelspeed/rpm, other useful stuff, current draw
+            // raw pedal value
+            // icon gps lock
+            display_speeds();
+            break;
+        case 4:
+            // display_segment_voltages(&(CAN -> bms_voltages_received));
+            break;
+        default:
+            display_error();
+            break;
+    }
 
     _display.refresh();
 }
@@ -241,10 +245,7 @@ void hytech_dashboard::decrement_page() {
 }
 
 void hytech_dashboard::show_lap_times(TCU_LAP_TIMES_t* lap_times, TCU_DRIVER_MSG_t* driver_msg) {
-    _display.setCursor(40, 70);
-    _display.setTextColor(BLACK);
-    _display.setTextSize(3);
-
+    
     switch(lap_times->lap_clock_state) {
         case 0:
             // clear timer
@@ -278,11 +279,22 @@ void hytech_dashboard::show_lap_times(TCU_LAP_TIMES_t* lap_times, TCU_DRIVER_MSG
     prev_time = lap_times->prev_lap_time;
     target_time = driver_msg->target_lap_time;
 
-    _display.println("Lap Times");
-    _display.setCursor(40, _display.getCursorY());
-    format_millis("Curr", current_time);
-    format_millis("Prev", prev_time);
-    format_millis("Best", best_time);
+    _display.setTextColor(BLACK);
+    _display.setTextSize(1);
+    _display.setFont(&FreeSansBold12pt7b);
+    if (CENTER_ALIGN) {
+        _display.setCursor(105, 90);
+        _display.println("Lap Times");
+        _display.setFont(&FreeSans12pt7b);
+        _display.setCursor(100, _display.getCursorY());
+        format_millis("Curr", current_time);
+        format_millis("Prev", prev_time);
+        format_millis("Best", best_time);
+    } else {
+
+    }
+
+
 }
 
 /* LAP CLOCK HELPERS */
@@ -297,7 +309,7 @@ void hytech_dashboard::format_millis(String label, uint32_t time) {
     // Sid put some god damn brackets in this shit ^^ VV idc if you know PEMDAS
     int milliseconds = time - minutes * 60000 - seconds * 1000;
 
-    _display.setCursor(40, _display.getCursorY());
+    _display.setCursor(90, _display.getCursorY());
     _display.print(label);
     _display.print(": ");
     _display.print(twoDigits(minutes));
@@ -345,7 +357,7 @@ void hytech_dashboard::display_tire_data() {
 void hytech_dashboard::display_speeds() {
     _display.setCursor(40, 70);
     _display.setTextColor(BLACK);
-    _display.setTextSize(3);
+    _display.setTextSize(1);
     _display.println("Speed: ");
     _display.setCursor(40, _display.getCursorY());
     _display.println("Pedals:");
@@ -357,7 +369,7 @@ void hytech_dashboard::display_speeds() {
 void hytech_dashboard::display_segment_voltages(BMS_VOLTAGES_t* voltages) {
     _display.setCursor(40, 70);
     _display.setTextColor(BLACK);
-    _display.setTextSize(3);
+    _display.setTextSize(1);
     _display.println("S1: ");
     _display.setCursor(40, _display.getCursorY());
     _display.println("S2: ");
@@ -383,7 +395,7 @@ void hytech_dashboard::draw_quadrants() {
 
 
 void hytech_dashboard::set_cursor(uint8_t quadrant) {
-    _display.setTextSize(3);
+    _display.setTextSize(1);
     _display.setTextColor(BLACK);
     switch(quadrant) {
         case 1:
