@@ -29,7 +29,8 @@ class STEERING_RS422 {
         void set_zero_position(uint16_t new_zero_position);
         void calculate_zero_position();
         uint16_t return_zero_position();
-        //uint8_t self_calibration();
+        void self_calibration();
+        uint8_t check_calibration_status();
     private:
         static uint16_t buf;
         HardwareSerial* _serial;

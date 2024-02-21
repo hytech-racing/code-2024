@@ -194,42 +194,47 @@ void STEERING_RS422::reset_sensor() {
     delay(1);
 }
 
-/*
-uint8_t STEERING_RS422::self_calibration() {
+
+void STEERING_RS422::self_calibration() {
+
     //b6 calibration alr performed
     //b3 calcualted params out of range
     //b2 timeout (no complete rotation)
     //b1 counter bit 1
     //b0 counter bit 0
     //check status
-    uint8_t status_flags = 0;
     //check if calubration was already performed
-    command_sequence();
-    _serial->write(0x69);
-    delay(1);
-    if (_serial->available() && _serial->read() == 0x69) {
-
-        status_flags = _serial->read();
-    }
-    if (status_flags & 0b01000000) {
-        return status_flags;
-    }
-
+    //command_sequence();
     //self calibrate
+    Serial.println("calibrating");
     command_sequence();
     _serial->write(0x41);
     delay(10000); //10 sec delay()
+    Serial.println("calibration complete");
     
-    //check status
-    command_sequence();
+} 
+
+uint8_t STEERING_RS422::check_calibration_status() {
+    uint8_t status_flags = 0;
     _serial->write(0x69);
     delay(1);
     if (_serial->available() && _serial->read() == 0x69) {
         status_flags = _serial->read();
+    } else {
+        return -1;
     }
-    //check if any errors
+
+    if (status_flags & 0b01000000) {
+        Serial.println("already calibrated");
+        
+    }
+    if (status_flags & 0b00001000) {
+        Serial.println("bad tolerance");
+        
+    }
     if (status_flags & 0b0001100) {
-        return status_flags;
+        Serial.println("errors");
     }
-    return 1;
-} */
+    return status_flags;
+
+}
