@@ -57,19 +57,38 @@ events:
       - "/Users/kevinlou/Applications/CLion.app/Contents/bin/cmake/mac/x64/share/cmake-3.27/Modules/CMakeDetermineCXXCompiler.cmake:126 (CMAKE_DETERMINE_COMPILER_ID)"
       - "CMakeLists.txt:2 (project)"
     message: |
-      Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
-      Compiler: /usr/local/Cellar/gcc/13.2.0/bin/g++-13 
+      Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" failed.
+      Compiler: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ 
       Build flags: 
       Id flags:  
+      
+      The output was:
+      1
+      ld: library 'c++' not found
+      clang: error: linker command failed with exit code 1 (use -v to see invocation)
+      
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/Users/kevinlou/Applications/CLion.app/Contents/bin/cmake/mac/x64/share/cmake-3.27/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "/Users/kevinlou/Applications/CLion.app/Contents/bin/cmake/mac/x64/share/cmake-3.27/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "/Users/kevinlou/Applications/CLion.app/Contents/bin/cmake/mac/x64/share/cmake-3.27/Modules/CMakeDetermineCXXCompiler.cmake:126 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
+      Compiler: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ 
+      Build flags: 
+      Id flags: -c 
       
       The output was:
       0
       
       
-      Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "a.out"
+      Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CMakeCXXCompilerId.o"
       
-      The CXX compiler identification is GNU, found in:
-        /Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/3.27.8/CompilerIdCXX/a.out
+      The CXX compiler identification is AppleClang, found in:
+        /Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/3.27.8/CompilerIdCXX/CMakeCXXCompilerId.o
       
   -
     kind: "try_compile-v1"
@@ -80,8 +99,8 @@ events:
     checks:
       - "Detecting C compiler ABI info"
     directories:
-      source: "/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-3PFgN6"
-      binary: "/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-3PFgN6"
+      source: "/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-JJzYQr"
+      binary: "/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-JJzYQr"
     cmakeVariables:
       CMAKE_C_FLAGS: ""
       CMAKE_C_FLAGS_DEBUG: "-g"
@@ -93,16 +112,16 @@ events:
       variable: "CMAKE_C_ABI_COMPILED"
       cached: true
       stdout: |
-        Change Dir: '/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-3PFgN6'
+        Change Dir: '/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-JJzYQr'
         
-        Run Build Command(s): /Users/kevinlou/Applications/CLion.app/Contents/bin/ninja/mac/x64/ninja -v cmTC_60ad6
-        [1/2] /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc   -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk -mmacosx-version-min=14.0 -fcolor-diagnostics   -v -Wl,-v -MD -MT CMakeFiles/cmTC_60ad6.dir/CMakeCCompilerABI.c.o -MF CMakeFiles/cmTC_60ad6.dir/CMakeCCompilerABI.c.o.d -o CMakeFiles/cmTC_60ad6.dir/CMakeCCompilerABI.c.o -c /Users/kevinlou/Applications/CLion.app/Contents/bin/cmake/mac/x64/share/cmake-3.27/Modules/CMakeCCompilerABI.c
+        Run Build Command(s): /Users/kevinlou/Applications/CLion.app/Contents/bin/ninja/mac/x64/ninja -v cmTC_cefa3
+        [1/2] /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc   -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk -mmacosx-version-min=14.0 -fcolor-diagnostics   -v -Wl,-v -MD -MT CMakeFiles/cmTC_cefa3.dir/CMakeCCompilerABI.c.o -MF CMakeFiles/cmTC_cefa3.dir/CMakeCCompilerABI.c.o.d -o CMakeFiles/cmTC_cefa3.dir/CMakeCCompilerABI.c.o -c /Users/kevinlou/Applications/CLion.app/Contents/bin/cmake/mac/x64/share/cmake-3.27/Modules/CMakeCCompilerABI.c
         Apple clang version 15.0.0 (clang-1500.1.0.2.5)
         Target: x86_64-apple-darwin23.0.0
         Thread model: posix
         InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
         clang: warning: -Wl,-v: 'linker' input unused [-Wunused-command-line-argument]
-         "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang" -cc1 -triple x86_64-apple-macosx14.0.0 -Wundef-prefix=TARGET_OS_ -Wdeprecated-objc-isa-usage -Werror=deprecated-objc-isa-usage -Werror=implicit-function-declaration -emit-obj -mrelax-all --mrelax-relocations -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCCompilerABI.c -mrelocation-model pic -pic-level 2 -mframe-pointer=all -fno-strict-return -ffp-contract=on -fno-rounding-math -funwind-tables=2 -target-sdk-version=14.2 -fvisibility-inlines-hidden-static-local-var -target-cpu penryn -tune-cpu generic -mllvm -treat-scalable-fixed-error-as-warning -debugger-tuning=lldb -target-linker-version 1022.1 -v -fcoverage-compilation-dir=/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-3PFgN6 -resource-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/15.0.0 -dependency-file CMakeFiles/cmTC_60ad6.dir/CMakeCCompilerABI.c.o.d -skip-unused-modulemap-deps -MT CMakeFiles/cmTC_60ad6.dir/CMakeCCompilerABI.c.o -sys-header-deps -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/local/include -internal-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/15.0.0/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -Wno-reorder-init-list -Wno-implicit-int-float-conversion -Wno-c99-designator -Wno-final-dtor-non-final-class -Wno-extra-semi-stmt -Wno-misleading-indentation -Wno-quoted-include-in-framework-header -Wno-implicit-fallthrough -Wno-enum-enum-conversion -Wno-enum-float-conversion -Wno-elaborated-enum-base -Wno-reserved-identifier -Wno-gnu-folding-constant -fdebug-compilation-dir=/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-3PFgN6 -ferror-limit 19 -stack-protector 1 -fstack-check -mdarwin-stkchk-strong-link -fblocks -fencode-extended-block-signature -fregister-global-dtors-with-atexit -fgnuc-version=4.2.1 -fmax-type-align=16 -fcommon -fcolor-diagnostics -clang-vendor-feature=+disableNonDependentMemberExprInCurrentInstantiation -fno-odr-hash-protocols -clang-vendor-feature=+enableAggressiveVLAFolding -clang-vendor-feature=+revert09abecef7bbf -clang-vendor-feature=+thisNoAlignAttr -clang-vendor-feature=+thisNoNullAttr -mllvm -disable-aligned-alloc-awareness=1 -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_60ad6.dir/CMakeCCompilerABI.c.o -x c /Users/kevinlou/Applications/CLion.app/Contents/bin/cmake/mac/x64/share/cmake-3.27/Modules/CMakeCCompilerABI.c
+         "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang" -cc1 -triple x86_64-apple-macosx14.0.0 -Wundef-prefix=TARGET_OS_ -Wdeprecated-objc-isa-usage -Werror=deprecated-objc-isa-usage -Werror=implicit-function-declaration -emit-obj -mrelax-all --mrelax-relocations -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCCompilerABI.c -mrelocation-model pic -pic-level 2 -mframe-pointer=all -fno-strict-return -ffp-contract=on -fno-rounding-math -funwind-tables=2 -target-sdk-version=14.2 -fvisibility-inlines-hidden-static-local-var -target-cpu penryn -tune-cpu generic -mllvm -treat-scalable-fixed-error-as-warning -debugger-tuning=lldb -target-linker-version 1022.1 -v -fcoverage-compilation-dir=/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-JJzYQr -resource-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/15.0.0 -dependency-file CMakeFiles/cmTC_cefa3.dir/CMakeCCompilerABI.c.o.d -skip-unused-modulemap-deps -MT CMakeFiles/cmTC_cefa3.dir/CMakeCCompilerABI.c.o -sys-header-deps -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/local/include -internal-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/15.0.0/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -Wno-reorder-init-list -Wno-implicit-int-float-conversion -Wno-c99-designator -Wno-final-dtor-non-final-class -Wno-extra-semi-stmt -Wno-misleading-indentation -Wno-quoted-include-in-framework-header -Wno-implicit-fallthrough -Wno-enum-enum-conversion -Wno-enum-float-conversion -Wno-elaborated-enum-base -Wno-reserved-identifier -Wno-gnu-folding-constant -fdebug-compilation-dir=/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-JJzYQr -ferror-limit 19 -stack-protector 1 -fstack-check -mdarwin-stkchk-strong-link -fblocks -fencode-extended-block-signature -fregister-global-dtors-with-atexit -fgnuc-version=4.2.1 -fmax-type-align=16 -fcommon -fcolor-diagnostics -clang-vendor-feature=+disableNonDependentMemberExprInCurrentInstantiation -fno-odr-hash-protocols -clang-vendor-feature=+enableAggressiveVLAFolding -clang-vendor-feature=+revert09abecef7bbf -clang-vendor-feature=+thisNoAlignAttr -clang-vendor-feature=+thisNoNullAttr -mllvm -disable-aligned-alloc-awareness=1 -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_cefa3.dir/CMakeCCompilerABI.c.o -x c /Users/kevinlou/Applications/CLion.app/Contents/bin/cmake/mac/x64/share/cmake-3.27/Modules/CMakeCCompilerABI.c
         clang -cc1 version 15.0.0 (clang-1500.1.0.2.5) default target x86_64-apple-darwin23.0.0
         ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/local/include"
         ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/Library/Frameworks"
@@ -113,12 +132,12 @@ events:
          /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include
          /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/System/Library/Frameworks (framework directory)
         End of search list.
-        [2/2] : && /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk -mmacosx-version-min=14.0 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -v -Wl,-v CMakeFiles/cmTC_60ad6.dir/CMakeCCompilerABI.c.o -o cmTC_60ad6   && :
+        [2/2] : && /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk -mmacosx-version-min=14.0 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -v -Wl,-v CMakeFiles/cmTC_cefa3.dir/CMakeCCompilerABI.c.o -o cmTC_cefa3   && :
         Apple clang version 15.0.0 (clang-1500.1.0.2.5)
         Target: x86_64-apple-darwin23.0.0
         Thread model: posix
         InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
-         "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" -demangle -lto_library /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib -dynamic -arch x86_64 -platform_version macos 14.0.0 14.2 -syslibroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk -o cmTC_60ad6 -search_paths_first -headerpad_max_install_names -v CMakeFiles/cmTC_60ad6.dir/CMakeCCompilerABI.c.o -lSystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/15.0.0/lib/darwin/libclang_rt.osx.a
+         "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" -demangle -lto_library /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib -dynamic -arch x86_64 -platform_version macos 14.0.0 14.2 -syslibroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk -o cmTC_cefa3 -search_paths_first -headerpad_max_install_names -v CMakeFiles/cmTC_cefa3.dir/CMakeCCompilerABI.c.o -lSystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/15.0.0/lib/darwin/libclang_rt.osx.a
         @(#)PROGRAM:ld  PROJECT:dyld-1022.1
         BUILD 05:26:33 Dec  7 2023
         configured to support archs: armv6 armv7 armv7s arm64 arm64e arm64_32 i386 x86_64 x86_64h
@@ -158,16 +177,16 @@ events:
     message: |
       Parsed C implicit link information:
         link line regex: [^( *|.*[/\\])(ld|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
-        ignore line: [Change Dir: '/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-3PFgN6']
+        ignore line: [Change Dir: '/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-JJzYQr']
         ignore line: []
-        ignore line: [Run Build Command(s): /Users/kevinlou/Applications/CLion.app/Contents/bin/ninja/mac/x64/ninja -v cmTC_60ad6]
-        ignore line: [[1/2] /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc   -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk -mmacosx-version-min=14.0 -fcolor-diagnostics   -v -Wl -v -MD -MT CMakeFiles/cmTC_60ad6.dir/CMakeCCompilerABI.c.o -MF CMakeFiles/cmTC_60ad6.dir/CMakeCCompilerABI.c.o.d -o CMakeFiles/cmTC_60ad6.dir/CMakeCCompilerABI.c.o -c /Users/kevinlou/Applications/CLion.app/Contents/bin/cmake/mac/x64/share/cmake-3.27/Modules/CMakeCCompilerABI.c]
+        ignore line: [Run Build Command(s): /Users/kevinlou/Applications/CLion.app/Contents/bin/ninja/mac/x64/ninja -v cmTC_cefa3]
+        ignore line: [[1/2] /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc   -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk -mmacosx-version-min=14.0 -fcolor-diagnostics   -v -Wl -v -MD -MT CMakeFiles/cmTC_cefa3.dir/CMakeCCompilerABI.c.o -MF CMakeFiles/cmTC_cefa3.dir/CMakeCCompilerABI.c.o.d -o CMakeFiles/cmTC_cefa3.dir/CMakeCCompilerABI.c.o -c /Users/kevinlou/Applications/CLion.app/Contents/bin/cmake/mac/x64/share/cmake-3.27/Modules/CMakeCCompilerABI.c]
         ignore line: [Apple clang version 15.0.0 (clang-1500.1.0.2.5)]
         ignore line: [Target: x86_64-apple-darwin23.0.0]
         ignore line: [Thread model: posix]
         ignore line: [InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin]
         ignore line: [clang: warning: -Wl -v: 'linker' input unused [-Wunused-command-line-argument]]
-        ignore line: [ "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang" -cc1 -triple x86_64-apple-macosx14.0.0 -Wundef-prefix=TARGET_OS_ -Wdeprecated-objc-isa-usage -Werror=deprecated-objc-isa-usage -Werror=implicit-function-declaration -emit-obj -mrelax-all --mrelax-relocations -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCCompilerABI.c -mrelocation-model pic -pic-level 2 -mframe-pointer=all -fno-strict-return -ffp-contract=on -fno-rounding-math -funwind-tables=2 -target-sdk-version=14.2 -fvisibility-inlines-hidden-static-local-var -target-cpu penryn -tune-cpu generic -mllvm -treat-scalable-fixed-error-as-warning -debugger-tuning=lldb -target-linker-version 1022.1 -v -fcoverage-compilation-dir=/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-3PFgN6 -resource-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/15.0.0 -dependency-file CMakeFiles/cmTC_60ad6.dir/CMakeCCompilerABI.c.o.d -skip-unused-modulemap-deps -MT CMakeFiles/cmTC_60ad6.dir/CMakeCCompilerABI.c.o -sys-header-deps -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/local/include -internal-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/15.0.0/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -Wno-reorder-init-list -Wno-implicit-int-float-conversion -Wno-c99-designator -Wno-final-dtor-non-final-class -Wno-extra-semi-stmt -Wno-misleading-indentation -Wno-quoted-include-in-framework-header -Wno-implicit-fallthrough -Wno-enum-enum-conversion -Wno-enum-float-conversion -Wno-elaborated-enum-base -Wno-reserved-identifier -Wno-gnu-folding-constant -fdebug-compilation-dir=/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-3PFgN6 -ferror-limit 19 -stack-protector 1 -fstack-check -mdarwin-stkchk-strong-link -fblocks -fencode-extended-block-signature -fregister-global-dtors-with-atexit -fgnuc-version=4.2.1 -fmax-type-align=16 -fcommon -fcolor-diagnostics -clang-vendor-feature=+disableNonDependentMemberExprInCurrentInstantiation -fno-odr-hash-protocols -clang-vendor-feature=+enableAggressiveVLAFolding -clang-vendor-feature=+revert09abecef7bbf -clang-vendor-feature=+thisNoAlignAttr -clang-vendor-feature=+thisNoNullAttr -mllvm -disable-aligned-alloc-awareness=1 -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_60ad6.dir/CMakeCCompilerABI.c.o -x c /Users/kevinlou/Applications/CLion.app/Contents/bin/cmake/mac/x64/share/cmake-3.27/Modules/CMakeCCompilerABI.c]
+        ignore line: [ "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang" -cc1 -triple x86_64-apple-macosx14.0.0 -Wundef-prefix=TARGET_OS_ -Wdeprecated-objc-isa-usage -Werror=deprecated-objc-isa-usage -Werror=implicit-function-declaration -emit-obj -mrelax-all --mrelax-relocations -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCCompilerABI.c -mrelocation-model pic -pic-level 2 -mframe-pointer=all -fno-strict-return -ffp-contract=on -fno-rounding-math -funwind-tables=2 -target-sdk-version=14.2 -fvisibility-inlines-hidden-static-local-var -target-cpu penryn -tune-cpu generic -mllvm -treat-scalable-fixed-error-as-warning -debugger-tuning=lldb -target-linker-version 1022.1 -v -fcoverage-compilation-dir=/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-JJzYQr -resource-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/15.0.0 -dependency-file CMakeFiles/cmTC_cefa3.dir/CMakeCCompilerABI.c.o.d -skip-unused-modulemap-deps -MT CMakeFiles/cmTC_cefa3.dir/CMakeCCompilerABI.c.o -sys-header-deps -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/local/include -internal-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/15.0.0/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -Wno-reorder-init-list -Wno-implicit-int-float-conversion -Wno-c99-designator -Wno-final-dtor-non-final-class -Wno-extra-semi-stmt -Wno-misleading-indentation -Wno-quoted-include-in-framework-header -Wno-implicit-fallthrough -Wno-enum-enum-conversion -Wno-enum-float-conversion -Wno-elaborated-enum-base -Wno-reserved-identifier -Wno-gnu-folding-constant -fdebug-compilation-dir=/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-JJzYQr -ferror-limit 19 -stack-protector 1 -fstack-check -mdarwin-stkchk-strong-link -fblocks -fencode-extended-block-signature -fregister-global-dtors-with-atexit -fgnuc-version=4.2.1 -fmax-type-align=16 -fcommon -fcolor-diagnostics -clang-vendor-feature=+disableNonDependentMemberExprInCurrentInstantiation -fno-odr-hash-protocols -clang-vendor-feature=+enableAggressiveVLAFolding -clang-vendor-feature=+revert09abecef7bbf -clang-vendor-feature=+thisNoAlignAttr -clang-vendor-feature=+thisNoNullAttr -mllvm -disable-aligned-alloc-awareness=1 -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_cefa3.dir/CMakeCCompilerABI.c.o -x c /Users/kevinlou/Applications/CLion.app/Contents/bin/cmake/mac/x64/share/cmake-3.27/Modules/CMakeCCompilerABI.c]
         ignore line: [clang -cc1 version 15.0.0 (clang-1500.1.0.2.5) default target x86_64-apple-darwin23.0.0]
         ignore line: [ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/local/include"]
         ignore line: [ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/Library/Frameworks"]
@@ -178,12 +197,12 @@ events:
         ignore line: [ /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include]
         ignore line: [ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/System/Library/Frameworks (framework directory)]
         ignore line: [End of search list.]
-        ignore line: [[2/2] : && /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk -mmacosx-version-min=14.0 -Wl -search_paths_first -Wl -headerpad_max_install_names -v -Wl -v CMakeFiles/cmTC_60ad6.dir/CMakeCCompilerABI.c.o -o cmTC_60ad6   && :]
+        ignore line: [[2/2] : && /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk -mmacosx-version-min=14.0 -Wl -search_paths_first -Wl -headerpad_max_install_names -v -Wl -v CMakeFiles/cmTC_cefa3.dir/CMakeCCompilerABI.c.o -o cmTC_cefa3   && :]
         ignore line: [Apple clang version 15.0.0 (clang-1500.1.0.2.5)]
         ignore line: [Target: x86_64-apple-darwin23.0.0]
         ignore line: [Thread model: posix]
         ignore line: [InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin]
-        link line: [ "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" -demangle -lto_library /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib -dynamic -arch x86_64 -platform_version macos 14.0.0 14.2 -syslibroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk -o cmTC_60ad6 -search_paths_first -headerpad_max_install_names -v CMakeFiles/cmTC_60ad6.dir/CMakeCCompilerABI.c.o -lSystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/15.0.0/lib/darwin/libclang_rt.osx.a]
+        link line: [ "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" -demangle -lto_library /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib -dynamic -arch x86_64 -platform_version macos 14.0.0 14.2 -syslibroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk -o cmTC_cefa3 -search_paths_first -headerpad_max_install_names -v CMakeFiles/cmTC_cefa3.dir/CMakeCCompilerABI.c.o -lSystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/15.0.0/lib/darwin/libclang_rt.osx.a]
           arg [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld] ==> ignore
           arg [-demangle] ==> ignore
           arg [-lto_library] ==> ignore, skip following value
@@ -198,11 +217,11 @@ events:
           arg [-syslibroot] ==> ignore
           arg [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk] ==> ignore
           arg [-o] ==> ignore
-          arg [cmTC_60ad6] ==> ignore
+          arg [cmTC_cefa3] ==> ignore
           arg [-search_paths_first] ==> ignore
           arg [-headerpad_max_install_names] ==> ignore
           arg [-v] ==> ignore
-          arg [CMakeFiles/cmTC_60ad6.dir/CMakeCCompilerABI.c.o] ==> ignore
+          arg [CMakeFiles/cmTC_cefa3.dir/CMakeCCompilerABI.c.o] ==> ignore
           arg [-lSystem] ==> lib [System]
           arg [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/15.0.0/lib/darwin/libclang_rt.osx.a] ==> lib [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/15.0.0/lib/darwin/libclang_rt.osx.a]
         remove lib [System]
@@ -222,8 +241,8 @@ events:
     checks:
       - "Detecting CXX compiler ABI info"
     directories:
-      source: "/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-8DrKCg"
-      binary: "/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-8DrKCg"
+      source: "/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-rN8dko"
+      binary: "/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-rN8dko"
     cmakeVariables:
       CMAKE_CXX_FLAGS: ""
       CMAKE_CXX_FLAGS_DEBUG: "-g"
@@ -235,68 +254,33 @@ events:
       variable: "CMAKE_CXX_ABI_COMPILED"
       cached: true
       stdout: |
-        Change Dir: '/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-8DrKCg'
+        Change Dir: '/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-rN8dko'
         
-        Run Build Command(s): /Users/kevinlou/Applications/CLion.app/Contents/bin/ninja/mac/x64/ninja -v cmTC_e592a
-        [1/2] /usr/local/Cellar/gcc/13.2.0/bin/g++-13   -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk -mmacosx-version-min=14.0 -fdiagnostics-color=always   -v -Wl,-v -o CMakeFiles/cmTC_e592a.dir/CMakeCXXCompilerABI.cpp.o -c /Users/kevinlou/Applications/CLion.app/Contents/bin/cmake/mac/x64/share/cmake-3.27/Modules/CMakeCXXCompilerABI.cpp
-        Using built-in specs.
-        COLLECT_GCC=/usr/local/Cellar/gcc/13.2.0/bin/g++-13
-        Target: x86_64-apple-darwin22
-        Configured with: ../configure --prefix=/usr/local/opt/gcc --libdir=/usr/local/opt/gcc/lib/gcc/current --disable-nls --enable-checking=release --with-gcc-major-version-only --enable-languages=c,c++,objc,obj-c++,fortran --program-suffix=-13 --with-gmp=/usr/local/opt/gmp --with-mpfr=/usr/local/opt/mpfr --with-mpc=/usr/local/opt/libmpc --with-isl=/usr/local/opt/isl --with-zstd=/usr/local/opt/zstd --with-pkgversion='Homebrew GCC 13.2.0' --with-bugurl=https://github.com/Homebrew/homebrew-core/issues --with-system-zlib --build=x86_64-apple-darwin22 --with-sysroot=/Library/Developer/CommandLineTools/SDKs/MacOSX13.sdk
-        Thread model: posix
-        Supported LTO compression algorithms: zlib zstd
-        gcc version 13.2.0 (Homebrew GCC 13.2.0) 
-        COLLECT_GCC_OPTIONS='-fdiagnostics-color=always' '-isysroot' '/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk' '-v' '-o' 'CMakeFiles/cmTC_e592a.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-mmacosx-version-min=14.0' '-asm_macosx_version_min=14.0' '-nodefaultexport' '-shared-libgcc' '-mtune=core2' '-dumpdir' 'CMakeFiles/cmTC_e592a.dir/'
-         /usr/local/Cellar/gcc/13.2.0/bin/../libexec/gcc/x86_64-apple-darwin22/13/cc1plus -quiet -v -iprefix /usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13/ -D__DYNAMIC__ -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk /Users/kevinlou/Applications/CLion.app/Contents/bin/cmake/mac/x64/share/cmake-3.27/Modules/CMakeCXXCompilerABI.cpp -fPIC -quiet -dumpdir CMakeFiles/cmTC_e592a.dir/ -dumpbase CMakeCXXCompilerABI.cpp.cpp -dumpbase-ext .cpp -mmacosx-version-min=14.0 -mtune=core2 -version -fdiagnostics-color=always -o /var/folders/dr/d0vj4mkd1kz12cpmy779b2sh0000gn/T//cc4lKtRW.s
-        GNU C++17 (Homebrew GCC 13.2.0) version 13.2.0 (x86_64-apple-darwin22)
-        	compiled by GNU C version 13.2.0, GMP version 6.2.1, MPFR version 4.2.0-p12, MPC version 1.3.1, isl version isl-0.26-GMP
-        
-        GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
-        ignoring nonexistent directory "/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13/../../../../../../x86_64-apple-darwin22/include"
-        ignoring duplicate directory "/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/../../../../lib/gcc/current/gcc/x86_64-apple-darwin22/13/../../../../../../include/c++/13"
-        ignoring duplicate directory "/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/../../../../lib/gcc/current/gcc/x86_64-apple-darwin22/13/../../../../../../include/c++/13/x86_64-apple-darwin22"
-        ignoring duplicate directory "/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/../../../../lib/gcc/current/gcc/x86_64-apple-darwin22/13/../../../../../../include/c++/13/backward"
-        ignoring duplicate directory "/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/../../../../lib/gcc/current/gcc/x86_64-apple-darwin22/13/include"
-        ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/local/include"
-        ignoring duplicate directory "/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/../../../../lib/gcc/current/gcc/x86_64-apple-darwin22/13/include-fixed"
-        ignoring nonexistent directory "/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/../../../../lib/gcc/current/gcc/x86_64-apple-darwin22/13/../../../../../../x86_64-apple-darwin22/include"
-        ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/Library/Frameworks"
-        #include "..." search starts here:
-        #include <...> search starts here:
-         /usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13/../../../../../../include/c++/13
-         /usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13/../../../../../../include/c++/13/x86_64-apple-darwin22
-         /usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13/../../../../../../include/c++/13/backward
-         /usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13/include
-         /usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13/include-fixed
-         /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/include
-         /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/System/Library/Frameworks
-        End of search list.
-        Compiler executable checksum: 316b0e65d3b070d52308295433fec0c9
-        COLLECT_GCC_OPTIONS='-fdiagnostics-color=always' '-isysroot' '/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk' '-v' '-o' 'CMakeFiles/cmTC_e592a.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-mmacosx-version-min=14.0'  '-nodefaultexport' '-shared-libgcc' '-mtune=core2' '-dumpdir' 'CMakeFiles/cmTC_e592a.dir/'
-         as -arch x86_64 -v -mmacosx-version-min=14.0 -mllvm -x86-pad-for-align=false -force_cpusubtype_ALL -o CMakeFiles/cmTC_e592a.dir/CMakeCXXCompilerABI.cpp.o /var/folders/dr/d0vj4mkd1kz12cpmy779b2sh0000gn/T//cc4lKtRW.s
+        Run Build Command(s): /Users/kevinlou/Applications/CLion.app/Contents/bin/ninja/mac/x64/ninja -v cmTC_076d2
+        [1/2] /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++   -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk -mmacosx-version-min=14.0 -fcolor-diagnostics   -v -Wl,-v -MD -MT CMakeFiles/cmTC_076d2.dir/CMakeCXXCompilerABI.cpp.o -MF CMakeFiles/cmTC_076d2.dir/CMakeCXXCompilerABI.cpp.o.d -o CMakeFiles/cmTC_076d2.dir/CMakeCXXCompilerABI.cpp.o -c /Users/kevinlou/Applications/CLion.app/Contents/bin/cmake/mac/x64/share/cmake-3.27/Modules/CMakeCXXCompilerABI.cpp
         Apple clang version 15.0.0 (clang-1500.1.0.2.5)
         Target: x86_64-apple-darwin23.0.0
         Thread model: posix
         InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
-         "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang" -cc1as -triple x86_64-apple-macosx14.0.0 -filetype obj -main-file-name cc4lKtRW.s -target-cpu penryn -fdebug-compilation-dir=/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-8DrKCg -dwarf-debug-producer "Apple clang version 15.0.0 (clang-1500.1.0.2.5)" -dwarf-version=4 -mrelocation-model pic --mrelax-relocations -mllvm -x86-pad-for-align=false -mllvm -disable-aligned-alloc-awareness=1 -o CMakeFiles/cmTC_e592a.dir/CMakeCXXCompilerABI.cpp.o /var/folders/dr/d0vj4mkd1kz12cpmy779b2sh0000gn/T//cc4lKtRW.s
-        COMPILER_PATH=/usr/local/Cellar/gcc/13.2.0/bin/../libexec/gcc/x86_64-apple-darwin22/13/:/usr/local/Cellar/gcc/13.2.0/bin/../libexec/gcc/
-        LIBRARY_PATH=/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13/:/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/:/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13/../../../
-        COLLECT_GCC_OPTIONS='-fdiagnostics-color=always' '-isysroot' '/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk' '-v' '-o' 'CMakeFiles/cmTC_e592a.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-mmacosx-version-min=14.0'  '-nodefaultexport' '-shared-libgcc' '-mtune=core2' '-dumpdir' 'CMakeFiles/cmTC_e592a.dir/CMakeCXXCompilerABI.cpp.'
-        [2/2] : && /usr/local/Cellar/gcc/13.2.0/bin/g++-13 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk -mmacosx-version-min=14.0 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -v -Wl,-v CMakeFiles/cmTC_e592a.dir/CMakeCXXCompilerABI.cpp.o -o cmTC_e592a   && :
-        Using built-in specs.
-        COLLECT_GCC=/usr/local/Cellar/gcc/13.2.0/bin/g++-13
-        COLLECT_LTO_WRAPPER=/usr/local/Cellar/gcc/13.2.0/bin/../libexec/gcc/x86_64-apple-darwin22/13/lto-wrapper
-        Target: x86_64-apple-darwin22
-        Configured with: ../configure --prefix=/usr/local/opt/gcc --libdir=/usr/local/opt/gcc/lib/gcc/current --disable-nls --enable-checking=release --with-gcc-major-version-only --enable-languages=c,c++,objc,obj-c++,fortran --program-suffix=-13 --with-gmp=/usr/local/opt/gmp --with-mpfr=/usr/local/opt/mpfr --with-mpc=/usr/local/opt/libmpc --with-isl=/usr/local/opt/isl --with-zstd=/usr/local/opt/zstd --with-pkgversion='Homebrew GCC 13.2.0' --with-bugurl=https://github.com/Homebrew/homebrew-core/issues --with-system-zlib --build=x86_64-apple-darwin22 --with-sysroot=/Library/Developer/CommandLineTools/SDKs/MacOSX13.sdk
+        clang: warning: -Wl,-v: 'linker' input unused [-Wunused-command-line-argument]
+         "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang" -cc1 -triple x86_64-apple-macosx14.0.0 -Wundef-prefix=TARGET_OS_ -Wdeprecated-objc-isa-usage -Werror=deprecated-objc-isa-usage -Werror=implicit-function-declaration -emit-obj -mrelax-all --mrelax-relocations -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCXXCompilerABI.cpp -mrelocation-model pic -pic-level 2 -mframe-pointer=all -fno-strict-return -ffp-contract=on -fno-rounding-math -funwind-tables=2 -target-sdk-version=14.2 -fvisibility-inlines-hidden-static-local-var -target-cpu penryn -tune-cpu generic -mllvm -treat-scalable-fixed-error-as-warning -debugger-tuning=lldb -target-linker-version 1022.1 -v -fcoverage-compilation-dir=/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-rN8dko -resource-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/15.0.0 -dependency-file CMakeFiles/cmTC_076d2.dir/CMakeCXXCompilerABI.cpp.o.d -skip-unused-modulemap-deps -MT CMakeFiles/cmTC_076d2.dir/CMakeCXXCompilerABI.cpp.o -sys-header-deps -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/include/c++/v1 -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/local/include -internal-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/15.0.0/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -Wno-reorder-init-list -Wno-implicit-int-float-conversion -Wno-c99-designator -Wno-final-dtor-non-final-class -Wno-extra-semi-stmt -Wno-misleading-indentation -Wno-quoted-include-in-framework-header -Wno-implicit-fallthrough -Wno-enum-enum-conversion -Wno-enum-float-conversion -Wno-elaborated-enum-base -Wno-reserved-identifier -Wno-gnu-folding-constant -fdeprecated-macro -fdebug-compilation-dir=/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-rN8dko -ferror-limit 19 -stack-protector 1 -fstack-check -mdarwin-stkchk-strong-link -fblocks -fencode-extended-block-signature -fregister-global-dtors-with-atexit -fgnuc-version=4.2.1 -fno-cxx-modules -fcxx-exceptions -fexceptions -fmax-type-align=16 -fcommon -fcolor-diagnostics -clang-vendor-feature=+disableNonDependentMemberExprInCurrentInstantiation -fno-odr-hash-protocols -clang-vendor-feature=+enableAggressiveVLAFolding -clang-vendor-feature=+revert09abecef7bbf -clang-vendor-feature=+thisNoAlignAttr -clang-vendor-feature=+thisNoNullAttr -mllvm -disable-aligned-alloc-awareness=1 -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_076d2.dir/CMakeCXXCompilerABI.cpp.o -x c++ /Users/kevinlou/Applications/CLion.app/Contents/bin/cmake/mac/x64/share/cmake-3.27/Modules/CMakeCXXCompilerABI.cpp
+        clang -cc1 version 15.0.0 (clang-1500.1.0.2.5) default target x86_64-apple-darwin23.0.0
+        ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/local/include"
+        ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/Library/Frameworks"
+        #include "..." search starts here:
+        #include <...> search starts here:
+         /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/include/c++/v1
+         /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/15.0.0/include
+         /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/include
+         /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include
+         /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/System/Library/Frameworks (framework directory)
+        End of search list.
+        [2/2] : && /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk -mmacosx-version-min=14.0 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -v -Wl,-v CMakeFiles/cmTC_076d2.dir/CMakeCXXCompilerABI.cpp.o -o cmTC_076d2   && :
+        Apple clang version 15.0.0 (clang-1500.1.0.2.5)
+        Target: x86_64-apple-darwin23.0.0
         Thread model: posix
-        Supported LTO compression algorithms: zlib zstd
-        gcc version 13.2.0 (Homebrew GCC 13.2.0) 
-        COMPILER_PATH=/usr/local/Cellar/gcc/13.2.0/bin/../libexec/gcc/x86_64-apple-darwin22/13/:/usr/local/Cellar/gcc/13.2.0/bin/../libexec/gcc/
-        LIBRARY_PATH=/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13/:/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/:/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13/../../../
-        COLLECT_GCC_OPTIONS='-isysroot' '/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk' '-v' '-o' 'cmTC_e592a' '-mmacosx-version-min=14.0' '-asm_macosx_version_min=14.0' '-nodefaultexport' '-shared-libgcc' '-mtune=core2' '-dumpdir' 'cmTC_e592a.'
-         /usr/local/Cellar/gcc/13.2.0/bin/../libexec/gcc/x86_64-apple-darwin22/13/collect2 -dynamic -arch x86_64 -syslibroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk -platform_version macos 14.0 0.0 -o cmTC_e592a -L/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13 -L/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc -L/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13/../../.. -search_paths_first -headerpad_max_install_names -v CMakeFiles/cmTC_e592a.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lgcc_s.1.1 -lgcc -lSystem -no_compact_unwind -rpath @loader_path -rpath /usr/local/Cellar/gcc/13.2.0/lib/gcc/current/gcc/x86_64-apple-darwin22/13 -rpath /usr/local/Cellar/gcc/13.2.0/lib/gcc/current/gcc -rpath /usr/local/Cellar/gcc/13.2.0/lib/gcc/current
-        collect2 version 13.2.0
-        /usr/bin/ld -dynamic -arch x86_64 -syslibroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk -platform_version macos 14.0 0.0 -o cmTC_e592a -L/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13 -L/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc -L/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13/../../.. -search_paths_first -headerpad_max_install_names -v CMakeFiles/cmTC_e592a.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lgcc_s.1.1 -lgcc -lSystem -no_compact_unwind -rpath @loader_path -rpath /usr/local/Cellar/gcc/13.2.0/lib/gcc/current/gcc/x86_64-apple-darwin22/13 -rpath /usr/local/Cellar/gcc/13.2.0/lib/gcc/current/gcc -rpath /usr/local/Cellar/gcc/13.2.0/lib/gcc/current
+        InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
+         "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" -demangle -lto_library /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib -dynamic -arch x86_64 -platform_version macos 14.0.0 14.2 -syslibroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk -o cmTC_076d2 -search_paths_first -headerpad_max_install_names -v CMakeFiles/cmTC_076d2.dir/CMakeCXXCompilerABI.cpp.o -lc++ -lSystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/15.0.0/lib/darwin/libclang_rt.osx.a
         @(#)PROGRAM:ld  PROJECT:dyld-1022.1
         BUILD 05:26:33 Dec  7 2023
         configured to support archs: armv6 armv7 armv7s arm64 arm64e arm64_32 i386 x86_64 x86_64h
@@ -304,9 +288,6 @@ events:
         LTO support using: LLVM version 15.0.0 (static support for 29, runtime is 29)
         TAPI support using: Apple TAPI version 15.0.0 (tapi-1500.0.12.8)
         Library search paths:
-        	/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13
-        	/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc
-        	/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13/../../..
         Framework search paths:
         
       exitCode: 0
@@ -320,22 +301,16 @@ events:
       Parsed CXX implicit include dir info: rv=done
         found start of include info
         found start of implicit include info
-          add: [/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13/../../../../../../include/c++/13]
-          add: [/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13/../../../../../../include/c++/13/x86_64-apple-darwin22]
-          add: [/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13/../../../../../../include/c++/13/backward]
-          add: [/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13/include]
-          add: [/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13/include-fixed]
+          add: [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/include/c++/v1]
+          add: [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/15.0.0/include]
           add: [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/include]
-          add: [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/System/Library/Frameworks]
+          add: [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include]
         end of search list found
-        collapse include dir [/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13/../../../../../../include/c++/13] ==> [/usr/local/Cellar/gcc/13.2.0/include/c++/13]
-        collapse include dir [/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13/../../../../../../include/c++/13/x86_64-apple-darwin22] ==> [/usr/local/Cellar/gcc/13.2.0/include/c++/13/x86_64-apple-darwin22]
-        collapse include dir [/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13/../../../../../../include/c++/13/backward] ==> [/usr/local/Cellar/gcc/13.2.0/include/c++/13/backward]
-        collapse include dir [/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13/include] ==> [/usr/local/Cellar/gcc/13.2.0/lib/gcc/current/gcc/x86_64-apple-darwin22/13/include]
-        collapse include dir [/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13/include-fixed] ==> [/usr/local/Cellar/gcc/13.2.0/lib/gcc/current/gcc/x86_64-apple-darwin22/13/include-fixed]
+        collapse include dir [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/include/c++/v1] ==> [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/include/c++/v1]
+        collapse include dir [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/15.0.0/include] ==> [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/15.0.0/include]
         collapse include dir [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/include] ==> [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/include]
-        collapse include dir [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/System/Library/Frameworks] ==> [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/System/Library/Frameworks]
-        implicit include dirs: [/usr/local/Cellar/gcc/13.2.0/include/c++/13;/usr/local/Cellar/gcc/13.2.0/include/c++/13/x86_64-apple-darwin22;/usr/local/Cellar/gcc/13.2.0/include/c++/13/backward;/usr/local/Cellar/gcc/13.2.0/lib/gcc/current/gcc/x86_64-apple-darwin22/13/include;/usr/local/Cellar/gcc/13.2.0/lib/gcc/current/gcc/x86_64-apple-darwin22/13/include-fixed;/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/include;/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/System/Library/Frameworks]
+        collapse include dir [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include] ==> [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include]
+        implicit include dirs: [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/include/c++/v1;/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/15.0.0/include;/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/include;/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include]
       
       
   -
@@ -347,109 +322,60 @@ events:
     message: |
       Parsed CXX implicit link information:
         link line regex: [^( *|.*[/\\])(ld|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
-        ignore line: [Change Dir: '/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-8DrKCg']
+        ignore line: [Change Dir: '/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-rN8dko']
         ignore line: []
-        ignore line: [Run Build Command(s): /Users/kevinlou/Applications/CLion.app/Contents/bin/ninja/mac/x64/ninja -v cmTC_e592a]
-        ignore line: [[1/2] /usr/local/Cellar/gcc/13.2.0/bin/g++-13   -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk -mmacosx-version-min=14.0 -fdiagnostics-color=always   -v -Wl -v -o CMakeFiles/cmTC_e592a.dir/CMakeCXXCompilerABI.cpp.o -c /Users/kevinlou/Applications/CLion.app/Contents/bin/cmake/mac/x64/share/cmake-3.27/Modules/CMakeCXXCompilerABI.cpp]
-        ignore line: [Using built-in specs.]
-        ignore line: [COLLECT_GCC=/usr/local/Cellar/gcc/13.2.0/bin/g++-13]
-        ignore line: [Target: x86_64-apple-darwin22]
-        ignore line: [Configured with: ../configure --prefix=/usr/local/opt/gcc --libdir=/usr/local/opt/gcc/lib/gcc/current --disable-nls --enable-checking=release --with-gcc-major-version-only --enable-languages=c c++ objc obj-c++ fortran --program-suffix=-13 --with-gmp=/usr/local/opt/gmp --with-mpfr=/usr/local/opt/mpfr --with-mpc=/usr/local/opt/libmpc --with-isl=/usr/local/opt/isl --with-zstd=/usr/local/opt/zstd --with-pkgversion='Homebrew GCC 13.2.0' --with-bugurl=https://github.com/Homebrew/homebrew-core/issues --with-system-zlib --build=x86_64-apple-darwin22 --with-sysroot=/Library/Developer/CommandLineTools/SDKs/MacOSX13.sdk]
-        ignore line: [Thread model: posix]
-        ignore line: [Supported LTO compression algorithms: zlib zstd]
-        ignore line: [gcc version 13.2.0 (Homebrew GCC 13.2.0) ]
-        ignore line: [COLLECT_GCC_OPTIONS='-fdiagnostics-color=always' '-isysroot' '/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk' '-v' '-o' 'CMakeFiles/cmTC_e592a.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-mmacosx-version-min=14.0' '-asm_macosx_version_min=14.0' '-nodefaultexport' '-shared-libgcc' '-mtune=core2' '-dumpdir' 'CMakeFiles/cmTC_e592a.dir/']
-        ignore line: [ /usr/local/Cellar/gcc/13.2.0/bin/../libexec/gcc/x86_64-apple-darwin22/13/cc1plus -quiet -v -iprefix /usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13/ -D__DYNAMIC__ -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk /Users/kevinlou/Applications/CLion.app/Contents/bin/cmake/mac/x64/share/cmake-3.27/Modules/CMakeCXXCompilerABI.cpp -fPIC -quiet -dumpdir CMakeFiles/cmTC_e592a.dir/ -dumpbase CMakeCXXCompilerABI.cpp.cpp -dumpbase-ext .cpp -mmacosx-version-min=14.0 -mtune=core2 -version -fdiagnostics-color=always -o /var/folders/dr/d0vj4mkd1kz12cpmy779b2sh0000gn/T//cc4lKtRW.s]
-        ignore line: [GNU C++17 (Homebrew GCC 13.2.0) version 13.2.0 (x86_64-apple-darwin22)]
-        ignore line: [	compiled by GNU C version 13.2.0  GMP version 6.2.1  MPFR version 4.2.0-p12  MPC version 1.3.1  isl version isl-0.26-GMP]
-        ignore line: []
-        ignore line: [GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072]
-        ignore line: [ignoring nonexistent directory "/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13/../../../../../../x86_64-apple-darwin22/include"]
-        ignore line: [ignoring duplicate directory "/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/../../../../lib/gcc/current/gcc/x86_64-apple-darwin22/13/../../../../../../include/c++/13"]
-        ignore line: [ignoring duplicate directory "/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/../../../../lib/gcc/current/gcc/x86_64-apple-darwin22/13/../../../../../../include/c++/13/x86_64-apple-darwin22"]
-        ignore line: [ignoring duplicate directory "/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/../../../../lib/gcc/current/gcc/x86_64-apple-darwin22/13/../../../../../../include/c++/13/backward"]
-        ignore line: [ignoring duplicate directory "/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/../../../../lib/gcc/current/gcc/x86_64-apple-darwin22/13/include"]
-        ignore line: [ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/local/include"]
-        ignore line: [ignoring duplicate directory "/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/../../../../lib/gcc/current/gcc/x86_64-apple-darwin22/13/include-fixed"]
-        ignore line: [ignoring nonexistent directory "/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/../../../../lib/gcc/current/gcc/x86_64-apple-darwin22/13/../../../../../../x86_64-apple-darwin22/include"]
-        ignore line: [ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/Library/Frameworks"]
-        ignore line: [#include "..." search starts here:]
-        ignore line: [#include <...> search starts here:]
-        ignore line: [ /usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13/../../../../../../include/c++/13]
-        ignore line: [ /usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13/../../../../../../include/c++/13/x86_64-apple-darwin22]
-        ignore line: [ /usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13/../../../../../../include/c++/13/backward]
-        ignore line: [ /usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13/include]
-        ignore line: [ /usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13/include-fixed]
-        ignore line: [ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/include]
-        ignore line: [ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/System/Library/Frameworks]
-        ignore line: [End of search list.]
-        ignore line: [Compiler executable checksum: 316b0e65d3b070d52308295433fec0c9]
-        ignore line: [COLLECT_GCC_OPTIONS='-fdiagnostics-color=always' '-isysroot' '/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk' '-v' '-o' 'CMakeFiles/cmTC_e592a.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-mmacosx-version-min=14.0'  '-nodefaultexport' '-shared-libgcc' '-mtune=core2' '-dumpdir' 'CMakeFiles/cmTC_e592a.dir/']
-        ignore line: [ as -arch x86_64 -v -mmacosx-version-min=14.0 -mllvm -x86-pad-for-align=false -force_cpusubtype_ALL -o CMakeFiles/cmTC_e592a.dir/CMakeCXXCompilerABI.cpp.o /var/folders/dr/d0vj4mkd1kz12cpmy779b2sh0000gn/T//cc4lKtRW.s]
+        ignore line: [Run Build Command(s): /Users/kevinlou/Applications/CLion.app/Contents/bin/ninja/mac/x64/ninja -v cmTC_076d2]
+        ignore line: [[1/2] /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++   -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk -mmacosx-version-min=14.0 -fcolor-diagnostics   -v -Wl -v -MD -MT CMakeFiles/cmTC_076d2.dir/CMakeCXXCompilerABI.cpp.o -MF CMakeFiles/cmTC_076d2.dir/CMakeCXXCompilerABI.cpp.o.d -o CMakeFiles/cmTC_076d2.dir/CMakeCXXCompilerABI.cpp.o -c /Users/kevinlou/Applications/CLion.app/Contents/bin/cmake/mac/x64/share/cmake-3.27/Modules/CMakeCXXCompilerABI.cpp]
         ignore line: [Apple clang version 15.0.0 (clang-1500.1.0.2.5)]
         ignore line: [Target: x86_64-apple-darwin23.0.0]
         ignore line: [Thread model: posix]
         ignore line: [InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin]
-        ignore line: [ "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang" -cc1as -triple x86_64-apple-macosx14.0.0 -filetype obj -main-file-name cc4lKtRW.s -target-cpu penryn -fdebug-compilation-dir=/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-8DrKCg -dwarf-debug-producer "Apple clang version 15.0.0 (clang-1500.1.0.2.5)" -dwarf-version=4 -mrelocation-model pic --mrelax-relocations -mllvm -x86-pad-for-align=false -mllvm -disable-aligned-alloc-awareness=1 -o CMakeFiles/cmTC_e592a.dir/CMakeCXXCompilerABI.cpp.o /var/folders/dr/d0vj4mkd1kz12cpmy779b2sh0000gn/T//cc4lKtRW.s]
-        ignore line: [COMPILER_PATH=/usr/local/Cellar/gcc/13.2.0/bin/../libexec/gcc/x86_64-apple-darwin22/13/:/usr/local/Cellar/gcc/13.2.0/bin/../libexec/gcc/]
-        ignore line: [LIBRARY_PATH=/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13/:/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/:/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13/../../../]
-        ignore line: [COLLECT_GCC_OPTIONS='-fdiagnostics-color=always' '-isysroot' '/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk' '-v' '-o' 'CMakeFiles/cmTC_e592a.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-mmacosx-version-min=14.0'  '-nodefaultexport' '-shared-libgcc' '-mtune=core2' '-dumpdir' 'CMakeFiles/cmTC_e592a.dir/CMakeCXXCompilerABI.cpp.']
-        ignore line: [[2/2] : && /usr/local/Cellar/gcc/13.2.0/bin/g++-13 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk -mmacosx-version-min=14.0 -Wl -search_paths_first -Wl -headerpad_max_install_names -v -Wl -v CMakeFiles/cmTC_e592a.dir/CMakeCXXCompilerABI.cpp.o -o cmTC_e592a   && :]
-        ignore line: [Using built-in specs.]
-        ignore line: [COLLECT_GCC=/usr/local/Cellar/gcc/13.2.0/bin/g++-13]
-        ignore line: [COLLECT_LTO_WRAPPER=/usr/local/Cellar/gcc/13.2.0/bin/../libexec/gcc/x86_64-apple-darwin22/13/lto-wrapper]
-        ignore line: [Target: x86_64-apple-darwin22]
-        ignore line: [Configured with: ../configure --prefix=/usr/local/opt/gcc --libdir=/usr/local/opt/gcc/lib/gcc/current --disable-nls --enable-checking=release --with-gcc-major-version-only --enable-languages=c c++ objc obj-c++ fortran --program-suffix=-13 --with-gmp=/usr/local/opt/gmp --with-mpfr=/usr/local/opt/mpfr --with-mpc=/usr/local/opt/libmpc --with-isl=/usr/local/opt/isl --with-zstd=/usr/local/opt/zstd --with-pkgversion='Homebrew GCC 13.2.0' --with-bugurl=https://github.com/Homebrew/homebrew-core/issues --with-system-zlib --build=x86_64-apple-darwin22 --with-sysroot=/Library/Developer/CommandLineTools/SDKs/MacOSX13.sdk]
+        ignore line: [clang: warning: -Wl -v: 'linker' input unused [-Wunused-command-line-argument]]
+        ignore line: [ "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang" -cc1 -triple x86_64-apple-macosx14.0.0 -Wundef-prefix=TARGET_OS_ -Wdeprecated-objc-isa-usage -Werror=deprecated-objc-isa-usage -Werror=implicit-function-declaration -emit-obj -mrelax-all --mrelax-relocations -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCXXCompilerABI.cpp -mrelocation-model pic -pic-level 2 -mframe-pointer=all -fno-strict-return -ffp-contract=on -fno-rounding-math -funwind-tables=2 -target-sdk-version=14.2 -fvisibility-inlines-hidden-static-local-var -target-cpu penryn -tune-cpu generic -mllvm -treat-scalable-fixed-error-as-warning -debugger-tuning=lldb -target-linker-version 1022.1 -v -fcoverage-compilation-dir=/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-rN8dko -resource-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/15.0.0 -dependency-file CMakeFiles/cmTC_076d2.dir/CMakeCXXCompilerABI.cpp.o.d -skip-unused-modulemap-deps -MT CMakeFiles/cmTC_076d2.dir/CMakeCXXCompilerABI.cpp.o -sys-header-deps -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/include/c++/v1 -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/local/include -internal-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/15.0.0/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -Wno-reorder-init-list -Wno-implicit-int-float-conversion -Wno-c99-designator -Wno-final-dtor-non-final-class -Wno-extra-semi-stmt -Wno-misleading-indentation -Wno-quoted-include-in-framework-header -Wno-implicit-fallthrough -Wno-enum-enum-conversion -Wno-enum-float-conversion -Wno-elaborated-enum-base -Wno-reserved-identifier -Wno-gnu-folding-constant -fdeprecated-macro -fdebug-compilation-dir=/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-rN8dko -ferror-limit 19 -stack-protector 1 -fstack-check -mdarwin-stkchk-strong-link -fblocks -fencode-extended-block-signature -fregister-global-dtors-with-atexit -fgnuc-version=4.2.1 -fno-cxx-modules -fcxx-exceptions -fexceptions -fmax-type-align=16 -fcommon -fcolor-diagnostics -clang-vendor-feature=+disableNonDependentMemberExprInCurrentInstantiation -fno-odr-hash-protocols -clang-vendor-feature=+enableAggressiveVLAFolding -clang-vendor-feature=+revert09abecef7bbf -clang-vendor-feature=+thisNoAlignAttr -clang-vendor-feature=+thisNoNullAttr -mllvm -disable-aligned-alloc-awareness=1 -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_076d2.dir/CMakeCXXCompilerABI.cpp.o -x c++ /Users/kevinlou/Applications/CLion.app/Contents/bin/cmake/mac/x64/share/cmake-3.27/Modules/CMakeCXXCompilerABI.cpp]
+        ignore line: [clang -cc1 version 15.0.0 (clang-1500.1.0.2.5) default target x86_64-apple-darwin23.0.0]
+        ignore line: [ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/local/include"]
+        ignore line: [ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/Library/Frameworks"]
+        ignore line: [#include "..." search starts here:]
+        ignore line: [#include <...> search starts here:]
+        ignore line: [ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/include/c++/v1]
+        ignore line: [ /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/15.0.0/include]
+        ignore line: [ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/include]
+        ignore line: [ /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include]
+        ignore line: [ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/System/Library/Frameworks (framework directory)]
+        ignore line: [End of search list.]
+        ignore line: [[2/2] : && /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk -mmacosx-version-min=14.0 -Wl -search_paths_first -Wl -headerpad_max_install_names -v -Wl -v CMakeFiles/cmTC_076d2.dir/CMakeCXXCompilerABI.cpp.o -o cmTC_076d2   && :]
+        ignore line: [Apple clang version 15.0.0 (clang-1500.1.0.2.5)]
+        ignore line: [Target: x86_64-apple-darwin23.0.0]
         ignore line: [Thread model: posix]
-        ignore line: [Supported LTO compression algorithms: zlib zstd]
-        ignore line: [gcc version 13.2.0 (Homebrew GCC 13.2.0) ]
-        ignore line: [COMPILER_PATH=/usr/local/Cellar/gcc/13.2.0/bin/../libexec/gcc/x86_64-apple-darwin22/13/:/usr/local/Cellar/gcc/13.2.0/bin/../libexec/gcc/]
-        ignore line: [LIBRARY_PATH=/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13/:/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/:/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13/../../../]
-        ignore line: [COLLECT_GCC_OPTIONS='-isysroot' '/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk' '-v' '-o' 'cmTC_e592a' '-mmacosx-version-min=14.0' '-asm_macosx_version_min=14.0' '-nodefaultexport' '-shared-libgcc' '-mtune=core2' '-dumpdir' 'cmTC_e592a.']
-        link line: [ /usr/local/Cellar/gcc/13.2.0/bin/../libexec/gcc/x86_64-apple-darwin22/13/collect2 -dynamic -arch x86_64 -syslibroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk -platform_version macos 14.0 0.0 -o cmTC_e592a -L/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13 -L/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc -L/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13/../../.. -search_paths_first -headerpad_max_install_names -v CMakeFiles/cmTC_e592a.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lgcc_s.1.1 -lgcc -lSystem -no_compact_unwind -rpath @loader_path -rpath /usr/local/Cellar/gcc/13.2.0/lib/gcc/current/gcc/x86_64-apple-darwin22/13 -rpath /usr/local/Cellar/gcc/13.2.0/lib/gcc/current/gcc -rpath /usr/local/Cellar/gcc/13.2.0/lib/gcc/current]
-          arg [/usr/local/Cellar/gcc/13.2.0/bin/../libexec/gcc/x86_64-apple-darwin22/13/collect2] ==> ignore
+        ignore line: [InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin]
+        link line: [ "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" -demangle -lto_library /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib -dynamic -arch x86_64 -platform_version macos 14.0.0 14.2 -syslibroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk -o cmTC_076d2 -search_paths_first -headerpad_max_install_names -v CMakeFiles/cmTC_076d2.dir/CMakeCXXCompilerABI.cpp.o -lc++ -lSystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/15.0.0/lib/darwin/libclang_rt.osx.a]
+          arg [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld] ==> ignore
+          arg [-demangle] ==> ignore
+          arg [-lto_library] ==> ignore, skip following value
+          arg [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib] ==> skip value of -lto_library
           arg [-dynamic] ==> ignore
           arg [-arch] ==> ignore
           arg [x86_64] ==> ignore
-          arg [-syslibroot] ==> ignore
-          arg [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk] ==> ignore
           arg [-platform_version] ==> ignore
           arg [macos] ==> ignore
-          arg [14.0] ==> ignore
-          arg [0.0] ==> ignore
+          arg [14.0.0] ==> ignore
+          arg [14.2] ==> ignore
+          arg [-syslibroot] ==> ignore
+          arg [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk] ==> ignore
           arg [-o] ==> ignore
-          arg [cmTC_e592a] ==> ignore
-          arg [-L/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13] ==> dir [/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13]
-          arg [-L/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc] ==> dir [/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc]
-          arg [-L/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13/../../..] ==> dir [/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13/../../..]
+          arg [cmTC_076d2] ==> ignore
           arg [-search_paths_first] ==> ignore
           arg [-headerpad_max_install_names] ==> ignore
           arg [-v] ==> ignore
-          arg [CMakeFiles/cmTC_e592a.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
-          arg [-lstdc++] ==> lib [stdc++]
-          arg [-lgcc_s.1.1] ==> lib [gcc_s.1.1]
-          arg [-lgcc] ==> lib [gcc]
+          arg [CMakeFiles/cmTC_076d2.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
+          arg [-lc++] ==> lib [c++]
           arg [-lSystem] ==> lib [System]
-          arg [-no_compact_unwind] ==> ignore
-          arg [-rpath] ==> ignore
-          arg [@loader_path] ==> ignore
-          arg [-rpath] ==> ignore
-          arg [/usr/local/Cellar/gcc/13.2.0/lib/gcc/current/gcc/x86_64-apple-darwin22/13] ==> ignore
-          arg [-rpath] ==> ignore
-          arg [/usr/local/Cellar/gcc/13.2.0/lib/gcc/current/gcc] ==> ignore
-          arg [-rpath] ==> ignore
-          arg [/usr/local/Cellar/gcc/13.2.0/lib/gcc/current] ==> ignore
-        Library search paths: [;/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13;/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc;/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13/../../..]
+          arg [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/15.0.0/lib/darwin/libclang_rt.osx.a] ==> lib [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/15.0.0/lib/darwin/libclang_rt.osx.a]
         remove lib [System]
-        collapse library dir [/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13] ==> [/usr/local/Cellar/gcc/13.2.0/lib/gcc/current/gcc/x86_64-apple-darwin22/13]
-        collapse library dir [/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc] ==> [/usr/local/Cellar/gcc/13.2.0/lib/gcc/current/gcc]
-        collapse library dir [/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13/../../..] ==> [/usr/local/Cellar/gcc/13.2.0/lib/gcc/current]
-        collapse library dir [/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13] ==> [/usr/local/Cellar/gcc/13.2.0/lib/gcc/current/gcc/x86_64-apple-darwin22/13]
-        collapse library dir [/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc] ==> [/usr/local/Cellar/gcc/13.2.0/lib/gcc/current/gcc]
-        collapse library dir [/usr/local/Cellar/gcc/13.2.0/bin/../lib/gcc/current/gcc/x86_64-apple-darwin22/13/../../..] ==> [/usr/local/Cellar/gcc/13.2.0/lib/gcc/current]
-        implicit libs: [stdc++;gcc_s.1.1;gcc]
+        remove lib [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/15.0.0/lib/darwin/libclang_rt.osx.a]
+        implicit libs: [c++]
         implicit objs: []
-        implicit dirs: [/usr/local/Cellar/gcc/13.2.0/lib/gcc/current/gcc/x86_64-apple-darwin22/13;/usr/local/Cellar/gcc/13.2.0/lib/gcc/current/gcc;/usr/local/Cellar/gcc/13.2.0/lib/gcc/current]
+        implicit dirs: []
         implicit fwks: []
       
       
@@ -466,8 +392,8 @@ events:
     checks:
       - "Performing Test CMAKE_HAVE_LIBC_PTHREAD"
     directories:
-      source: "/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-F9XJ5W"
-      binary: "/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-F9XJ5W"
+      source: "/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-nIsOFY"
+      binary: "/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-nIsOFY"
     cmakeVariables:
       CMAKE_C_FLAGS: ""
       CMAKE_C_FLAGS_DEBUG: "-g"
@@ -480,11 +406,11 @@ events:
       variable: "CMAKE_HAVE_LIBC_PTHREAD"
       cached: true
       stdout: |
-        Change Dir: '/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-F9XJ5W'
+        Change Dir: '/Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-nIsOFY'
         
-        Run Build Command(s): /Users/kevinlou/Applications/CLion.app/Contents/bin/ninja/mac/x64/ninja -v cmTC_3315a
-        [1/2] /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -DCMAKE_HAVE_LIBC_PTHREAD  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk -mmacosx-version-min=14.0 -fcolor-diagnostics -MD -MT CMakeFiles/cmTC_3315a.dir/src.c.o -MF CMakeFiles/cmTC_3315a.dir/src.c.o.d -o CMakeFiles/cmTC_3315a.dir/src.c.o -c /Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-F9XJ5W/src.c
-        [2/2] : && /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk -mmacosx-version-min=14.0 -Wl,-search_paths_first -Wl,-headerpad_max_install_names  CMakeFiles/cmTC_3315a.dir/src.c.o -o cmTC_3315a   && :
+        Run Build Command(s): /Users/kevinlou/Applications/CLion.app/Contents/bin/ninja/mac/x64/ninja -v cmTC_1c809
+        [1/2] /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -DCMAKE_HAVE_LIBC_PTHREAD  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk -mmacosx-version-min=14.0 -fcolor-diagnostics -MD -MT CMakeFiles/cmTC_1c809.dir/src.c.o -MF CMakeFiles/cmTC_1c809.dir/src.c.o.d -o CMakeFiles/cmTC_1c809.dir/src.c.o -c /Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-nIsOFY/src.c
+        [2/2] : && /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk -mmacosx-version-min=14.0 -Wl,-search_paths_first -Wl,-headerpad_max_install_names  CMakeFiles/cmTC_1c809.dir/src.c.o -o cmTC_1c809   && :
         
       exitCode: 0
 ...

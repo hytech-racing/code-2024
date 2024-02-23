@@ -7,7 +7,7 @@
  * Stores position of the car with a timestamp
  */
 struct Point {
-    std::chrono::steady_clock::time_point time;
+    std::chrono::high_resolution_clock::time_point time;
     double x;
     double y;
 
