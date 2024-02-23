@@ -15,7 +15,8 @@ void Dashboard_Controls::startup() {
     pinMode(BUZZER_PIN, OUTPUT);
 
     for (int i = 0; i < DIAL_SIZE; i++){
-      pinMode(i, INPUT_PULLUP);
+      // walker u trolled
+      pinMode(dial_pins[i], INPUT_PULLUP);
     }
 }
 

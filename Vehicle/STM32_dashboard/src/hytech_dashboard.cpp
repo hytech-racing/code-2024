@@ -60,6 +60,18 @@ unsigned int generateSeed() {
 
     // Use analog input value
     seed ^= analogRead(PA3);
+    seed ^= analogRead(PA2);
+    seed ^= analogRead(PA1);
+    // seed ^= analogRead(PA0);
+    // seed ^= analogRead(PB0);
+    // seed ^= analogRead(PB1);
+    // seed ^= analogRead(PB1);
+    // seed ^= analogRead(PB3);
+
+    uint32_t mem;
+    // memcpy(mem, 0x0, 4);
+    // seed ^= mem;
+
 
     // Add more sources of variability as needed
 
