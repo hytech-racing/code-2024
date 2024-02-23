@@ -26,9 +26,14 @@ void Dashboard_Controls::update(DashboardCAN* CAN) {
     SerialUSB.println("Start button pressed.");
   }
 
-  if (btn_led_dimmer.isPressed() && dimmer.check()) {
+  if (btn_led_dimmer.isPressed() && dimmer_timer.check()) {
     hytech_dashboard::getInstance()->dim_neopixels();
-    dimmer.reset();
+    dimmer_timer.reset();
+  }
+
+  if (btn_mark.isPressed() && page_switch_timer.check()) {
+    hytech_dashboard::getInstance()->increment_page();
+    page_switch_timer.reset();
   }
 
   DASHBOARD_STATE_t* s = &CAN->dash_state;
@@ -105,3 +110,5 @@ void Dashboard_Controls::update(DashboardCAN* CAN) {
   // }
   // CAN->dashboard_status.set_start_btn(btn_start.isPressed());
 }
+
+// mode 1, mode 2, endurance, launch

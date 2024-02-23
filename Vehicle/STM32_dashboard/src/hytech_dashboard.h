@@ -108,6 +108,12 @@ class hytech_dashboard {
          * Sets neopixel brightness. Can be used by other classes when the dimmer button is pressed.
         */
         void dim_neopixels();
+
+         /* handles increment and rollover for switching pages */
+        void increment_page();
+
+        /* handles decrement and rollover for switching pages*/
+        void decrement_page();
     
     private:
         // Private constructor to prevent external instantiation
@@ -141,6 +147,8 @@ class hytech_dashboard {
 
         uint8_t current_brightness = MIN_BRIGHTNESS;
 
+        int page_offset = -4;
+
         /* Displays the clock and times in m:s.ms format based on the number of milliseconds*/
         void format_millis(String label, uint32_t time);
         
@@ -159,7 +167,7 @@ class hytech_dashboard {
         void draw_battery_bar(int percent);
 
         /* helper function that draws quadrants on the display for tire/suspension data */
-        void draw_quadrants();
+        void draw_quadrants(String text);
 
         /*!
             Draws the lap times page on the display. This function keeps track of the state
@@ -187,14 +195,9 @@ class hytech_dashboard {
         /* resets the clock back to current time*/
         void restart_current_timer();
 
-        /* handles increment and rollover for switching pages */
-        void increment_page();
-
-        /* handles decrement and rollover for switching pages*/
-        void decrement_page();
 
         /* helper for displaying data in quadrants, sets the print cursor, based on the seleceted quadrant */
-        void set_cursor(uint8_t quadrant);
+        void set_cursor_in_quadrant(uint8_t quadrant, int vertical_offset);
 
         /*!
             Draws tire data on the display. Similar to the suspension data, this function segments the display

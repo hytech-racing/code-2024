@@ -208,9 +208,6 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     //     _display.refresh();
     // }
 
-
-    current_page = 0;
-
     switch(current_page) {
         case 0:
             show_lap_times(&(CAN->lap_times), &(CAN->driver_msg));
@@ -346,24 +343,24 @@ String hytech_dashboard::twoDigits(int number) {
 
 void hytech_dashboard::display_suspension_data(MCU_LOAD_CELLS_t* front_load_cells, SAB_LOAD_CELLS_t* rear_load_cells) {
     
-    draw_quadrants();
+    draw_quadrants("Suspension");
 
-    set_cursor(1);
+    set_cursor_in_quadrant(1, 20);
     _display.print("FR: ");
     _display.println(front_load_cells->FR_load_cell);
-    set_cursor(2);
+    set_cursor_in_quadrant(2, 20);
     _display.print("FL: ");
     _display.println(front_load_cells->FL_load_cell);
-    set_cursor(3);
+    set_cursor_in_quadrant(3, 20);
     _display.print("RL: ");
     _display.println(rear_load_cells->RL_load_cell);
-    set_cursor(4);
+    set_cursor_in_quadrant(4, 20);
     _display.print("RR: ");
     _display.println(rear_load_cells->RR_load_cell);
 }
 
 void hytech_dashboard::display_tire_data() {
-    draw_quadrants();
+    draw_quadrants("Tire Data");
 }
 
 void hytech_dashboard::display_speeds() {
@@ -392,34 +389,48 @@ void hytech_dashboard::display_segment_voltages(BMS_VOLTAGES_t* voltages) {
 }
 
 void hytech_dashboard::display_error() {
-    set_cursor(2);
+    // set_cursor_in_quadrant(2);
     // _display.fillRoundRect();
     _display.print("Error");
 }
 
 /* DISPLAY HELPER FUNCTIONS */
 
-void hytech_dashboard::draw_quadrants() {
-    _display.drawLine(160, 40, 160, 200, BLACK);
-    _display.drawLine(50, 120, 270, 120, BLACK);
+void hytech_dashboard::draw_quadrants(String text) {
+    _display.setCursor(50, 68);
+    _display.setTextColor(BLACK);
+    _display.setTextSize(1);
+    _display.setFont(&FreeSansBold12pt7b);
+    _display.print(text);
+    _display.setFont(&FreeSans12pt7b);
+
+    // vertical lines
+    _display.drawLine(160, 75+page_offset, 160, 215+page_offset, BLACK); // middle vertical line
+    _display.drawLine(50, 75+page_offset, 50, 215+page_offset, BLACK); // left vertical line
+    _display.drawLine(270, 75+page_offset, 270, 215+page_offset, BLACK); // right vertical line
+
+    // horizontal lines
+    _display.drawLine(50, 145+page_offset, 270, 145+page_offset, BLACK); // middle horizontal line
+    _display.drawLine(50, 75+page_offset, 270, 75+page_offset, BLACK); // top horizontal line
+    _display.drawLine(50, 215+page_offset, 270, 215+page_offset, BLACK); // bottom horizontal line
 }
 
 
-void hytech_dashboard::set_cursor(uint8_t quadrant) {
+void hytech_dashboard::set_cursor_in_quadrant(uint8_t quadrant, int vertical_offset) {
     _display.setTextSize(1);
     _display.setTextColor(BLACK);
     switch(quadrant) {
         case 1:
-            _display.setCursor(210,40);
+            _display.setCursor(160,75+page_offset+vertical_offset);
             break;
         case 2:
-            _display.setCursor(43,40);
+            _display.setCursor(50,75+page_offset+vertical_offset);
             break;
         case 3:
-            _display.setCursor(43,130);
+            _display.setCursor(50,145+page_offset+vertical_offset);
             break;
         case 4:
-            _display.setCursor(210,130);
+            _display.setCursor(160,145+page_offset+vertical_offset);
             break;
     }
 }

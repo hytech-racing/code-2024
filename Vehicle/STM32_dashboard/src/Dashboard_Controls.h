@@ -46,6 +46,7 @@ class Dashboard_Controls {
 
 
         bool previousState = false;
-        Metro dimmer = Metro(200);
+        Metro dimmer_timer = Metro(200);
+        Metro page_switch_timer = Metro(200);
         
 };
