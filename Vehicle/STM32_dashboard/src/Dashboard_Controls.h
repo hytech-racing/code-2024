@@ -14,12 +14,12 @@
 #define BUZZER_PIN PC13
 // Dial pin definition
 #define DIAL_SIZE 6
-#define DIAL_ENDURANCE PB12
+#define DIAL_MODE_ZERO PB12
 #define DIAL_MODE_ONE PB13
 #define DIAL_MODE_TWO PB14
-#define DIAL_LAUNCH_CONTROL PB15
-#define DIAL_SKIDPAD PC6
-#define DIAL_AUTOCROSS PC7
+#define DIAL_MODE_THREE PB15
+#define DIAL_MODE_FIVE PC7
+#define DIAL_MODE_FOUR PC6
 
 class DashboardCAN;
 class Dashboard_Controls {
@@ -41,8 +41,8 @@ class Dashboard_Controls {
         DebouncedButton btn_right_shifter;
     private:
         // walker trolled again
-        int dial_pins[DIAL_SIZE] = {DIAL_MODE_ONE, DIAL_MODE_TWO, DIAL_LAUNCH_CONTROL, DIAL_AUTOCROSS, DIAL_ENDURANCE, DIAL_SKIDPAD};
-        String DIAL_MODES[DIAL_SIZE] = {"DIAL_MODE_ONE", "DIAL_MODE_TWO", "DIAL_LAUNCH_CONTROL", "DIAL_AUTOCROSS", "DIAL_ENDURANCE", "DIAL_SKIDPAD"};
+        int dial_pins[DIAL_SIZE] = {DIAL_MODE_ZERO, DIAL_MODE_ONE, DIAL_MODE_TWO, DIAL_MODE_THREE,DIAL_MODE_FOUR, DIAL_MODE_FIVE};
+        String DIAL_MODES[DIAL_SIZE] = {"DIAL_MODE_ZERO", "DIAL_MODE_ONE", "DIAL_MODE_TWO", "DIAL_MODE_THREE", "DIAL_MODE_FOUR", "DIAL_FIVE"};
 
 
         bool previousState = false;
@@ -50,3 +50,6 @@ class Dashboard_Controls {
         Metro page_switch_timer = Metro(200);
         
 };
+
+
+// 4, 0,1,2, 5,3,
