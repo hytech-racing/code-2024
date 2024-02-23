@@ -14,6 +14,9 @@ void Dashboard_Controls::startup() {
 
     pinMode(BUZZER_PIN, OUTPUT);
 
+    for (int i = 0; i < DIAL_SIZE; i++){
+      pinMode(i, INPUT_PULLUP);
+    }
 }
 
 void Dashboard_Controls::update(DashboardCAN* CAN) {
@@ -42,6 +45,16 @@ void Dashboard_Controls::update(DashboardCAN* CAN) {
   s->left_shifter_button = btn_left_shifter.isPressed();
 
   s->right_shifter_button = btn_right_shifter.isPressed();
+
+  for(int i = 0; i < DIAL_SIZE; i++){
+    int pin_read = digitalRead(dial_pins[i]);
+    SerialUSB.printf("%d:%d ", i, pin_read);
+    // if (!pin_read) {
+    //   s->dial_state = DIAL_MODES(i);
+    //   break;
+    // }
+  }
+  SerialUSB.println("");
 
   
   digitalWrite(BUZZER_PIN, CAN->dash_mcu_state.drive_buzzer);

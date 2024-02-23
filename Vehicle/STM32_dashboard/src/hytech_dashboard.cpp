@@ -363,7 +363,6 @@ void hytech_dashboard::display_speeds() {
     _display.println("Pedals:");
     _display.setCursor(40, _display.getCursorY());
     _display.println("Current: ");
-    _display.refresh();
 }
         
 void hytech_dashboard::display_segment_voltages(BMS_VOLTAGES_t* voltages) {
