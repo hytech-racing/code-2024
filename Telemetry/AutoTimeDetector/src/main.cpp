@@ -31,7 +31,7 @@ int main() {
 
     std::vector<Point> positions;
     Grapher grapher;
-    CircleChecker circleChecker(positions, grapher);
+    CircleChecker circleChecker(grapher);
     CoordinateConverter conv;
 
     MqttGpsCallback mqttCallback(positions, conv, circleChecker);

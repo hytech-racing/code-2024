@@ -1,18 +1,12 @@
 # ninja log v5
-0	114	1707084207143713706	build.ninja	be0cdbf95a7fcb9
-24	2385	1707084088718829086	CMakeFiles/AutoTimeDetector.dir/src/Grapher.cpp.o	3713364e942721e
 0	8	0	clean	68e478471b08b796
-22	2458	1707084088797205196	CMakeFiles/AutoTimeDetector.dir/src/MqttGpsCallback.cpp.o	6a5dce81b296f844
-2111	2222	1706492930061654942	AutoTimeDetector	e36dbc4dde55b0d6
-23	2094	1707084088432359699	CMakeFiles/AutoTimeDetector.dir/src/CoordinateConverter.cpp.o	b42490279c8c50a1
+8	1050	1707091095721206345	CMakeFiles/AutoTimeDetector.dir/src/MqttGpsCallback.cpp.o	6a5dce81b296f844
+58	2263	1707084570052125322	CMakeFiles/AutoTimeDetector.dir/src/Grapher.cpp.o	3713364e942721e
+0	114	1708657250783963163	build.ninja	be0cdbf95a7fcb9
+1050	1130	1707091095808196472	AutoTimeDetector	61501c6154777419
+57	1285	1707084569075913691	CMakeFiles/AutoTimeDetector.dir/src/CoordinateConverter.cpp.o	b42490279c8c50a1
 3	2034	1706832176985389655	CMakeFiles/AutoTimeDetector.dir/src/supportLib.cpp.o	f235859d98754c66
 3	2444	1706832177410441319	CMakeFiles/AutoTimeDetector.dir/src/pbPlots.cpp.o	4165bc19460f6794
-21	2864	1707084089206511566	CMakeFiles/AutoTimeDetector.dir/src/main.cpp.o	59e3d952e1129565
-12	1532	1707084163021415203	CMakeFiles/AutoTimeDetector.dir/src/CircleChecker.cpp.o	a008aa8af8991900
-57	1285	1707084569075913691	CMakeFiles/AutoTimeDetector.dir/src/CoordinateConverter.cpp.o	b42490279c8c50a1
-59	1705	1707084569497603079	CMakeFiles/AutoTimeDetector.dir/src/math.cpp.o	bd8ad45afdc1cb28
-59	1846	1707084569640157277	CMakeFiles/AutoTimeDetector.dir/src/CircleChecker.cpp.o	a008aa8af8991900
-58	2263	1707084570052125322	CMakeFiles/AutoTimeDetector.dir/src/Grapher.cpp.o	3713364e942721e
-56	2266	1707084570053571106	CMakeFiles/AutoTimeDetector.dir/src/MqttGpsCallback.cpp.o	6a5dce81b296f844
-55	2803	1707084570595045104	CMakeFiles/AutoTimeDetector.dir/src/main.cpp.o	59e3d952e1129565
-2803	2954	1707084570758980952	AutoTimeDetector	61501c6154777419
+13	1342	1707090337061621268	CMakeFiles/AutoTimeDetector.dir/src/main.cpp.o	59e3d952e1129565
+9	807	1707091095480569211	CMakeFiles/AutoTimeDetector.dir/src/CircleChecker.cpp.o	a008aa8af8991900
+8	2006	1707089329371410492	CMakeFiles/AutoTimeDetector.dir/src/math.cpp.o	bd8ad45afdc1cb28

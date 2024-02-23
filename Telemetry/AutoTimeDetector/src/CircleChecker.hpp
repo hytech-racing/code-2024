@@ -12,15 +12,13 @@ private:
     const double CIRCLE_RADIUS = 7.5;
     const double MAX_RADIUS_ERROR = 2;
 
-    std::vector<Point> positions;
-
     Grapher grapher;
 
 public:
 
-    CircleChecker(std::vector<Point> &positions, Grapher &grapher);
+    CircleChecker(Grapher &grapher);
 
-    void circle_check();
+    void circle_check(std::vector<Point> &positions);
 
 };
 

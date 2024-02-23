@@ -101,14 +101,20 @@ math::Circle math::least_squares_circle_fit(std::vector<Point> &positions, int b
     return {u_c + x_bar, v_c + y_bar, r};
 }
 
-double math::delta_theta(math::Circle circle, Point p1, Point p2){
-    double theta1 = std::atan2(p1.y - circle.y, p1.x - circle.x);
-    double theta2 = std::atan2(p2.y - circle.y, p2.x - circle.x);
+//double math::delta_theta(math::Circle circle, Point p1, Point p2){
+//    double theta1 = std::atan2(p1.y - circle.y, p1.x - circle.x);
+//    double theta2 = std::atan2(p2.y - circle.y, p2.x - circle.x);
+//
+//    theta1 = fmod(theta1 + 2*M_PI, 2*M_PI);
+//    theta2 = fmod(theta2 + 2*M_PI, 2*M_PI);
+//    if(theta2 < theta1) theta2 += 2*M_PI;
+//
+//    double diff = theta2 - theta1;
+//    return (diff > M_PI) ? diff - M_PI : diff;
+//}
 
-    theta1 = fmod(theta1 + 2*M_PI, 2*M_PI);
-    theta2 = fmod(theta2 + 2*M_PI, 2*M_PI);
-    if(theta2 < theta1) theta2 += 2*M_PI;
-
-    double diff = theta2 - theta1;
-    return (diff > M_PI) ? diff - M_PI : diff;
+double math::delta_theta(math::Circle circle, Point p1, Point p2) {
+    double estimate_s = std::sqrt((p1.x-p2.x)*(p1.x-p2.x) + (p1.y-p2.y)*(p1.y-p2.y));
+    double theta = estimate_s/circle.radius;
+    return theta;
 }

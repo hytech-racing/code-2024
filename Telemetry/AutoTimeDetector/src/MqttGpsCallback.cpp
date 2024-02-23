@@ -17,9 +17,8 @@ void MqttGpsCallback::message_arrived(mqtt::const_message_ptr msg) {
                 conv.setReferenceLongitude(last_longitude);
                 reference_set = true;
             }
-//                std::cout << last_latitude << " " << last_longitude;
             positions.emplace_back(conv.gps_to_len(last_latitude, last_longitude));
-            circleChecker.circle_check();
+            circleChecker.circle_check(positions);
         }
     }
 }

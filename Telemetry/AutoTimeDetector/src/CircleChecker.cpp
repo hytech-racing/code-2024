@@ -2,9 +2,9 @@
 #include "math.hpp"
 #include <iostream>
 
-CircleChecker::CircleChecker(std::vector<Point> &positions, Grapher &grapher) : positions(positions), grapher(grapher) {}
+CircleChecker::CircleChecker(Grapher &grapher) : grapher(grapher) {}
 
-void CircleChecker::circle_check() {
+void CircleChecker::circle_check(std::vector<Point> &positions) {
     if (positions.size() < MIN_CHECK) {
         return;
     }
@@ -15,9 +15,8 @@ void CircleChecker::circle_check() {
 
         math::Circle circle = math::least_squares_circle_fit(positions, begin_idx);
 
-//        std::cout << circle.radius << std::endl;
         if(circle.radius < CIRCLE_RADIUS - MAX_RADIUS_ERROR || circle.radius > CIRCLE_RADIUS + MAX_RADIUS_ERROR){
-            grapher.graph(positions, begin_idx, circle, 0);
+//            grapher.graph(positions, begin_idx, circle, 0);
             break;
         }
         double total_delta = 0;
@@ -25,7 +24,7 @@ void CircleChecker::circle_check() {
             double dt = math::delta_theta(circle, positions[i], positions[i+1]);
             total_delta += dt;
         }
-        grapher.graph(positions, begin_idx, circle, total_delta);
+//        grapher.graph(positions, begin_idx, circle, total_delta);
         if(total_delta >= 2*M_PI || total_delta <= -2*M_PI){
             //circle completed
             Point final_pos = positions.back();

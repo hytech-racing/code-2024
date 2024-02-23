@@ -42,7 +42,7 @@ initialize_mqtt()
 time.sleep(0.1)
 
 data = []
-with open('test_data.csv', mode ='r') as file:    
+with open('test_data_2.csv', mode ='r') as file:    
        csvFile = csv.DictReader(file)
        for lines in csvFile:
             lineList = (list(lines.values()))
@@ -51,13 +51,13 @@ with open('test_data.csv', mode ='r') as file:
 
 index = 0
 while True:
-    name = input('Press Enter ')
+    time.sleep(.2)
     
-    if (index == 70):
+    if (index == 480):
          break
     index+=1
-    publish_data("MCU/GPS/longitude", data[index][0])
     publish_data("MCU/GPS/latitude", data[index][1])
+    publish_data("MCU/GPS/longitude", data[index][0])
     print(index)
     '''
     data =  randint(0, 20)

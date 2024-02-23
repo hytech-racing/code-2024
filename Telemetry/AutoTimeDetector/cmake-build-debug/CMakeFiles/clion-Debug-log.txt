@@ -1,4 +1,25 @@
-/Users/kevinlou/Applications/CLion.app/Contents/bin/cmake/mac/x64/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=/Users/kevinlou/Applications/CLion.app/Contents/bin/ninja/mac/x64/ninja -G Ninja -S /Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector -B /Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug
--- Configuring done (0.3s)
+/Users/kevinlou/Applications/CLion.app/Contents/bin/cmake/mac/x64/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=/Users/kevinlou/Applications/CLion.app/Contents/bin/ninja/mac/x64/ninja -DCMAKE_CXX_COMPILER=/usr/local/Cellar/gcc/13.2.0/bin/g++-13 -G Ninja -S /Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector -B /Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug
+-- The C compiler identification is AppleClang 15.0.0.15000100
+-- The CXX compiler identification is GNU 13.2.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Checking whether CXX compiler has -isysroot
+-- Checking whether CXX compiler has -isysroot - yes
+-- Checking whether CXX compiler supports OSX deployment target flag
+-- Checking whether CXX compiler supports OSX deployment target flag - yes
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/local/Cellar/gcc/13.2.0/bin/g++-13 - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found OpenSSL: /usr/local/Cellar/openssl@3/3.1.3/lib/libcrypto.dylib (found version "3.1.3")  
+-- Found PahoMqttC: /usr/local/lib/libpaho-mqtt3as.dylib  
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE  
+-- Configuring done (10.6s)
 -- Generating done (0.0s)
 -- Build files have been written to: /Users/kevinlou/Documents/GitHub/code-2024/Telemetry/AutoTimeDetector/cmake-build-debug
