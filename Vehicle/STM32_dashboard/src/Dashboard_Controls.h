@@ -1,5 +1,6 @@
 #include "DebouncedButton.h"
 #include "Metro.h"
+#include "Arduino.h"
 
 // Button pin definition
 #define BTN_START PC12
@@ -21,9 +22,6 @@
 #define DIAL_AUTOCROSS PC7
 
 class DashboardCAN;
-
-enum DIAL_MODES { MODE_ONE = 0, MODE_TWO = 1, ACCELERATION_LAUNCH_CONTROL = 2, SKIDPAD = 3, AUTOCROSS = 4, ENDURANCE = 5};
-
 class Dashboard_Controls {
     public:
         /*
@@ -42,9 +40,10 @@ class Dashboard_Controls {
         DebouncedButton btn_left_shifter;
         DebouncedButton btn_right_shifter;
     private:
-        DIAL_MODES dial_mode = MODE_ONE;
         // walker trolled again
         int dial_pins[DIAL_SIZE] = {DIAL_MODE_ONE, DIAL_MODE_TWO, DIAL_LAUNCH_CONTROL, DIAL_AUTOCROSS, DIAL_ENDURANCE, DIAL_SKIDPAD};
+        String DIAL_MODES[DIAL_SIZE] = {"DIAL_MODE_ONE", "DIAL_MODE_TWO", "DIAL_LAUNCH_CONTROL", "DIAL_AUTOCROSS", "DIAL_ENDURANCE", "DIAL_SKIDPAD"};
+
 
         bool previousState = false;
         Metro dimmer = Metro(200);
