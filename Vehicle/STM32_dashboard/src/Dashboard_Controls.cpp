@@ -49,13 +49,16 @@ void Dashboard_Controls::update(DashboardCAN* CAN) {
 
   for(int i = 0; i < DIAL_SIZE; i++){
     int pin_read = digitalRead(dial_pins[i]);
-    SerialUSB.printf("%d:%d ", i, pin_read);
+    // SerialUSB.printf("%d:%d ", i, pin_read);
+    if (!pin_read) {
+      SerialUSB.println(dial_pins[i]);
+    }
     // if (!pin_read) {
     //   s->dial_state = DIAL_MODES(i);
     //   break;
     // }
   }
-  SerialUSB.println("");
+  // SerialUSB.println("");
 
   
   digitalWrite(BUZZER_PIN, CAN->dash_mcu_state.drive_buzzer);

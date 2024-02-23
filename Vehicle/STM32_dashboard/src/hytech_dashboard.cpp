@@ -68,7 +68,7 @@ unsigned int generateSeed() {
     // seed ^= analogRead(PB1);
     // seed ^= analogRead(PB3);
 
-    uint32_t mem;
+    // uint32_t mem;
     // memcpy(mem, 0x0, 4);
     // seed ^= mem;
 

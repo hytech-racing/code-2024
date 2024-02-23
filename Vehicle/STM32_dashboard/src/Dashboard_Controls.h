@@ -13,12 +13,12 @@
 #define BUZZER_PIN PC13
 // Dial pin definition
 #define DIAL_SIZE 6
+#define DIAL_ENDURANCE PB12
 #define DIAL_MODE_ONE PB13
 #define DIAL_MODE_TWO PB14
 #define DIAL_LAUNCH_CONTROL PB15
 #define DIAL_SKIDPAD PC6
 #define DIAL_AUTOCROSS PC7
-#define DIAL_ENDURANCE PB12
 
 class DashboardCAN;
 
@@ -43,7 +43,8 @@ class Dashboard_Controls {
         DebouncedButton btn_right_shifter;
     private:
         DIAL_MODES dial_mode = MODE_ONE;
-        int dial_pins[DIAL_SIZE] = {DIAL_MODE_ONE, DIAL_MODE_TWO, DIAL_LAUNCH_CONTROL, DIAL_AUTOCROSS, DIAL_ENDURANCE};
+        // walker trolled again
+        int dial_pins[DIAL_SIZE] = {DIAL_MODE_ONE, DIAL_MODE_TWO, DIAL_LAUNCH_CONTROL, DIAL_AUTOCROSS, DIAL_ENDURANCE, DIAL_SKIDPAD};
 
         bool previousState = false;
         Metro dimmer = Metro(200);
