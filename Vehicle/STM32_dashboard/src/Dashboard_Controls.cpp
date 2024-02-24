@@ -54,7 +54,6 @@ void Dashboard_Controls::update(DashboardCAN* CAN) {
 
   for(int i = 0; i < DIAL_SIZE; i++){
     int pin_read = digitalRead(dial_pins[i]);
-    // SerialUSB.printf("%d:%d ", i, pin_read);
     if (!pin_read) {
       SerialUSB.print(dial_pins[i]);
       SerialUSB.print(": ");
@@ -110,5 +109,3 @@ void Dashboard_Controls::update(DashboardCAN* CAN) {
   // }
   // CAN->dashboard_status.set_start_btn(btn_start.isPressed());
 }
-
-// mode 1, mode 2, endurance, launch

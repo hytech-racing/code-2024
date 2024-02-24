@@ -547,6 +547,8 @@ void hytech_dashboard::refresh_neopixels(DashboardCAN* CAN) {
         set_neopixel_color(LED_LIST_e::MC_ERR, CAN->dash_mcu_state.motor_controller_error_led);
         set_neopixel_color(LED_LIST_e::IMD, CAN->dash_mcu_state.imd_led);
         set_neopixel_color(LED_LIST_e::AMS, CAN->dash_mcu_state.ams_led);
+        set_neopixel_color(LED_LIST_e::GLV, 0);
+        set_neopixel_color(LED_LIST_e::CRIT_CHARGE, 0);
         
         _neopixels.show();
         CAN->mcu_state_update = false;
