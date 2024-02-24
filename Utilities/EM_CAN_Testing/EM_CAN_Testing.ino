@@ -27,17 +27,24 @@ void setup() {
 void loop() {
   ENERGY_METER_CAN.events();
   // Serial.println("Receive test");
- while (ENERGY_METER_CAN.read(msg)) { // Receive a message on CAN
-   if (msg.id == ID_EM_MEASUREMENT) {
-       Serial.print("Received 0x");
-       Serial.print(msg.id, HEX);
-       Serial.print(": ");
-       for (unsigned int i = 0; i < msg.len; i++) {
-           Serial.print(msg.buf[i], HEX);
-           Serial.print(" ");
-       }
-       Serial.println();
-   }
+// while (ENERGY_METER_CAN.read(msg)) { // Receive a message on CAN
+//   if (msg.id == ID_EM_MEASUREMENT) {
+//       Serial.print("Received 0x");
+//       Serial.print(msg.id, HEX);
+//       Serial.print(": ");
+//       for (unsigned int i = 0; i < msg.len; i++) {
+//           Serial.print(msg.buf[i], HEX);
+//           Serial.print(" ");
+//       }
+//       Serial.println();
+//   }
+
+  if (print_timer.check()) {
+    Serial.print("Voltage: ");
+    Serial.println((float)(em_measurement.get_voltage() / 65535.0));
+    Serial.print("Current: ");
+    Serial.println((float)(em_measurement.get_current() / 65535.0));
+    Serial.println();
  }
 
   // Serial.println();
