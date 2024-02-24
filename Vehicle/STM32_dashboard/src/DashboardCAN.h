@@ -52,6 +52,7 @@ class DashboardCAN {
         MCU_PEDAL_READINGS_t mcu_pedal_readings;
         MCU_LOAD_CELLS_t mcu_load_cells;
         SAB_LOAD_CELLS_t sab_load_cells;
+        MC1_STATUS_t mc1_status;
         
         TCU_LAP_TIMES_t lap_times;
         TCU_DRIVER_MSG_t driver_msg;

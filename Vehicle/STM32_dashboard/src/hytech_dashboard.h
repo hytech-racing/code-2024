@@ -72,8 +72,6 @@ class MCU_load_cells;
 */
 class hytech_dashboard {
     public:
-        int i = 0;
-        bool forward = true;
         /*!
             Returns the reference to the hytech_dashboard singleton class.
             @return hytech_dashboard pointer to the singleton
@@ -208,7 +206,7 @@ class hytech_dashboard {
         */
         void display_tire_data();
 
-        void display_speeds(int i);
+        void display_speeds(MC1_STATUS_t* mc1_status);
         void display_segment_voltages();
 
         void display_error();

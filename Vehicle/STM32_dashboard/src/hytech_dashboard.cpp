@@ -187,29 +187,21 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     _display.drawBitmap(0,0, epd_bitmap_hytech_dashboard, 320, 240, BLACK);
 
 
-    // draw_vertical_pedal_bar(CAN->mcu_pedal_readings.accel_pedal_1, 17);
-    // draw_vertical_pedal_bar(CAN->mcu_pedal_readings.accel_pedal_1, 285);
+    /** TODO: scale these values down to [0,100]*/
+    draw_vertical_pedal_bar(CAN->mcu_pedal_readings.accel_pedal_1, 17);
+    draw_vertical_pedal_bar(CAN->mcu_pedal_readings.brake_pedal_1, 285);
 
-    draw_vertical_pedal_bar(i, 17);
-    draw_vertical_pedal_bar(100-i, 285);
-    draw_battery_bar(i);
-    draw_regen_bar(i);
-    draw_current_draw_bar(i);
-    if (forward) {
-        i+=1;
-    } else {
-        i-=1;
-    }
-    if (forward && i == 100) {
-        forward = false;
-    } else if (!forward && i == 0) {
-        forward = true;
-    }
+    /** TODO: add real data to these bars*/
+    draw_battery_bar(0);
+    draw_regen_bar(0);
+    draw_current_draw_bar(0);
+
+    /** TODO: only show this if GPS lock present (use CAN message when it exists)*/
     _display.drawBitmap(270-27, 40, epd_bitmap_gps, 27, 27, BLACK);
 
     switch(current_page) {
         case 0:
-            display_speeds(i);
+            display_speeds(&(CAN->mc1_status));
             break;
         case 1:
             display_suspension_data(&(CAN->mcu_load_cells), &(CAN->sab_load_cells));
@@ -413,11 +405,12 @@ void hytech_dashboard::display_tire_data() {
     _display.setFont(&FreeSans12pt7b);
 }
 
-void hytech_dashboard::display_speeds(int i) {
+void hytech_dashboard::display_speeds(MC1_STATUS_t* mc1_status) {
     _display.setFont(&FreeSans24pt7b);
     _display.setTextSize(2);
     _display.setCursor(100, 160);
-    _display.println(twoDigits(i));
+    /** TODO: convert from RPM to MPH*/
+    _display.println(twoDigits(mc1_status->speed_rpm));
     _display.setTextSize(1);
     _display.setFont(&FreeSans12pt7b);
     _display.setCursor(125, 185);

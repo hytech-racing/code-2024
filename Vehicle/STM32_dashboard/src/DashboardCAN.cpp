@@ -69,6 +69,11 @@ void DashboardCAN::read_CAN()
       Unpack_TCU_DRIVER_MSG_ht_can(&driver_msg, _msg.buf, NULL);
       break;
 
+    case MC1_STATUS_CANID:
+      SerialUSB.println("Received MC1 status message");
+      Unpack_MC1_STATUS_ht_can(&mc1_status, _msg.buf, NULL);
+      break;
+
     case DASHBOARD_MCU_STATE_CANID:
       // SerialUSB.println("Received mcu state");
       // compare cached CAN message of same type to incoming message
