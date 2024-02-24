@@ -42,6 +42,10 @@ class Dashboard_Controls {
     private:
         // walker trolled again
         int dial_pins[DIAL_SIZE] = {DIAL_MODE_ZERO, DIAL_MODE_ONE, DIAL_MODE_TWO, DIAL_MODE_THREE,DIAL_MODE_FOUR, DIAL_MODE_FIVE};
+        
+        /**
+         * replace values in this array with the actual modesthat we will use
+        */
         String DIAL_MODES[DIAL_SIZE] = {"DIAL_MODE_ZERO", "DIAL_MODE_ONE", "DIAL_MODE_TWO", "DIAL_MODE_THREE", "DIAL_MODE_FOUR", "DIAL_FIVE"};
 
 

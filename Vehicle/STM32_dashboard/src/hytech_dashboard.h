@@ -27,7 +27,7 @@
 #define NEOPIXEL_PIN PC14
 #define NEOPIXEL_COUNT 12
 
-#define NUM_PAGES 2
+#define NUM_PAGES 5
 
 #define MAX_BRIGHTNESS 255
 #define MIN_BRIGHTNESS 20
@@ -154,6 +154,8 @@ class hytech_dashboard {
         
         /* helper function for format_millis that keeps all numbers at two digits*/
         String twoDigits(int number);
+
+        void draw_page_title(String text);
         
         /* helper function that draws the pedal bar */
         void draw_vertical_pedal_bar(int val, int initial_x_coord);
