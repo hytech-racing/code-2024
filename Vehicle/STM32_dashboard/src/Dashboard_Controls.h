@@ -54,6 +54,3 @@ class Dashboard_Controls {
         Metro page_switch_timer = Metro(200);
         
 };
-
-
-// 4, 0,1,2, 5,3,

@@ -170,6 +170,7 @@ class hytech_dashboard {
 
         /* helper function that draws quadrants on the display for tire/suspension data */
         void draw_quadrants(String text);
+        void draw_hexant(String text);
 
         /*!
             Draws the lap times page on the display. This function keeps track of the state
@@ -207,8 +208,8 @@ class hytech_dashboard {
         */
         void display_tire_data();
 
-        void display_speeds();
-        void display_segment_voltages(BMS_VOLTAGES_t* voltages);
+        void display_speeds(int i);
+        void display_segment_voltages();
 
         void display_error();
 

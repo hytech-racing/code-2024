@@ -5,6 +5,8 @@
 #include <fstream>
 #include <Fonts/FreeSans12pt7b.h>
 #include <Fonts/FreeSansBold12pt7b.h>
+#include <Fonts/FreeSans9pt7b.h>
+#include <Fonts/FreeSans24pt7b.h>
 
 // Definition of display and neopixel globals
 // For some reason, code complains when these are defined in the header file
@@ -145,13 +147,14 @@ void hytech_dashboard::startup() {
     std::uniform_int_distribution<> dis(1, 100000);
     int randomNumber = dis(gen);
 
-    String greeting = greetings[randomNumber % NUMBER_OF_MESSAGES];
+    // String greeting = greetings[randomNumber % NUMBER_OF_MESSAGES];
+    String greeting = "Undefeated";
     int length = greeting.length();
     _display.setCursor(hytech_logo_x-length*3, hytech_logo_y + hytech_logo_size + 30);
     _display.setTextColor(BLACK);
     _display.setTextSize(1);
     srand(micros());
-    _display.println(greetings[randomNumber % NUMBER_OF_MESSAGES]);
+    _display.println(greeting);
     _display.refresh();
 
     delay(5000);
@@ -204,18 +207,11 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     }
     _display.drawBitmap(270-27, 40, epd_bitmap_gps, 27, 27, BLACK);
 
-    // for (int i = 100; i >= 0; i -= 3) {
-    //     draw_vertical_pedal_bar(i, 17);
-    //     _display.refresh();
-    // }
-
     switch(current_page) {
         case 0:
-            show_lap_times(&(CAN->lap_times), &(CAN->driver_msg));
+            display_speeds(i);
             break;
         case 1:
-            // suspension
-            // loadcell, pot
             display_suspension_data(&(CAN->mcu_load_cells), &(CAN->sab_load_cells));
             break;
         case 2:
@@ -224,13 +220,10 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
             display_tire_data();
             break;
         case 3:
-            // groundspeed, wheelspeed/rpm, other useful stuff, current draw
-            // raw pedal value
-            // icon gps lock
-            display_speeds();
+            show_lap_times(&(CAN->lap_times), &(CAN->driver_msg));
             break;
         case 4:
-            display_segment_voltages(&(CAN -> bms_voltages_received));
+            display_segment_voltages();
             break;
         default:
             display_error();
@@ -345,61 +338,95 @@ void hytech_dashboard::draw_page_title(String text) {
 void hytech_dashboard::display_suspension_data(MCU_LOAD_CELLS_t* front_load_cells, SAB_LOAD_CELLS_t* rear_load_cells) {
     
     draw_quadrants("Suspension");
+    _display.setFont(&FreeSans9pt7b);
 
+    // q1
     set_cursor_in_quadrant(1, 20);
-    _display.print("FR: ");
+    int x = _display.getCursorX();
+    _display.print("LD: ");
     _display.println(front_load_cells->FR_load_cell);
+    _display.setCursor(x, _display.getCursorY()-6);
+    _display.print("POT: 0");
+
+    // q2
     set_cursor_in_quadrant(2, 20);
-    _display.print("FL: ");
+    x = _display.getCursorX();
+    _display.print("LD: ");
     _display.println(front_load_cells->FL_load_cell);
+    _display.setCursor(x, _display.getCursorY()-6);
+    _display.print("POT: 0");
+
     set_cursor_in_quadrant(3, 20);
-    _display.print("RL: ");
+    x = _display.getCursorX();
+    _display.print("LD: ");
     _display.println(rear_load_cells->RL_load_cell);
+    _display.setCursor(x, _display.getCursorY()-6);
+    _display.print("POT: 0");
+
+
     set_cursor_in_quadrant(4, 20);
-    _display.print("RR: ");
+    x = _display.getCursorX();
+    _display.print("LD: ");
     _display.println(rear_load_cells->RR_load_cell);
+    _display.setCursor(x, _display.getCursorY()-6);
+    _display.print("POT: 0");
+
+    _display.setFont(&FreeSans12pt7b);
 }
 
 void hytech_dashboard::display_tire_data() {
     draw_quadrants("Tire Data");
+    // q1
     set_cursor_in_quadrant(1, 20);
-    _display.print("FR: ");
-    // _display.println(front_load_cells->FR_load_cell);
+
+    _display.setFont(&FreeSans9pt7b);
+
+    int x = _display.getCursorX();
+    _display.print("PRES: ");
+    _display.println("0");
+    _display.setCursor(x, _display.getCursorY()-6);
+    _display.print("TEMP: 0");
+
+    // q2
     set_cursor_in_quadrant(2, 20);
-    _display.print("FL: ");
-    // _display.println(front_load_cells->FL_load_cell);
+    x = _display.getCursorX();
+    _display.print("PRES: ");
+    _display.println("0");
+    _display.setCursor(x, _display.getCursorY()-6);
+    _display.print("TEMP: 0");
+
     set_cursor_in_quadrant(3, 20);
-    _display.print("RL: ");
-    // _display.println(rear_load_cells->RL_load_cell);
+    x = _display.getCursorX();
+    _display.print("PRES: ");
+    _display.println("0");
+    _display.setCursor(x, _display.getCursorY()-6);
+    _display.print("TEMP: 0");
+
+
     set_cursor_in_quadrant(4, 20);
-    _display.print("RR: ");
-    // _display.println(rear_load_cells->RR_load_cell);
+    x = _display.getCursorX();
+    _display.print("PRES: ");
+    _display.println("0");
+    _display.setCursor(x, _display.getCursorY()-6);
+    _display.print("TEMP: 0");
+
+    _display.setFont(&FreeSans12pt7b);
 }
 
-void hytech_dashboard::display_speeds() {
-    _display.setCursor(40, 70);
-    _display.setTextColor(BLACK);
+void hytech_dashboard::display_speeds(int i) {
+    _display.setFont(&FreeSans24pt7b);
+    _display.setTextSize(2);
+    _display.setCursor(100, 160);
+    _display.println(twoDigits(i));
     _display.setTextSize(1);
-    _display.println("Speed: ");
-    _display.setCursor(40, _display.getCursorY());
-    _display.println("Pedals:");
-    _display.setCursor(40, _display.getCursorY());
-    _display.println("Current: ");
+    _display.setFont(&FreeSans12pt7b);
+    _display.setCursor(125, 185);
+    _display.print("MPH");
+    _display.setFont(&FreeSans12pt7b);
 }
         
-void hytech_dashboard::display_segment_voltages(BMS_VOLTAGES_t* voltages) {
-    draw_page_title("Segment Voltages")
-    _display.setCursor(50, 70);
-    _display.setTextColor(BLACK);
-    _display.setTextSize(1);
-    _display.println("S1: ");
-    _display.setCursor(40, _display.getCursorY());
-    _display.println("S2: ");
-    _display.setCursor(40, _display.getCursorY());
-    _display.println("S3: ");
-    _display.setCursor(40, _display.getCursorY());
-    _display.println("S4: ");
-    _display.setCursor(40, _display.getCursorY());
+void hytech_dashboard::display_segment_voltages() {
+    draw_hexant("Segment Voltages");
 }
 
 void hytech_dashboard::display_error() {
@@ -423,6 +450,20 @@ void hytech_dashboard::draw_quadrants(String text) {
     _display.drawLine(50, 215+page_offset, 270, 215+page_offset, BLACK); // bottom horizontal line
 }
 
+void hytech_dashboard::draw_hexant(String text) {
+    int offset = 23;
+    draw_page_title(text);
+    // vertical lines
+    _display.drawLine(160, 75+page_offset, 160, 215+page_offset, BLACK); // middle vertical line
+    _display.drawLine(50, 75+page_offset, 50, 215+page_offset, BLACK); // left vertical line
+    _display.drawLine(270, 75+page_offset, 270, 215+page_offset, BLACK); // right vertical line
+
+    // horizontal lines
+    _display.drawLine(50, 75+page_offset, 270, 75+page_offset, BLACK); // top horizontal line
+    _display.drawLine(50, 215+page_offset, 270, 215+page_offset, BLACK); // bottom horizontal line
+    _display.drawLine(50, 145+page_offset-offset, 270, 145+page_offset-offset, BLACK); // middle horizontal line
+    _display.drawLine(50, 145+page_offset+offset, 270, 145+page_offset+offset, BLACK); // middle horizontal line
+}
 
 void hytech_dashboard::set_cursor_in_quadrant(uint8_t quadrant, int vertical_offset) {
     _display.setTextSize(1);
@@ -556,4 +597,9 @@ void hytech_dashboard::set_neopixel_color(LED_LIST_e led, uint8_t state) {
   skip splash screen
   random msgs
   speed page
+  gradient for
+  RAINBOW LED
+  pop-up msgs
+  launch inverting colors
+  ice spice
 */
