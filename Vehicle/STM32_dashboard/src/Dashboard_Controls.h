@@ -3,12 +3,12 @@
 #include "Arduino.h"
 
 // Button pin definition
-#define BTN_START PC12
-#define BTN_MARK PA8
+#define BTN_START PC9
+#define BTN_MARK PD2
 #define BTN_MC_CYCLE PC8
 // #define BTN_LAUNCH_CTRL 
-#define BTN_TORQUE_MODE PD2
-#define BTN_LED_DIMMER PC9
+#define BTN_TORQUE_MODE PA8
+#define BTN_LED_DIMMER PC12
 #define BTN_LEFT_SHIFTER PA10
 #define BTN_RIGHT_SHIFTER PA9
 #define BUZZER_PIN PC13
@@ -39,6 +39,8 @@ class Dashboard_Controls {
         DebouncedButton btn_led_dimmer;
         DebouncedButton btn_left_shifter;
         DebouncedButton btn_right_shifter;
+
+        int buttons[5] = {BTN_START, BTN_MARK, BTN_MC_CYCLE, BTN_TORQUE_MODE, BTN_LED_DIMMER};
     private:
         // walker trolled again
         int dial_pins[DIAL_SIZE] = {DIAL_MODE_ZERO, DIAL_MODE_ONE, DIAL_MODE_TWO, DIAL_MODE_THREE,DIAL_MODE_FOUR, DIAL_MODE_FIVE};

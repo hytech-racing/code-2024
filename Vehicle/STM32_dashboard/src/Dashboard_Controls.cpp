@@ -52,16 +52,23 @@ void Dashboard_Controls::update(DashboardCAN* CAN) {
 
   s->right_shifter_button = btn_right_shifter.isPressed();
 
-  for(int i = 0; i < DIAL_SIZE; i++){
-    int pin_read = digitalRead(dial_pins[i]);
-    if (!pin_read) {
-      SerialUSB.print(dial_pins[i]);
-      SerialUSB.print(": ");
-      SerialUSB.println(DIAL_MODES[i]);
-      s->dial_state = i;
-      break;
-    }
-  }
+  // for(int i = 0; i < DIAL_SIZE; i++){
+  //   int pin_read = digitalRead(dial_pins[i]);
+  //   if (!pin_read) {
+  //     SerialUSB.print(dial_pins[i]);
+  //     SerialUSB.print(": ");
+  //     SerialUSB.println(DIAL_MODES[i]);
+  //     s->dial_state = i;
+  //     break;
+  //   }
+  // }
+
+  // for (int i = 0; i < 5; i++) {
+  //   int pin_read = digitalRead(buttons[i]);
+  //   if (!pin_read) {
+  //     SerialUSB.println(buttons[i]);
+  //   }
+  // }
 
   digitalWrite(BUZZER_PIN, CAN->dash_mcu_state.drive_buzzer);
   s->drive_buzzer = CAN->dash_mcu_state.drive_buzzer;
