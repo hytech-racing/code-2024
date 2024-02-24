@@ -168,14 +168,14 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     // update neopixels
     refresh_neopixels(CAN);
 
-    // SerialUSB.print("BRB: ");
-    // SerialUSB.println(digitalRead(PB5));
+    SerialUSB.print("BRB: ");
+    SerialUSB.println(digitalRead(PB5));
 
-    // SerialUSB.print("BOTS: ");
-    // SerialUSB.println(digitalRead(PB6));
+    SerialUSB.print("BOTS: ");
+    SerialUSB.println(digitalRead(PB6));
 
-    // SerialUSB.print("INERTIA: ");
-    // SerialUSB.println(digitalRead(PB7));
+    SerialUSB.print("INERTIA: ");
+    SerialUSB.println(digitalRead(PB7));
 
     // add page to dashboard showing if shutdown tripped
 
