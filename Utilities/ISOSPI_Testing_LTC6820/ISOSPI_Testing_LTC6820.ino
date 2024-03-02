@@ -1,25 +1,27 @@
 #include <SPI.h>
 #include <Mcp320x.h>
 
-#define FL_CS    	10		   // SPI slave select
-#define FR_CS     2
+#define FL_CS    	33		   // SPI slave select
+#define FR_CS     29
+#define ADC_CS     34
 #define ADC_VREF    3300     // 3.3V Vref
 #define ADC_CLK     1000000  // SPI clock 1.6MHz
 
-MCP3208 adc_fl(ADC_VREF, FL_CS);
+MCP3208 adc(ADC_VREF, ADC_CS);
 MCP3204 adc_fr(ADC_VREF, FR_CS);
+MCP3204 adc_fl(ADC_VREF, FL_CS);
 void setup() {
   // configure PIN mode
   pinMode(FR_CS, OUTPUT);
  pinMode(FL_CS, OUTPUT);
- pinMode(3, OUTPUT);
+ pinMode(ADC_CS, OUTPUT);
   
   
   // set initial PIN state
   digitalWrite(FL_CS, HIGH);
   digitalWrite(FR_CS, HIGH);
- digitalWrite(FL_CS, HIGH);
-  digitalWrite(3, HIGH);
+ digitalWrite(ADC_CS, HIGH);
+
   // initialize serial
   Serial.begin(115200);
 
@@ -38,13 +40,13 @@ void loop() {
    Serial.println("Reading...");
 
    t1 = micros();
-//  uint16_t accel1 = adc.read(MCP3204::Channel::SINGLE_0);
-//  uint16_t accel2 = adc.read(MCP3204::Channel::SINGLE_1);
-//  uint16_t brake1 = adc.read(MCP3204::Channel::SINGLE_2);
-//  uint16_t brake2 = adc.read(MCP3204::Channel::SINGLE_3);
+  uint16_t accel1 = adc.read(MCP3208::Channel::SINGLE_0);
+  uint16_t accel2 = adc.read(MCP3208::Channel::SINGLE_1);
+  uint16_t brake1 = adc.read(MCP3208::Channel::SINGLE_2);
+  uint16_t brake2 = adc.read(MCP3208::Channel::SINGLE_3);
 uint16_t FR_LC = adc_fr.read(MCP3204::Channel::SINGLE_2);
-//uint16_t FL_LC = adc_fl.read(MCP3208::Channel::SINGLE_2);
-uint16_t FL_LC = 0;
+uint16_t FL_LC = adc_fl.read(MCP3204::Channel::SINGLE_2);
+
   //uint16_t raw = analogRead(40);
    t2 = micros();
 
@@ -63,35 +65,35 @@ uint16_t fl = adc_fl.toAnalog(FL_LC);
    Serial.println(" mV)");
 
    // get analog value
-//   uint16_t acc1_val = adc.toAnalog(accel1);
-//   uint16_t acc2_val = adc.toAnalog(accel2);
-//   uint16_t  b1_val = adc.toAnalog(b1_val);
-//   uint16_t b2_val = adc.toAnalog(b2_val);
+   uint16_t acc1_val = adc.toAnalog(accel1);
+   uint16_t acc2_val = adc.toAnalog(accel2);
+   uint16_t  b1_val = adc.toAnalog(b1_val);
+   uint16_t b2_val = adc.toAnalog(b2_val);
 
 //   // readed value
-//   Serial.print("accel1 value: ");
-//   Serial.print(accel1);
-//   Serial.print(" (");
-//   Serial.print(acc1_val);
-//   Serial.println(" mV)");
+   Serial.print("accel1 value: ");
+   Serial.print(accel1);
+   Serial.print(" (");
+   Serial.print(acc1_val);
+   Serial.println(" mV)");
 //
-//   Serial.print("accel2 value: ");
-//   Serial.print(accel2);
-//   Serial.print(" (");
-//   Serial.print(acc2_val);
-//   Serial.println(" mV)");
-//
-//Serial.print("brake1 value: ");
-//   Serial.print(brake1);
-//   Serial.print(" (");
-//   Serial.print(b1_val);
-//   Serial.println(" mV)");
-//
-//Serial.print("brake2 value: ");
-//   Serial.print(brake2);
-//   Serial.print(" (");
-//   Serial.print(b2_val);
-//   Serial.println(" mV)");
+   Serial.print("accel2 value: ");
+   Serial.print(accel2);
+   Serial.print(" (");
+   Serial.print(acc2_val);
+   Serial.println(" mV)");
+
+Serial.print("brake1 value: ");
+   Serial.print(brake1);
+   Serial.print(" (");
+   Serial.print(b1_val);
+   Serial.println(" mV)");
+
+Serial.print("brake2 value: ");
+   Serial.print(brake2);
+   Serial.print(" (");
+   Serial.print(b2_val);
+   Serial.println(" mV)");
 
 
    // sampling time

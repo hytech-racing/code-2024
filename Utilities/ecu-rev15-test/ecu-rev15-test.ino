@@ -5,7 +5,10 @@ Metro timer_watchdog_timer = Metro(10);
 
 void setup() {
   pinMode(BRAKE_LIGHT_CTRL, OUTPUT);
-
+  pinMode(FR_CS, OUTPUT);
+  pinMode(FL_CS, OUTPUT);
+  pinMode(ADC_CS, OUTPUT);
+  
   // change to input if comparator is PUSH PULL
   pinMode(INVERTER_EN, OUTPUT);
   pinMode(INVERTER_24V_EN, OUTPUT);
@@ -19,6 +22,9 @@ void setup() {
   digitalWrite(SOFTWARE_OK, HIGH);
   digitalWrite(INVERTER_24V_EN, HIGH);
   digitalWrite(INVERTER_EN, HIGH);
+  digitalWrite(FR_CS, HIGH);
+  digitalWrite(FL_CS, HIGH);
+  digitalWrite(ADC_CS, HIGH);
   delay(5000);
 
 }
