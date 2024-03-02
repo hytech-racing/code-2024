@@ -20,12 +20,13 @@ DashboardCAN::DashboardCAN(STM32_CAN* CAN)
 void DashboardCAN::read_CAN()
 {
   while (_CAN->read(_msg)) {
-    // SerialUSB.println("message received");
+    // SerialUSB.printf("message received %d\n", _msg.id);
     // parse message based on ID
     switch (_msg.id) {
 
     case MCU_STATUS_CANID:
-      Unpack_MCU_STATUS_ht_can(&mcu_status, _msg.buf, NULL);
+      // SerialUSB.println("Received MCU Status Reading");
+      Unpack_MCU_STATUS_ht_can(&mcu_status, _msg.buf, _msg.len);
       // reset heartbeat timer if message received from ECU
       heartbeat_timer.reset();
       heartbeat_timer.interval(MCU_HEARTBEAT_TIMEOUT);
@@ -33,45 +34,45 @@ void DashboardCAN::read_CAN()
       break;
 
     case MCU_ANALOG_READINGS_CANID:
-      Unpack_MCU_ANALOG_READINGS_ht_can(&mcu_analog_readings, _msg.buf, NULL);
+      Unpack_MCU_ANALOG_READINGS_ht_can(&mcu_analog_readings, _msg.buf, _msg.len);
       heartbeat_timer.reset();
       heartbeat_timer.interval(MCU_HEARTBEAT_TIMEOUT);
       // mcu_analog_readings_received();
       break;
 
     case BMS_VOLTAGES_CANID:
-      Unpack_BMS_VOLTAGES_ht_can(&bms_voltages, _msg.buf, NULL);
+      Unpack_BMS_VOLTAGES_ht_can(&bms_voltages, _msg.buf, _msg.len);
       // include bms timer
       // bms_voltages_received();
       break;
 
     case MCU_PEDAL_READINGS_CANID:
-      SerialUSB.println("Received MCU Pedal Reading");
-      Unpack_MCU_PEDAL_READINGS_ht_can(&mcu_pedal_readings, _msg.buf, NULL);
+      // SerialUSB.println("Received MCU Pedal Reading");
+      Unpack_MCU_PEDAL_READINGS_ht_can(&mcu_pedal_readings, _msg.buf, _msg.len);
       break;
 
     case MCU_LOAD_CELLS_CANID:
-      SerialUSB.println("Received MCU Load Cells");
-      Unpack_MCU_LOAD_CELLS_ht_can(&mcu_load_cells, _msg.buf, NULL);
+      // SerialUSB.println("Received MCU Load Cells");
+      Unpack_MCU_LOAD_CELLS_ht_can(&mcu_load_cells, _msg.buf, _msg.len);
       break;
 
     case SAB_LOAD_CELLS_CANID:
-      SerialUSB.println("Received SAB Load Cells");
-      Unpack_SAB_LOAD_CELLS_ht_can(&sab_load_cells, _msg.buf, NULL);
+      // SerialUSB.println("Received SAB Load Cells");
+      Unpack_SAB_LOAD_CELLS_ht_can(&sab_load_cells, _msg.buf, _msg.len);
 
     case TCU_LAP_TIMES_CANID:
-      SerialUSB.println("Received TCU lap times");
-      Unpack_TCU_LAP_TIMES_ht_can(&lap_times, _msg.buf, NULL);
+      // SerialUSB.println("Received TCU lap times");
+      Unpack_TCU_LAP_TIMES_ht_can(&lap_times, _msg.buf, _msg.len);
       break;
 
     case TCU_DRIVER_MSG_CANID:
-      SerialUSB.println("Received TCU drive message");
-      Unpack_TCU_DRIVER_MSG_ht_can(&driver_msg, _msg.buf, NULL);
+      // SerialUSB.println("Received TCU drive message");
+      Unpack_TCU_DRIVER_MSG_ht_can(&driver_msg, _msg.buf, _msg.len);
       break;
 
     case MC1_STATUS_CANID:
-      SerialUSB.println("Received MC1 status message");
-      Unpack_MC1_STATUS_ht_can(&mc1_status, _msg.buf, NULL);
+      // SerialUSB.println("Received MC1 status message");
+      Unpack_MC1_STATUS_ht_can(&mc1_status, _msg.buf, _msg.len);
       break;
 
     case DASHBOARD_MCU_STATE_CANID:
@@ -92,16 +93,19 @@ void DashboardCAN::read_CAN()
       // }
       // Serial.println();
 
+      // SerialUSB.println("Received DASH_MCU_STATUS");
 
       if (mcu_state_timer.check() || (&prev_dash_mcu_state, _msg.buf, sizeof(_msg.buf)) != 0) {
-        SerialUSB.println("New message! Unpacking");
-        Unpack_DASHBOARD_MCU_STATE_ht_can(&dash_mcu_state, _msg.buf, NULL);
+        // SerialUSB.println("New message! Unpacking");
+        Unpack_DASHBOARD_MCU_STATE_ht_can(&dash_mcu_state, _msg.buf, _msg.len);
         memcpy(&prev_dash_mcu_state, _msg.buf, sizeof(_msg.buf));
         mcu_state_update = true;
         mcu_state_timer.reset();
       } else {
         mcu_state_update = false;
       }
+
+      SerialUSB.printf("LEDS:\n%d\n%d\n%d\n",dash_mcu_state.ams_led, dash_mcu_state.imd_led, dash_mcu_state.bots_led);
       
       break;
 
