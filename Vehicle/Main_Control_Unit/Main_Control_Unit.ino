@@ -5,26 +5,32 @@
    Rev 12
 */
 
-#include <stdint.h>
-#include <FlexCAN_T4.h>
-#include <HyTech_CAN.h>
+/*
+ * Readjusted by Cecilia Yang so that we don't look like absolute idiots
+ * 
+ * Rev 15
+ */
+
+/* System includes */
 #define _USE_MATH_DEFINES
 #include <cmath>
+#include <stdint.h>
 #include <time.h>
 #include <deque>
 
-#include "ADC_SPI.h"
-#include "STEERING_SPI.h"
+// CAN
+#include "FlexCAN_T4.h"
+#include "HyTech_CAN.h"
 #include "kinetis_flexcan.h"
 #include "Metro.h"
 
+// Sensors
+#include "ADC_SPI.h"        // using different ADCs now
+#include "STEERING_SPI.h"   // using UART now
 // IMU
-#include <ADIS16460.h>
-
-#include "drivers.h"
+#include <ADIS16460.h>  // not using anymore
 
 // constants to define for different operation
-
 #define DRIVER DEFAULT_DRIVER
 #define TORQUE_1 10
 #define TORQUE_2 15
@@ -35,8 +41,9 @@
 #define DEBUG false
 #define BMS_DEBUG_ENABLE false
 
-#include "MCU_rev12_dfs.h"
-
+// Custom def files
+#include "drivers.h"
+#include "MCU_rev15_dfs.h"
 #include "driver_constants.h"
 
 // Call the ADIS16460 IMU class
@@ -112,8 +119,11 @@ ADC_SPI ADC3(ADC3_CS, ADC_SPI_SPEED, ECU_SDI, ECU_SDO, ECU_CLK);
 
 STEERING_SPI STEERING(STEERING_CS, STEERING_SPI_SPEED);
 
-FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> FRONT_INV_CAN;
-FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> REAR_INV_CAN;
+/*
+ * 
+ */
+FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> INV_CAN;
+//FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> REAR_INV_CAN;
 FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> TELEM_CAN;
 CAN_message_t msg;
 
@@ -162,12 +172,14 @@ void setup() {
 
 
   //   IMU set up
+  /*
   IMU.regWrite(MSC_CTRL, 0xC1);  // Enable Data Ready, set polarity
   delay(20);
   IMU.regWrite(FLTR_CTRL, 0x504); // Set digital filter
   delay(20);
   IMU.regWrite(DEC_RATE, 0), // Disable decimation
                delay(20);
+  */
 
   pinMode(BRAKE_LIGHT_CTRL, OUTPUT);
 
@@ -183,24 +195,29 @@ void setup() {
   pinMode(SOFTWARE_OK, OUTPUT);
   digitalWrite(SOFTWARE_OK, HIGH);
 
+  /*
+   * Not using software SPI anymore
+   */
+  /*
   pinMode(ECU_CLK, OUTPUT);
   pinMode(ECU_SDI, INPUT);
   pinMode(ECU_SDO, OUTPUT);
+  */
 
 #if DEBUG
   Serial.begin(115200);
 #endif
-  FRONT_INV_CAN.begin();
-  FRONT_INV_CAN.setBaudRate(500000);
-  REAR_INV_CAN.begin();
-  REAR_INV_CAN.setBaudRate(500000);
+  INV_CAN.begin();
+  INV_CAN.setBaudRate(500000);
+//  REAR_INV_CAN.begin();
+//  REAR_INV_CAN.setBaudRate(500000);
   TELEM_CAN.begin();
   TELEM_CAN.setBaudRate(500000);
-  FRONT_INV_CAN.enableMBInterrupts();
-  REAR_INV_CAN.enableMBInterrupts();
+  INV_CAN.enableMBInterrupts();
+//  REAR_INV_CAN.enableMBInterrupts();
   TELEM_CAN.enableMBInterrupts();
-  FRONT_INV_CAN.onReceive(parse_front_inv_can_message);
-  REAR_INV_CAN.onReceive(parse_rear_inv_can_message);
+  INV_CAN.onReceive(parse_inv_can_message);
+//  REAR_INV_CAN.onReceive(parse_rear_inv_can_message);
   TELEM_CAN.onReceive(parse_telem_can_message);
   delay(500);
 
@@ -232,22 +249,22 @@ void setup() {
 }
 
 void loop() {
-  FRONT_INV_CAN.events();
-  REAR_INV_CAN.events();
+  INV_CAN.events();
+//  REAR_INV_CAN.events();
   TELEM_CAN.events();
 
   read_all_adcs();
   //read_steering_spi_values();
   read_status_values();
-  read_imu();
+//  read_imu();
 
   send_CAN_mcu_status();
   send_CAN_mcu_pedal_readings();
   send_CAN_mcu_load_cells();
   send_CAN_mcu_potentiometers();
   send_CAN_mcu_analog_readings();
-  send_CAN_imu_accelerometer();
-  send_CAN_imu_gyroscope();
+//  send_CAN_imu_accelerometer();
+//  send_CAN_imu_gyroscope();
   send_CAN_inverter_setpoints();
 
   //  /* Finish restarting the inverter when timer expires */
@@ -285,14 +302,14 @@ void loop() {
     Serial.println("LOAD CELLS");
     Serial.println(mcu_load_cells.get_FL_load_cell());
     Serial.println(mcu_load_cells.get_FR_load_cell());
-    Serial.println(mcu_load_cells.get_RL_load_cell());
-    Serial.println(mcu_load_cells.get_RR_load_cell());
+//    Serial.println(mcu_load_cells.get_RL_load_cell());  // Rear loadcells read from SAB now
+//    Serial.println(mcu_load_cells.get_RR_load_cell());
     Serial.println("SUS POTS");
     Serial.println(mcu_front_potentiometers.get_pot1());
     Serial.println(mcu_front_potentiometers.get_pot3());
-    Serial.println(mcu_rear_potentiometers.get_pot4());
-    Serial.println(mcu_rear_potentiometers.get_pot6());
-    
+//    Serial.println(mcu_rear_potentiometers.get_pot4()); // Same for rear pots
+//    Serial.println(mcu_rear_potentiometers.get_pot6());
+    Serial.println("Torque");
     Serial.println(torque_setpoint_array[0]);
     Serial.println(torque_setpoint_array[1]);
     Serial.println(torque_setpoint_array[2]);
@@ -303,9 +320,9 @@ void loop() {
     Serial.println(mc_temps[2].get_motor_temp());
     Serial.println(mc_temps[3].get_motor_temp());
     Serial.println(mc_temps[3].get_igbt_temp());
-    Serial.println("IMU");
-    Serial.println(imu_accelerometer.get_vert_accel());
-    Serial.println(imu_gyroscope.get_yaw());
+//    Serial.println("IMU");
+//    Serial.println(imu_accelerometer.get_vert_accel());
+//    Serial.println(imu_gyroscope.get_yaw());
     Serial.println("dial");
     Serial.println(dashboard_status.get_dial_state());
   }
@@ -319,24 +336,25 @@ inline void send_CAN_inverter_setpoints() {
     mc_setpoints_command[0].write(msg.buf);
     msg.id = ID_MC1_SETPOINTS_COMMAND;
     msg.len = sizeof(mc_setpoints_command[0]);
-    FRONT_INV_CAN.write(msg);
+    INV_CAN.write(msg);
 
     mc_setpoints_command[1].write(msg.buf);
     msg.id = ID_MC2_SETPOINTS_COMMAND;
     msg.len = sizeof(mc_setpoints_command[1]);
-    FRONT_INV_CAN.write(msg);
+    INV_CAN.write(msg);
 
     mc_setpoints_command[2].write(msg.buf);
     msg.id = ID_MC3_SETPOINTS_COMMAND;
     msg.len = sizeof(mc_setpoints_command[2]);
-    REAR_INV_CAN.write(msg);
+    INV_CAN.write(msg);
 
     mc_setpoints_command[3].write(msg.buf);
     msg.id = ID_MC4_SETPOINTS_COMMAND;
     msg.len = sizeof(mc_setpoints_command[3]);
-    REAR_INV_CAN.write(msg);
+    INV_CAN.write(msg);
   }
 }
+
 inline void send_CAN_mcu_status() {
   if (timer_CAN_mcu_status_send.check()) {
     // Send Main Control Unit status message
@@ -371,10 +389,12 @@ inline void send_CAN_mcu_potentiometers() {
     msg.id = ID_MCU_FRONT_POTS;
     msg.len = sizeof(mcu_front_potentiometers);
     TELEM_CAN.write(msg);
-    mcu_rear_potentiometers.write(msg.buf);
-    msg.id = ID_MCU_REAR_POTS;
-    msg.len = sizeof(mcu_rear_potentiometers);
-    TELEM_CAN.write(msg);
+
+    // Rear moved to SAB
+//    mcu_rear_potentiometers.write(msg.buf);
+//    msg.id = ID_MCU_REAR_POTS;
+//    msg.len = sizeof(mcu_rear_potentiometers);
+//    TELEM_CAN.write(msg);
   }
 }
 
@@ -397,7 +417,8 @@ inline void send_CAN_mcu_analog_readings() {
 }
 inline void state_machine() {
   switch (mcu_status.get_state()) {
-    case MCU_STATE::STARTUP: break;
+    case MCU_STATE::STARTUP:
+      break;
 
     case MCU_STATE::TRACTIVE_SYSTEM_NOT_ACTIVE:
 #if DEBUG
@@ -418,7 +439,10 @@ inline void state_machine() {
         set_all_inverters_dc_on(true);
         inverter_startup_state = INVERTER_STARTUP_STATE::WAIT_QUIT_DC_ON;
       }
-      if (dashboard_status.get_start_btn() && mcu_status.get_mech_brake_active()) {
+//      if (dashboard_status.get_start_btn() && mcu_status.get_mech_brake_active())
+      // Adjusted for temporary solution
+      if (mcu_status.get_mech_brake_active())
+      {
 #if DEBUG
         Serial.println("Setting state to Enabling Inverter");
 #endif
@@ -436,6 +460,7 @@ inline void state_machine() {
         set_state(MCU_STATE::TRACTIVE_SYSTEM_ACTIVE);
       }
 
+      // Inner state machine for inverter states
       switch (inverter_startup_state) {
         case INVERTER_STARTUP_STATE::WAIT_SYSTEM_READY:
           if (check_all_inverters_system_ready()) {
@@ -463,12 +488,12 @@ inline void state_machine() {
           break;
 
       }
+      
       break;
 
 
     case MCU_STATE::WAITING_READY_TO_DRIVE_SOUND:
       check_TS_active();
-
       // if the ready to drive sound has been playing for long enough, move to ready to drive mode
       if (timer_ready_sound.check()) {
 #if DEBUG
@@ -589,7 +614,7 @@ void parse_telem_can_message(const CAN_message_t &RX_msg) {
       timer_bms_heartbeat.reset();
       timer_bms_heartbeat.interval(BMS_HEARTBEAT_TIMEOUT);
       break;
-    case ID_DASHBOARD_STATUS:
+    case ID_DASHBOARD_STATUS: // will not get, doesn't hurt, just skip this block of code
       dashboard_status.load(rx_msg.buf);
       /* process dashboard buttons */
       if (dashboard_status.get_torque_mode_btn()) {
@@ -618,7 +643,7 @@ void parse_telem_can_message(const CAN_message_t &RX_msg) {
   }
 }
 
-void parse_front_inv_can_message(const CAN_message_t &RX_msg) {
+void parse_inv_can_message(const CAN_message_t &RX_msg) {
   CAN_message_t rx_msg = RX_msg;
   switch (rx_msg.id) {
     case ID_MC1_STATUS:       mc_status[0].load(rx_msg.buf);    break;
@@ -627,13 +652,6 @@ void parse_front_inv_can_message(const CAN_message_t &RX_msg) {
     case ID_MC2_TEMPS:        mc_temps[1].load(rx_msg.buf);    break;
     case ID_MC1_ENERGY:       mc_energy[0].load(rx_msg.buf);    break;
     case ID_MC2_ENERGY:       mc_energy[1].load(rx_msg.buf);    break;
-  }
-}
-
-void parse_rear_inv_can_message(const CAN_message_t &RX_msg) {
-  CAN_message_t rx_msg = RX_msg;
-
-  switch (rx_msg.id) {
     case ID_MC3_STATUS:       mc_status[2].load(rx_msg.buf);    break;
     case ID_MC4_STATUS:       mc_status[3].load(rx_msg.buf);    break;
     case ID_MC3_TEMPS:        mc_temps[2].load(rx_msg.buf);    break;
@@ -642,6 +660,20 @@ void parse_rear_inv_can_message(const CAN_message_t &RX_msg) {
     case ID_MC4_ENERGY:       mc_energy[3].load(rx_msg.buf);    break;
   }
 }
+
+//void parse_rear_inv_can_message(const CAN_message_t &RX_msg) {
+//  CAN_message_t rx_msg = RX_msg;
+//
+//  switch (rx_msg.id) {
+//    case ID_MC3_STATUS:       mc_status[2].load(rx_msg.buf);    break;
+//    case ID_MC4_STATUS:       mc_status[3].load(rx_msg.buf);    break;
+//    case ID_MC3_TEMPS:        mc_temps[2].load(rx_msg.buf);    break;
+//    case ID_MC4_TEMPS:        mc_temps[3].load(rx_msg.buf);    break;
+//    case ID_MC3_ENERGY:       mc_energy[2].load(rx_msg.buf);    break;
+//    case ID_MC4_ENERGY:       mc_energy[3].load(rx_msg.buf);    break;
+//  }
+//}
+
 //FIXME
 inline void power_off_inverter() {
   digitalWrite(INVERTER_24V_EN, LOW);

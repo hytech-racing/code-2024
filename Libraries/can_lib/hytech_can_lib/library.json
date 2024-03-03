@@ -1,0 +1,11 @@
+{
+"name": "can_lib",
+"version": "1.0.0",
+"build": {
+	"flags": [
+		"-Iinc",
+		"-Ilib",
+		"-Iconf"
+	]
+}
+}
