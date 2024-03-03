@@ -23,7 +23,7 @@ void Dashboard_Controls::startup() {
 void Dashboard_Controls::update(DashboardCAN* CAN) {
   
   if (btn_start.isPressed()) {
-    SerialUSB.println("Start button pressed.");
+    // SerialUSB.println("Start button pressed.");
   }
 
   if (btn_led_dimmer.isPressed() && dimmer_timer.check()) {

@@ -105,7 +105,7 @@ void DashboardCAN::read_CAN()
         mcu_state_update = false;
       }
 
-      SerialUSB.printf("LEDS:\n%d\n%d\n%d\n",dash_mcu_state.ams_led, dash_mcu_state.imd_led, dash_mcu_state.bots_led);
+      // SerialUSB.printf("LEDS:\n%d\n%d\n%d\n",dash_mcu_state.ams_led, dash_mcu_state.imd_led, dash_mcu_state.bots_led);
       
       break;
 
@@ -137,7 +137,7 @@ void DashboardCAN::send_status() {
     _msg.id = Pack_DASHBOARD_STATE_ht_can(&dash_state, _msg.buf, &_msg.len, (uint8_t*) &_msg.flags.extended);
     _CAN->write(_msg);
 
-    SerialUSB.println("Message Sent");
+    SerialUSB.printf("Message Sent %d\n", millis());
     memcpy(&prev_dash_state, &dash_state, sizeof(DASHBOARD_STATE_t));
     send_now = false;
     send_timer.reset();
