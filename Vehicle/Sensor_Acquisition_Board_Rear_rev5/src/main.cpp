@@ -1,57 +1,61 @@
 /*
  * Teensy 4.0 code for rear Sensor Acquisition Board rev5
  */
-/* Header include */
-// Framework
+
+/**
+ *  Include files 
+ */
+
+/* Framework */
 #include <Arduino.h>
-// Constants
+
+/* Libraries */
+#include "FlexCAN_T4.h"
+#include "HyTech_CAN.h"
+
+/* Constants */
 #include "rear_sab_dfs.h"
-// CAN
-#include <FlexCAN_T4.h>
-#include <HyTech_CAN.h>
-// Timer
-#include "Metro.h"
-// Sensors
-#include "DebouncedButton.h"
-#include "RideHeightRS485.h"
-#include "ADC_SPI.h"
+
+/* Interfaces */
+#include "HytechCANInterface.h"
+#include "MCP_ADC.h"
 #include "Filter_IIR.h"
+#include "TelemetryInterface.h"
 
-FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> TELEM_CAN;
-CAN_message_t msg;
+/* Systems */
+#include "DebouncedButton.h"
+#include "SysClock.h"
 
-/* CAN messages */
-BMS_coulomb_counts bms_coulomb_counts;
-SAB_ride_heights sab_ride_heights;
-SAB_thermistors_1 sab_thermistors_1;
-SAB_thermistors_2 sab_thermistors_2;
-SAB_CB sab_corner_board_readings;
+/**
+ * Data source
+*/
+
+/* One CAN line on rear SAB rev5 */
+FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> TELEM_CAN;  // Telemetry
+
+/* Sensors */
+struct ADCs
+{
+  MCP_ADC<4> a1 = MCP_ADC<4>(ADC1_CS);  // RL corner board
+  MCP_ADC<4> a2 = MCP_ADC<4>(ADC2_CS);  // RR corner board
+  MCP_ADC<8> a3 = MCP_ADC<8>(ADC3_CS);  // Thermistors
+} ADC;
+
+// VectorNav
+
+/**
+ * Interfaces
+*/
+Filter_IIR thermistor_iir = Filter_IIR(THERM_ALPHA);  // IIR filter thermistor reading
 
 /* Metro timers */
-// CAN send
-Metro timer_CAN_sab_loadcells_send = Metro(50);
-Metro timer_CAN_sab_potentiometers_send = Metro(50);
-Metro timer_CAN_sab_ride_height_send = Metro(50);
-Metro timer_CAN_sab_thermistors_send = Metro(100);
-Metro timer_CAN_sab_IMU_send = Metro(20);
-Metro timer_CAN_TCU_status_send = Metro(20);
-Metro timer_CAN_sab_pitot_tubes_send = Metro(50);
 // Sensor read
 Metro timer_read_all_adcs = Metro(10);
-Metro timer_read_ride_height = Metro(20);
 Metro timer_read_imu = Metro(20);
 
 /* Sensor declare */
-// ADC
-ADC_SPI adc1(ADC1_CS, ADC_SPI_SPEED);   // RL CB
-ADC_SPI adc2(ADC2_CS, ADC_SPI_SPEED);   // RR CB
-ADC_SPI adc3(ADC3_CS, ADC_SPI_SPEED);   // SAB
 // Pi shutdown
 DebouncedButton btn_pi_shutdown;
-// Ride height
-RideHeightRS485 ride_height_sensor(RS485_SERIAL_SPEED);
-// IMU
-// tbd
 
 /* DSP utilities */
 Filter_IIR thermistor_iir[TOTAL_THERMISTOR_COUNT] = {THERM_ALPHA, THERM_ALPHA, THERM_ALPHA, THERM_ALPHA, THERM_ALPHA, THERM_ALPHA, THERM_ALPHA};
