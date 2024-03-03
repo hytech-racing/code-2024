@@ -8,6 +8,9 @@
 #include <FlexCAN_T4.h>
 #include <Metro.h>
 
+// Insert shutdown stuff
+#include "MCU_rev15_dfs.h"
+
 // FlexCAN CAN(500000);
 FlexCAN_T4<CAN2> CAN;
 CAN_message_t msg;
@@ -16,6 +19,9 @@ Metro timer_can = Metro(20);
 Metro debug_print = Metro(500);
 Metro timer_light = Metro(3);
 Metro error_toggle = Metro (50);
+
+// Insert shutdown stuff
+Metro timer_watchdog_timer = Metro(10);
 
 MC_status mc_status;
 MC_setpoints_command mc_setpoints_command;
@@ -45,6 +51,33 @@ void setup() {
   mc_setpoints_command.set_pos_torque_limit(0);
   mc_setpoints_command.set_neg_torque_limit(0);
   // CAN0_MCR &= 0xFFFDFFFF; // Enable self-reception
+
+
+
+  // Insert shutdown stuff
+  pinMode(BRAKE_LIGHT_CTRL, OUTPUT);
+  pinMode(FR_CS, OUTPUT);
+  pinMode(FL_CS, OUTPUT);
+  pinMode(ADC_CS, OUTPUT);
+  
+  // change to input if comparator is PUSH PULL
+  pinMode(INVERTER_EN, OUTPUT);
+  pinMode(INVERTER_24V_EN, OUTPUT);
+
+  pinMode(WATCHDOG_INPUT, OUTPUT);
+  // the initial state of the watchdog is high
+  // this is reflected in the static watchdog_state
+  // starting high
+  digitalWrite(WATCHDOG_INPUT, HIGH);
+  pinMode(SOFTWARE_OK, OUTPUT);
+  digitalWrite(SOFTWARE_OK, HIGH);
+  digitalWrite(INVERTER_24V_EN, HIGH);
+  digitalWrite(INVERTER_EN, HIGH);
+  digitalWrite(FR_CS, HIGH);
+  digitalWrite(FL_CS, HIGH);
+  digitalWrite(ADC_CS, HIGH);
+  delay(5000);
+  
 }
 
 void loop() {
@@ -185,4 +218,30 @@ void loop() {
   if (timer_light.check()) { // Turn off LED
     digitalWrite(13, LOW);
   }
+
+  // Insert shutdown stuff
+  software_shutdown();
+}
+
+inline void software_shutdown() {
+  digitalWrite(SOFTWARE_OK, HIGH);
+  //mcu_status.set_software_is_ok(true);
+
+  // check inputs
+  // BMS heartbeat has not arrived within time interval
+
+  // add BMS software checks
+  // software ok/not ok action
+//  if (mcu_status.get_software_is_ok()) {
+//    digitalWrite(SOFTWARE_OK, HIGH); //eventually make this HIGH only if software is ok
+//  } else {
+//    digitalWrite(SOFTWARE_OK, LOW);
+//  }
+  /* Watchdog timer */
+  if (timer_watchdog_timer.check()) {
+    static bool watchdog_state = HIGH;
+    watchdog_state = !watchdog_state;
+    digitalWrite(WATCHDOG_INPUT, watchdog_state);
+  }
+
 }
