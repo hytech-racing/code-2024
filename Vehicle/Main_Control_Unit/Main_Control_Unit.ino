@@ -25,7 +25,8 @@
 #include "Metro.h"
 
 // Sensors
-#include "ADC_SPI.h"        // using different ADCs now
+//#include "ADC_SPI.h"        // using different ADCs now
+#include "ADC_SPI_HT06.h"    // Test previously working version
 #include "STEERING_SPI.h"   // using UART now
 // IMU
 #include <ADIS16460.h>  // not using anymore
@@ -47,7 +48,7 @@
 #include "driver_constants.h"
 
 // Call the ADIS16460 IMU class
-ADIS16460 IMU(IMU_CS, IMU_DATAREADY, IMU_RESET); // Chip Select, Data Ready, Reset Pin Assignments
+//ADIS16460 IMU(IMU_CS, IMU_DATAREADY, IMU_RESET); // Chip Select, Data Ready, Reset Pin Assignments
 
 // Outbound CAN messages
 MCU_pedal_readings mcu_pedal_readings;
@@ -113,9 +114,10 @@ bool imd_faulting = false;
 bool inverter_restart = false; // True when restarting the inverter
 INVERTER_STARTUP_STATE inverter_startup_state = INVERTER_STARTUP_STATE::WAIT_SYSTEM_READY;
 
-ADC_SPI ADC1(ADC1_CS, ADC_SPI_SPEED, ECU_SDI, ECU_SDO, ECU_CLK);
-ADC_SPI ADC2(ADC2_CS, ADC_SPI_SPEED, ECU_SDI, ECU_SDO, ECU_CLK);
-ADC_SPI ADC3(ADC3_CS, ADC_SPI_SPEED, ECU_SDI, ECU_SDO, ECU_CLK);
+//ADC_SPI ADC1(ADC1_CS, ADC_SPI_SPEED, ECU_SDI, ECU_SDO, ECU_CLK);
+//ADC_SPI ADC2(ADC2_CS, ADC_SPI_SPEED, ECU_SDI, ECU_SDO, ECU_CLK);
+//ADC_SPI ADC3(ADC3_CS, ADC_SPI_SPEED, ECU_SDI, ECU_SDO, ECU_CLK);
+ADC_SPI ADC1(ADC1_CS, ADC_SPI_SPEED);
 
 STEERING_SPI STEERING(STEERING_CS, STEERING_SPI_SPEED);
 
@@ -240,8 +242,10 @@ void setup() {
   delay(5000);
 
   set_state(MCU_STATE::TRACTIVE_SYSTEM_NOT_ACTIVE);
-  mcu_status.set_max_torque(TORQUE_3);
-  mcu_status.set_torque_mode(3);
+//  mcu_status.set_max_torque(TORQUE_3);
+//  mcu_status.set_torque_mode(3);
+  mcu_status.set_max_torque(TORQUE_1);
+  mcu_status.set_torque_mode(1);
 
   /* Set up total discharge readings */
   //setup_total_discharge();
@@ -323,8 +327,8 @@ void loop() {
 //    Serial.println("IMU");
 //    Serial.println(imu_accelerometer.get_vert_accel());
 //    Serial.println(imu_gyroscope.get_yaw());
-    Serial.println("dial");
-    Serial.println(dashboard_status.get_dial_state());
+//    Serial.println("dial");
+//    Serial.println(dashboard_status.get_dial_state());
   }
 
 }
@@ -875,7 +879,10 @@ inline void set_inverter_torques() {
 
   int16_t max_speed;
 
-  switch (dashboard_status.get_dial_state()) {
+  int dial_mode = 0;
+//  switch (dashboard_status.get_dial_state())
+  switch (dial_mode) 
+  {
     case 0:
       for (int i = 0; i < 4; i++) {
         speed_setpoint_array[i] = MAX_ALLOWED_SPEED;
@@ -907,6 +914,7 @@ inline void set_inverter_torques() {
         }
       }
       break;
+      
     case 1:
       for (int i = 0; i < 4; i++) {
         speed_setpoint_array[i] = MAX_ALLOWED_SPEED;
@@ -1235,6 +1243,7 @@ inline void set_inverter_torques() {
 
 }
 
+/*
 inline void read_all_adcs() {
   if (timer_read_all_adcs.check()) {
 
@@ -1281,6 +1290,47 @@ inline void read_all_adcs() {
     ADC3.read_all_channels(&adc3_inputs[0]);
     mcu_analog_readings.set_glv_battery_voltage(adc3_inputs[ADC_GLV_READ_CHANNEL]);
     mcu_front_potentiometers.set_pot3(adc3_inputs[SUS_POT_FR]);
+  }
+}
+*/
+
+inline void read_all_adcs() {
+  if (timer_read_all_adcs.check()) {
+
+    prev_load_cell_readings[0] = mcu_load_cells.get_FL_load_cell();
+    prev_load_cell_readings[1] = mcu_load_cells.get_FR_load_cell();
+    prev_load_cell_readings[2] = mcu_load_cells.get_RL_load_cell();
+    prev_load_cell_readings[3] = mcu_load_cells.get_RR_load_cell();
+
+    uint16_t adc1_inputs[8];
+    for (int chan=0; chan<8; chan++) {
+//      adc1_inputs[chan] = adc1.readADC(chan);     // Test rev14
+      adc1_inputs[chan] = ADC1.read_adc(chan);    // Test previously working version
+    }
+//    ADC1.read_all_channels(&adc1_inputs[0]);
+    mcu_pedal_readings.set_accelerator_pedal_1(adc1_inputs[ADC_ACCEL_1_CHANNEL]);
+    mcu_pedal_readings.set_accelerator_pedal_2(adc1_inputs[ADC_ACCEL_2_CHANNEL]);
+    mcu_pedal_readings.set_brake_pedal_1(adc1_inputs[ADC_BRAKE_1_CHANNEL]);
+    mcu_pedal_readings.set_brake_pedal_2(adc1_inputs[ADC_BRAKE_2_CHANNEL]);
+    mcu_analog_readings.set_steering_2(adc1_inputs[ADC_STEERING_2_CHANNEL]);
+    current_read = adc1_inputs[ADC_CURRENT_CHANNEL] - adc1_inputs[ADC_REFERENCE_CHANNEL];
+    float current = ((((current_read / 819.0) / .1912) / 4.832) * 1000) / 6.67;
+    if (current > 300) {
+      current = 300;
+    } else if (current < -300) {
+      current = -300;
+    }
+    mcu_analog_readings.set_hall_effect_current((uint16_t)current * 100);
+
+
+
+    mcu_load_cells.set_RL_load_cell((uint16_t)((adc1_inputs[ADC_RL_LOAD_CELL_CHANNEL]*LOAD_CELL3_SLOPE + LOAD_CELL3_OFFSET) * (1 - load_cell_alpha) + prev_load_cell_readings[2]*load_cell_alpha));
+
+    mcu_status.set_brake_pedal_active(mcu_pedal_readings.get_brake_pedal_1() <= BRAKE_ACTIVE);  // different slope in rev15
+    digitalWrite(BRAKE_LIGHT_CTRL, mcu_status.get_brake_pedal_active());
+
+    mcu_status.set_mech_brake_active(mcu_pedal_readings.get_brake_pedal_1() <= BRAKE_THRESHOLD_MECH_BRAKE_1); //define in driver_constraints.h (70%)  // different slope in rev15
+    
   }
 }
 
@@ -1426,6 +1476,7 @@ inline void read_status_values() {
 }
 
 // IMU functions
+/*
 inline void read_imu() {
   if (timer_read_imu.check()) {
     double sinAngle = sin(VEHICLE_TILT_ANGLE_X);
@@ -1451,6 +1502,7 @@ inline void read_imu() {
     imu_gyroscope.set_roll((int16_t)(roll * 100)); // * 0.005); // 0.005 is the scale
   }
 }
+*/
 
 inline void send_CAN_imu_accelerometer() {
   if (timer_CAN_imu_accelerometer_send.check()) {

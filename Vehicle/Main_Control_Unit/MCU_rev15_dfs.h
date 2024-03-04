@@ -4,11 +4,11 @@
  * Teensy Pin definitions
  */
 #define INVERTER_EN 9
-#define INVERTER_24V_EN 8
+#define INVERTER_24V_EN 7 // rev15 changes
 
 #define MC_MAX_SPEED 20000
 
-#define BRAKE_LIGHT_CTRL 7
+#define BRAKE_LIGHT_CTRL 6  // rev15 changes
 
 #define ECU_CLK 13 
 #define ECU_SDI 12
@@ -31,9 +31,9 @@
 #define CAN_ECU_RX3 30
 #define CAN_ECU_TX3 31
 
-#define ADC1_CS 33 
+#define ADC1_CS 34  // rev15 changes
 #define ADC2_CS 29 
-#define ADC3_CS 34
+//#define ADC3_CS 34
 
 #define FR_INTERLOCK 40 
 #define FL_INTERLOCK 39
@@ -43,20 +43,20 @@
 #define INTERTIA_SENSE 20
 #define SOFTWARE_OK_READ 25 // SHDN_F_READ Watchdog Combined
 #define BOTS_SENSE_OK_READ 26 // SHDN_G_READ
-#define BOTS_OK_READ 3  // SHDN_B_READ
-#define IMD_OK_READ 4 // SHDN_C_READ
-#define BMS_OK_READ 5 // SHDN_D_READ
-#define BSPD_OK_READ 6 // SHDN_E_READ
-#define SOFTWARE_OK 28
+#define BOTS_OK_READ 24  // SHDN_B_READ // rev15 changes
+#define IMD_OK_READ 18 // SHDN_C_READ   // rev15 changes
+#define BMS_OK_READ 16 // SHDN_D_READ   // rev15 changes
+#define BSPD_OK_READ 39 // SHDN_E_READ
+#define SOFTWARE_OK 8                   // rev15 changes
 // digital outputs
 #define WATCHDOG_INPUT 32
 
 /*
  * ADC pin definitions
  */
-#define ADC_BRAKE_1_CHANNEL 2
+#define ADC_BRAKE_1_CHANNEL 5
 #define ADC_BRAKE_2_CHANNEL 3
-#define ADC_ACCEL_1_CHANNEL 0
+#define ADC_ACCEL_1_CHANNEL 2
 #define ADC_ACCEL_2_CHANNEL 1
 
 #define ADC_STEERING_2_CHANNEL 4
