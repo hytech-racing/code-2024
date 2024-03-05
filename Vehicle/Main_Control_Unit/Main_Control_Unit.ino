@@ -290,10 +290,29 @@ void loop() {
     Serial.println(mc_temps[2].get_diagnostic_number());
     Serial.println(mc_temps[3].get_diagnostic_number());
     Serial.println();
-    Serial.println(mcu_pedal_readings.get_accelerator_pedal_1());
-    Serial.println(mcu_pedal_readings.get_accelerator_pedal_2());
-    Serial.println(mcu_pedal_readings.get_brake_pedal_1());
-    Serial.println(mcu_pedal_readings.get_brake_pedal_2());
+
+    if (mcu_status.get_state() == MCU_STATE::ENABLING_INVERTER) {
+      Serial.println("Enabling inverter");
+    }
+    if (mcu_status.get_state() == MCU_STATE::WAITING_READY_TO_DRIVE_SOUND) {
+      Serial.println("Waiting ready to drive sound");
+    }
+    if (mcu_status.get_state() == MCU_STATE::READY_TO_DRIVE) {
+      Serial.println("Ready to drive");
+      for (int i = 0; i < 4; i++) {
+        Serial.print("Inv[");
+        Serial.print(i);
+        Serial.println("]:");
+        Serial.println(mc_setpoints_command[i].get_speed_setpoint());
+        Serial.println(mc_setpoints_command[i].get_pos_torque_limit());
+        Serial.println(mc_setpoints_command[i].get_neg_torque_limit());
+      }
+//      Serial.println("PEDALS");
+//      Serial.println(mcu_pedal_readings.get_accelerator_pedal_1());
+//      Serial.println(mcu_pedal_readings.get_accelerator_pedal_2());
+//      Serial.println(mcu_pedal_readings.get_brake_pedal_1());
+//      Serial.println(mcu_pedal_readings.get_brake_pedal_2());
+    }
     //calculate_pedal_implausibilities();
 //    Serial.println(mcu_status.get_no_accel_implausability());
 //    Serial.println(mcu_status.get_no_brake_implausability());
@@ -303,27 +322,27 @@ void loop() {
 //    Serial.println(brake1);
 //    Serial.println(brake2);
     Serial.println();
-    Serial.println("LOAD CELLS");
-    Serial.println(mcu_load_cells.get_FL_load_cell());
-    Serial.println(mcu_load_cells.get_FR_load_cell());
-//    Serial.println(mcu_load_cells.get_RL_load_cell());  // Rear loadcells read from SAB now
-//    Serial.println(mcu_load_cells.get_RR_load_cell());
-    Serial.println("SUS POTS");
-    Serial.println(mcu_front_potentiometers.get_pot1());
-    Serial.println(mcu_front_potentiometers.get_pot3());
+//    Serial.println("LOAD CELLS");
+//    Serial.println(mcu_load_cells.get_FL_load_cell());
+//    Serial.println(mcu_load_cells.get_FR_load_cell());
+////    Serial.println(mcu_load_cells.get_RL_load_cell());  // Rear loadcells read from SAB now
+////    Serial.println(mcu_load_cells.get_RR_load_cell());
+//    Serial.println("SUS POTS");
+//    Serial.println(mcu_front_potentiometers.get_pot1());
+//    Serial.println(mcu_front_potentiometers.get_pot3());
 //    Serial.println(mcu_rear_potentiometers.get_pot4()); // Same for rear pots
 //    Serial.println(mcu_rear_potentiometers.get_pot6());
-    Serial.println("Torque");
-    Serial.println(torque_setpoint_array[0]);
-    Serial.println(torque_setpoint_array[1]);
-    Serial.println(torque_setpoint_array[2]);
-    Serial.println(torque_setpoint_array[3]);
-    Serial.println("MOTOR TEMPS");
-    Serial.println(mc_temps[0].get_motor_temp());
-    Serial.println(mc_temps[1].get_motor_temp());
-    Serial.println(mc_temps[2].get_motor_temp());
-    Serial.println(mc_temps[3].get_motor_temp());
-    Serial.println(mc_temps[3].get_igbt_temp());
+//    Serial.println("Torque");
+//    Serial.println(torque_setpoint_array[0]);
+//    Serial.println(torque_setpoint_array[1]);
+//    Serial.println(torque_setpoint_array[2]);
+//    Serial.println(torque_setpoint_array[3]);
+//    Serial.println("MOTOR TEMPS");
+//    Serial.println(mc_temps[0].get_motor_temp());
+//    Serial.println(mc_temps[1].get_motor_temp());
+//    Serial.println(mc_temps[2].get_motor_temp());
+//    Serial.println(mc_temps[3].get_motor_temp());
+//    Serial.println(mc_temps[3].get_igbt_temp());
 //    Serial.println("IMU");
 //    Serial.println(imu_accelerometer.get_vert_accel());
 //    Serial.println(imu_gyroscope.get_yaw());
@@ -336,6 +355,12 @@ void loop() {
 
 
 inline void send_CAN_inverter_setpoints() {
+//  for(int i = 0; i < 4; i++) {
+//    mc_setpoints_command[i].set_speed_setpoint(0);
+//    mc_setpoints_command[i].set_pos_torque_limit(0);
+//    mc_setpoints_command[i].set_neg_torque_limit(0);
+//  }
+  
   if (timer_CAN_inverter_setpoints_send.check()) {
     mc_setpoints_command[0].write(msg.buf);
     msg.id = ID_MC1_SETPOINTS_COMMAND;
@@ -422,9 +447,23 @@ inline void send_CAN_mcu_analog_readings() {
 inline void state_machine() {
   switch (mcu_status.get_state()) {
     case MCU_STATE::STARTUP:
+
+      for(int i = 0; i < 4; i++) {
+    mc_setpoints_command[i].set_speed_setpoint(0);
+    mc_setpoints_command[i].set_pos_torque_limit(0);
+    mc_setpoints_command[i].set_neg_torque_limit(0);
+  }
+    
       break;
 
     case MCU_STATE::TRACTIVE_SYSTEM_NOT_ACTIVE:
+
+      for(int i = 0; i < 4; i++) {
+    mc_setpoints_command[i].set_speed_setpoint(0);
+    mc_setpoints_command[i].set_pos_torque_limit(0);
+    mc_setpoints_command[i].set_neg_torque_limit(0);
+  }
+    
 #if DEBUG
       Serial.println("TS NOT ACTIVE");
 #endif
@@ -438,6 +477,13 @@ inline void state_machine() {
       break;
 
     case MCU_STATE::TRACTIVE_SYSTEM_ACTIVE:
+
+      for(int i = 0; i < 4; i++) {
+    mc_setpoints_command[i].set_speed_setpoint(0);
+    mc_setpoints_command[i].set_pos_torque_limit(0);
+    mc_setpoints_command[i].set_neg_torque_limit(0);
+  }
+    
       check_TS_active();
       if (check_all_inverters_system_ready()) {
         set_all_inverters_dc_on(true);
@@ -455,6 +501,13 @@ inline void state_machine() {
       break;
 
     case MCU_STATE::ENABLING_INVERTER:
+
+      for(int i = 0; i < 4; i++) {
+    mc_setpoints_command[i].set_speed_setpoint(0);
+    mc_setpoints_command[i].set_pos_torque_limit(0);
+    mc_setpoints_command[i].set_neg_torque_limit(0);
+  }
+    
       check_TS_active();
       // inverter enabling timed out
       if (timer_inverter_enable.check()) {
@@ -497,6 +550,13 @@ inline void state_machine() {
 
 
     case MCU_STATE::WAITING_READY_TO_DRIVE_SOUND:
+
+      for(int i = 0; i < 4; i++) {
+    mc_setpoints_command[i].set_speed_setpoint(0);
+    mc_setpoints_command[i].set_pos_torque_limit(0);
+    mc_setpoints_command[i].set_neg_torque_limit(0);
+  }
+    
       check_TS_active();
       // if the ready to drive sound has been playing for long enough, move to ready to drive mode
       if (timer_ready_sound.check()) {
@@ -508,6 +568,17 @@ inline void state_machine() {
       break;
 
     case MCU_STATE::READY_TO_DRIVE:
+
+    #if DEBUG
+        Serial.println("Setting state to Ready to Drive");
+#endif
+
+        for(int i = 0; i < 4; i++) {
+    mc_setpoints_command[i].set_speed_setpoint(300);
+    mc_setpoints_command[i].set_pos_torque_limit(0.1 * 2140);
+    mc_setpoints_command[i].set_neg_torque_limit(0);
+  }
+    
       check_TS_active();
 
       if (check_all_inverters_error()) {
@@ -523,9 +594,9 @@ inline void state_machine() {
         mcu_status.get_imd_ok_high()
 
       ) {
-        set_inverter_torques();
+//        set_inverter_torques();
       } else if (mcu_status.get_bms_ok_high() && mcu_status.get_imd_ok_high()) {
-        set_inverter_torques_regen_only();
+//        set_inverter_torques_regen_only();
       } else {
         Serial.println("not calculating torque");
         Serial.printf("no brake implausibility: %d\n", mcu_status.get_no_brake_implausability());
