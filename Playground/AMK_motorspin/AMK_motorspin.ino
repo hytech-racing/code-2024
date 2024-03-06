@@ -31,6 +31,7 @@ bool dc_done = false;
 bool ready1 = false;
 bool error = false;
 bool toggle = false;
+bool inv_en_set = false;
 
 int counter = 0;
 int counter2 = 0;
@@ -38,10 +39,11 @@ int counter2 = 0;
 void setup() {
   Serial.begin(115200); // Initialize serial for PC communication
   CAN.begin();
-  CAN.setBaudRate(500000);
+  CAN.setBaudRate(1000000);
   delay(200);
   Serial.println("CAN transceiver initialized");
   Serial.println("CAN TEST SENDER/RECEIVER");
+  Serial.println("I actually uploaded code");
   pinMode(13, OUTPUT);
   mc_status.set_status_word(0x00);
   mc_setpoints_command.set_inverter_enable(false);
@@ -72,7 +74,7 @@ void setup() {
   pinMode(SOFTWARE_OK, OUTPUT);
   digitalWrite(SOFTWARE_OK, HIGH);
   digitalWrite(INVERTER_24V_EN, HIGH);
-  digitalWrite(INVERTER_EN, HIGH);
+//  digitalWrite(INVERTER_EN, HIGH);
   digitalWrite(FR_CS, HIGH);
   digitalWrite(FL_CS, HIGH);
   digitalWrite(ADC_CS, HIGH);
@@ -150,7 +152,11 @@ void loop() {
     dc_done = false;
   }
   if (mc_status.get_system_ready()) {
-    system_ready = true;
+    if (!inv_en_set) {
+      digitalWrite(INVERTER_EN, HIGH);
+      inv_en_set = true;
+    }
+    system_ready = true;    
   } else {
     system_ready = false;
   }
@@ -169,7 +175,7 @@ void loop() {
   if (timer_can.check()) { // Send a message on CAN
 
 
-    msg.id = 0xB3;
+    msg.id = 0xB1;
     msg.len = sizeof(mc_setpoints_command);
     mc_setpoints_command.write(msg.buf);
     CAN.write(msg);
@@ -208,7 +214,7 @@ void loop() {
       counter2 = 0;
     }
 
-    if (msg.id == 0x0A3) {
+    if (msg.id == 0x0A1) {
       mc_status.load(msg.buf);
     }
 
