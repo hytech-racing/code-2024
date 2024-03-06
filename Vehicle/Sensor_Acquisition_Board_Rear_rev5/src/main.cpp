@@ -46,7 +46,7 @@ struct ADCs
 /**
  * Interfaces
 */
-Filter_IIR thermistor_iir = Filter_IIR(THERM_ALPHA);  // IIR filter thermistor reading
+
 
 /* Metro timers */
 // Sensor read
@@ -58,7 +58,7 @@ Metro timer_read_imu = Metro(20);
 DebouncedButton btn_pi_shutdown;
 
 /* DSP utilities */
-Filter_IIR thermistor_iir[TOTAL_THERMISTOR_COUNT] = {THERM_ALPHA, THERM_ALPHA, THERM_ALPHA, THERM_ALPHA, THERM_ALPHA, THERM_ALPHA, THERM_ALPHA};
+Filter_IIR thermistor_iir = Filter_IIR(THERM_ALPHA);  // IIR filter thermistor reading
 
 /* Function prototypes */
 void parse_telem_can_message(const CAN_message_t &RX_msg);
