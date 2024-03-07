@@ -282,15 +282,28 @@ void loop() {
 
 
   if (timer_debug.check()) {
-    Serial.println("ERROR");
-    Serial.println(check_all_inverters_error());
-    Serial.println(mc_energy[0].get_dc_bus_voltage());
-    Serial.println(mc_temps[0].get_diagnostic_number());
-    Serial.println(mc_temps[1].get_diagnostic_number());
-    Serial.println(mc_temps[2].get_diagnostic_number());
-    Serial.println(mc_temps[3].get_diagnostic_number());
-    Serial.println();
+//    Serial.println("ERROR");
+//    Serial.println(check_all_inverters_error());
+//    Serial.println(mc_energy[0].get_dc_bus_voltage());
+//    Serial.println(mc_temps[0].get_diagnostic_number());
+//    Serial.println(mc_temps[1].get_diagnostic_number());
+//    Serial.println(mc_temps[2].get_diagnostic_number());
+//    Serial.println(mc_temps[3].get_diagnostic_number());
+//    Serial.println();
 
+    if (mcu_status.get_state() == MCU_STATE::STARTUP) {
+      Serial.println("Start up");
+    }
+    if (mcu_status.get_state() == MCU_STATE::TRACTIVE_SYSTEM_NOT_ACTIVE) {
+      Serial.println("Tractive system not ready");
+    }
+    if (mcu_status.get_state() == MCU_STATE::TRACTIVE_SYSTEM_ACTIVE) {
+      Serial.println("Tractive system ready");
+      Serial.print("Check all inverters system ready: ");
+      Serial.println(check_all_inverters_system_ready());
+      Serial.print("Mech brake active: ");
+      Serial.println(mcu_status.get_mech_brake_active());
+    }
     if (mcu_status.get_state() == MCU_STATE::ENABLING_INVERTER) {
       Serial.println("Enabling inverter");
     }
@@ -307,12 +320,12 @@ void loop() {
         Serial.println(mc_setpoints_command[i].get_pos_torque_limit());
         Serial.println(mc_setpoints_command[i].get_neg_torque_limit());
       }
-//      Serial.println("PEDALS");
-//      Serial.println(mcu_pedal_readings.get_accelerator_pedal_1());
-//      Serial.println(mcu_pedal_readings.get_accelerator_pedal_2());
-//      Serial.println(mcu_pedal_readings.get_brake_pedal_1());
-//      Serial.println(mcu_pedal_readings.get_brake_pedal_2());
     }
+      Serial.println("PEDALS");
+      Serial.println(mcu_pedal_readings.get_accelerator_pedal_1());
+      Serial.println(mcu_pedal_readings.get_accelerator_pedal_2());
+      Serial.println(mcu_pedal_readings.get_brake_pedal_1());
+      Serial.println(mcu_pedal_readings.get_brake_pedal_2());
     //calculate_pedal_implausibilities();
 //    Serial.println(mcu_status.get_no_accel_implausability());
 //    Serial.println(mcu_status.get_no_brake_implausability());
