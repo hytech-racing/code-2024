@@ -126,7 +126,7 @@ void loop() {
   if (debug_print.check()) {
       Serial.print("System Ready: ");
       Serial.print("Inv[");
-      Serial.print(i);
+      Serial.print(0);
       Serial.println("]:");
       Serial.println("Pos torque limit:");
       Serial.println(mc_setpoints_command[0].get_pos_torque_limit());
@@ -189,22 +189,22 @@ inline void software_shutdown() {
 inline void send_CAN_inverter_setpoints() {
   if (timer_can.check()) {
     mc_setpoints_command[0].write(msg.buf);
-    msg.id = ID_MC1_SETPOINTS_COMMAND;
+    msg.id = 0x0A0;
     msg.len = sizeof(mc_setpoints_command[0]);
     CAN.write(msg);
 
     mc_setpoints_command[1].write(msg.buf);
-    msg.id = ID_MC2_SETPOINTS_COMMAND;
+    msg.id = 0x0A1;
     msg.len = sizeof(mc_setpoints_command[1]);
     CAN.write(msg);
 
     mc_setpoints_command[2].write(msg.buf);
-    msg.id = ID_MC3_SETPOINTS_COMMAND;
+    msg.id = 0x0A2;
     msg.len = sizeof(mc_setpoints_command[2]);
     CAN.write(msg);
 
     mc_setpoints_command[3].write(msg.buf);
-    msg.id = ID_MC4_SETPOINTS_COMMAND;
+    msg.id = 0x0A3;
     msg.len = sizeof(mc_setpoints_command[3]);
     CAN.write(msg);
   }
@@ -213,10 +213,10 @@ inline void send_CAN_inverter_setpoints() {
 void parse_can_message(const CAN_message_t &RX_msg) {
   CAN_message_t rx_msg = RX_msg;
   switch (rx_msg.id) {
-    case ID_MC1_STATUS:       mc_status[0].load(rx_msg.buf);    break;
-    case ID_MC2_STATUS:       mc_status[1].load(rx_msg.buf);    break;
-    case ID_MC3_STATUS:       mc_status[2].load(rx_msg.buf);    break;
-    case ID_MC4_STATUS:       mc_status[3].load(rx_msg.buf);    break;
+    case 0xB0:       mc_status[0].load(rx_msg.buf);    break;
+    case 0xB1:       mc_status[1].load(rx_msg.buf);    break;
+    case 0xB2:       mc_status[2].load(rx_msg.buf);    break;
+    case 0xB3:       mc_status[3].load(rx_msg.buf);    break;
   }
 }
 
