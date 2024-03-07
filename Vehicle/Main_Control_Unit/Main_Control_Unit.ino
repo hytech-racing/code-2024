@@ -363,22 +363,22 @@ inline void send_CAN_inverter_setpoints() {
   
   if (timer_CAN_inverter_setpoints_send.check()) {
     mc_setpoints_command[0].write(msg.buf);
-    msg.id = ID_MC1_SETPOINTS_COMMAND;
+    msg.id = 0x0A0;
     msg.len = sizeof(mc_setpoints_command[0]);
     INV_CAN.write(msg);
 
     mc_setpoints_command[1].write(msg.buf);
-    msg.id = ID_MC2_SETPOINTS_COMMAND;
+    msg.id = 0x0A1;
     msg.len = sizeof(mc_setpoints_command[1]);
     INV_CAN.write(msg);
 
     mc_setpoints_command[2].write(msg.buf);
-    msg.id = ID_MC3_SETPOINTS_COMMAND;
+    msg.id = 0x0A2;
     msg.len = sizeof(mc_setpoints_command[2]);
     INV_CAN.write(msg);
 
     mc_setpoints_command[3].write(msg.buf);
-    msg.id = ID_MC4_SETPOINTS_COMMAND;
+    msg.id = 0x0A3;
     msg.len = sizeof(mc_setpoints_command[3]);
     INV_CAN.write(msg);
   }
@@ -447,43 +447,41 @@ inline void send_CAN_mcu_analog_readings() {
 inline void state_machine() {
   switch (mcu_status.get_state()) {
     case MCU_STATE::STARTUP:
-
       for(int i = 0; i < 4; i++) {
-    mc_setpoints_command[i].set_speed_setpoint(0);
-    mc_setpoints_command[i].set_pos_torque_limit(0);
-    mc_setpoints_command[i].set_neg_torque_limit(0);
-  }
-    
+//        mc_setpoints_command[i].set_speed_setpoint(0);
+//        mc_setpoints_command[i].set_pos_torque_limit(0);
+//        mc_setpoints_command[i].set_neg_torque_limit(0);
+      }    
       break;
 
     case MCU_STATE::TRACTIVE_SYSTEM_NOT_ACTIVE:
-
-      for(int i = 0; i < 4; i++) {
-    mc_setpoints_command[i].set_speed_setpoint(0);
-    mc_setpoints_command[i].set_pos_torque_limit(0);
-    mc_setpoints_command[i].set_neg_torque_limit(0);
-  }
+//      for(int i = 0; i < 4; i++) {
+//        mc_setpoints_command[i].set_speed_setpoint(0);
+//        mc_setpoints_command[i].set_pos_torque_limit(0);
+//        mc_setpoints_command[i].set_neg_torque_limit(0);
+//      }
     
-#if DEBUG
-      Serial.println("TS NOT ACTIVE");
-#endif
-      // if TS is above HV threshold, move to Tractive System Active
-      if (check_TS_over_HV_threshold()) {
-#if DEBUG
-        Serial.println("Setting state to TS Active from TS Not Active");
-#endif
+        #if DEBUG
+          Serial.println("TS NOT ACTIVE");
+        #endif
+        
+        // if TS is above HV threshold, move to Tractive System Active
+        if (check_TS_over_HV_threshold()) {
+        
+        #if DEBUG
+          Serial.println("Setting state to TS Active from TS Not Active");
+        #endif
+        
         set_state(MCU_STATE::TRACTIVE_SYSTEM_ACTIVE);
-      }
-      break;
+        }
+        break;
 
     case MCU_STATE::TRACTIVE_SYSTEM_ACTIVE:
-
-      for(int i = 0; i < 4; i++) {
-    mc_setpoints_command[i].set_speed_setpoint(0);
-    mc_setpoints_command[i].set_pos_torque_limit(0);
-    mc_setpoints_command[i].set_neg_torque_limit(0);
-  }
-    
+//      for(int i = 0; i < 4; i++) {
+//        mc_setpoints_command[i].set_speed_setpoint(0);
+//        mc_setpoints_command[i].set_pos_torque_limit(0);
+//        mc_setpoints_command[i].set_neg_torque_limit(0);
+//      }
       check_TS_active();
       if (check_all_inverters_system_ready()) {
         set_all_inverters_dc_on(true);
@@ -493,30 +491,31 @@ inline void state_machine() {
       // Adjusted for temporary solution
       if (mcu_status.get_mech_brake_active())
       {
-#if DEBUG
-        Serial.println("Setting state to Enabling Inverter");
-#endif
+        
+        #if DEBUG
+          Serial.println("Setting state to Enabling Inverter");
+        #endif
+        
         set_state(MCU_STATE::ENABLING_INVERTER);
       }
       break;
 
     case MCU_STATE::ENABLING_INVERTER:
-
-      for(int i = 0; i < 4; i++) {
-    mc_setpoints_command[i].set_speed_setpoint(0);
-    mc_setpoints_command[i].set_pos_torque_limit(0);
-    mc_setpoints_command[i].set_neg_torque_limit(0);
-  }
-    
+//      for(int i = 0; i < 4; i++) {
+//        mc_setpoints_command[i].set_speed_setpoint(0);
+//        mc_setpoints_command[i].set_pos_torque_limit(0);
+//        mc_setpoints_command[i].set_neg_torque_limit(0);
+//      }    
       check_TS_active();
       // inverter enabling timed out
       if (timer_inverter_enable.check()) {
-#if DEBUG
-        Serial.println("Setting state to TS Active from Enabling Inverter");
-#endif
+        
+        #if DEBUG
+          Serial.println("Setting state to TS Active from Enabling Inverter");
+        #endif
+      
         set_state(MCU_STATE::TRACTIVE_SYSTEM_ACTIVE);
       }
-
       // Inner state machine for inverter states
       switch (inverter_startup_state) {
         case INVERTER_STARTUP_STATE::WAIT_SYSTEM_READY:
@@ -537,50 +536,49 @@ inline void state_machine() {
 
         case INVERTER_STARTUP_STATE::WAIT_QUIT_INVERTER_ON:
           if (check_all_inverters_quit_inverter_on()) {
-#if DEBUG
-            Serial.println("Setting state to Waiting Ready to Drive Sound");
-#endif
+            
+            #if DEBUG
+              Serial.println("Setting state to Waiting Ready to Drive Sound");
+            #endif
+            
             set_state(MCU_STATE::WAITING_READY_TO_DRIVE_SOUND);
           }
           break;
-
-      }
-      
+      }      
       break;
 
-
     case MCU_STATE::WAITING_READY_TO_DRIVE_SOUND:
-
-      for(int i = 0; i < 4; i++) {
-    mc_setpoints_command[i].set_speed_setpoint(0);
-    mc_setpoints_command[i].set_pos_torque_limit(0);
-    mc_setpoints_command[i].set_neg_torque_limit(0);
-  }
-    
+//      for(int i = 0; i < 4; i++) {
+//        mc_setpoints_command[i].set_speed_setpoint(0);
+//        mc_setpoints_command[i].set_pos_torque_limit(0);
+//        mc_setpoints_command[i].set_neg_torque_limit(0);
+//      }    
       check_TS_active();
       // if the ready to drive sound has been playing for long enough, move to ready to drive mode
       if (timer_ready_sound.check()) {
-#if DEBUG
-        Serial.println("Setting state to Ready to Drive");
-#endif
+        
+        #if DEBUG
+          Serial.println("Setting state to Ready to Drive");
+        #endif
+        
         set_state(MCU_STATE::READY_TO_DRIVE);
       }
       break;
 
     case MCU_STATE::READY_TO_DRIVE:
 
-    #if DEBUG
+      #if DEBUG
         Serial.println("Setting state to Ready to Drive");
-#endif
+      #endif
 
-        for(int i = 0; i < 4; i++) {
-    mc_setpoints_command[i].set_speed_setpoint(300);
-    mc_setpoints_command[i].set_pos_torque_limit(0.1 * 2140);
-    mc_setpoints_command[i].set_neg_torque_limit(0);
-  }
-    
+      for(int i = 0; i < 4; i++) {
+        mc_setpoints_command[i].set_speed_setpoint(300);
+        mc_setpoints_command[i].set_pos_torque_limit(2140);
+        mc_setpoints_command[i].set_neg_torque_limit(0);
+      }
+      
       check_TS_active();
-
+      
       if (check_all_inverters_error()) {
         set_all_inverters_disabled();
         set_state(MCU_STATE::TRACTIVE_SYSTEM_ACTIVE);
@@ -592,7 +590,6 @@ inline void state_machine() {
         pedal_implausability_duration <= 100 &&
         mcu_status.get_bms_ok_high() &&
         mcu_status.get_imd_ok_high()
-
       ) {
 //        set_inverter_torques();
       } else if (mcu_status.get_bms_ok_high() && mcu_status.get_imd_ok_high()) {
@@ -607,7 +604,6 @@ inline void state_machine() {
         Serial.printf("get imd ok high: %d\n", mcu_status.get_imd_ok_high());
         set_all_inverters_no_torque();
       }
-
       break;
   }
 }
@@ -721,14 +717,14 @@ void parse_telem_can_message(const CAN_message_t &RX_msg) {
 void parse_inv_can_message(const CAN_message_t &RX_msg) {
   CAN_message_t rx_msg = RX_msg;
   switch (rx_msg.id) {
-    case ID_MC1_STATUS:       mc_status[0].load(rx_msg.buf);    break;
-    case ID_MC2_STATUS:       mc_status[1].load(rx_msg.buf);    break;
+    case 0xB0:       mc_status[0].load(rx_msg.buf);    break;
+    case 0xB1:       mc_status[1].load(rx_msg.buf);    break;
     case ID_MC1_TEMPS:        mc_temps[0].load(rx_msg.buf);    break;
     case ID_MC2_TEMPS:        mc_temps[1].load(rx_msg.buf);    break;
     case ID_MC1_ENERGY:       mc_energy[0].load(rx_msg.buf);    break;
     case ID_MC2_ENERGY:       mc_energy[1].load(rx_msg.buf);    break;
-    case ID_MC3_STATUS:       mc_status[2].load(rx_msg.buf);    break;
-    case ID_MC4_STATUS:       mc_status[3].load(rx_msg.buf);    break;
+    case 0xB2:       mc_status[2].load(rx_msg.buf);    break;
+    case 0xB3:       mc_status[3].load(rx_msg.buf);    break;
     case ID_MC3_TEMPS:        mc_temps[2].load(rx_msg.buf);    break;
     case ID_MC4_TEMPS:        mc_temps[3].load(rx_msg.buf);    break;
     case ID_MC3_ENERGY:       mc_energy[2].load(rx_msg.buf);    break;
@@ -1626,7 +1622,7 @@ inline void calculate_pedal_implausibilities() {
     Serial.println("T.4.2.10 1");
 #endif
   }
-  else if (mcu_pedal_readings.get_accelerator_pedal_2() > MAX_ACCELERATOR_PEDAL_2 || mcu_pedal_readings.get_accelerator_pedal_2() < MIN_ACCELERATOR_PEDAL_2) {
+  else if (mcu_pedal_readings.get_accelerator_pedal_2() < MAX_ACCELERATOR_PEDAL_2 || mcu_pedal_readings.get_accelerator_pedal_2() > MIN_ACCELERATOR_PEDAL_2) {
     mcu_status.set_no_accel_implausability(false);
 #if DEBUG
     Serial.println("T.4.2.10 2");
@@ -1650,10 +1646,10 @@ inline void calculate_pedal_implausibilities() {
   // BSE check
   // EV.5.6
   // FSAE T.4.3.4
-  if (mcu_pedal_readings.get_brake_pedal_1() < MIN_BRAKE_PEDAL_1 || mcu_pedal_readings.get_brake_pedal_1() > MAX_BRAKE_PEDAL_1) {
+  if (mcu_pedal_readings.get_brake_pedal_1() > MIN_BRAKE_PEDAL_1 || mcu_pedal_readings.get_brake_pedal_1() < MAX_BRAKE_PEDAL_1) {
     mcu_status.set_no_brake_implausability(false);
   }
-  else if (mcu_pedal_readings.get_brake_pedal_2() > MIN_BRAKE_PEDAL_2 || mcu_pedal_readings.get_brake_pedal_2() < MAX_BRAKE_PEDAL_2) { //negative slope for brake 2
+  else if (mcu_pedal_readings.get_brake_pedal_2() < MIN_BRAKE_PEDAL_2 || mcu_pedal_readings.get_brake_pedal_2() > MAX_BRAKE_PEDAL_2) { //negative slope for brake 2
     mcu_status.set_no_brake_implausability(false);
   } else if (fabs((mcu_pedal_readings.get_brake_pedal_1() - START_BRAKE_PEDAL_1) / (END_BRAKE_PEDAL_1 - START_BRAKE_PEDAL_1) -
                   (START_BRAKE_PEDAL_2 - mcu_pedal_readings.get_brake_pedal_2()) / (START_BRAKE_PEDAL_2 - END_BRAKE_PEDAL_2)) > 0.25) {
@@ -1669,7 +1665,7 @@ inline void calculate_pedal_implausibilities() {
     (
       (mcu_pedal_readings.get_accelerator_pedal_1() > ((END_ACCELERATOR_PEDAL_1 - START_ACCELERATOR_PEDAL_1) / 4 + START_ACCELERATOR_PEDAL_1))
       ||
-      (mcu_pedal_readings.get_accelerator_pedal_2() > ((END_ACCELERATOR_PEDAL_2 - START_ACCELERATOR_PEDAL_2) / 4 + START_ACCELERATOR_PEDAL_2))
+      (mcu_pedal_readings.get_accelerator_pedal_2() < ((END_ACCELERATOR_PEDAL_2 - START_ACCELERATOR_PEDAL_2) / 4 + START_ACCELERATOR_PEDAL_2))
     )
     && mcu_status.get_mech_brake_active()
   )
@@ -1680,7 +1676,7 @@ inline void calculate_pedal_implausibilities() {
   (
     (mcu_pedal_readings.get_accelerator_pedal_1() < ((END_ACCELERATOR_PEDAL_1 - START_ACCELERATOR_PEDAL_1) / 20 + START_ACCELERATOR_PEDAL_1))
     &&
-    (mcu_pedal_readings.get_accelerator_pedal_2() < ((END_ACCELERATOR_PEDAL_2 - START_ACCELERATOR_PEDAL_2) / 20 + START_ACCELERATOR_PEDAL_2))
+    (mcu_pedal_readings.get_accelerator_pedal_2() > ((END_ACCELERATOR_PEDAL_2 - START_ACCELERATOR_PEDAL_2) / 20 + START_ACCELERATOR_PEDAL_2))
   )
   {
     mcu_status.set_no_accel_brake_implausability(true);
