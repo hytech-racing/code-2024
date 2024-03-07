@@ -906,12 +906,19 @@ inline void set_inverter_torques() {
   if (avg_accel < 0) {
     avg_accel = 0;
   }
+  /*
+   * Maybe Liwei was worried the Teensy would miss one since
+   * Accel is more critical
+   * Unlikely though
+   */
+   /*
   if (avg_accel > max_torque) {
     avg_accel = max_torque;
   }
   if (avg_accel < 0) {
     avg_accel = 0;
   }
+  */
   if (avg_brake > 1500) {
     avg_brake = 1500;
   }
@@ -1629,13 +1636,13 @@ inline void pitch_angle_calibration() {
 inline void calculate_pedal_implausibilities() {
   // FSAE EV.5.5
   // FSAE T.4.2.10
-  if (mcu_pedal_readings.get_accelerator_pedal_1() < MIN_ACCELERATOR_PEDAL_1 || mcu_pedal_readings.get_accelerator_pedal_1() > MAX_ACCELERATOR_PEDAL_1) {
+  if (mcu_pedal_readings.get_accelerator_pedal_1() < MIN_ACCELERATOR_PEDAL_1 || mcu_pedal_readings.get_accelerator_pedal_1() > MAX_ACCELERATOR_PEDAL_1) { // accel1 pos slope
     mcu_status.set_no_accel_implausability(false);
 #if DEBUG
     Serial.println("T.4.2.10 1");
 #endif
   }
-  else if (mcu_pedal_readings.get_accelerator_pedal_2() < MAX_ACCELERATOR_PEDAL_2 || mcu_pedal_readings.get_accelerator_pedal_2() > MIN_ACCELERATOR_PEDAL_2) {
+  else if (mcu_pedal_readings.get_accelerator_pedal_2() < MAX_ACCELERATOR_PEDAL_2 || mcu_pedal_readings.get_accelerator_pedal_2() > MIN_ACCELERATOR_PEDAL_2) {  // accel2 neg slope
     mcu_status.set_no_accel_implausability(false);
 #if DEBUG
     Serial.println("T.4.2.10 2");
@@ -1659,12 +1666,14 @@ inline void calculate_pedal_implausibilities() {
   // BSE check
   // EV.5.6
   // FSAE T.4.3.4
-  if (mcu_pedal_readings.get_brake_pedal_1() > MIN_BRAKE_PEDAL_1 || mcu_pedal_readings.get_brake_pedal_1() < MAX_BRAKE_PEDAL_1) {
+  if (mcu_pedal_readings.get_brake_pedal_1() > MIN_BRAKE_PEDAL_1 || mcu_pedal_readings.get_brake_pedal_1() < MAX_BRAKE_PEDAL_1) { // brake1 neg slope
     mcu_status.set_no_brake_implausability(false);
   }
-  else if (mcu_pedal_readings.get_brake_pedal_2() < MIN_BRAKE_PEDAL_2 || mcu_pedal_readings.get_brake_pedal_2() > MAX_BRAKE_PEDAL_2) { //negative slope for brake 2
+  else if (mcu_pedal_readings.get_brake_pedal_2() < MIN_BRAKE_PEDAL_2 || mcu_pedal_readings.get_brake_pedal_2() > MAX_BRAKE_PEDAL_2) { //negative slope for brake 2 // pos slope for rev15
     mcu_status.set_no_brake_implausability(false);
-  } else if (fabs((mcu_pedal_readings.get_brake_pedal_1() - START_BRAKE_PEDAL_1) / (END_BRAKE_PEDAL_1 - START_BRAKE_PEDAL_1) -
+  }
+  // check that the pedals are reading within 25% of each other
+  else if (fabs((mcu_pedal_readings.get_brake_pedal_1() - START_BRAKE_PEDAL_1) / (END_BRAKE_PEDAL_1 - START_BRAKE_PEDAL_1) -
                   (START_BRAKE_PEDAL_2 - mcu_pedal_readings.get_brake_pedal_2()) / (START_BRAKE_PEDAL_2 - END_BRAKE_PEDAL_2)) > 0.25) {
     mcu_status.set_no_brake_implausability(false);
   }
@@ -1676,9 +1685,9 @@ inline void calculate_pedal_implausibilities() {
   // APPS/Brake Pedal Plausability Check
   if  (
     (
-      (mcu_pedal_readings.get_accelerator_pedal_1() > ((END_ACCELERATOR_PEDAL_1 - START_ACCELERATOR_PEDAL_1) / 4 + START_ACCELERATOR_PEDAL_1))
+      (mcu_pedal_readings.get_accelerator_pedal_1() > ((END_ACCELERATOR_PEDAL_1 - START_ACCELERATOR_PEDAL_1) / 4 + START_ACCELERATOR_PEDAL_1))  // accel1 pos slope
       ||
-      (mcu_pedal_readings.get_accelerator_pedal_2() < ((END_ACCELERATOR_PEDAL_2 - START_ACCELERATOR_PEDAL_2) / 4 + START_ACCELERATOR_PEDAL_2))
+      (mcu_pedal_readings.get_accelerator_pedal_2() < ((END_ACCELERATOR_PEDAL_2 - START_ACCELERATOR_PEDAL_2) / 4 + START_ACCELERATOR_PEDAL_2))  // accel2 neg slope
     )
     && mcu_status.get_mech_brake_active()
   )

@@ -51,9 +51,9 @@ CAN_message_t DashboardInterface::write()
     can_msg.id = id;
     // this circular buffer implementation requires that you push your data in a array buffer
     // all this does is put the msg into a uint8_t buffer and pushes it onto the queue
-    uint8_t buf[sizeof(CAN_message_t)] = {};
-    memmove(buf, &can_msg, sizeof(CAN_message_t));
-    msg_queue_->push_back(buf, sizeof(CAN_message_t));
+    // uint8_t buf[sizeof(CAN_message_t)] = {};
+    // memmove(buf, &can_msg, sizeof(CAN_message_t));
+    // msg_queue_->push_back(buf, sizeof(CAN_message_t));
 
     return can_msg;
 

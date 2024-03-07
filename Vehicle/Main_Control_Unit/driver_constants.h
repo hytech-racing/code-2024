@@ -9,7 +9,7 @@
 //        #define MIN_ACCELERATOR_PEDAL_1 1000    // Low accelerator implausibility threshold
 //        #define MIN_ACCELERATOR_PEDAL_1 700    // Low accelerator implausibility threshold
 
-        #define MIN_ACCELERATOR_PEDAL_1 2200  // pos slope
+        #define MIN_ACCELERATOR_PEDAL_1 2200  // accel1 pos slope
         
 //        #define START_ACCELERATOR_PEDAL_1 1370  // Position to start acceleration //1140 + pressure 1151
 //        #define END_ACCELERATOR_PEDAL_1 2108    // Position to max out acceleration //1905
@@ -27,7 +27,7 @@
 //        #define MIN_ACCELERATOR_PEDAL_2 500    // Low accelerator implausibility threshold
 //        #define MIN_ACCELERATOR_PEDAL_2 1350    // Low accelerator implausibility threshold
 
-        #define MIN_ACCELERATOR_PEDAL_2 1550  // neg slope
+        #define MIN_ACCELERATOR_PEDAL_2 1550  // accel2 neg slope
         
 //        #define START_ACCELERATOR_PEDAL_2 680  // Position to start acceleration 560 + pressure 570
 //        #define END_ACCELERATOR_PEDAL_2 1050    // Position to max out acceleration 948
@@ -42,7 +42,7 @@
         #define MAX_ACCELERATOR_PEDAL_2 440   // High accelerator implausibility threshold
         
 
-        #define MIN_BRAKE_PEDAL_1 2890    // Low brake implausibility threshold // neg slope
+        #define MIN_BRAKE_PEDAL_1 2890    // Low brake implausibility threshold // brake1 neg slope
         
         #define START_BRAKE_PEDAL_1 2860  // Position to start brake // 2078 + pressure
         
@@ -51,7 +51,7 @@
         #define MAX_BRAKE_PEDAL_1 2300
          
 //brake 2 is negative slope
-        #define MIN_BRAKE_PEDAL_2 850    // Low brake implausibility threshold  // pos slope
+        #define MIN_BRAKE_PEDAL_2 850    // Low brake implausibility threshold  // brake2 pos slope
         
         #define START_BRAKE_PEDAL_2 878  // Position to start brake //2045 - pressure
         

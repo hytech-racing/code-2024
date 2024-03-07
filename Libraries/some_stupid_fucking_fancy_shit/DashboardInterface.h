@@ -105,6 +105,13 @@ public:
     {
         msg_queue_ = msg_output_queue;
     };
+    /*
+        Constructor overload for simple solution
+    */
+    DashboardInterface()
+    {
+        msg_queue_ = NULL;  // do not use message queue
+    };
 
     /*!
         read function will take in a reference to a new CAN message, unpack it,
