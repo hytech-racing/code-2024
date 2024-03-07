@@ -34,19 +34,21 @@
 FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> TELEM_CAN;  // Telemetry
 
 /* Sensors */
+// ADCs
 struct ADCs
 {
   MCP_ADC<4> a1 = MCP_ADC<4>(ADC1_CS);  // RL corner board
   MCP_ADC<4> a2 = MCP_ADC<4>(ADC2_CS);  // RR corner board
   MCP_ADC<8> a3 = MCP_ADC<8>(ADC3_CS);  // Thermistors
 } ADC;
-
+// Pi shutdown
+DebouncedButton btn_pi_shutdown;
 // VectorNav
 
 /**
  * Interfaces
 */
-
+TelemetryInterface telem_interface(&)
 
 /* Metro timers */
 // Sensor read
@@ -54,8 +56,7 @@ Metro timer_read_all_adcs = Metro(10);
 Metro timer_read_imu = Metro(20);
 
 /* Sensor declare */
-// Pi shutdown
-DebouncedButton btn_pi_shutdown;
+
 
 /* DSP utilities */
 Filter_IIR thermistor_iir = Filter_IIR(THERM_ALPHA);  // IIR filter thermistor reading
@@ -105,6 +106,15 @@ void parse_telem_can_message(const CAN_message_t &RX_msg) {
       break;
     default:
       break;
+  }
+}
+
+/**
+ * Process Rx buffer
+*/
+void process_ring_buffer(CANBufferType &rx_buffer, unsigned long curr_millis) {
+  while (rx_buffer.available()) {
+    CAN_message_t recvd_msg
   }
 }
 

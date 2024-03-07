@@ -17,9 +17,7 @@ extern CANBufferType CAN2_txBuffer;
  */
 void on_can3_receive(const CAN_message_t &msg);
 
-/**
- * 
-*/
+
 
 
 
