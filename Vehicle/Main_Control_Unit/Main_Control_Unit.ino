@@ -867,7 +867,7 @@ inline void set_inverter_torques_regen_only() {
     }
     else {
       int16_t max_speed_regen = 0;
-      for (int i = 0; i < sizeof(torque_setpoint_array); i++) {
+      for (int i = 0; i < 4; i++) {
 
         max_speed_regen = (max_speed_regen < mc_status[i].get_speed()) ? mc_status[i].get_speed() : max_speed_regen;
 
