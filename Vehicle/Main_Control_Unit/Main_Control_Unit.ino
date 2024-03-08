@@ -319,6 +319,13 @@ void loop() {
         Serial.println(mc_setpoints_command[i].get_speed_setpoint());
         Serial.println(mc_setpoints_command[i].get_pos_torque_limit());
         Serial.println(mc_setpoints_command[i].get_neg_torque_limit());
+        
+        Serial.printf("no brake implausibility: %d\n", mcu_status.get_no_brake_implausability());
+        Serial.printf("no accel implausibility: %d\n", mcu_status.get_no_accel_implausability());
+        Serial.printf("no accel brake implausibility: %d\n", mcu_status.get_no_accel_brake_implausability());
+        Serial.printf("software is ok: %d\n", mcu_status.get_software_is_ok());
+        Serial.printf("get bms ok high: %d\n", mcu_status.get_bms_ok_high());
+        Serial.printf("get imd ok high: %d\n", mcu_status.get_imd_ok_high());
       }
     }
       Serial.println("PEDALS");
@@ -584,11 +591,11 @@ inline void state_machine() {
         Serial.println("Setting state to Ready to Drive");
       #endif
 
-      for(int i = 0; i < 4; i++) {
-        mc_setpoints_command[i].set_speed_setpoint(300);
-        mc_setpoints_command[i].set_pos_torque_limit(2140);
-        mc_setpoints_command[i].set_neg_torque_limit(0);
-      }
+//      for(int i = 0; i < 4; i++) {
+//        mc_setpoints_command[i].set_speed_setpoint(300);
+//        mc_setpoints_command[i].set_pos_torque_limit(2140);
+//        mc_setpoints_command[i].set_neg_torque_limit(0);
+//      }
       
       check_TS_active();
       
@@ -604,7 +611,7 @@ inline void state_machine() {
         mcu_status.get_bms_ok_high() &&
         mcu_status.get_imd_ok_high()
       ) {
-//        set_inverter_torques();
+        set_inverter_torques();
       } else if (mcu_status.get_bms_ok_high() && mcu_status.get_imd_ok_high()) {
 //        set_inverter_torques_regen_only();
       } else {
