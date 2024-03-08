@@ -613,7 +613,7 @@ inline void state_machine() {
       ) {
         set_inverter_torques();
       } else if (mcu_status.get_bms_ok_high() && mcu_status.get_imd_ok_high()) {
-//        set_inverter_torques_regen_only();
+        set_inverter_torques_regen_only();
       } else {
         Serial.println("not calculating torque");
         Serial.printf("no brake implausibility: %d\n", mcu_status.get_no_brake_implausability());
