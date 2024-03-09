@@ -1,10 +1,10 @@
 #include "DashboardInterface.h"
 
-void DashboardInterface::read(const CAN_message_t &can_msg)
+void DashboardInterface::read(const uint8_t* _d, uint8_t dlc_)
 {
 
     DASHBOARD_STATE_t dash_state;
-    Unpack_DASHBOARD_STATE_hytech(&dash_state, can_msg.buf, can_msg.len);
+    Unpack_DASHBOARD_STATE_hytech(&dash_state, _d, dlc_);
 
     _data.dial_mode = static_cast<DialMode_e>(dash_state.dial_state);
     
@@ -25,7 +25,7 @@ void DashboardInterface::read(const CAN_message_t &can_msg)
 
 }
 
-CAN_message_t DashboardInterface::write()
+uint32_t DashboardInterface::write(uint8_t* _d, uint8_t* _len, uint8_t* _ide)
 {   
 
     DASHBOARD_MCU_STATE_t dash_mcu_state;
@@ -46,16 +46,16 @@ CAN_message_t DashboardInterface::write()
     dash_mcu_state.glv_led = _data.LED[static_cast<int>(DashLED_e::GLV_LED)];
     dash_mcu_state.pack_charge_led = _data.LED[static_cast<int>(DashLED_e::CRIT_CHARGE_LED)];
     
-    CAN_message_t can_msg;
-    auto id = Pack_DASHBOARD_MCU_STATE_hytech(&dash_mcu_state, can_msg.buf, &can_msg.len, (uint8_t*) &can_msg.flags.extended);
-    can_msg.id = id;
+    // CAN_message_t can_msg;
+    auto id = Pack_DASHBOARD_MCU_STATE_hytech(&dash_mcu_state, _d, _len, _ide);
+    // can_msg.id = id;
     // this circular buffer implementation requires that you push your data in a array buffer
     // all this does is put the msg into a uint8_t buffer and pushes it onto the queue
     // uint8_t buf[sizeof(CAN_message_t)] = {};
     // memmove(buf, &can_msg, sizeof(CAN_message_t));
     // msg_queue_->push_back(buf, sizeof(CAN_message_t));
 
-    return can_msg;
+    return id;
 
 }
 
@@ -79,7 +79,7 @@ void DashboardInterface::tick10(bool buzzer, bool ams_ok, bool imd_ok, bool bots
     if (bots) setLED(DashLED_e::BOTS_LED, LEDColors_e::ON);
     else setLED(DashLED_e::BOTS_LED, LEDColors_e::RED);
 
-    write();
+    // write();
 }
 
 DialMode_e DashboardInterface::getDialMode() {return _data.dial_mode;}
@@ -99,4 +99,14 @@ bool DashboardInterface::shutdownHAboveThreshold() {return _data.shutdown;}
 
 void DashboardInterface::soundBuzzer(bool state) {_data.buzzer_cmd = state;}
 bool DashboardInterface::checkBuzzer() {return _data.buzzer_state;}
+
+void DashboardInterface::clearActionButtons()
+{
+    _data.button.mark        = false;
+    _data.button.mode        = false;
+    _data.button.mc_cycle    = false;
+    _data.button.launch_ctrl = false;
+    _data.button.torque_mode = false;
+    _data.button.led_dimmer  = false;
+}
 

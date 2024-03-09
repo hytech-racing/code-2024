@@ -1,9 +1,11 @@
 #ifndef __DASHBOARDINTERFACE_H__
 #define __DASHBOARDINTERFACE_H__
 
-#include "MessageQueueDefine.h"
-#include "FlexCAN_T4.h"
+// #include "MessageQueueDefine.h"
+// #include "FlexCAN_T4.h"
 #include "hytech.h"
+
+#include <stdint.h>
 
 /* Enum for the modes on the dial, corresponds directly to dial index pos. */
 enum class DialMode_e
@@ -90,7 +92,7 @@ class DashboardInterface
 {
 private:
     /* Pointer to the circular buffer to write new messages */
-    CANBufferType *msg_queue_;
+    // CANBufferType *msg_queue_;
     /* The instantiated data struct used to access data by member functions */
     DashComponentInterface_s _data;
 
@@ -101,16 +103,16 @@ public:
 
         @param msg_output_queue Pointer to the telem CAN circular buffer
     */
-    DashboardInterface(CANBufferType *msg_output_queue)
-    {
-        msg_queue_ = msg_output_queue;
-    };
+    // DashboardInterface(CANBufferType *msg_output_queue)
+    // {
+    //     msg_queue_ = msg_output_queue;
+    // };
     /*
         Constructor overload for simple solution
     */
     DashboardInterface()
     {
-        msg_queue_ = NULL;  // do not use message queue
+        // msg_queue_ = NULL;  // do not use message queue
     };
 
     /*!
@@ -118,10 +120,10 @@ public:
         and will store all of the information into the DashComponentInterface for later access
         @param can_msg is the reference to a new CAN message CAN_message_t
     */
-    void read(const CAN_message_t &can_msg);
+    void read(const uint8_t* _d, uint8_t dlc_);
 
     /* write function will Pack a message based on the current data in the interface and push it to the tx buffer */
-    CAN_message_t write();
+    uint32_t write(uint8_t* _d, uint8_t* _len, uint8_t* _ide);
 
     /*
         Tick DashboardInterface at 10hz to gather data and send CAN message
@@ -168,6 +170,11 @@ public:
         @param color LEDColors_e enum that corresponds to the color/state of the set LED
     */
     void setLED(DashLED_e led, LEDColors_e color);
+
+    /*
+        clear all action buttons
+    */
+   void clearActionButtons();
 };
 
 #endif /* __DASHBOARDINTERFACE_H__ */
