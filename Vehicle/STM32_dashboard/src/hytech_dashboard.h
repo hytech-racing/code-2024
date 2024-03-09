@@ -39,7 +39,7 @@ enum LED_LIST_e { BOTS = 0, LAUNCH_CTRL = 1, TORQUE_MODE = 2, BRAKE_ENGAGE = 3, 
                 GLV = 6, CRIT_CHARGE = 7, RDY_DRIVE = 8, MC_ERR = 9, IMD = 10, 
                 AMS = 11};                
 
-enum LED_colors_e
+enum class LED_colors_e
 {
     OFF = 0x00,
     ON = 0xFF00,

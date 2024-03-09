@@ -115,7 +115,7 @@ void hytech_dashboard::startup() {
 
         // AMS and IMD are off according to rules
         if (i == LED_LIST_e::AMS || i == LED_LIST_e::IMD){
-            _neopixels.setPixelColor(i, LED_colors_e::OFF);
+            _neopixels.setPixelColor(i, 0);
         }
             
     }
@@ -526,14 +526,14 @@ void hytech_dashboard::refresh_neopixels(DashboardCAN* CAN) {
     // replace Metro timer if it is figured out
     if (CAN->mcu_state_update || pixel_refresh.check()) {
 
-        // Serial.println("Refreshing Neopixels");
+        Serial.printf("Refreshing Neopixels, %d, %d\n", CAN->brb_read ? LED_colors_e::ON : LED_colors_e::RED, CAN->inertia_read ? LED_colors_e::ON : LED_colors_e::RED);
 
         set_neopixel_color(LED_LIST_e::BOTS, CAN->dash_mcu_state.bots_led);
         set_neopixel_color(LED_LIST_e::LAUNCH_CTRL, CAN->dash_mcu_state.launch_control_led);
         set_neopixel_color(LED_LIST_e::TORQUE_MODE, CAN->dash_mcu_state.mode_led);
         set_neopixel_color(LED_LIST_e::BRAKE_ENGAGE, CAN->dash_mcu_state.mechanical_brake_led);
-        set_neopixel_color(LED_LIST_e::COCKPIT_BRB, CAN->dash_mcu_state.cockpit_brb_led);
-        set_neopixel_color(LED_LIST_e::INERTIA, CAN->dash_mcu_state.inertia_status_led);
+        set_neopixel_color(LED_LIST_e::COCKPIT_BRB, CAN->brb_read ? 1 : 3);
+        set_neopixel_color(LED_LIST_e::INERTIA, CAN->inertia_read ? 1 : 3);
         set_neopixel_color(LED_LIST_e::RDY_DRIVE, CAN->dash_mcu_state.start_status_led);
         set_neopixel_color(LED_LIST_e::MC_ERR, CAN->dash_mcu_state.motor_controller_error_led);
         set_neopixel_color(LED_LIST_e::IMD, CAN->dash_mcu_state.imd_led);
@@ -554,16 +554,16 @@ void hytech_dashboard::set_neopixel_color(LED_LIST_e led, uint8_t state) {
     switch (state)
     {
     case 0:
-        color = LED_colors_e::OFF;
+        color = int(LED_colors_e::OFF);
         break;
     case 1:
-        color = LED_colors_e::ON;
+        color = int(LED_colors_e::ON);
         break;
     case 2:
-        color = LED_colors_e::YELLOW;
+        color = int(LED_colors_e::YELLOW);
         break;
     case 3:
-        color = LED_colors_e::RED;
+        color = int(LED_colors_e::RED);
         break;
     
     default:

@@ -15,6 +15,8 @@ DashboardCAN::DashboardCAN(STM32_CAN* CAN)
   // we will just poll the can bus for now
   // _CAN.enableMBInterrupts();
   // _CAN.onReceive();
+  inertia_read = false;
+  brb_read = false;
 }
 
 void DashboardCAN::read_CAN()

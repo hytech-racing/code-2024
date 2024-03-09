@@ -21,6 +21,8 @@ void Dashboard_Controls::startup() {
 }
 
 void Dashboard_Controls::update(DashboardCAN* CAN) {
+
+  /* Read Buttons */
   
   if (btn_start.isPressed()) {
     // SerialUSB.println("Start button pressed.");
@@ -70,12 +72,19 @@ void Dashboard_Controls::update(DashboardCAN* CAN) {
   //   }
   // }
 
+  /* Update Buzzer */
+
   digitalWrite(BUZZER_PIN, CAN->dash_mcu_state.drive_buzzer);
   s->drive_buzzer = CAN->dash_mcu_state.drive_buzzer;
 
   if (CAN->dash_mcu_state.drive_buzzer) {
     SerialUSB.println("ACTIVE BUZZER");
   }
+
+  /* Read Shutdown Signals*/
+
+  CAN->inertia_read = digitalRead(SHUTDOWN_J_INERTIA_PIN);
+  CAN->brb_read = digitalRead(SHUTDOWN_K_COKPIT_BRB_PIN);
 
   // old code
 

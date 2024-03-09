@@ -20,6 +20,10 @@
 #define DIAL_MODE_THREE PB15
 #define DIAL_MODE_FIVE PC7
 #define DIAL_MODE_FOUR PC6
+// Shutdown pin definition
+#define SHUTDOWN_B_BOTS_PIN PB6 // not used atm, pulls status from ECU
+#define SHUTDOWN_J_INERTIA_PIN PB7
+#define SHUTDOWN_K_COKPIT_BRB_PIN PB5
 
 class DashboardCAN;
 class Dashboard_Controls {

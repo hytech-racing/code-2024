@@ -60,6 +60,9 @@ class DashboardCAN {
         bool mcu_state_update = true;
         bool send_now = false;
 
+        /* SHUTDOWN VARS */
+        bool inertia_read;
+        bool brb_read;
         
 
         // constructor takes pointer to STM32_CAN object
