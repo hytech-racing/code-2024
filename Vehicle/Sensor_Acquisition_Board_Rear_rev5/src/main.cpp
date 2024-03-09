@@ -8,6 +8,7 @@
 
 /* Framework */
 #include <Arduino.h>
+#include <stdint.h>
 
 /* Libraries */
 #include "FlexCAN_T4.h"
@@ -48,7 +49,8 @@ DebouncedButton btn_pi_shutdown;
 /**
  * Interfaces
 */
-TelemetryInterface telem_interface(&)
+TelemetryInterface telem_interface(&CAN2_txBuffer, {THERM_3, THERM_4, THERM_5, THERM_6, THERM_7, THERM_8, THERM_9,
+                                                    SUS_POT_3, SUS_POT_4, RL_LOAD_CELL, RR_LOAD_CELL});
 
 /* Metro timers */
 // Sensor read
@@ -66,22 +68,11 @@ void parse_telem_can_message(const CAN_message_t &RX_msg);
 
 void setup() {
 
-
   // Initialize debounced button
   btn_pi_shutdown.begin(PI_SHUTDOWN, 100);
 
-  // RS485
-  ride_height_sensor.begin();
-
   // RS232
-  Serial1.begin();
-
-  // CAN
-  TELEM_CAN.begin();
-  TELEM_CAN.setBaudRate(500000);
-  TELEM_CAN.enableMBInterrupts();
-  TELEM_CAN.onReceive(parse_telem_can_message);
-  delay(500);
+  Serial1.begin(IMU_RS232_SPEED);
 
 }
 
@@ -96,25 +87,41 @@ void loop() {
 
 }
 
-/* Parse incoming CAN message needed for SAB operation */
-/* Prototype */
-void parse_telem_can_message(const CAN_message_t &RX_msg) {
-  CAN_message_t rx_msg = RX_msg;
-  switch (rx_msg.id) {
-    case ID_BMS_COULOMB_COUNTS:
-      bms_coulomb_counts.load(rx_msg.buf);
-      break;
-    default:
-      break;
-  }
+/**
+ * Initialize CAN lines 
+*/
+void init_all_CAN_devices() {
+  // Telemetry CAN line
+  TELEM_CAN.begin();
+  TELEM_CAN.setBaudRate(TELEM_CAN_BAUDRATE);
+  TELEM_CAN.setMaxMB(16);
+  TELEM_CAN.enableFIFO();
+  TELEM_CAN.enableFIFOInterrupt();
+  TELEM_CAN.onReceive(on_can2_receive);
+  TELEM_CAN.mailboxStatus();
+
+  // delay(500);
 }
 
 /**
  * Process Rx buffer
+ * Prototype. Not needed atm.
 */
 void process_ring_buffer(CANBufferType &rx_buffer, unsigned long curr_millis) {
   while (rx_buffer.available()) {
-    CAN_message_t recvd_msg
+    CAN_message_t recvd_msg;
+    uint8_t buf[sizeof(CAN_message_t)];
+    rx_buffer.pop_front(buf, sizeof(CAN_message_t));
+    memmove(&recvd_msg, buf, sizeof(recvd_msg));
+    switch (recvd_msg.id)
+    {
+    case 0:
+      /* code */
+      break;
+    
+    default:
+      break;
+    }
   }
 }
 

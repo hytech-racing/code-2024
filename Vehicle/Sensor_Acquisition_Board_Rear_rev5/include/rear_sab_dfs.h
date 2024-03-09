@@ -25,6 +25,7 @@
 #define ADC_SPI_SPEED 2000000
 #define RS485_SERIAL_SPEED 115200
 #define IMU_RS232_SPEED 115200
+#define TELEM_CAN_BAUDRATE 500000
 
 /* ADC read channels */
 // SAB MCP3208
@@ -45,5 +46,6 @@
 /* Thermistor parameters */
 #define TOTAL_THERMISTOR_COUNT 7
 #define THERM_ALPHA
+
 
 
