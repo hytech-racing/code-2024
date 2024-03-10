@@ -20,12 +20,17 @@
 /* Interfaces */
 #include "HytechCANInterface.h"
 #include "MCP_ADC.h"
-#include "Filter_IIR.h"
 #include "TelemetryInterface.h"
 
 /* Systems */
-#include "DebouncedButton.h"
 #include "SysClock.h"
+
+/**
+ * Utilities
+*/
+#include "MessageQueueDefine.h"
+#include "DebouncedButton.h"
+#include "Filter_IIR.h"
 
 /**
  * Data source
@@ -52,21 +57,37 @@ DebouncedButton btn_pi_shutdown;
 TelemetryInterface telem_interface(&CAN2_txBuffer, {THERM_3, THERM_4, THERM_5, THERM_6, THERM_7, THERM_8, THERM_9,
                                                     SUS_POT_3, SUS_POT_4, RL_LOAD_CELL, RR_LOAD_CELL});
 
+/**
+ * Systems
+*/
+SysClock sys_clock;
+
 /* Metro timers */
 // Sensor read
 Metro timer_read_all_adcs = Metro(10);
 Metro timer_read_imu = Metro(20);
 
-/* Sensor declare */
-
-
-/* DSP utilities */
-Filter_IIR thermistor_iir = Filter_IIR(THERM_ALPHA);  // IIR filter thermistor reading
+/* Utilities */
+// IIR filter for DSP
+// Thermistors
+Filter_IIR thermistor_iir[TOTAL_THERMISTOR_COUNT];
+// Loadcells
+// Filter_IIR loadcell_iir[TOTAL_LOADCELL_COUNT] = Filter_IIR{LOADCELL_ALPHA, LOADCELL_ALPHA};  // actually will be done by torque controllers themselves if needed
 
 /* Function prototypes */
-void parse_telem_can_message(const CAN_message_t &RX_msg);
+void init_all_CAN_devices();
+void process_ring_buffer(CANBufferType &rx_buffer, unsigned long curr_millis);
+void init_all_iir_filters();
+void tick_all_interfaces(const SysTick_s &curr_tick);
+void tick_all_systems(const SysTick_s &curr_tick);
 
 void setup() {
+
+  // Tick system clock
+  SysTick_s curr_tick = sys_clock.tick(micros());
+
+  // Set IIR filter alpha for thermistors
+  init_all_iir_filters();
 
   // Initialize debounced button
   btn_pi_shutdown.begin(PI_SHUTDOWN, 100);
@@ -77,13 +98,21 @@ void setup() {
 }
 
 void loop() {
-  // CAN
-  TELEM_CAN.events();
-  // ADC
-  read_all_adcs();
-  // IIR filter thermistors
-  
 
+  // Tick system clock
+  SysTick_s curr_tick = sys_clock.tick(micros());
+
+  // Process received CAN messages
+  // Not currently needed
+
+  // Tick interfaces
+  tick_all_interfaces(curr_tick);
+
+  // Tick systems
+  // Not currently needed
+
+  // Send outbound CAN messages
+  send_all_CAN_msg(CAN2_txBuffer, &TELEM_CAN);
 
 }
 
@@ -125,28 +154,40 @@ void process_ring_buffer(CANBufferType &rx_buffer, unsigned long curr_millis) {
   }
 }
 
-/* Read all analog sensors from ADC */
-inline void read_all_adcs() {
-  if (timer_read_all_adcs.check()) {
-    /* RL CB */
-    // Sus pot
-    sab_corner_board_readings.set_pot3(adc1.read_channel(SUS_POT_3));
-    // Loadcell
-    sab_corner_board_readings.set_RL_load_cell(adc1.read_channel(RL_LOAD_CELL));
-    /* RR CB */
-    // Sus pot
-    sab_corner_board_readings.set_pot4(adc2.read_channel(SUS_POT_4));
-    // Loadcell
-    sab_corner_board_readings.set_RR_load_cell(adc2.read_channel(RR_LOAD_CELL));
-    /* SAB */
-    // Thermistors
-    sab_thermistors_1.set_thermistor3(adc3.read_channel(THERM_3));
-    sab_thermistors_1.set_thermistor4(adc3.read_channel(THERM_4));
-    sab_thermistors_1.set_thermistor5(adc3.read_channel(THERM_5));
-    sab_thermistors_1.set_thermistor6(adc3.read_channel(THERM_6));
-    sab_thermistors_2.set_thermistor7(adc3.read_channel(THERM_7));
-    sab_thermistors_2.set_thermistor8(adc3.read_channel(THERM_8));
-    sab_thermistors_2.set_thermistor9(adc3.read_channel(THERM_9));
+/**
+ * Initialize all IIR filters
+*/
+void init_all_iir_filters() {
+  for (int i = 0; i < TOTAL_THERMISTOR_COUNT; i++) {
+    thermistor_iir[i].set_alpha(THERM_ALPHA);
   }
 }
+
+/**
+ * Tick interfaces
+*/
+void tick_all_interfaces(const SysTick_s &curr_tick) {
+
+  TriggerBits_s t = curr_tick.triggers;
+
+  if (t.trigger100) { // 100Hz
+    ADC.a1.tick();
+    ADC.a2.tick();
+    ADC.a3.tick();
+  }
+
+  if (t.trigger50) {  // 50Hz
+    telem_interface.tick(ADC.a1.get(), ADC.a2.get(), ADC.a3.get(), btn_pi_shutdown.isPressed(), thermistor_iir);
+  }
+
+}
+
+/**
+ * Tick systems
+*/
+void tick_all_systems(const SysTick_s &curr_tick) {
+  
+}
+
+
 

@@ -45,7 +45,11 @@
 
 /* Thermistor parameters */
 #define TOTAL_THERMISTOR_COUNT 7
-#define THERM_ALPHA
+#define THERM_ALPHA 0.8
+
+/* Loadcell parameters */
+#define TOTAL_LOADCELL_COUNT 2
+#define LOADCELL_ALPHA 0.8
 
 
 

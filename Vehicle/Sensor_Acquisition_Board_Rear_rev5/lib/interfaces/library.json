@@ -1,0 +1,13 @@
+{
+    "name": "interfaces-lib",
+    "version": "1.0.0",
+    "license": "MIT",
+    "dependencies": {
+        "can_lib": "*",
+        "interfaces-lib": "*",
+        "shared-interfaces": "*",
+        "utilities-lib": "*"
+    },
+    "frameworks": "*",
+    "platforms": "*"
+}

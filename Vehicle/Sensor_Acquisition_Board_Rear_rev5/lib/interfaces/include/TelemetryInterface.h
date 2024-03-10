@@ -6,6 +6,7 @@
 #include "HyTech_CAN.h"
 #include "MessageQueueDefine.h"
 #include "AnalogSensorsInterface.h"
+#include "Filter_IIR.h"
 
 struct TelemetryInterfaceReadChannels
 {
@@ -26,19 +27,19 @@ class TelemetryInterface
 {
 public:
     /* Constructors */
-    TelemetryInterface(CANBufferType *msg_output_queue, TelemetryInterfaceReadChannels &channels):
+    TelemetryInterface(CANBufferType *msg_output_queue, const TelemetryInterfaceReadChannels &channels):
         msg_queue_(msg_output_queue),
         channels_(channels) {};
 
     /* Update CAN messages */
     void update_thermistors_CAN_msg(
-        const AnalogConversion_s &therm3,
-        const AnalogConversion_s &therm4,
-        const AnalogConversion_s &therm5,
-        const AnalogConversion_s &therm6,
-        const AnalogConversion_s &therm7,
-        const AnalogConversion_s &therm8,
-        const AnalogConversion_s &therm9
+        const uint16_t therm3,
+        const uint16_t therm4,
+        const uint16_t therm5,
+        const uint16_t therm6,
+        const uint16_t therm7,
+        const uint16_t therm8,
+        const uint16_t therm9
     );
     void update_cornerboard_CAN_msg(
         const AnalogConversion_s &lc_rl,
@@ -57,12 +58,16 @@ public:
         const AnalogConversionPacket_s<4> &adc1,
         const AnalogConversionPacket_s<4> &adc2,
         const AnalogConversionPacket_s<8> &adc3,
-        const bool tcu_shutdown_status
+        const bool tcu_shutdown_status,
+        const Filter_IIR *iir
     );
 
 private:
     /* CAN buffer */
     CANBufferType *msg_queue_;
+
+    /* ADC read channels */
+    TelemetryInterfaceReadChannels channels_;
 
     /* Outbound CAN message */
     SAB_thermistors_1 sab_thermistors_1_;

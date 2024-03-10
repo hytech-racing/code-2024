@@ -4,11 +4,23 @@
 
 #include <stdint.h>
 
+#define DEFAULT_ALPHA 0.0
+
 class Filter_IIR
 {
 
 public:
-    Filter_IIR(float alpha, uint16_t init_val=0);
+    /**
+     * Constructors
+     */
+    Filter_IIR(float alpha, uint16_t init_val=0) {
+        set_alpha(alpha);
+        prev_reading = init_val;
+    }
+    Filter_IIR() {
+        Filter_IIR(DEFAULT_ALPHA);
+    }
+
     void set_alpha(float alpha);
     uint16_t filtered_result(uint16_t new_val);
     
