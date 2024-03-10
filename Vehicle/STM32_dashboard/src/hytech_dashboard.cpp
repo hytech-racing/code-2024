@@ -213,7 +213,7 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
             display_speeds(&(CAN->mc1_status));
             break;
         case 1:
-            display_suspension_data(&(CAN->mcu_load_cells), &(CAN->sab_load_cells));
+            display_suspension_data(&(CAN->mcu_load_cells)/*, &(CAN->sab_load_cells)*/);
             break;
         case 2:
             // tires
@@ -336,7 +336,7 @@ void hytech_dashboard::draw_page_title(String text) {
     _display.setFont(&FreeSans12pt7b);
 }
 
-void hytech_dashboard::display_suspension_data(MCU_LOAD_CELLS_t* front_load_cells, SAB_LOAD_CELLS_t* rear_load_cells) {
+void hytech_dashboard::display_suspension_data(MCU_LOAD_CELLS_t* front_load_cells/*, SAB_LOAD_CELLS_t* rear_load_cells*/) {
     
     draw_quadrants("Suspension");
     _display.setFont(&FreeSans9pt7b);
@@ -360,7 +360,7 @@ void hytech_dashboard::display_suspension_data(MCU_LOAD_CELLS_t* front_load_cell
     set_cursor_in_quadrant(3, 20);
     x = _display.getCursorX();
     _display.print("LD: ");
-    _display.println(rear_load_cells->RL_load_cell);
+    // _display.println(rear_load_cells->RL_load_cell);
     _display.setCursor(x, _display.getCursorY()-6);
     _display.print("POT: 0");
 
@@ -368,7 +368,7 @@ void hytech_dashboard::display_suspension_data(MCU_LOAD_CELLS_t* front_load_cell
     set_cursor_in_quadrant(4, 20);
     x = _display.getCursorX();
     _display.print("LD: ");
-    _display.println(rear_load_cells->RR_load_cell);
+    // _display.println(rear_load_cells->RR_load_cell);
     _display.setCursor(x, _display.getCursorY()-6);
     _display.print("POT: 0");
 

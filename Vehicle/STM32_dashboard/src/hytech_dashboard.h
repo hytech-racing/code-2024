@@ -9,7 +9,7 @@
 #include "bitmaps.h"
 #include "DashboardCAN.h"
 #include "MCP23S08.h"
-#include "ht_can.h"
+#include "hytech.h"
 
 
 // Display defines
@@ -191,7 +191,7 @@ class hytech_dashboard {
             @param front_load_cells A MCU_LOAD_CELLS_t struct from the CAN library that includes data sent from the ECU, gathered from the front corner boards.
             @param rear_load_cells A SAB_LOAD_CELLS_t struct from the CAN library that includes data sent from the SAB, gathered from the rear corner boards.
         */
-        void display_suspension_data(MCU_LOAD_CELLS_t* front_load_cells, SAB_LOAD_CELLS_t* rear_load_cells);
+        void display_suspension_data(MCU_LOAD_CELLS_t* front_load_cells/*, SAB_LOAD_CELLS_t* rear_load_cells*/);
 
         /* resets the clock back to current time*/
         void restart_current_timer();
