@@ -468,18 +468,18 @@ inline void state_machine() {
   switch (mcu_status.get_state()) {
     case MCU_STATE::STARTUP:
       for(int i = 0; i < 4; i++) {
-//        mc_setpoints_command[i].set_speed_setpoint(0);
-//        mc_setpoints_command[i].set_pos_torque_limit(0);
-//        mc_setpoints_command[i].set_neg_torque_limit(0);
+        mc_setpoints_command[i].set_speed_setpoint(0);
+        mc_setpoints_command[i].set_pos_torque_limit(0);
+        mc_setpoints_command[i].set_neg_torque_limit(0);
       }    
       break;
 
     case MCU_STATE::TRACTIVE_SYSTEM_NOT_ACTIVE:
-//      for(int i = 0; i < 4; i++) {
-//        mc_setpoints_command[i].set_speed_setpoint(0);
-//        mc_setpoints_command[i].set_pos_torque_limit(0);
-//        mc_setpoints_command[i].set_neg_torque_limit(0);
-//      }
+      for(int i = 0; i < 4; i++) {
+        mc_setpoints_command[i].set_speed_setpoint(0);
+        mc_setpoints_command[i].set_pos_torque_limit(0);
+        mc_setpoints_command[i].set_neg_torque_limit(0);
+      }
     
         #if DEBUG
           Serial.println("TS NOT ACTIVE");
@@ -497,11 +497,11 @@ inline void state_machine() {
         break;
 
     case MCU_STATE::TRACTIVE_SYSTEM_ACTIVE:
-//      for(int i = 0; i < 4; i++) {
-//        mc_setpoints_command[i].set_speed_setpoint(0);
-//        mc_setpoints_command[i].set_pos_torque_limit(0);
-//        mc_setpoints_command[i].set_neg_torque_limit(0);
-//      }
+      for(int i = 0; i < 4; i++) {
+        mc_setpoints_command[i].set_speed_setpoint(0);
+        mc_setpoints_command[i].set_pos_torque_limit(0);
+        mc_setpoints_command[i].set_neg_torque_limit(0);
+      }
       check_TS_active();
       if (check_all_inverters_system_ready()) {
         set_all_inverters_dc_on(true);
@@ -521,11 +521,11 @@ inline void state_machine() {
       break;
 
     case MCU_STATE::ENABLING_INVERTER:
-//      for(int i = 0; i < 4; i++) {
-//        mc_setpoints_command[i].set_speed_setpoint(0);
-//        mc_setpoints_command[i].set_pos_torque_limit(0);
-//        mc_setpoints_command[i].set_neg_torque_limit(0);
-//      }    
+      for(int i = 0; i < 4; i++) {
+        mc_setpoints_command[i].set_speed_setpoint(0);
+        mc_setpoints_command[i].set_pos_torque_limit(0);
+        mc_setpoints_command[i].set_neg_torque_limit(0);
+      }    
       check_TS_active();
       // inverter enabling timed out
       if (timer_inverter_enable.check()) {
@@ -568,11 +568,11 @@ inline void state_machine() {
       break;
 
     case MCU_STATE::WAITING_READY_TO_DRIVE_SOUND:
-//      for(int i = 0; i < 4; i++) {
-//        mc_setpoints_command[i].set_speed_setpoint(0);
-//        mc_setpoints_command[i].set_pos_torque_limit(0);
-//        mc_setpoints_command[i].set_neg_torque_limit(0);
-//      }    
+      for(int i = 0; i < 4; i++) {
+        mc_setpoints_command[i].set_speed_setpoint(0);
+        mc_setpoints_command[i].set_pos_torque_limit(0);
+        mc_setpoints_command[i].set_neg_torque_limit(0);
+      }    
       check_TS_active();
       // if the ready to drive sound has been playing for long enough, move to ready to drive mode
       if (timer_ready_sound.check()) {
@@ -591,11 +591,11 @@ inline void state_machine() {
         Serial.println("Setting state to Ready to Drive");
       #endif
 
-//      for(int i = 0; i < 4; i++) {
-//        mc_setpoints_command[i].set_speed_setpoint(300);
-//        mc_setpoints_command[i].set_pos_torque_limit(2140);
-//        mc_setpoints_command[i].set_neg_torque_limit(0);
-//      }
+      for(int i = 0; i < 4; i++) {
+        mc_setpoints_command[i].set_speed_setpoint(300);
+        mc_setpoints_command[i].set_pos_torque_limit(2140);
+        mc_setpoints_command[i].set_neg_torque_limit(0);
+      }
       
       check_TS_active();
       
@@ -611,9 +611,9 @@ inline void state_machine() {
         mcu_status.get_bms_ok_high() &&
         mcu_status.get_imd_ok_high()
       ) {
-        set_inverter_torques();
+//        set_inverter_torques();
       } else if (mcu_status.get_bms_ok_high() && mcu_status.get_imd_ok_high()) {
-        set_inverter_torques_regen_only();
+//        set_inverter_torques_regen_only();
       } else {
         Serial.println("not calculating torque");
         Serial.printf("no brake implausibility: %d\n", mcu_status.get_no_brake_implausability());

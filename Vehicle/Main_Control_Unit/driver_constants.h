@@ -59,7 +59,7 @@
         
         #define MAX_BRAKE_PEDAL_2 2600  // actual 2540
 
-        #define BRAKE_THRESHOLD_MECH_BRAKE_1 1670 // brake 1, mech brake threshold +-5
+        #define BRAKE_THRESHOLD_MECH_BRAKE_1 2000 // brake 1, mech brake threshold +-5
         
         #define BRAKE_THRESHOLD_MECH_BRAKE_2 2020 // brake 2, mech brake threshold +-5
         
