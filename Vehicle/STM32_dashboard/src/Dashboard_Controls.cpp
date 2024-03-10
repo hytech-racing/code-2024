@@ -73,17 +73,21 @@ void Dashboard_Controls::update(DashboardCAN* CAN) {
   // }
 
   /* Update Buzzer */
-
-  if (CAN->dash_mcu_state.drive_buzzer && !buzzer_last_state) {
-    digitalWrite(BUZZER_PIN, CAN->dash_mcu_state.drive_buzzer);
+  if (CAN->dash_mcu_state.drive_buzzer
+      && !buzzer_last_state
+      && (millis() - buzzer_last_millis) > BUZZER_TIME) {
+    digitalWrite(BUZZER_PIN, HIGH);
+    buzzer_cur_state = true;
     buzzer_last_state = true;
     buzzer_timer.reset();
   } else if (buzzer_last_state && buzzer_timer.check()) {
     digitalWrite(BUZZER_PIN, LOW);
+    buzzer_cur_state = true;
     buzzer_last_state = false;
+    buzzer_last_millis = millis();
   }
 
-  s->drive_buzzer = digitalRead(BUZZER_PIN);
+  s->drive_buzzer = digitalRead(buzzer_cur_state);
 
 
   /* Read Shutdown Signals*/
