@@ -179,8 +179,17 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
 
 
     /** TODO: scale these values down to [0,100]*/
-    draw_vertical_pedal_bar(CAN->mcu_pedal_readings.accel_pedal_1, 17);
-    draw_vertical_pedal_bar(CAN->mcu_pedal_readings.brake_pedal_1, 285);
+
+    double ACCEL1_MIN_VAL = 2167;
+    double ACCEL1_MAX_VAL = 3285;
+    double ACCEL1_RANGE = ACCEL1_MAX_VAL - ACCEL1_MIN_VAL;
+
+    double BRAKE1_MIN_VAL = 2587;
+    double BRAKE1_MAX_VAL = 1947;
+    double BRAKE1_RANGE = BRAKE1_MAX_VAL - BRAKE1_MIN_VAL;
+
+    draw_vertical_pedal_bar((int) ((CAN->mcu_pedal_readings.accel_pedal_1 - ACCEL1_MIN_VAL)/(ACCEL1_RANGE) * 100), 285);
+    draw_vertical_pedal_bar( (int) (((CAN->mcu_pedal_readings.brake_pedal_1 - BRAKE1_MIN_VAL)/BRAKE1_RANGE) * 100), 17);
 
     /** TODO: add real data to these bars*/
     draw_battery_bar(0);
