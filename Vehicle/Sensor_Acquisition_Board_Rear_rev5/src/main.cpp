@@ -18,7 +18,7 @@
 #include "rear_sab_dfs.h"
 
 /* Interfaces */
-#include "HytechCANInterface.h"
+#include "HyTechCANInterface.h"
 #include "MCP_ADC.h"
 #include "TelemetryInterface.h"
 
