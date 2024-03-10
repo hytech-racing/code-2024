@@ -188,8 +188,17 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     double BRAKE1_MAX_VAL = 1947;
     double BRAKE1_RANGE = BRAKE1_MAX_VAL - BRAKE1_MIN_VAL;
 
+    // TODO: add mechanical break point to display
+    double BRAKE1_MECH = 2196;
+
     draw_vertical_pedal_bar((int) ((CAN->mcu_pedal_readings.accel_pedal_1 - ACCEL1_MIN_VAL)/(ACCEL1_RANGE) * 100), 285);
     draw_vertical_pedal_bar( (int) (((CAN->mcu_pedal_readings.brake_pedal_1 - BRAKE1_MIN_VAL)/BRAKE1_RANGE) * 100), 17);
+
+    if (CAN->mcu_pedal_readings.brake_pedal_1 <= BRAKE1_MECH) {
+        CAN->dash_mcu_state.mechanical_brake_led = 2;
+    } else {
+        CAN->dash_mcu_state.mechanical_brake_led = 0;
+    }
 
     /** TODO: add real data to these bars*/
     draw_battery_bar(0);

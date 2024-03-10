@@ -99,7 +99,9 @@ void DashboardCAN::read_CAN()
 
       if (mcu_state_timer.check() || (&prev_dash_mcu_state, _msg.buf, sizeof(_msg.buf)) != 0) {
         // SerialUSB.println("New message! Unpacking");
+        int prev_brake_state = dash_mcu_state.mechanical_brake_led;
         Unpack_DASHBOARD_MCU_STATE_ht_can(&dash_mcu_state, _msg.buf, _msg.len);
+        dash_mcu_state.mechanical_brake_led = prev_brake_state;
         memcpy(&prev_dash_mcu_state, _msg.buf, sizeof(_msg.buf));
         mcu_state_update = true;
         mcu_state_timer.reset();
