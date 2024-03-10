@@ -61,6 +61,7 @@ void DashboardCAN::read_CAN()
     // case SAB_LOAD_CELLS_CANID:
     //   // SerialUSB.println("Received SAB Load Cells");
     //   Unpack_SAB_LOAD_CELLS_hytech(&sab_load_cells, _msg.buf, _msg.len);
+    //   break;
 
     case TCU_LAP_TIMES_CANID:
       // SerialUSB.println("Received TCU lap times");
