@@ -57,6 +57,7 @@
 
 #define ID_EM_STATUS                                                0x100
 #define ID_EM_MEASUREMENT                                           0x400
+#define ID_ACU_SHUNT_MEASUREMENT                                    0x401
 
 #define ID_IMU_ACCELEROMETER                                        0x90
 #define ID_IMU_GYROSCOPE                                            0x91

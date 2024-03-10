@@ -15,6 +15,7 @@
 #include <LTC6811_2.h>
 #include <Metro.h>
 
+
 // CONSTANT DEFINITIONS: define important values, such as IC count and cells per IC
 #define TOTAL_IC 12                 // Number of LTC6811-2 ICs that are used in the accumulator
 #define EVEN_IC_CELLS 12           // Number of cells monitored by ICs with even addresses
@@ -33,6 +34,9 @@
 #define BALANCE_CONTINUOUS 2000     // Sets balancing duty cycle as 100%
 #define BALANCE_MODE 1            // Mode 0 is normal balance, mode 1 is progressive balance
 
+
+//shunt def
+#define CURR_SHUNT A2
 // VARIABLE DECLARATIONS
 uint16_t pec15Table[256];          // Array containing lookup table for PEC generator
 uint16_t* LTC6811_2::pec15Table_pointer = pec15Table;   // Pointer to the PEC lookup table
@@ -58,7 +62,7 @@ uint16_t max_thermistor_voltage = 0;
 uint16_t min_thermistor_voltage = 65535;
 uint16_t max_board_temp_voltage = 0;
 uint16_t min_board_temp_voltage = 65535;
-float pin_voltage_read;
+float current_shunt_read;
 float charge = MAX_PACK_CHARGE;
 float shunt_voltage_input;
 float shunt_current;
@@ -70,6 +74,7 @@ Metro CAN_timer = Metro(2); // Timer that spaces apart writes for CAN messages s
 Metro print_timer = Metro(500);
 Metro balance_timer(BALANCE_STANDARD);
 Metro timer_CAN_em_forward(100);
+Metro timer_shunt(100);
 IntervalTimer pulse_timer;    //AMS ok pulse timer
 bool next_pulse = true; //AMS ok pulse
 uint8_t can_voltage_ic = 0; //counter for the current IC data to send for detailed voltage CAN message
@@ -113,7 +118,7 @@ BMS_temperatures bms_temperatures; //Message class containing general temperatur
 BMS_onboard_temperatures bms_onboard_temperatures; //Message class containing general AMS temperature information
 BMS_detailed_voltages bms_detailed_voltages; //Message class containing detailed voltage information
 BMS_detailed_temperatures bms_detailed_temperatures; // message class containing detailed temperature information
-
+ACU_shunt_measurements acu_shunt_measurements;
 CCU_status ccu_status;
 
 void setup() {
@@ -255,12 +260,15 @@ void read_voltages() {
 
 void coulomb_counter() {
   // integrate shunt current over time to count coulombs and provide state of charge
-  pin_voltage_read = (analogRead(A2) * 3.3) / 1024;
-  shunt_voltage_input = (pin_voltage_read * (9.22 / 5.1)) - 3.3;
-  shunt_current = shunt_voltage_input / 0.005;
+  current_shunt_read = (analogRead(CURR_SHUNT) * 3.3) / 1024; //.68
+  shunt_voltage_input = (current_shunt_read * (9.22 / 5.1)) - 3.3;
+  shunt_current = (shunt_voltage_input / 0.01);
   charge -= (CC_integrator_timer * shunt_current) / 1000000;
   state_of_charge = charge / MAX_PACK_CHARGE;
   CC_integrator_timer = 0;
+  
+  acu_shunt_measurements.set_shunt_voltage((uint16_t) (shunt_voltage_input*100));
+  acu_shunt_measurements.set_shunt_current((uint16_t) (shunt_current));
   Serial.print(state_of_charge);
   Serial.print('\n');
 }
@@ -490,6 +498,16 @@ void write_CAN_messages() {
   bms_onboard_temperatures.set_high_temperature(gpio_temps[max_board_temp_location[0]][max_board_temp_location[1]] * 100);
   bms_onboard_temperatures.set_average_temperature(total_board_temps * 100 / 6);
 
+
+
+  //shunt status message
+
+  if(timer_shunt.check()){
+    msg.id = ID_ACU_SHUNT_MEASUREMENT;
+    msg.len = sizeof(acu_shunt_measurements);
+    acu_shunt_measurements.write(msg.buf);
+    TELEM_CAN.write(msg);
+  }
   //Write BMS_status message
   if (can_bms_status_timer > 100) {
     msg.id = ID_BMS_STATUS;
