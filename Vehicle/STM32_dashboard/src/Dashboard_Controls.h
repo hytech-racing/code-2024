@@ -25,6 +25,8 @@
 #define SHUTDOWN_J_INERTIA_PIN PB7
 #define SHUTDOWN_K_COKPIT_BRB_PIN PB5
 
+#define BUZZER_TIME 2000
+
 class DashboardCAN;
 class Dashboard_Controls {
     public:
@@ -56,6 +58,8 @@ class Dashboard_Controls {
 
 
         bool previousState = false;
+        bool buzzer_last_state = false;
+        Metro buzzer_timer = Metro(BUZZER_TIME);
         Metro dimmer_timer = Metro(200);
         Metro page_switch_timer = Metro(200);
         

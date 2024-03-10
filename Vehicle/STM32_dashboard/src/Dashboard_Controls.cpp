@@ -74,12 +74,17 @@ void Dashboard_Controls::update(DashboardCAN* CAN) {
 
   /* Update Buzzer */
 
-  digitalWrite(BUZZER_PIN, CAN->dash_mcu_state.drive_buzzer);
-  s->drive_buzzer = CAN->dash_mcu_state.drive_buzzer;
-
-  if (CAN->dash_mcu_state.drive_buzzer) {
-    SerialUSB.println("ACTIVE BUZZER");
+  if (CAN->dash_mcu_state.drive_buzzer && !buzzer_last_state) {
+    digitalWrite(BUZZER_PIN, CAN->dash_mcu_state.drive_buzzer);
+    buzzer_last_state = true;
+    buzzer_timer.reset();
+  } else if (buzzer_last_state && buzzer_timer.check()) {
+    digitalWrite(BUZZER_PIN, LOW);
+    buzzer_last_state = false;
   }
+
+  s->drive_buzzer = digitalRead(BUZZER_PIN);
+
 
   /* Read Shutdown Signals*/
 
