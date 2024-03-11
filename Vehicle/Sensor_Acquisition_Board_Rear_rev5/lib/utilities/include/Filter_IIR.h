@@ -22,6 +22,8 @@ public:
     }
 
     void set_alpha(float alpha);
+    uint16_t get_prev_reading() const {return prev_reading;}
+
     uint16_t filtered_result(uint16_t new_val);
     
 private:    
