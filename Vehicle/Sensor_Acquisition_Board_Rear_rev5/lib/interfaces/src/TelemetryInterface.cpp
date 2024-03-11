@@ -64,18 +64,18 @@ void TelemetryInterface::tick(const AnalogConversionPacket_s<4> &adc1,
                               const Filter_IIR *iir)
 {
     // 10Hz
-    update_thermistors_CAN_msg((iir + channels_.therm3_channel)->filtered_result(adc3.conversions[channels_.therm3_channel].raw),
-                               (iir + channels_.therm4_channel)->filtered_result(adc3.conversions[channels_.therm4_channel].raw),
-                               (iir + channels_.therm5_channel)->filtered_result(adc3.conversions[channels_.therm5_channel].raw),
-                               (iir + channels_.therm6_channel)->filtered_result(adc3.conversions[channels_.therm6_channel].raw),
-                               (iir + channels_.therm7_channel)->filtered_result(adc3.conversions[channels_.therm7_channel].raw),
-                               (iir + channels_.therm8_channel)->filtered_result(adc3.conversions[channels_.therm8_channel].raw),
-                               (iir + channels_.therm9_channel)->filtered_result(adc3.conversions[channels_.therm9_channel].raw));
+    // update_thermistors_CAN_msg((iir + channels_.therm3_channel)->filtered_result(adc3.conversions[channels_.therm3_channel].raw),
+    //                            (iir + channels_.therm4_channel)->filtered_result(adc3.conversions[channels_.therm4_channel].raw),
+    //                            (iir + channels_.therm5_channel)->filtered_result(adc3.conversions[channels_.therm5_channel].raw),
+    //                            (iir + channels_.therm6_channel)->filtered_result(adc3.conversions[channels_.therm6_channel].raw),
+    //                            (iir + channels_.therm7_channel)->filtered_result(adc3.conversions[channels_.therm7_channel].raw),
+    //                            (iir + channels_.therm8_channel)->filtered_result(adc3.conversions[channels_.therm8_channel].raw),
+    //                            (iir + channels_.therm9_channel)->filtered_result(adc3.conversions[channels_.therm9_channel].raw));
     // 20Hz
-    update_cornerboard_CAN_msg(adc1.conversions[channels_.loadcell_rl_channel],
-                               adc2.conversions[channels_.loadcell_rr_channel],
-                               adc1.conversions[channels_.pots_rl_channel],
-                               adc2.conversions[channels_.pots_rr_channel]);
+    // update_cornerboard_CAN_msg(adc1.conversions[channels_.loadcell_rl_channel],
+    //                            adc2.conversions[channels_.loadcell_rr_channel],
+    //                            adc1.conversions[channels_.pots_rl_channel],
+    //                            adc2.conversions[channels_.pots_rr_channel]);
     // 50Hz
     update_tcu_status_CAN_msg(tcu_shutdown_status);
 

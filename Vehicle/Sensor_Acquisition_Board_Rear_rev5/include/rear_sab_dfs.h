@@ -21,11 +21,12 @@
 // Button
 #define PI_SHUTDOWN 14  // debounce
 
-/* Protocol speed */
+/* Protocol speeds */
 #define ADC_SPI_SPEED 2000000
 #define RS485_SERIAL_SPEED 115200
 #define IMU_RS232_SPEED 115200
 #define TELEM_CAN_BAUDRATE 500000
+#define DEBUG_PRINT_BAUDRATE 115200
 
 /* ADC read channels */
 // SAB MCP3208
