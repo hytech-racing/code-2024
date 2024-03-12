@@ -157,8 +157,11 @@ void hytech_dashboard::startup() {
     _display.println(greeting);
     _display.refresh();
 
-    delay(5000);
-
+    delay(2000);
+    _display.clearDisplay();
+    _display.drawBitmap(0,0, epd_bitmap_cat, cat_length, cat_length, BLACK);
+    _display.refresh();
+    delay(3000);
     _display.clearDisplay();
     _display.drawBitmap(0,0, epd_bitmap_hytech_dashboard, 320, 240, BLACK);
 }
