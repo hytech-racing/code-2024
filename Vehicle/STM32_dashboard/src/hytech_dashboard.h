@@ -34,6 +34,13 @@
 #define BRIGHTNESS_STEPS 4
 #define STEP_BRIGHTNESS (MAX_BRIGHTNESS - MIN_BRIGHTNESS) / BRIGHTNESS_STEPS
 
+// MPH conversion
+const float GEARBOX_RATIO =             11.86;
+const float WHEEL_DIAMETER =            0.4064; // meters
+const float RPM_TO_METERS_PER_SECOND =  WHEEL_DIAMETER * 3.1415 / GEARBOX_RATIO / 60.0;
+const float METERS_PER_SECOND_TO_RPM =  1.0 / RPM_TO_METERS_PER_SECOND;
+const float METERS_PER_SECOND_TO_MPH =  2.2369;
+
 // OFF: OFF, ON: GREEN/OK, YELLOW : WARNING/MISC RED : CRITICAL
 enum LED_LIST_e { BOTS = 0, LAUNCH_CTRL = 1, TORQUE_MODE = 2, BRAKE_ENGAGE = 3, COCKPIT_BRB = 4, INERTIA = 5, 
                 GLV = 6, CRIT_CHARGE = 7, RDY_DRIVE = 8, MC_ERR = 9, IMD = 10, 
@@ -206,7 +213,7 @@ class hytech_dashboard {
         */
         void display_tire_data();
 
-        void display_speeds(MC1_STATUS_t* mc1_status);
+        void display_speeds(DRIVETRAIN_RPMS_TELEM_t* drivetrain_rpms);
         void display_segment_voltages();
 
         void display_error();

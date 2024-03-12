@@ -58,6 +58,12 @@ void DashboardCAN::read_CAN()
       Unpack_MCU_LOAD_CELLS_hytech(&mcu_load_cells, _msg.buf, _msg.len);
       break;
 
+    case DRIVETRAIN_RPMS_TELEM_CANID:
+      // SerialUSB.println("Received Drivetrain RPMs");
+      Unpack_DRIVETRAIN_RPMS_TELEM_hytech(&drivetrain_rpms, _msg.buf, _msg.len);
+      // SerialUSB.println(drivetrain_rpms.fr_motor_rpm);
+      break;
+
     // case SAB_LOAD_CELLS_CANID:
     //   // SerialUSB.println("Received SAB Load Cells");
     //   Unpack_SAB_LOAD_CELLS_hytech(&sab_load_cells, _msg.buf, _msg.len);

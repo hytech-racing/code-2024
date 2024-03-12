@@ -210,7 +210,7 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
 
     switch(current_page) {
         case 0:
-            display_speeds(&(CAN->mc1_status));
+            display_speeds(&(CAN->drivetrain_rpms));
             break;
         case 1:
             display_suspension_data(&(CAN->mcu_load_cells)/*, &(CAN->sab_load_cells)*/);
@@ -414,12 +414,17 @@ void hytech_dashboard::display_tire_data() {
     _display.setFont(&FreeSans12pt7b);
 }
 
-void hytech_dashboard::display_speeds(MC1_STATUS_t* mc1_status) {
+void hytech_dashboard::display_speeds(DRIVETRAIN_RPMS_TELEM_t* drivetrain_rpms) {
     _display.setFont(&FreeSans24pt7b);
     _display.setTextSize(2);
     _display.setCursor(100, 160);
     /** TODO: convert from RPM to MPH*/
-    _display.println(twoDigits(mc1_status->speed_rpm));
+    double wheelspeed = abs(drivetrain_rpms->fr_motor_rpm * RPM_TO_METERS_PER_SECOND);
+    // SerialUSB.println(wheelspeed);
+    uint16_t mph = (int) (wheelspeed * METERS_PER_SECOND_TO_MPH);
+    // SerialUSB.println(mph);
+    _display.println(twoDigits(mph));
+    // _display.println(mph);
     _display.setTextSize(1);
     _display.setFont(&FreeSans12pt7b);
     _display.setCursor(125, 185);
@@ -544,7 +549,7 @@ void hytech_dashboard::refresh_neopixels(DashboardCAN* CAN) {
     // replace Metro timer if it is figured out
     if (CAN->mcu_state_update || pixel_refresh.check()) {
 
-        Serial.printf("Refreshing Neopixels, %d, %d\n", CAN->brb_read ? LED_colors_e::ON : LED_colors_e::RED, CAN->inertia_read ? LED_colors_e::ON : LED_colors_e::RED);
+        // Serial.printf("Refreshing Neopixels, %d, %d\n", CAN->brb_read ? LED_colors_e::ON : LED_colors_e::RED, CAN->inertia_read ? LED_colors_e::ON : LED_colors_e::RED);
 
         set_neopixel_color(LED_LIST_e::BOTS, CAN->dash_mcu_state.bots_led);
         set_neopixel_color(LED_LIST_e::LAUNCH_CTRL, CAN->dash_mcu_state.launch_control_led);
