@@ -5,7 +5,7 @@
 #include <STM32_CAN.h>
 // #include "HyTech_CAN.h"
 #include "hytech_dashboard.h"
-#include "ht_can.h"
+#include "hytech.h"
 
 #define MCU_HEARTBEAT_TIMEOUT 1000
 
@@ -51,7 +51,8 @@ class DashboardCAN {
         BMS_VOLTAGES_t bms_voltages;
         MCU_PEDAL_READINGS_t mcu_pedal_readings;
         MCU_LOAD_CELLS_t mcu_load_cells;
-        SAB_LOAD_CELLS_t sab_load_cells;
+        // SAB_LOAD_CELLS_t sab_load_cells;
+        DRIVETRAIN_RPMS_TELEM_t drivetrain_rpms;
         MC1_STATUS_t mc1_status;
         
         TCU_LAP_TIMES_t lap_times;

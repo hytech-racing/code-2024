@@ -213,10 +213,10 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
 
     switch(current_page) {
         case 0:
-            display_speeds(&(CAN->mc1_status));
+            display_speeds(&(CAN->drivetrain_rpms));
             break;
         case 1:
-            display_suspension_data(&(CAN->mcu_load_cells), &(CAN->sab_load_cells));
+            display_suspension_data(&(CAN->mcu_load_cells)/*, &(CAN->sab_load_cells)*/);
             break;
         case 2:
             // tires
@@ -339,7 +339,7 @@ void hytech_dashboard::draw_page_title(String text) {
     _display.setFont(&FreeSans12pt7b);
 }
 
-void hytech_dashboard::display_suspension_data(MCU_LOAD_CELLS_t* front_load_cells, SAB_LOAD_CELLS_t* rear_load_cells) {
+void hytech_dashboard::display_suspension_data(MCU_LOAD_CELLS_t* front_load_cells/*, SAB_LOAD_CELLS_t* rear_load_cells*/) {
     
     draw_quadrants("Suspension");
     _display.setFont(&FreeSans9pt7b);
@@ -363,7 +363,7 @@ void hytech_dashboard::display_suspension_data(MCU_LOAD_CELLS_t* front_load_cell
     set_cursor_in_quadrant(3, 20);
     x = _display.getCursorX();
     _display.print("LD: ");
-    _display.println(rear_load_cells->RL_load_cell);
+    // _display.println(rear_load_cells->RL_load_cell);
     _display.setCursor(x, _display.getCursorY()-6);
     _display.print("POT: 0");
 
@@ -371,7 +371,7 @@ void hytech_dashboard::display_suspension_data(MCU_LOAD_CELLS_t* front_load_cell
     set_cursor_in_quadrant(4, 20);
     x = _display.getCursorX();
     _display.print("LD: ");
-    _display.println(rear_load_cells->RR_load_cell);
+    // _display.println(rear_load_cells->RR_load_cell);
     _display.setCursor(x, _display.getCursorY()-6);
     _display.print("POT: 0");
 
@@ -417,12 +417,17 @@ void hytech_dashboard::display_tire_data() {
     _display.setFont(&FreeSans12pt7b);
 }
 
-void hytech_dashboard::display_speeds(MC1_STATUS_t* mc1_status) {
+void hytech_dashboard::display_speeds(DRIVETRAIN_RPMS_TELEM_t* drivetrain_rpms) {
     _display.setFont(&FreeSans24pt7b);
     _display.setTextSize(2);
     _display.setCursor(100, 160);
     /** TODO: convert from RPM to MPH*/
-    _display.println(twoDigits(mc1_status->speed_rpm));
+    double wheelspeed = abs(drivetrain_rpms->fr_motor_rpm * RPM_TO_METERS_PER_SECOND);
+    // SerialUSB.println(wheelspeed);
+    uint16_t mph = (int) (wheelspeed * METERS_PER_SECOND_TO_MPH);
+    // SerialUSB.println(mph);
+    _display.println(twoDigits(mph));
+    // _display.println(mph);
     _display.setTextSize(1);
     _display.setFont(&FreeSans12pt7b);
     _display.setCursor(125, 185);
@@ -547,7 +552,7 @@ void hytech_dashboard::refresh_neopixels(DashboardCAN* CAN) {
     // replace Metro timer if it is figured out
     if (CAN->mcu_state_update || pixel_refresh.check()) {
 
-        Serial.printf("Refreshing Neopixels, %d, %d\n", CAN->brb_read ? LED_colors_e::ON : LED_colors_e::RED, CAN->inertia_read ? LED_colors_e::ON : LED_colors_e::RED);
+        // Serial.printf("Refreshing Neopixels, %d, %d\n", CAN->brb_read ? LED_colors_e::ON : LED_colors_e::RED, CAN->inertia_read ? LED_colors_e::ON : LED_colors_e::RED);
 
         set_neopixel_color(LED_LIST_e::BOTS, CAN->dash_mcu_state.bots_led);
         set_neopixel_color(LED_LIST_e::LAUNCH_CTRL, CAN->dash_mcu_state.launch_control_led);
