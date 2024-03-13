@@ -50,9 +50,9 @@ MCU_status mcu_status;
 
 /* Sensors */
 // ADCs
-MCP_ADC<4> ADC1 = MCP_ADC<4>(ADC1_CS);  // RL corner board
-MCP_ADC<4> ADC2 = MCP_ADC<4>(ADC2_CS);  // RR corner board
-MCP_ADC<8> ADC3 = MCP_ADC<8>(ADC3_CS);  // Thermistors
+MCP_ADC<4> ADC1 = MCP_ADC<4>(ADC1_CS, ADC_ISOSPI_SPEED);  // RL corner board
+MCP_ADC<4> ADC2 = MCP_ADC<4>(ADC2_CS, ADC_ISOSPI_SPEED);  // RR corner board
+MCP_ADC<8> ADC3 = MCP_ADC<8>(ADC3_CS, ADC_SPI_SPEED);  // Thermistors
 
 // ADC_SPI ADC1(ADC1_CS, ADC_SPI_SPEED);
 
@@ -129,19 +129,15 @@ void setup() {
 
 void loop() {
 
-  // Serial.println("Sus");
   // Tick system clock
   SysTick_s curr_tick = sys_clock.tick(micros());
-  // Serial.println("Sus here");
 
   // Process received CAN messages
   // Not currently needed
   TELEM_CAN.events();
 
-  // Serial.println("Sus again");
   // Tick interfaces
   tick_all_interfaces(curr_tick);
-  // Serial.println("Sus after tick interface");
 
   // Tick systems
   // Not currently needed
@@ -152,7 +148,6 @@ void loop() {
   // Debug prints to see if we're tripping balls
   TriggerBits_s t = curr_tick.triggers;
   if (t.trigger5) {
-    Serial.println("5Hz triggered by SysClock");
     Serial.println("Thermistors:");
     Serial.println(ADC3.get().conversions[THERM_3].raw);
     Serial.println(ADC3.get().conversions[THERM_4].raw);
@@ -186,15 +181,6 @@ void init_all_CAN_devices() {
   TELEM_CAN.onReceive(parse_telem_CAN_msg);
 
   // delay(500);
-
-  // TELEM_CAN.begin();
-  // TELEM_CAN.setBaudRate(500000);
-  // FRONT_INV_CAN.enableMBInterrupts();
-  // REAR_INV_CAN.enableMBInterrupts();
-  // TELEM_CAN.enableMBInterrupts();
-  // FRONT_INV_CAN.onReceive(parse_front_inv_can_message);
-  // REAR_INV_CAN.onReceive(parse_rear_inv_can_message);
-  // TELEM_CAN.onReceive(parse_telem_can_message);
 }
 
 /**
@@ -311,11 +297,6 @@ void send_sab_CAN_msg() {
   msg.id = ID_TCU_STATUS;
   msg.len = sizeof(tcu_status);
   TELEM_CAN.write(msg);
-
-  // mcu_status.write(msg.buf);
-  // msg.id = ID_MCU_STATUS;
-  // msg.len = sizeof(mcu_status);
-  // TELEM_CAN.write(msg);
 }
 
 /**
@@ -330,7 +311,6 @@ void tick_all_interfaces(const SysTick_s &curr_tick) {
     ADC1.tick();
     ADC2.tick();
     ADC3.tick();
-    // Serial.println("100Hz triggered by SysClock");
 
     // Filter thermistor readings
     for (int i = 0; i < TOTAL_THERMISTOR_COUNT; i++) {
@@ -341,7 +321,6 @@ void tick_all_interfaces(const SysTick_s &curr_tick) {
 
   if (t.trigger50) {  // 50Hz
     // telem_interface.tick(ADC1.get(), ADC2.get(), ADC3.get(), btn_pi_shutdown.isPressed(), thermistor_iir);
-    // Serial.println("50Hz triggered by SysClock");
 
     update_all_CAN_msg();
     send_sab_CAN_msg();
