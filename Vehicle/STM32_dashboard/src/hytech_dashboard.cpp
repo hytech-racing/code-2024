@@ -425,7 +425,12 @@ void hytech_dashboard::display_speeds(DRIVETRAIN_RPMS_TELEM_t* drivetrain_rpms) 
     _display.setTextSize(2);
     _display.setCursor(100, 160);
     /** TODO: convert from RPM to MPH*/
-    double wheelspeed = abs(drivetrain_rpms->fr_motor_rpm * RPM_TO_METERS_PER_SECOND);
+    double rpms = drivetrain_rpms->fr_motor_rpm;
+    rpms += drivetrain_rpms->fl_motor_rpm;
+    rpms += drivetrain_rpms->rr_motor_rpm;
+    rpms += drivetrain_rpms->rl_motor_rpm;
+    rpms /= 4;
+    double wheelspeed = abs(rpms * RPM_TO_METERS_PER_SECOND);
     // SerialUSB.println(wheelspeed);
     uint16_t mph = (int) (wheelspeed * METERS_PER_SECOND_TO_MPH);
     // SerialUSB.println(mph);
