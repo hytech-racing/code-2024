@@ -121,7 +121,7 @@ void setup() {
   Serial.println("Debounce button initialized for Pi shutdown");
 
   // RS232
-  Serial1.begin(IMU_RS232_SPEED);
+  Serial2.begin(IMU_RS232_SPEED);
   Serial.println("VectorNav initialized ... in theory ^^ coming soon");
   Serial.println();
 
