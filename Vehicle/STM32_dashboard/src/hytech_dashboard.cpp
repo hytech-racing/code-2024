@@ -80,8 +80,14 @@ unsigned int generateSeed() {
     return seed;
 }
 
-
-
+void hytech_dashboard::init() {
+    // set non-needed Display pins low
+    pinMode(PC5, OUTPUT);
+    pinMode(PB1, OUTPUT);
+    pinMode(PA3, OUTPUT);
+    digitalWrite(PC5, LOW);
+    digitalWrite(PB1, LOW);
+}
 
 void hytech_dashboard::startup() {
 
@@ -219,7 +225,7 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
             display_speeds(&(CAN->drivetrain_rpms));
             break;
         case 1:
-            display_suspension_data(&(CAN->mcu_load_cells)/*, &(CAN->sab_load_cells)*/);
+            display_suspension_data(&(CAN->mcu_suspension), &(CAN->sab_suspension));
             break;
         case 2:
             // tires
@@ -342,7 +348,7 @@ void hytech_dashboard::draw_page_title(String text) {
     _display.setFont(&FreeSans12pt7b);
 }
 
-void hytech_dashboard::display_suspension_data(MCU_LOAD_CELLS_t* front_load_cells/*, SAB_LOAD_CELLS_t* rear_load_cells*/) {
+void hytech_dashboard::display_suspension_data(MCU_SUSPENSION_t* front_suspension, SAB_SUSPENSION_t* rear_suspension) {
     
     draw_quadrants("Suspension");
     _display.setFont(&FreeSans9pt7b);
@@ -351,32 +357,36 @@ void hytech_dashboard::display_suspension_data(MCU_LOAD_CELLS_t* front_load_cell
     set_cursor_in_quadrant(1, 20);
     int x = _display.getCursorX();
     _display.print("LD: ");
-    _display.println(front_load_cells->FR_load_cell);
+    _display.println(front_suspension->load_cell_fr);
     _display.setCursor(x, _display.getCursorY()-6);
-    _display.print("POT: 0");
+    _display.print("POT: ");
+    _display.println(front_suspension->potentiometer_fr);
 
     // q2
     set_cursor_in_quadrant(2, 20);
     x = _display.getCursorX();
     _display.print("LD: ");
-    _display.println(front_load_cells->FL_load_cell);
+    _display.println(front_suspension->load_cell_fl);
     _display.setCursor(x, _display.getCursorY()-6);
-    _display.print("POT: 0");
+    _display.print("POT: ");
+    _display.println(front_suspension->potentiometer_fl);
 
     set_cursor_in_quadrant(3, 20);
     x = _display.getCursorX();
     _display.print("LD: ");
-    // _display.println(rear_load_cells->RL_load_cell);
+    _display.println(rear_suspension->load_cell_rl);
     _display.setCursor(x, _display.getCursorY()-6);
-    _display.print("POT: 0");
+    _display.print("POT: ");
+    _display.println(rear_suspension->potentiometer_rl);
 
 
     set_cursor_in_quadrant(4, 20);
     x = _display.getCursorX();
     _display.print("LD: ");
-    // _display.println(rear_load_cells->RR_load_cell);
+    _display.println(rear_suspension->load_cell_rr);
     _display.setCursor(x, _display.getCursorY()-6);
-    _display.print("POT: 0");
+    _display.print("POT: ");
+    _display.println(rear_suspension->potentiometer_rr);
 
     _display.setFont(&FreeSans12pt7b);
 }

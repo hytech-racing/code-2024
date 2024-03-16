@@ -86,6 +86,11 @@ class hytech_dashboard {
         static hytech_dashboard* getInstance();
 
         /*
+            Initializes display pins
+        */
+        void init();
+
+        /*
             The startup function initializes the display devices and runs a short startup animation
             on the screen. Nothing is acutally starting up during this, but it looks cool.
         */
@@ -198,7 +203,7 @@ class hytech_dashboard {
             @param front_load_cells A MCU_LOAD_CELLS_t struct from the CAN library that includes data sent from the ECU, gathered from the front corner boards.
             @param rear_load_cells A SAB_LOAD_CELLS_t struct from the CAN library that includes data sent from the SAB, gathered from the rear corner boards.
         */
-        void display_suspension_data(MCU_LOAD_CELLS_t* front_load_cells/*, SAB_LOAD_CELLS_t* rear_load_cells*/);
+        void display_suspension_data(MCU_SUSPENSION_t* front_suspension, SAB_SUSPENSION_t* rear_suspension);
 
         /* resets the clock back to current time*/
         void restart_current_timer();

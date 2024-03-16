@@ -53,9 +53,9 @@ void DashboardCAN::read_CAN()
       Unpack_MCU_PEDAL_READINGS_hytech(&mcu_pedal_readings, _msg.buf, _msg.len);
       break;
 
-    case MCU_LOAD_CELLS_CANID:
-      // SerialUSB.println("Received MCU Load Cells");
-      Unpack_MCU_LOAD_CELLS_hytech(&mcu_load_cells, _msg.buf, _msg.len);
+    case MCU_SUSPENSION_CANID:
+      // SerialUSB.println("Received MCU Suspension");
+      Unpack_MCU_SUSPENSION_hytech(&mcu_suspension, _msg.buf, _msg.len);
       break;
 
     case DRIVETRAIN_RPMS_TELEM_CANID:
@@ -64,10 +64,10 @@ void DashboardCAN::read_CAN()
       // SerialUSB.println(drivetrain_rpms.fr_motor_rpm);
       break;
 
-    // case SAB_LOAD_CELLS_CANID:
-    //   // SerialUSB.println("Received SAB Load Cells");
-    //   Unpack_SAB_LOAD_CELLS_hytech(&sab_load_cells, _msg.buf, _msg.len);
-    //   break;
+    case SAB_SUSPENSION_CANID:
+      // SerialUSB.println("Received SAB Suspension");
+      Unpack_SAB_SUSPENSION_hytech(&sab_suspension, _msg.buf, _msg.len);
+      break;
 
     case TCU_LAP_TIMES_CANID:
       // SerialUSB.println("Received TCU lap times");
@@ -84,20 +84,6 @@ void DashboardCAN::read_CAN()
       // compare cached CAN message of same type to incoming message
       // If they are the same, don't unpack it, and don't refresh neopixels
 
-      // for (int i = 0; i < 8; i++) {
-      //   Serial.print("0x");
-      //   if (_msg.buf[i] < 0x10) {
-      //     Serial.print("0"); // Add leading zero for single-digit hex values
-      //   }
-      //   Serial.print(_msg.buf[i], HEX);
-
-      //   if (i < 7) {
-      //     Serial.print(", ");
-      //   }
-      // }
-      // Serial.println();
-
-      // SerialUSB.println("Received DASH_MCU_STATUS");
 
       if (mcu_state_timer.check() || (&prev_dash_mcu_state, _msg.buf, sizeof(_msg.buf)) != 0) {
         // SerialUSB.println("New message! Unpacking");
