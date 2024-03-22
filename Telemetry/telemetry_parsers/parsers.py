@@ -1709,3 +1709,53 @@ def parse_TPMS_RR_TEMP4(data, id = None, time=None):
     directory = [vector[6] for vector in vectors]
     return [(arr, cols, units, directory)]
 MESSAGE_DICT[0x43A] = (parse_TPMS_RR_TEMP4, "TPMS_RR_TEMP4")
+
+def parse_SAB_thermistors_1(data, id = None, time=None):
+    msg_id = 0xE5
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
+    
+    vectors = [
+        (16, -1, False, lambda x: x, "Thermistor 3"   , "C", "SAB.Thermistors_1.Thermistor3"),
+        (16, -1, False, lambda x: x, "Thermistor 4"   , "C", "SAB.Thermistors_1.Thermistor4"),
+        (16, -1, False, lambda x: x, "Thermistor 5"  , "C", "SAB.Thermistors_1.Thermistor5"),
+        (16, -1, False, lambda x: x, "Thermistor 6"    , "C", "SAB.Thermistors_1.Thermistor6"),
+    ]
+
+    bitoffsets, bitmasks = get_offsets_masks(vectors)
+    arr = parse_to_np(data.byteswap(), vectors, bitoffsets, bitmasks, time = time)
+
+    #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    directory = [vector[6] for vector in vectors]
+    return [(arr, cols, units, directory)]
+MESSAGE_DICT[0xE5] = (parse_SAB_thermistors_1, "SAB_THERMISTORS_1")
+
+def parse_SAB_thermistors_2(data, id = None, time=None):
+    msg_id = 0xE6
+    if id is not None:
+        mask = id==msg_id
+        data = data[mask]
+        if time is not None:
+            time = time[mask]
+    
+    vectors = [
+        (16, -1, False, lambda x: x, "Thermistor 7"   , "C", "SAB.Thermistors_2.Thermistor7"),
+        (16, -1, False, lambda x: x, "Thermistor 8"  , "C", "SAB.Thermistors_2.Thermistor8"),
+        (16, -1, False, lambda x: x, "Thermistor 9"    , "C", "SAB.Thermistors_2.Thermistor9"),
+    ]
+
+    bitoffsets, bitmasks = get_offsets_masks(vectors)
+    arr = parse_to_np(data.byteswap(), vectors, bitoffsets, bitmasks, time = time)
+
+    #df = pd.DataFrame(arr, columns='cols')
+    cols = [vector[4] for vector in vectors]
+    units = [vector[5] for vector in vectors]
+    directory = [vector[6] for vector in vectors]
+    return [(arr, cols, units, directory)]
+MESSAGE_DICT[0xE6] = (parse_SAB_thermistors_2, "SAB_THERMISTORS_2")
+
