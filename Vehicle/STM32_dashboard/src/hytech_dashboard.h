@@ -30,7 +30,7 @@
 #define NUM_PAGES 5
 
 #define MAX_BRIGHTNESS 255
-#define MIN_BRIGHTNESS 10
+#define MIN_BRIGHTNESS 3
 #define BRIGHTNESS_STEPS 4
 #define STEP_BRIGHTNESS (MAX_BRIGHTNESS - MIN_BRIGHTNESS) / BRIGHTNESS_STEPS
 
@@ -168,7 +168,7 @@ class hytech_dashboard {
         void draw_page_title(String text);
         
         /* helper function that draws the pedal bar */
-        void draw_vertical_pedal_bar(int val, int initial_x_coord);
+        void draw_vertical_pedal_bar(float val, int initial_x_coord);
 
         /* helper function that draws the regen bar based on regen percentage*/
         void draw_regen_bar(int percent);

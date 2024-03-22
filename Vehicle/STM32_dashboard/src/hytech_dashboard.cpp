@@ -166,11 +166,6 @@ void hytech_dashboard::startup() {
     delay(2000);
     _display.clearDisplay();
 
-
-    _display.drawBitmap(60,25, epd_bitmap_cat, 200, 200, BLACK);
-    _display.refresh();
-    delay(3000);
-
     _display.clearDisplay();
     _display.drawBitmap(0,0, epd_bitmap_hytech_dashboard, 320, 240, BLACK);
 }
@@ -201,12 +196,13 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     double BRAKE1_RANGE = BRAKE1_MAX_VAL - BRAKE1_MIN_VAL;
 
     // TODO: add mechanical break point to display
-    double BRAKE1_MECH = 2196;
+    float brake_mech_point = HYTECH_mechanical_brake_percent_float_ro_fromS(CAN->mcu_pedal_readings.mechanical_brake_percent_float_ro);
+    float accel_pedal = HYTECH_accel_percent_float_ro_fromS(CAN->mcu_pedal_readings.accel_percent_float_ro);
+    float brake_pedal = HYTECH_brake_percent_float_ro_fromS(CAN->mcu_pedal_readings.brake_percent_float_ro);
+    draw_vertical_pedal_bar(accel_pedal, 285);
+    draw_vertical_pedal_bar(brake_pedal, 17);
 
-    draw_vertical_pedal_bar((int) ((CAN->mcu_pedal_readings.accel_pedal_1 - ACCEL1_MIN_VAL)/(ACCEL1_RANGE) * 100), 285);
-    draw_vertical_pedal_bar( (int) (((CAN->mcu_pedal_readings.brake_pedal_1 - BRAKE1_MIN_VAL)/BRAKE1_RANGE) * 100), 17);
-
-    if (CAN->mcu_pedal_readings.brake_pedal_1 <= BRAKE1_MECH) {
+    if (CAN->mcu_pedal_readings.brake_percent_float_ro >= CAN->mcu_pedal_readings.mechanical_brake_percent_float_ro) {
         CAN->dash_mcu_state.mechanical_brake_led = 2;
     } else {
         CAN->dash_mcu_state.mechanical_brake_led = 0;
@@ -513,10 +509,10 @@ void hytech_dashboard::set_cursor_in_quadrant(uint8_t quadrant, int vertical_off
 }
 
 // draws white rect top down
-void hytech_dashboard::draw_vertical_pedal_bar(int val, int initial_x_coord) {
+void hytech_dashboard::draw_vertical_pedal_bar(float val, int initial_x_coord) {
     double ZERO_PERCENT_VAL = 175;
     val = (val > 100) ? val = 100 : (val < 0) ? val = 0 : val = val;
-    int i = (100-val) * (ZERO_PERCENT_VAL/100.0);
+    int i = (int) (100-val) * (ZERO_PERCENT_VAL/100.0);
     _display.fillRect(initial_x_coord, 35, 18, i, WHITE);
 }
 
