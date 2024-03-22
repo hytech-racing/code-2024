@@ -8,6 +8,7 @@
 
 #define IMU_RS232_SPEED 115200
 #define DEFAULT_WRITE_BUFFER_SIZE 17
+#define DEFAULT_WRITE_BUFFER_MIDIUM 21
 #define DEFAULT_WRITE_BUFFER_LONG 256
 #define DEFAULT_READ_BUFFER_SIZE 256
 #define BINARY_OUTPUT_GROUP_COUNT 4
@@ -37,7 +38,8 @@ void parseAsyncDataOutputFrequency(uint32_t* adof, char *_data);
 char* startAsciiPacketParse(char* packetStart, size_t& index);
 char* getNextData(char* str, size_t& startIndex);
 char* vnstrtok(char* str, size_t& startIndex);
-void ConfigBinaryOutput();
+void configBinaryOutput();
+void turnOffUnusedBinaryOutput();
 
 // Global
 int counter;
@@ -53,6 +55,11 @@ void setup() {
 
   // Init counter
   counter = 0;
+
+  // Configure sensor
+  turnOffUnusedBinaryOutput();
+  configBinaryOutput();
+  
 
 }
 
@@ -78,7 +85,7 @@ void loop() {
   // readDefaultAsciiOutput_INS_LLA();
   // readDefaultAsciiOutput_INS_LLA_40Hz();
 
-  ConfigBinaryOutput();
+  // Customized binary output
   readUserConfiguredBinaryOutput();
 
 
@@ -408,7 +415,7 @@ void readUserConfiguredBinaryOutput() {
   }   // end of timer.check()
 }
 
-void ConfigBinaryOutput() {
+void configBinaryOutput() {
 
   // char toSend[256];
   // Packet response;
@@ -501,6 +508,64 @@ void ConfigBinaryOutput() {
 
   Serial2.print(toSend);
   Serial2.flush();
+
+}
+
+void turnOffUnusedBinaryOutput() {
+
+  // Binary output 2
+  uint8_t binaryOutputNumber = 2;
+  char toSend2[DEFAULT_WRITE_BUFFER_LONG];
+
+  #if VN_HAVE_SECURE_CRT
+  int length = sprintf_s(toSend, sizeof(toSend), "$VNWRG,%u,%u,%u,%X", 74 + binaryOutputNumber, fields.asyncMode, fields.rateDivisor, groups);
+  #else
+  int length = sprintf(toSend2, "$VNWRG,%u,%u", 74 + binaryOutputNumber, vn::protocol::uart::ASYNCMODE_NONE); // turn off binary output 2
+  #endif
+
+  #if VN_HAVE_SECURE_CRT
+  length += sprintf_s(toSend + length, sizeof(toSend) - length, "*");
+  #else
+  length += sprintf(toSend2 + length, "*");
+  #endif
+
+  length += sprintf(toSend2 + length, "XX\r\n");
+
+  Serial2.print(toSend2);
+  Serial2.flush();
+
+  // Binary output 3
+  binaryOutputNumber = 3;
+  char toSend3[DEFAULT_WRITE_BUFFER_LONG];
+
+  #if VN_HAVE_SECURE_CRT
+  int length = sprintf_s(toSend, sizeof(toSend), "$VNWRG,%u,%u,%u,%X", 74 + binaryOutputNumber, fields.asyncMode, fields.rateDivisor, groups);
+  #else
+  int length = sprintf(toSend3, "$VNWRG,%u,%u", 74 + binaryOutputNumber, vn::protocol::uart::ASYNCMODE_NONE); // turn off binary output 2
+  #endif
+
+  #if VN_HAVE_SECURE_CRT
+  length += sprintf_s(toSend + length, sizeof(toSend) - length, "*");
+  #else
+  length += sprintf(toSend3 + length, "*");
+  #endif
+
+  length += sprintf(toSend3 + length, "XX\r\n");
+
+  Serial2.print(toSend3);
+  Serial2.flush();
+
+}
+
+void turnOffAsciiOutput() { // VNOFF
+
+  char toSend[DEFAULT_WRITE_BUFFER_MIDIUM];
+
+  #if VN_HAVE_SECURE_CRT
+	size_t length = sprintf_s(buffer, size, "$VNWRG,06,%u,%u", ador, port);
+	#else
+	size_t length = sprintf(buffer, "$VNWRG,06,%u,%u", ador, port);
+	#endif
 
 }
 

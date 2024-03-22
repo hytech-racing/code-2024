@@ -35,9 +35,9 @@
 #define THERM_4 1
 #define THERM_5 2
 #define THERM_6 3
-#define THERM_7 4
-#define THERM_8 5
-#define THERM_9 6
+#define THERM_7 5
+#define THERM_8 6
+#define THERM_9 7
 // CB RL MCP3204
 #define SUS_POT_3 1
 #define RL_LOAD_CELL 2
