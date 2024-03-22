@@ -719,7 +719,7 @@ MESSAGE_DICT[0xAB] = (parse_MC4_energy, "MC4_energy")
 
 #done
 def parse_MC1_setpoints_command(data, id = None, time=None):
-    msg_id = 0xB0
+    msg_id = 0xA0
     if id is not None:
         mask = id==msg_id
         data = data[mask]
@@ -744,11 +744,11 @@ def parse_MC1_setpoints_command(data, id = None, time=None):
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
     return [(arr, cols, units, directory)]
-MESSAGE_DICT[0xB0] = (parse_MC1_setpoints_command, "MC1_setpoints_command") 
+MESSAGE_DICT[0xA0] = (parse_MC1_setpoints_command, "MC1_setpoints_command") 
 
 #done
 def parse_MC2_setpoints_command(data, id = None, time=None):
-    msg_id = 0xB1
+    msg_id = 0xA1
     if id is not None:
         mask = id==msg_id
         data = data[mask]
@@ -773,11 +773,11 @@ def parse_MC2_setpoints_command(data, id = None, time=None):
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
     return [(arr, cols, units, directory)]
-MESSAGE_DICT[0xB1] = (parse_MC2_setpoints_command, "MC2_setpoints_command") 
+MESSAGE_DICT[0xA1] = (parse_MC2_setpoints_command, "MC2_setpoints_command") 
 
 #done
 def parse_MC3_setpoints_command(data, id = None, time=None):
-    msg_id = 0xB2
+    msg_id = 0xA2
     if id is not None:
         mask = id==msg_id
         data = data[mask]
@@ -802,11 +802,11 @@ def parse_MC3_setpoints_command(data, id = None, time=None):
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
     return [(arr, cols, units, directory)]
-MESSAGE_DICT[0xB2] = (parse_MC3_setpoints_command, "MC3_setpoints_command") 
+MESSAGE_DICT[0xA2] = (parse_MC3_setpoints_command, "MC3_setpoints_command") 
 
 #done
 def parse_MC4_setpoints_command(data, id = None, time=None):
-    msg_id = 0xB3
+    msg_id = 0xA3
     if id is not None:
         mask = id==msg_id
         data = data[mask]
@@ -831,11 +831,11 @@ def parse_MC4_setpoints_command(data, id = None, time=None):
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
     return [(arr, cols, units, directory)]
-MESSAGE_DICT[0xB3] = (parse_MC4_setpoints_command, "MC4_setpoints_command") 
+MESSAGE_DICT[0xA3] = (parse_MC4_setpoints_command, "MC4_setpoints_command") 
 
 #done
 def parse_MC1_status(data, id = None, time=None):
-    msg_id = 0xA0
+    msg_id = 0xB0
     if id is not None:
         mask = id==msg_id
         data = data[mask]
@@ -864,11 +864,11 @@ def parse_MC1_status(data, id = None, time=None):
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
     return [(arr, cols, units, directory)]
-MESSAGE_DICT[0xA0] = (parse_MC1_status, "MC1_status") 
+MESSAGE_DICT[0xB0] = (parse_MC1_status, "MC1_status") 
 
 #done
 def parse_MC2_status(data, id = None, time=None):
-    msg_id = 0xA1
+    msg_id = 0xB1
     if id is not None:
         mask = id==msg_id
         data = data[mask]
@@ -897,11 +897,11 @@ def parse_MC2_status(data, id = None, time=None):
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
     return [(arr, cols, units, directory)]
-MESSAGE_DICT[0xA1] = (parse_MC2_status, "MC2_status") 
+MESSAGE_DICT[0xB1] = (parse_MC2_status, "MC2_status") 
 
 #done
 def parse_MC3_status(data, id = None, time=None):
-    msg_id = 0xA2
+    msg_id = 0xB2
     if id is not None:
         mask = id==msg_id
         data = data[mask]
@@ -930,11 +930,11 @@ def parse_MC3_status(data, id = None, time=None):
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
     return [(arr, cols, units, directory)]
-MESSAGE_DICT[0xA2] = (parse_MC3_status, "MC3_status") 
+MESSAGE_DICT[0xB2] = (parse_MC3_status, "MC3_status") 
 
 #done
 def parse_MC4_status(data, id = None, time=None):
-    msg_id = 0xA3
+    msg_id = 0xB3
     if id is not None:
         mask = id==msg_id
         data = data[mask]
@@ -963,11 +963,11 @@ def parse_MC4_status(data, id = None, time=None):
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
     return [(arr, cols, units, directory)]
-MESSAGE_DICT[0xA3] = (parse_MC4_status, "MC4_status") 
+MESSAGE_DICT[0xB3] = (parse_MC4_status, "MC4_status") 
 
 #done
 def parse_MC1_temps(data, id = None, time=None):
-    msg_id = 0xA4
+    msg_id = 0xB4
     if id is not None:
         mask = id==msg_id
         data = data[mask]
@@ -989,11 +989,11 @@ def parse_MC1_temps(data, id = None, time=None):
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
     return [(arr, cols, units, directory)]
-MESSAGE_DICT[0xA4] = (parse_MC1_temps, "MC1_temps") 
+MESSAGE_DICT[0xB4] = (parse_MC1_temps, "MC1_temps") 
 
 #done
 def parse_MC2_temps(data, id = None, time=None):
-    msg_id = 0xA5
+    msg_id = 0xB5
     if id is not None:
         mask = id==msg_id
         data = data[mask]
@@ -1015,11 +1015,11 @@ def parse_MC2_temps(data, id = None, time=None):
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
     return [(arr, cols, units, directory)]
-MESSAGE_DICT[0xA5] = (parse_MC2_temps, "MC2_temps") 
+MESSAGE_DICT[0xB5] = (parse_MC2_temps, "MC2_temps") 
 
 #done
 def parse_MC3_temps(data, id = None, time=None):
-    msg_id = 0xA6
+    msg_id = 0xB6
     if id is not None:
         mask = id==msg_id
         data = data[mask]
@@ -1041,11 +1041,11 @@ def parse_MC3_temps(data, id = None, time=None):
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
     return [(arr, cols, units, directory)]
-MESSAGE_DICT[0xA6] = (parse_MC3_temps, "MC3_temps") 
+MESSAGE_DICT[0xB6] = (parse_MC3_temps, "MC3_temps") 
 
 #done
 def parse_MC4_temps(data, id = None, time=None):
-    msg_id = 0xA7
+    msg_id = 0xB7
     if id is not None:
         mask = id==msg_id
         data = data[mask]
@@ -1067,7 +1067,7 @@ def parse_MC4_temps(data, id = None, time=None):
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
     return [(arr, cols, units, directory)]
-MESSAGE_DICT[0xA7] = (parse_MC4_temps, "MC4_temps") 
+MESSAGE_DICT[0xB7] = (parse_MC4_temps, "MC4_temps") 
 
 def parse_SAB_readings_front(data, id = None, time=None):
     msg_id = 0x92
