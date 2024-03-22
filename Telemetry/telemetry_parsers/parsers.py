@@ -619,7 +619,7 @@ MESSAGE_DICT[0xC7] = (parse_MCU_rear_pots, "MCU_rear_potentiometers")
 
 #done
 def parse_MC1_energy(data, id = None, time=None):
-    msg_id = 0xA8
+    msg_id = 0xB8
     if id is not None:
         mask = id==msg_id
         data = data[mask]
@@ -640,11 +640,11 @@ def parse_MC1_energy(data, id = None, time=None):
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
     return [(arr, cols, units, directory)]
-MESSAGE_DICT[0xA8] = (parse_MC1_energy, "MC1_energy") 
+MESSAGE_DICT[0xB8] = (parse_MC1_energy, "MC1_energy") 
 
 #done
 def parse_MC2_energy(data, id = None, time=None):
-    msg_id = 0xA9
+    msg_id = 0xB9
     if id is not None:
         mask = id==msg_id
         data = data[mask]
@@ -665,11 +665,11 @@ def parse_MC2_energy(data, id = None, time=None):
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
     return [(arr, cols, units, directory)]
-MESSAGE_DICT[0xA9] = (parse_MC2_energy, "MC2_energy") 
+MESSAGE_DICT[0xB9] = (parse_MC2_energy, "MC2_energy") 
 
 #done
 def parse_MC3_energy(data, id = None, time=None):
-    msg_id = 0xAA
+    msg_id = 0xBA
     if id is not None:
         mask = id==msg_id
         data = data[mask]
@@ -690,11 +690,11 @@ def parse_MC3_energy(data, id = None, time=None):
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
     return [(arr, cols, units, directory)]
-MESSAGE_DICT[0xAA] = (parse_MC3_energy, "MC3_energy") 
+MESSAGE_DICT[0xBA] = (parse_MC3_energy, "MC3_energy") 
 
 #done
 def parse_MC4_energy(data, id = None, time=None):
-    msg_id = 0xAB
+    msg_id = 0xBB
     if id is not None:
         mask = id==msg_id
         data = data[mask]
@@ -715,7 +715,7 @@ def parse_MC4_energy(data, id = None, time=None):
     units = [vector[5] for vector in vectors]
     directory = [vector[6] for vector in vectors]
     return [(arr, cols, units, directory)]
-MESSAGE_DICT[0xAB] = (parse_MC4_energy, "MC4_energy") 
+MESSAGE_DICT[0xBB] = (parse_MC4_energy, "MC4_energy") 
 
 #done
 def parse_MC1_setpoints_command(data, id = None, time=None):
