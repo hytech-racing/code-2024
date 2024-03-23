@@ -214,7 +214,7 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     draw_current_draw_bar(0);
 
     /** TODO: only show this if GPS lock present (use CAN message when it exists)*/
-    _display.drawBitmap(270-27, 40, epd_bitmap_gps, 27, 27, BLACK);
+    if (blink()) _display.drawBitmap(270-27, 40, epd_bitmap_gps, 27, 27, BLACK);
 
     switch(current_page) {
         case 0:
@@ -613,6 +613,16 @@ void hytech_dashboard::set_neopixel_color(LED_LIST_e led, uint8_t state) {
 
     _neopixels.setPixelColor(led, color);
 
+}
+
+bool hytech_dashboard::blink() {
+
+    if((millis() - last_blink_millis) > BLINK_PERIOD) {
+        last_blink = !last_blink;
+        last_blink_millis = millis();
+    }
+
+    return last_blink;
 }
 
 

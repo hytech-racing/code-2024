@@ -29,6 +29,8 @@
 
 #define NUM_PAGES 5
 
+#define BLINK_PERIOD 500
+
 #define MAX_BRIGHTNESS 255
 #define MIN_BRIGHTNESS 3
 #define BRIGHTNESS_STEPS 4
@@ -159,6 +161,9 @@ class hytech_dashboard {
 
         int page_offset = -4;
 
+        uint32_t last_blink_millis = 0;
+        bool last_blink = false;
+
         /* Displays the clock and times in m:s.ms format based on the number of milliseconds*/
         void format_millis(String label, uint32_t time);
         
@@ -208,7 +213,6 @@ class hytech_dashboard {
         /* resets the clock back to current time*/
         void restart_current_timer();
 
-
         /* helper for displaying data in quadrants, sets the print cursor, based on the seleceted quadrant */
         void set_cursor_in_quadrant(uint8_t quadrant, int vertical_offset);
 
@@ -235,6 +239,12 @@ class hytech_dashboard {
 
         /* Helper function for refresh_neopixels that sets the color of pixels with the enumerated color values */
         void set_neopixel_color(LED_LIST_e led, uint8_t state);
+
+        /*
+            Display helper function for blinking display elements. Returns true if disp. element
+            should be visible for that refresh cycle. Blink period is defined by the BLINK_PERIOD define
+        */
+        bool blink();
 
 
 };
