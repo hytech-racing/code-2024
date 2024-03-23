@@ -75,8 +75,8 @@ void setup() {
   turnOffAsciiOutput();
   // turnOffUnusedBinaryOutput();
   configBinaryOutput(1, 0x01);    // 0000 0001
-  configBinaryOutput(2, 0x05);    // 0000 0101
-  configBinaryOutput(3, 0x28);    // 0010 1000
+  // configBinaryOutput(2, 0x05);    // 0000 0101
+  // configBinaryOutput(3, 0x28);    // 0010 1000
 
 }
 
@@ -110,6 +110,8 @@ void loop() {
   // readUserConfiguredBinaryOutput_1();
   // readUserConfiguredBinaryOutput_2();
   // readUserConfiguredBinaryOutput_3();
+
+  configBinaryOutput(1, 0x01);    // 0000 0001
 
   /* Parser test for received ascii message */
   // char receiveBuffer[DEFAULT_READ_BUFFER_SIZE] = "$VNRRG,07,40*5C";
@@ -706,13 +708,13 @@ void configBinaryOutput(uint8_t binaryOutputNumber, uint8_t fields) {
 
   char toSend[DEFAULT_WRITE_BUFFER_LONG];
 
-  bool commonField = fields | 0x01;
-  bool timeField = fields | 0x02;
-  bool imuField = fields | 0x04;
-  bool gpsField = fields | 0x08;
-  bool attitudeField = fields | 0x10;
-  bool insField = fields | 0x20;
-  bool gps2Field = fields | 0x40;
+  bool commonField = fields & 0x01;   Serial.printf("common: %d\n", commonField);
+  bool timeField = fields & 0x02;     Serial.printf("time: %d\n", timeField);
+  bool imuField = fields & 0x04;      Serial.printf("imu: %d\n", imuField);
+  bool gpsField = fields & 0x08;      Serial.printf("gps: %d\n", gpsField);
+  bool attitudeField = fields & 0x10; Serial.printf("attitude: %d\n", attitudeField);
+  bool insField = fields & 0x20;      Serial.printf("ins: %d\n", insField);
+  bool gps2Field = fields & 0x40;     Serial.printf("gps2: %d\n", gps2Field);
 
   // First determine which groups are present.
   uint16_t groups = 0;
@@ -743,11 +745,15 @@ void configBinaryOutput(uint8_t binaryOutputNumber, uint8_t fields) {
     #if VN_HAVE_SECURE_CRT
     length += sprintf_s(toSend + length, sizeof(toSend) - length, ",%X", fields.commonField);
     #else
-    length += sprintf(toSend + length, ",%X", vn::protocol::uart::COMMONGROUP_TIMEGPS |     // 0001 0001 0110 0010 = 11 62
-                                              vn::protocol::uart::COMMONGROUP_ANGULARRATE | 
-                                              vn::protocol::uart::COMMONGROUP_POSITION | 
-                                              vn::protocol::uart::COMMONGROUP_ACCEL | 
-                                              vn::protocol::uart::COMMONGROUP_INSSTATUS);
+    if (binaryOutputNumber == 1) {
+      length += sprintf(toSend + length, ",%X", vn::protocol::uart::COMMONGROUP_TIMEGPS |     // 0001 0001 0110 0010 = 00 62
+                                                vn::protocol::uart::COMMONGROUP_ANGULARRATE | 
+                                                vn::protocol::uart::COMMONGROUP_POSITION);
+    }
+    else if (binaryOutputNumber == 2) {
+      length += sprintf(toSend + length, ",%X", vn::protocol::uart::COMMONGROUP_ACCEL |       // 0001 0001 0000 0000 = 11 00
+                                                vn::protocol::uart::COMMONGROUP_INSSTATUS);
+    }
     #endif
   if (timeField)
   	#if VN_HAVE_SECURE_CRT
