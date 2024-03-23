@@ -75,8 +75,8 @@ void setup() {
   turnOffAsciiOutput();
   // turnOffUnusedBinaryOutput();
   configBinaryOutput(1, 0x01);    // 0000 0001
-  // configBinaryOutput(2, 0x05);    // 0000 0101
-  // configBinaryOutput(3, 0x28);    // 0010 1000
+  configBinaryOutput(2, 0x05);    // 0000 0101
+  configBinaryOutput(3, 0x28);    // 0010 1000
 
 }
 
@@ -103,15 +103,15 @@ void loop() {
   // readDefaultAsciiOutput_INS_LLA_40Hz();
 
   // Customized binary output
-  checkBinaryOff(1);    // checked: correct
+  // checkBinaryOff(1);    // checked: correct
   // checkBinaryOff(2);     // checked: correct
   // checkBinaryOff(3);      // checked: correct
   // checkAsciiOff();   // checked: ascii is off
-  // readUserConfiguredBinaryOutput_1();
+  readUserConfiguredBinaryOutput_1();
   // readUserConfiguredBinaryOutput_2();
   // readUserConfiguredBinaryOutput_3();
 
-  configBinaryOutput(1, 0x01);    // 0000 0001
+  // configBinaryOutput(1, 0x01);    // 0000 0001
 
   /* Parser test for received ascii message */
   // char receiveBuffer[DEFAULT_READ_BUFFER_SIZE] = "$VNRRG,07,40*5C";
@@ -415,10 +415,16 @@ void readUserConfiguredBinaryOutput_1() {
     if (data != 0xFA)
       return;
 
+    data = Serial2.read();
+
+    if (data != 0x01)
+      return;
+
     int binaryPacketLength = 1 + 1 + 2 * BINARY_OUTPUT_GROUP_COUNT_1 + BINARY_OUTPUT_PAYLOAD_1 + 2;  // in bytes: sync, groups, group fields, payload, crc
     uint8_t receiveBuffer[binaryPacketLength];
     int index = 0;
 
+    receiveBuffer[index++] = 0xFA;
     receiveBuffer[index++] = data;
 
     // while (index < binaryPacketLength) {
@@ -432,13 +438,13 @@ void readUserConfiguredBinaryOutput_1() {
     // while (index < binaryPacketLength) {
       while (Serial2.available())
       {
-        if (index < binaryPacketLength) {
+        // if (index < binaryPacketLength) {
           data = Serial2.read();
           receiveBuffer[index++] = data;
-        }
+        // }
       }      
     // }
-
+/*
     uint8_t syncByte = receiveBuffer[0];
 
     uint8_t groupsByte = receiveBuffer[1];
@@ -452,7 +458,8 @@ void readUserConfiguredBinaryOutput_1() {
     if (groupField1 != 0x0062)  // 0000 0000 0110 0010
       return;
 #endif
-
+*/
+/*
     uint64_t timeGPS = (receiveBuffer[7 + OFFSET_PADDING_1] << (8 * 7)) | (receiveBuffer[6 + OFFSET_PADDING_1] << (8 * 6)) | 
                        (receiveBuffer[5 + OFFSET_PADDING_1] << (8 * 5)) | (receiveBuffer[4 + OFFSET_PADDING_1] << (8 * 4)) |
                        (receiveBuffer[3 + OFFSET_PADDING_1] << (8 * 3)) | (receiveBuffer[2 + OFFSET_PADDING_1] << (8 * 2)) | 
@@ -479,6 +486,7 @@ void readUserConfiguredBinaryOutput_1() {
                       (receiveBuffer[37 + OFFSET_PADDING_1] << (8 * 1)) | receiveBuffer[36 + OFFSET_PADDING_1];
 
     uint16_t crc = (receiveBuffer[45 + OFFSET_PADDING_1] << 8) | receiveBuffer[44 + OFFSET_PADDING_1];
+    */
 
     Serial.println("Ask Vector Nav something ^^");
     Serial.println("Let's get raw reponse first");
@@ -741,12 +749,12 @@ void configBinaryOutput(uint8_t binaryOutputNumber, uint8_t fields) {
   int length = sprintf(toSend, "$VNWRG,%u,%u,%u,%X", 74 + binaryOutputNumber, vn::protocol::uart::ASYNCMODE_PORT1, 16, groups); // serial1, 800/16=50Hz, 
   #endif
 
-  if (commonField)
+  if (commonField) {
     #if VN_HAVE_SECURE_CRT
     length += sprintf_s(toSend + length, sizeof(toSend) - length, ",%X", fields.commonField);
     #else
     if (binaryOutputNumber == 1) {
-      length += sprintf(toSend + length, ",%X", vn::protocol::uart::COMMONGROUP_TIMEGPS |     // 0001 0001 0110 0010 = 00 62
+      length += sprintf(toSend + length, ",%X", vn::protocol::uart::COMMONGROUP_TIMEGPS |     // 0000 0000 0110 0010 = 00 62
                                                 vn::protocol::uart::COMMONGROUP_ANGULARRATE | 
                                                 vn::protocol::uart::COMMONGROUP_POSITION);
     }
@@ -755,43 +763,50 @@ void configBinaryOutput(uint8_t binaryOutputNumber, uint8_t fields) {
                                                 vn::protocol::uart::COMMONGROUP_INSSTATUS);
     }
     #endif
-  if (timeField)
+  }
+  if (timeField) {
   	#if VN_HAVE_SECURE_CRT
   	length += sprintf_s(toSend + length, sizeof(toSend) - length, ",%X", fields.timeField);
   	#else
   	// length += sprintf(toSend + length, ",%X", fields.timeField);
   	#endif
-  if (imuField)
+  }
+  if (imuField) {
   	#if VN_HAVE_SECURE_CRT
   	length += sprintf_s(toSend + length, sizeof(toSend) - length, ",%X", fields.imuField);
   	#else
   	length += sprintf(toSend + length, ",%X", vn::protocol::uart::IMUGROUP_UNCOMPACCEL |    // 0000 0000 1000 0100 = 00 84
                                               vn::protocol::uart::IMUGROUP_DELTAVEL);
   	#endif
-  if (gpsField)
+  }
+  if (gpsField) {
   	#if VN_HAVE_SECURE_CRT
   	length += sprintf_s(toSend + length, sizeof(toSend) - length, ",%X", fields.gpsField);
   	#else
   	length += sprintf(toSend + length, ",%X", vn::protocol::uart::GPSGROUP_POSECEF);        // 0000 0000 0100 0000 = 00 40
   	#endif
-  if (attitudeField)
+  }
+  if (attitudeField) {
   	#if VN_HAVE_SECURE_CRT
   	length += sprintf_s(toSend + length, sizeof(toSend) - length, ",%X", fields.attitudeField);
   	#else
   	// length += sprintf(toSend + length, ",%X", fields.attitudeField);
   	#endif
-  if (insField)
+  }
+  if (insField) {
     #if VN_HAVE_SECURE_CRT
     length += sprintf_s(toSend + length, sizeof(toSend) - length, ",%X", fields.insField);
     #else
     length += sprintf(toSend + length, ",%X", vn::protocol::uart::INSGROUP_VELBODY);        // 0000 0000 0000 1000 = 00 08
     #endif
-  if(gps2Field)
+  }
+  if(gps2Field) {
     #if VN_HAVE_SECURE_CRT
     length += sprintf_s(toSend + length, sizeof(toSend) - length, ",%X", fields.gps2Field);
     #else
     // length += sprintf(toSend + length, ",%X", fields.gps2Field);
     #endif
+  }
 
   #if VN_HAVE_SECURE_CRT
   length += sprintf_s(toSend + length, sizeof(toSend) - length, "*");
