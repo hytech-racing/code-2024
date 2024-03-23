@@ -7,13 +7,23 @@
 #include "types.h"
 
 #define IMU_RS232_SPEED 115200
+
 #define DEFAULT_WRITE_BUFFER_SIZE 17
 #define DEFAULT_WRITE_BUFFER_MIDIUM 21
 #define DEFAULT_WRITE_BUFFER_LONG 256
 #define DEFAULT_READ_BUFFER_SIZE 256
-#define BINARY_OUTPUT_GROUP_COUNT 4
-#define BINARY_OUTPUT_PAYLOAD_LENGTH 118   // bytes
-#define OFFSET_PADDING 24
+
+#define BINARY_OUTPUT_GROUP_COUNT_1 1
+#define BINARY_OUTPUT_GROUP_COUNT_2 2
+#define BINARY_OUTPUT_GROUP_COUNT_3 2
+#define BINARY_OUTPUT_PAYLOAD_1 44   // bytes
+#define BINARY_OUTPUT_PAYLOAD_2 38   // bytes
+#define BINARY_OUTPUT_PAYLOAD_3 36   // bytes
+#define OFFSET_PADDING_1 4
+#define OFFSET_PADDING_2 6
+#define OFFSET_PADDING_3
+
+#define SANITY_CHECK 0
 
 #define ATOU32 static_cast<uint32_t>(std::atoi(result))
 #define NEXT result = getNextData(_data, parseIndex); \
@@ -25,7 +35,9 @@ Metro timer_vectornav_read_binary = Metro(20);  // configured 50Hz
 
 // Function declarations
 void queryModelNumber();
-void readUserConfiguredBinaryOutput();
+void readUserConfiguredBinaryOutput_1();
+void readUserConfiguredBinaryOutput_2();
+void readUserConfiguredBinaryOutput_3();
 void queryYawPitchRoll();
 void queryYawPitchRollMagneticAccelerationAndAngularRates();
 void queryAsyncDataOutputFrequency();
@@ -38,8 +50,11 @@ void parseAsyncDataOutputFrequency(uint32_t* adof, char *_data);
 char* startAsciiPacketParse(char* packetStart, size_t& index);
 char* getNextData(char* str, size_t& startIndex);
 char* vnstrtok(char* str, size_t& startIndex);
-void configBinaryOutput();
+void configBinaryOutput(uint8_t binaryOutputNumber, uint8_t fields);
 void turnOffUnusedBinaryOutput();
+void turnOffAsciiOutput();
+void checkBinaryOff(uint8_t binaryOutputNumber);
+void checkAsciiOff();
 
 // Global
 int counter;
@@ -57,6 +72,7 @@ void setup() {
   counter = 0;
 
   // Configure sensor
+  turnOffAsciiOutput();
   turnOffUnusedBinaryOutput();
   configBinaryOutput();
   
@@ -86,6 +102,10 @@ void loop() {
   // readDefaultAsciiOutput_INS_LLA_40Hz();
 
   // Customized binary output
+  // checkBinaryOff(1);    // checked: correct
+  // checkBinaryOff(2);     // checked: correct
+  // checkBinaryOff(3);      // checked: correct
+  // checkAsciiOff();   // checked: ascii is off
   readUserConfiguredBinaryOutput();
 
 
@@ -231,48 +251,357 @@ char* vnstrtok(char* str, size_t& startIndex)
 	return str + origIndex;
 }
 
-void readUserConfiguredBinaryOutput() {
-  if (timer_vectornav_read_binary.check() && Serial2.available()) {
+void readUserConfiguredBinaryOutput_2() {
+
+  if (timer_vectornav_read_binary.check()) {
     uint8_t data = Serial2.read();
 
     if (data != 0xFA)
       return;
 
-    int binaryPacketLength = 1 + 1 + 2 * BINARY_OUTPUT_GROUP_COUNT + BINARY_OUTPUT_PAYLOAD_LENGTH + 2;  // in bytes: sync, groups, group fields, payload, crc
+    int binaryPacketLength = 1 + 1 + 2 * BINARY_OUTPUT_GROUP_COUNT_2 + BINARY_OUTPUT_PAYLOAD_2 + 2;  // in bytes: sync, groups, group fields, payload, crc
     uint8_t receiveBuffer[binaryPacketLength];
     int index = 0;
 
     receiveBuffer[index++] = data;
 
-    while (index < binaryPacketLength) {
-      if (Serial2.available())
+    // while (index < binaryPacketLength) {
+    //   while (Serial2.available())
+    //   {
+    //     data = Serial2.read();
+    //     receiveBuffer[index++] = data;
+    //   }      
+    // }
+
+    // while (index < binaryPacketLength) {
+      while (Serial2.available())
       {
-        data = Serial2.read();
-        receiveBuffer[index++] = data;
+        if (index < binaryPacketLength) {
+          data = Serial2.read();
+          receiveBuffer[index++] = data;
+        }
       }      
-    }
+    // }
 
     uint8_t syncByte = receiveBuffer[0];
 
     uint8_t groupsByte = receiveBuffer[1];
-    if (groupsByte != 0x2D)
+#if SANITY_CHECK
+    if (groupsByte != 0x05)   // 0000 0101
       return;
+#endif
 
     uint16_t groupField1 = ((uint16_t)receiveBuffer[3] << 8) | receiveBuffer[2];
-    if (groupField1 != 0x1162)
+#if SANITY_CHECK
+    if (groupField1 != 0x1100)    // 0001 0001 0000 0000
       return;
+#endif
 
     uint16_t groupField2 = (receiveBuffer[5] << 8) | receiveBuffer[4];
-    if (groupField2 != 0x0084)
+#if SANITY_CHECK
+    if (groupField2 != 0x0084)    // 0000 0000 1000 0100
+      return;
+#endif
+
+    float accelBodyX = (receiveBuffer[3 + OFFSET_PADDING_2] << (8 * 3)) | (receiveBuffer[2 + OFFSET_PADDING_2] << (8 * 2)) | 
+                       (receiveBuffer[1 + OFFSET_PADDING_2] << (8 * 1)) | receiveBuffer[0 + OFFSET_PADDING_2];
+    float accelBodyY = (receiveBuffer[7 + OFFSET_PADDING_2] << (8 * 3)) | (receiveBuffer[6 + OFFSET_PADDING_2] << (8 * 2)) | 
+                       (receiveBuffer[5 + OFFSET_PADDING_2] << (8 * 1)) | receiveBuffer[4 + OFFSET_PADDING_2];
+    float accelBodyZ = (receiveBuffer[11 + OFFSET_PADDING_2] << (8 * 3)) | (receiveBuffer[10 + OFFSET_PADDING_2] << (8 * 2)) | 
+                       (receiveBuffer[9 + OFFSET_PADDING_2] << (8 * 1)) | receiveBuffer[8 + OFFSET_PADDING_2];
+
+    uint16_t InsStatus = (receiveBuffer[13 + OFFSET_PADDING_2] << 8) | receiveBuffer[12 + OFFSET_PADDING_2];
+
+    float uncompAccelBodyX = (receiveBuffer[17 + OFFSET_PADDING_2] << (8 * 3)) | (receiveBuffer[16 + OFFSET_PADDING_2] << (8 * 2)) | 
+                             (receiveBuffer[15 + OFFSET_PADDING_2] << (8 * 1)) | receiveBuffer[14 + OFFSET_PADDING_2];
+    float uncompAccelBodyY = (receiveBuffer[21 + OFFSET_PADDING_2] << (8 * 3)) | (receiveBuffer[20 + OFFSET_PADDING_2] << (8 * 2)) | 
+                             (receiveBuffer[19 + OFFSET_PADDING_2] << (8 * 1)) | receiveBuffer[18 + OFFSET_PADDING_2];
+    float uncompAccelBodyZ = (receiveBuffer[25 + OFFSET_PADDING_2] << (8 * 3)) | (receiveBuffer[24 + OFFSET_PADDING_2] << (8 * 2)) | 
+                             (receiveBuffer[23 + OFFSET_PADDING_2] << (8 * 1)) | receiveBuffer[22 + OFFSET_PADDING_2];
+
+    float deltaVelX = (receiveBuffer[29 + OFFSET_PADDING_2] << (8 * 3)) | (receiveBuffer[28 + OFFSET_PADDING_2] << (8 * 2)) | 
+                      (receiveBuffer[27 + OFFSET_PADDING_2] << (8 * 1)) | receiveBuffer[26 + OFFSET_PADDING_2];
+    float deltaVelY = (receiveBuffer[33 + OFFSET_PADDING_2] << (8 * 3)) | (receiveBuffer[32 + OFFSET_PADDING_2] << (8 * 2)) | 
+                      (receiveBuffer[31 + OFFSET_PADDING_2] << (8 * 1)) | receiveBuffer[30 + OFFSET_PADDING_2];
+    float deltaVelZ = (receiveBuffer[37 + OFFSET_PADDING_2] << (8 * 3)) | (receiveBuffer[36 + OFFSET_PADDING_2] << (8 * 2)) | 
+                      (receiveBuffer[35 + OFFSET_PADDING_2] << (8 * 1)) | receiveBuffer[34 + OFFSET_PADDING_2];
+
+    uint16_t crc = (receiveBuffer[39 + OFFSET_PADDING_2] << 8) | receiveBuffer[38 + OFFSET_PADDING_2];
+
+    Serial.println("Ask Vector Nav something ^^");
+    Serial.println("Let's get raw reponse first");
+
+    // Serial.println();
+
+    Serial.println("User configured binary output: ");
+
+    Serial.print("Raw string: ");
+    for (int i = 0; i < binaryPacketLength; i++)
+    {
+      Serial.printf("%X ", receiveBuffer[i]);
+    }
+
+    Serial.printf("\nLength: %d", index);
+
+    Serial.printf("\n\n");
+/*
+    Serial.println("Let's parse it hard core :)");
+
+    Serial.println();
+
+    Serial.printf("Sync: %X\n", syncByte);
+
+    Serial.println();
+
+    Serial.printf("Groups: %X\n", groupsByte);
+    Serial.printf("Group 1 Common: %X\n", groupField1);
+    Serial.printf("Group 3 IMU: %X\n", groupField2);
+    Serial.printf("Group 4 GNSS1: %X\n", groupField3);
+    Serial.printf("Group 6 INS: %X\n", groupField4);
+
+    Serial.println();
+
+    Serial.println("Data acquired from Group 1:");
+    Serial.printf("TimeGPS: %d[ns]\n", timeGPS);
+    Serial.printf("AngularRate: X - %f[rad/s], Y - %f[rad/s], Z - %f[rad/s]\n", angularRateBodyX, angularRateBodyY, angularRateBodyZ);
+    Serial.printf("Position: latitude - %f[deg], longitude - %f[deg], altitude - %f[m]\n", latitude, longitude, altitude);
+    Serial.printf("Accel: X - %f[m/s^2], Y - %f[m/s^2], Z - %f[m/s^2]\n", accelBodyX, accelBodyY, accelBodyZ);
+    Serial.printf("InsStatus: %X\n", InsStatus);
+    
+    Serial.println();
+
+    Serial.println("Data acquired from Group 3:");
+    Serial.printf("UncompAccel: X - %f[m/s^2], Y - %f[m/s^2], Z - %f[m/s^2]\n", uncompAccelBodyX, uncompAccelBodyY, uncompAccelBodyZ);
+    Serial.printf("DeltaVel: X - %f[m/s], Y - %f[m/s], Z - %f[m/s]\n", deltaVelX, deltaVelY, deltaVelZ);
+
+    Serial.println();
+
+    Serial.println("Data acquired from Group 4:");
+    Serial.printf("PosEcef: (%f, %f, %f)[m]\n", posEcef0, posEcef1, posEcef2);
+    
+    Serial.println();
+
+    Serial.println("Data acquired from Group 6:");
+    Serial.printf("VelBody: X - %f[m/s], Y - %f[m/s], Z - %f[m/s]\n", velBodyX, velBodyY, velBodyZ);
+
+    Serial.printf("CRC: %X\n", crc);
+
+    Serial.println();
+
+    Serial.print("Test bit shift: ");
+    uint8_t x = 1;
+    uint32_t y = (x << 8) | x;    // 0000 0001 0000 0001
+    Serial.printf("%X\n", y);
+
+    Serial.println();
+
+    Serial.println("phew...!");
+
+    Serial.println();
+
+    */
+  }   // end of timer.check()
+}
+
+void readUserConfiguredBinaryOutput_1() {
+
+  if (timer_vectornav_read_binary.check()) {
+    uint8_t data = Serial2.read();
+
+    if (data != 0xFA)
       return;
 
-    uint16_t groupField3 = (receiveBuffer[7] << 8) | receiveBuffer[6];
-    if (groupField3 != 0x0040)
+    int binaryPacketLength = 1 + 1 + 2 * BINARY_OUTPUT_GROUP_COUNT + BINARY_OUTPUT_PAYLOAD_1 + 2;  // in bytes: sync, groups, group fields, payload, crc
+    uint8_t receiveBuffer[binaryPacketLength];
+    int index = 0;
+
+    receiveBuffer[index++] = data;
+
+    // while (index < binaryPacketLength) {
+    //   while (Serial2.available())
+    //   {
+    //     data = Serial2.read();
+    //     receiveBuffer[index++] = data;
+    //   }      
+    // }
+
+    // while (index < binaryPacketLength) {
+      while (Serial2.available())
+      {
+        if (index < binaryPacketLength) {
+          data = Serial2.read();
+          receiveBuffer[index++] = data;
+        }
+      }      
+    // }
+
+    uint8_t syncByte = receiveBuffer[0];
+
+    uint8_t groupsByte = receiveBuffer[1];
+#if SANITY_CHECK
+    if (groupsByte != 0x01)   // 0000 0001
+      return;
+#endif
+
+    uint16_t groupField1 = ((uint16_t)receiveBuffer[3] << 8) | receiveBuffer[2];
+#if SANITY_CHECK
+    if (groupField1 != 0x0062)  // 0000 0000 0110 0010
+      return;
+#endif
+
+    uint64_t timeGPS = (receiveBuffer[7 + OFFSET_PADDING_1] << (8 * 7)) | (receiveBuffer[6 + OFFSET_PADDING_1] << (8 * 6)) | 
+                       (receiveBuffer[5 + OFFSET_PADDING_1] << (8 * 5)) | (receiveBuffer[4 + OFFSET_PADDING_1] << (8 * 4)) |
+                       (receiveBuffer[3 + OFFSET_PADDING_1] << (8 * 3)) | (receiveBuffer[2 + OFFSET_PADDING_1] << (8 * 2)) | 
+                       (receiveBuffer[1 + OFFSET_PADDING_1] << (8 * 1)) | receiveBuffer[0 + OFFSET_PADDING_1];
+
+    float angularRateBodyX = (receiveBuffer[11 + OFFSET_PADDING_1] << (8 * 3)) | (receiveBuffer[10 + OFFSET_PADDING_1] << (8 * 2)) | 
+                             (receiveBuffer[9 + OFFSET_PADDING_1] << (8 * 1)) | receiveBuffer[8 + OFFSET_PADDING_1];
+    float angularRateBodyY = (receiveBuffer[15 + OFFSET_PADDING_1] << (8 * 3)) | (receiveBuffer[14 + OFFSET_PADDING_1] << (8 * 2)) | 
+                             (receiveBuffer[13 + OFFSET_PADDING_1] << (8 * 1)) | receiveBuffer[12 + OFFSET_PADDING_1];
+    float angularRateBodyZ = (receiveBuffer[19 + OFFSET_PADDING_1] << (8 * 3)) | (receiveBuffer[18 + OFFSET_PADDING_1] << (8 * 2)) | 
+                             (receiveBuffer[17 + OFFSET_PADDING_1] << (8 * 1)) | receiveBuffer[16 + OFFSET_PADDING_1];
+
+    double latitude = (receiveBuffer[27 + OFFSET_PADDING_1] << (8 * 7)) | (receiveBuffer[26 + OFFSET_PADDING_1] << (8 * 6)) | 
+                      (receiveBuffer[25 + OFFSET_PADDING_1] << (8 * 5)) | (receiveBuffer[24 + OFFSET_PADDING_1] << (8 * 4)) |
+                      (receiveBuffer[23 + OFFSET_PADDING_1] << (8 * 3)) | (receiveBuffer[22 + OFFSET_PADDING_1] << (8 * 2)) | 
+                      (receiveBuffer[21 + OFFSET_PADDING_1] << (8 * 1)) | receiveBuffer[20 + OFFSET_PADDING_1];
+    double longitude = (receiveBuffer[35 + OFFSET_PADDING_1] << (8 * 7)) | (receiveBuffer[34 + OFFSET_PADDING_1] << (8 * 6)) | 
+                       (receiveBuffer[33 + OFFSET_PADDING_1] << (8 * 5)) | (receiveBuffer[32 + OFFSET_PADDING_1] << (8 * 4)) |
+                       (receiveBuffer[31 + OFFSET_PADDING_1] << (8 * 3)) | (receiveBuffer[30 + OFFSET_PADDING_1] << (8 * 2)) | 
+                       (receiveBuffer[29 + OFFSET_PADDING_1] << (8 * 1)) | receiveBuffer[28 + OFFSET_PADDING_1];
+    double altitude = (receiveBuffer[43 + OFFSET_PADDING_1] << (8 * 7)) | (receiveBuffer[42 + OFFSET_PADDING_1] << (8 * 6)) | 
+                      (receiveBuffer[41 + OFFSET_PADDING_1] << (8 * 5)) | (receiveBuffer[40 + OFFSET_PADDING_1] << (8 * 4)) |
+                      (receiveBuffer[39 + OFFSET_PADDING_1] << (8 * 3)) | (receiveBuffer[38 + OFFSET_PADDING_1] << (8 * 2)) | 
+                      (receiveBuffer[37 + OFFSET_PADDING_1] << (8 * 1)) | receiveBuffer[36 + OFFSET_PADDING_1];
+
+    uint16_t crc = (receiveBuffer[45 + OFFSET_PADDING_1] << 8) | receiveBuffer[44 + OFFSET_PADDING_1];
+
+    Serial.println("Ask Vector Nav something ^^");
+    Serial.println("Let's get raw reponse first");
+
+    // Serial.println();
+
+    Serial.println("User configured binary output: ");
+
+    Serial.print("Raw string: ");
+    for (int i = 0; i < binaryPacketLength; i++)
+    {
+      Serial.printf("%X ", receiveBuffer[i]);
+    }
+
+    Serial.printf("\nLength: %d", index);
+
+    Serial.printf("\n\n");
+/*
+    Serial.println("Let's parse it hard core :)");
+
+    Serial.println();
+
+    Serial.printf("Sync: %X\n", syncByte);
+
+    Serial.println();
+
+    Serial.printf("Groups: %X\n", groupsByte);
+    Serial.printf("Group 1 Common: %X\n", groupField1);
+    Serial.printf("Group 3 IMU: %X\n", groupField2);
+    Serial.printf("Group 4 GNSS1: %X\n", groupField3);
+    Serial.printf("Group 6 INS: %X\n", groupField4);
+
+    Serial.println();
+
+    Serial.println("Data acquired from Group 1:");
+    Serial.printf("TimeGPS: %d[ns]\n", timeGPS);
+    Serial.printf("AngularRate: X - %f[rad/s], Y - %f[rad/s], Z - %f[rad/s]\n", angularRateBodyX, angularRateBodyY, angularRateBodyZ);
+    Serial.printf("Position: latitude - %f[deg], longitude - %f[deg], altitude - %f[m]\n", latitude, longitude, altitude);
+    Serial.printf("Accel: X - %f[m/s^2], Y - %f[m/s^2], Z - %f[m/s^2]\n", accelBodyX, accelBodyY, accelBodyZ);
+    Serial.printf("InsStatus: %X\n", InsStatus);
+    
+    Serial.println();
+
+    Serial.println("Data acquired from Group 3:");
+    Serial.printf("UncompAccel: X - %f[m/s^2], Y - %f[m/s^2], Z - %f[m/s^2]\n", uncompAccelBodyX, uncompAccelBodyY, uncompAccelBodyZ);
+    Serial.printf("DeltaVel: X - %f[m/s], Y - %f[m/s], Z - %f[m/s]\n", deltaVelX, deltaVelY, deltaVelZ);
+
+    Serial.println();
+
+    Serial.println("Data acquired from Group 4:");
+    Serial.printf("PosEcef: (%f, %f, %f)[m]\n", posEcef0, posEcef1, posEcef2);
+    
+    Serial.println();
+
+    Serial.println("Data acquired from Group 6:");
+    Serial.printf("VelBody: X - %f[m/s], Y - %f[m/s], Z - %f[m/s]\n", velBodyX, velBodyY, velBodyZ);
+
+    Serial.printf("CRC: %X\n", crc);
+
+    Serial.println();
+
+    Serial.print("Test bit shift: ");
+    uint8_t x = 1;
+    uint32_t y = (x << 8) | x;    // 0000 0001 0000 0001
+    Serial.printf("%X\n", y);
+
+    Serial.println();
+
+    Serial.println("phew...!");
+
+    Serial.println();
+
+    */
+  }   // end of timer.check()
+}
+
+void readUserConfiguredBinaryOutput_3() {
+
+  if (timer_vectornav_read_binary.check()) {
+    uint8_t data = Serial2.read();
+
+    if (data != 0xFA)
       return;
 
-    uint16_t groupField4 = (receiveBuffer[9] << 8) | receiveBuffer[8];
-    if (groupField4 != 0x0008)
+    int binaryPacketLength = 1 + 1 + 2 * BINARY_OUTPUT_GROUP_COUNT_3 + BINARY_OUTPUT_PAYLOAD_3 + 2;  // in bytes: sync, groups, group fields, payload, crc
+    uint8_t receiveBuffer[binaryPacketLength];
+    int index = 0;
+
+    receiveBuffer[index++] = data;
+
+    // while (index < binaryPacketLength) {
+    //   while (Serial2.available())
+    //   {
+    //     data = Serial2.read();
+    //     receiveBuffer[index++] = data;
+    //   }      
+    // }
+
+    // while (index < binaryPacketLength) {
+      while (Serial2.available())
+      {
+        if (index < binaryPacketLength) {
+          data = Serial2.read();
+          receiveBuffer[index++] = data;
+        }
+      }      
+    // }
+
+    uint8_t syncByte = receiveBuffer[0];
+
+    uint8_t groupsByte = receiveBuffer[1];
+#if SANITY_CHECK
+    if (groupsByte != 0x28)   // 0010 1000
       return;
+#endif
+
+    uint16_t groupField1 = ((uint16_t)receiveBuffer[3] << 8) | receiveBuffer[2];
+#if SANITY_CHECK
+    if (groupField1 != 0x0040)
+      return;
+#endif
+
+    uint16_t groupField2 = (receiveBuffer[5] << 8) | receiveBuffer[4];
+#if SANITY_CHECK
+    if (groupField2 != 0x0008)
+      return;
+#endif
 
     uint64_t timeGPS = (receiveBuffer[17] << (8 * 7)) | (receiveBuffer[16] << (8 * 6)) | 
                        (receiveBuffer[15] << (8 * 5)) | (receiveBuffer[14] << (8 * 4)) |
@@ -347,9 +676,9 @@ void readUserConfiguredBinaryOutput() {
     Serial.println("Ask Vector Nav something ^^");
     Serial.println("Let's get raw reponse first");
 
-    Serial.println();
+    // Serial.println();
 
-    Serial.print("User configured binary output: ");
+    Serial.println("User configured binary output: ");
 
     Serial.print("Raw string: ");
     for (int i = 0; i < binaryPacketLength; i++)
@@ -357,8 +686,10 @@ void readUserConfiguredBinaryOutput() {
       Serial.printf("%X ", receiveBuffer[i]);
     }
 
-    Serial.printf("\n\n");
+    Serial.printf("\nLength: %d", index);
 
+    Serial.printf("\n\n");
+/*
     Serial.println("Let's parse it hard core :)");
 
     Serial.println();
@@ -412,33 +743,39 @@ void readUserConfiguredBinaryOutput() {
     Serial.println("phew...!");
 
     Serial.println();
+
+    */
   }   // end of timer.check()
 }
 
-void configBinaryOutput() {
+void configBinaryOutput(uint8_t binaryOutputNumber, uint8_t fields) {
 
-  // char toSend[256];
-  // Packet response;
-
-  uint8_t binaryOutputNumber = 1;
   char toSend[DEFAULT_WRITE_BUFFER_LONG];
+
+  bool commonField = fields | 0x01;
+  bool timeField = fields | 0x02;
+  bool imuField = fields | 0x04;
+  bool gpsField = fields | 0x08;
+  bool attitudeField = fields | 0x10;
+  bool insField = fields | 0x20;
+  bool gps2Field = fields | 0x40;
 
   // First determine which groups are present.
   uint16_t groups = 0;
-  // if (fields.commonField)
+  if (commonField)
     groups |= 0x0001;         // 0000 0000 0000 0001. common group selected
-  // if (fields.timeField)
-    // groups |= 0x0002;
-  // if (fields.imuField)
+  if (timeField)
+    groups |= 0x0002;
+  if (imuField)
     groups |= 0x0004;         // 0000 0000 0000 0100. IMU group selected
-  // if (fields.gpsField)
+  if (gpsField)
     groups |= 0x0008;         // 0000 0000 0000 1000. GNSS1 group selected
-  // if (fields.attitudeField)
-    // groups |= 0x0010;
-  // if (fields.insField)
+  if (attitudeField)
+    groups |= 0x0010;
+  if (insField)
     groups |= 0x0020;         // 0000 0000 0010 0000. INS group selected
-  // if(fields.gps2Field)
-    // groups |= 0x0040;
+  if (gps2Field)
+    groups |= 0x0040;
 
   // groups = 0010 1101 = 2D
 
@@ -448,7 +785,7 @@ void configBinaryOutput() {
   int length = sprintf(toSend, "$VNWRG,%u,%u,%u,%X", 74 + binaryOutputNumber, vn::protocol::uart::ASYNCMODE_PORT1, 16, groups); // serial1, 800/16=50Hz, 
   #endif
 
-  // if (fields.commonField)
+  if (commonField)
     #if VN_HAVE_SECURE_CRT
     length += sprintf_s(toSend + length, sizeof(toSend) - length, ",%X", fields.commonField);
     #else
@@ -458,43 +795,43 @@ void configBinaryOutput() {
                                               vn::protocol::uart::COMMONGROUP_ACCEL | 
                                               vn::protocol::uart::COMMONGROUP_INSSTATUS);
     #endif
-  // if (fields.timeField)
-  // 	#if VN_HAVE_SECURE_CRT
-  // 	length += sprintf_s(toSend + length, sizeof(toSend) - length, ",%X", fields.timeField);
-  // 	#else
-  // 	length += sprintf(toSend + length, ",%X", fields.timeField);
-  // 	#endif
-  // if (fields.imuField)
+  if (timeField)
+  	#if VN_HAVE_SECURE_CRT
+  	length += sprintf_s(toSend + length, sizeof(toSend) - length, ",%X", fields.timeField);
+  	#else
+  	length += sprintf(toSend + length, ",%X", fields.timeField);
+  	#endif
+  if (imuField)
   	#if VN_HAVE_SECURE_CRT
   	length += sprintf_s(toSend + length, sizeof(toSend) - length, ",%X", fields.imuField);
   	#else
   	length += sprintf(toSend + length, ",%X", vn::protocol::uart::IMUGROUP_UNCOMPACCEL |    // 0000 0000 1000 0100 = 00 84
                                               vn::protocol::uart::IMUGROUP_DELTAVEL);
   	#endif
-  // if (fields.gpsField)
+  if (gpsField)
   	#if VN_HAVE_SECURE_CRT
   	length += sprintf_s(toSend + length, sizeof(toSend) - length, ",%X", fields.gpsField);
   	#else
   	length += sprintf(toSend + length, ",%X", vn::protocol::uart::GPSGROUP_POSECEF);        // 0000 0000 0100 0000 = 00 40
   	#endif
-  // if (fields.attitudeField)
-  // 	#if VN_HAVE_SECURE_CRT
-  // 	length += sprintf_s(toSend + length, sizeof(toSend) - length, ",%X", fields.attitudeField);
-  // 	#else
-  // 	length += sprintf(toSend + length, ",%X", fields.attitudeField);
-  // 	#endif
-  // if (fields.insField)
+  if (attitudeField)
+  	#if VN_HAVE_SECURE_CRT
+  	length += sprintf_s(toSend + length, sizeof(toSend) - length, ",%X", fields.attitudeField);
+  	#else
+  	length += sprintf(toSend + length, ",%X", fields.attitudeField);
+  	#endif
+  if (insField)
     #if VN_HAVE_SECURE_CRT
     length += sprintf_s(toSend + length, sizeof(toSend) - length, ",%X", fields.insField);
     #else
     length += sprintf(toSend + length, ",%X", vn::protocol::uart::INSGROUP_VELBODY);        // 0000 0000 0000 1000 = 00 08
     #endif
-  // if(fields.gps2Field)
-  //   #if VN_HAVE_SECURE_CRT
-  //   length += sprintf_s(toSend + length, sizeof(toSend) - length, ",%X", fields.gps2Field);
-  //   #else
-  //   length += sprintf(toSend + length, ",%X", fields.gps2Field);
-  //   #endif
+  if(gps2Field)
+    #if VN_HAVE_SECURE_CRT
+    length += sprintf_s(toSend + length, sizeof(toSend) - length, ",%X", fields.gps2Field);
+    #else
+    length += sprintf(toSend + length, ",%X", fields.gps2Field);
+    #endif
 
   #if VN_HAVE_SECURE_CRT
   length += sprintf_s(toSend + length, sizeof(toSend) - length, "*");
@@ -503,8 +840,6 @@ void configBinaryOutput() {
   #endif
 
   length += sprintf(toSend + length, "XX\r\n");
-
-  // transaction(toSend, length, waitForReply, &response);
 
   Serial2.print(toSend);
   Serial2.flush();
@@ -518,18 +853,18 @@ void turnOffUnusedBinaryOutput() {
   char toSend2[DEFAULT_WRITE_BUFFER_LONG];
 
   #if VN_HAVE_SECURE_CRT
-  int length = sprintf_s(toSend, sizeof(toSend), "$VNWRG,%u,%u,%u,%X", 74 + binaryOutputNumber, fields.asyncMode, fields.rateDivisor, groups);
+  int length2 = sprintf_s(toSend2, sizeof(toSend2), "$VNWRG,%u,%u,%u,%X", 74 + binaryOutputNumber, fields.asyncMode, fields.rateDivisor, groups);
   #else
-  int length = sprintf(toSend2, "$VNWRG,%u,%u", 74 + binaryOutputNumber, vn::protocol::uart::ASYNCMODE_NONE); // turn off binary output 2
+  int length2 = sprintf(toSend2, "$VNWRG,%u,%u,%u,%X", 74 + binaryOutputNumber, vn::protocol::uart::ASYNCMODE_NONE, 0, 0); // turn off binary output 2
   #endif
 
   #if VN_HAVE_SECURE_CRT
-  length += sprintf_s(toSend + length, sizeof(toSend) - length, "*");
+  length2 += sprintf_s(toSend2 + length2, sizeof(toSend2) - length2, "*");
   #else
-  length += sprintf(toSend2 + length, "*");
+  length2 += sprintf(toSend2 + length2, "*");
   #endif
 
-  length += sprintf(toSend2 + length, "XX\r\n");
+  length2 += sprintf(toSend2 + length2, "XX\r\n");
 
   Serial2.print(toSend2);
   Serial2.flush();
@@ -539,18 +874,18 @@ void turnOffUnusedBinaryOutput() {
   char toSend3[DEFAULT_WRITE_BUFFER_LONG];
 
   #if VN_HAVE_SECURE_CRT
-  int length = sprintf_s(toSend, sizeof(toSend), "$VNWRG,%u,%u,%u,%X", 74 + binaryOutputNumber, fields.asyncMode, fields.rateDivisor, groups);
+  int length3 = sprintf_s(toSend3, sizeof(toSend3), "$VNWRG,%u,%u,%u,%X", 74 + binaryOutputNumber, fields.asyncMode, fields.rateDivisor, groups);
   #else
-  int length = sprintf(toSend3, "$VNWRG,%u,%u", 74 + binaryOutputNumber, vn::protocol::uart::ASYNCMODE_NONE); // turn off binary output 2
+  int length3 = sprintf(toSend3, "$VNWRG,%u,%u", 74 + binaryOutputNumber, vn::protocol::uart::ASYNCMODE_NONE, 0, 0); // turn off binary output 2
   #endif
 
   #if VN_HAVE_SECURE_CRT
-  length += sprintf_s(toSend + length, sizeof(toSend) - length, "*");
+  length3 += sprintf_s(toSend3 + length3, sizeof(toSend3) - length3, "*");
   #else
-  length += sprintf(toSend3 + length, "*");
+  length3 += sprintf(toSend3 + length3, "*");
   #endif
 
-  length += sprintf(toSend3 + length, "XX\r\n");
+  length3 += sprintf(toSend3 + length3, "XX\r\n");
 
   Serial2.print(toSend3);
   Serial2.flush();
@@ -562,10 +897,57 @@ void turnOffAsciiOutput() { // VNOFF
   char toSend[DEFAULT_WRITE_BUFFER_MIDIUM];
 
   #if VN_HAVE_SECURE_CRT
-	size_t length = sprintf_s(buffer, size, "$VNWRG,06,%u,%u", ador, port);
+	size_t length = sprintf_s(toSend, size, "$VNWRG,06,%u,%u", ador, port);
 	#else
-	size_t length = sprintf(buffer, "$VNWRG,06,%u,%u", ador, port);
+	size_t length = sprintf(toSend, "$VNWRG,06,%u", vn::protocol::uart::VNOFF);
 	#endif
+
+  length += sprintf(toSend + length, "*XX\r\n");
+
+  Serial2.print(toSend);
+  Serial2.flush();
+
+}
+
+void checkBinaryOff(uint8_t binaryOutputNumber) {
+
+  char toSend[DEFAULT_WRITE_BUFFER_SIZE];
+
+  #if VN_HAVE_SECURE_CRT
+  size_t length = sprintf_s(toSend, sizeof(toSend), "$VNRRG,%u*", 74 + binaryOutputNumber);
+  #else
+  size_t length = sprintf(toSend, "$VNRRG,%u*", 74 + binaryOutputNumber);
+  #endif
+
+  length += sprintf(toSend + length, "*XX\r\n");
+
+  Serial2.print(toSend);
+  Serial2.flush();
+
+  int index = 0;
+  char receiveBuffer[DEFAULT_READ_BUFFER_SIZE] = {'\0'};
+  while (Serial2.available() > 0 && index < DEFAULT_READ_BUFFER_SIZE - 1) {
+    receiveBuffer[index++] = Serial2.read();
+  }
+
+  Serial.println(receiveBuffer);
+
+}
+
+void checkAsciiOff() {
+
+  char toSend[DEFAULT_WRITE_BUFFER_SIZE] = "$VNRRG,06*XX\r\n";
+  Serial2.print(toSend);
+  Serial2.print(toSend);
+  Serial2.flush();
+
+  int index = 0;
+  char receiveBuffer[DEFAULT_READ_BUFFER_SIZE] = {'\0'};
+  while (Serial2.available() > 0 && index < DEFAULT_READ_BUFFER_SIZE - 1) {
+    receiveBuffer[index++] = Serial2.read();
+  }
+
+  Serial.println(receiveBuffer);
 
 }
 
