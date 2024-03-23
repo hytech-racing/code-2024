@@ -35,8 +35,11 @@ void setup() {
   //steering.continuous_start();
   Serial.println("get ready..");
   delay(500);
+
+  steering.calibrate_steering(3933);
   steering.save_parameters();
-  //steering.self_calibration();
+  
+//  steering.self_calibration();
 }
 
 void loop() {
