@@ -12,6 +12,7 @@
 #define DEFAULT_WRITE_BUFFER_MIDIUM 21
 #define DEFAULT_WRITE_BUFFER_LONG 256
 #define DEFAULT_READ_BUFFER_SIZE 256
+#define DEFAULT_SERIAL_BUFFER_SIZE 64
 
 #define BINARY_OUTPUT_GROUP_COUNT_1 1
 #define BINARY_OUTPUT_GROUP_COUNT_2 2
@@ -31,13 +32,14 @@
 		return;
 
 Metro timer_vectornav_read = Metro(25);         // default 40Hz
-Metro timer_vectornav_read_binary = Metro(20);  // configured 50Hz
+Metro timer_vectornav_read_binary = Metro(10);  // configured 200Hz
 
 // Function declarations
 void queryModelNumber();
 void readUserConfiguredBinaryOutput_1();
 void readUserConfiguredBinaryOutput_2();
 void readUserConfiguredBinaryOutput_3();
+void pollUserConfiguredBinaryOutput(uint8_t binaryOutputNumber);
 void queryYawPitchRoll();
 void queryYawPitchRollMagneticAccelerationAndAngularRates();
 void queryAsyncDataOutputFrequency();
@@ -50,7 +52,7 @@ void parseAsyncDataOutputFrequency(uint32_t* adof, char *_data);
 char* startAsciiPacketParse(char* packetStart, size_t& index);
 char* getNextData(char* str, size_t& startIndex);
 char* vnstrtok(char* str, size_t& startIndex);
-void configBinaryOutput(uint8_t binaryOutputNumber, uint8_t fields);
+void configBinaryOutput(uint8_t binaryOutputNumber, uint8_t fields, uint16_t rateDivisor);
 void turnOffUnusedBinaryOutput();
 void turnOffAsciiOutput();
 void checkBinaryOff(uint8_t binaryOutputNumber);
@@ -74,9 +76,9 @@ void setup() {
   // Configure sensor
   turnOffAsciiOutput();
   // turnOffUnusedBinaryOutput();
-  configBinaryOutput(1, 0x01);    // 0000 0001
-  configBinaryOutput(2, 0x05);    // 0000 0101
-  configBinaryOutput(3, 0x28);    // 0010 1000
+  configBinaryOutput(1, 0x01, 0);    // 0000 0001
+  configBinaryOutput(2, 0x05, 32);    // 0000 0101
+  configBinaryOutput(3, 0x28, 0);    // 0010 1000
 
 }
 
@@ -110,6 +112,7 @@ void loop() {
   readUserConfiguredBinaryOutput_1();
   // readUserConfiguredBinaryOutput_2();
   // readUserConfiguredBinaryOutput_3();
+  // pollUserConfiguredBinaryOutput(1);
 
   // configBinaryOutput(1, 0x01);    // 0000 0001
 
@@ -415,16 +418,17 @@ void readUserConfiguredBinaryOutput_1() {
     if (data != 0xFA)
       return;
 
-    data = Serial2.read();
+    // data = Serial2.read();
 
-    if (data != 0x01)
-      return;
+    // if (data != 0x01)
+    //   return;
 
-    int binaryPacketLength = 1 + 1 + 2 * BINARY_OUTPUT_GROUP_COUNT_1 + BINARY_OUTPUT_PAYLOAD_1 + 2;  // in bytes: sync, groups, group fields, payload, crc
+    // int binaryPacketLength = 1 + 1 + 2 * BINARY_OUTPUT_GROUP_COUNT_1 + BINARY_OUTPUT_PAYLOAD_1 + 2;  // in bytes: sync, groups, group fields, payload, crc
+    int binaryPacketLength = 64;
     uint8_t receiveBuffer[binaryPacketLength];
     int index = 0;
 
-    receiveBuffer[index++] = 0xFA;
+    // receiveBuffer[index++] = 0xFA;
     receiveBuffer[index++] = data;
 
     // while (index < binaryPacketLength) {
@@ -712,7 +716,7 @@ void readUserConfiguredBinaryOutput_3() {
   }   // end of timer.check()
 }
 
-void configBinaryOutput(uint8_t binaryOutputNumber, uint8_t fields) {
+void configBinaryOutput(uint8_t binaryOutputNumber, uint8_t fields, uint16_t rateDivisor) {
 
   char toSend[DEFAULT_WRITE_BUFFER_LONG];
 
@@ -746,7 +750,7 @@ void configBinaryOutput(uint8_t binaryOutputNumber, uint8_t fields) {
   #if VN_HAVE_SECURE_CRT
   int length = sprintf_s(toSend, sizeof(toSend), "$VNWRG,%u,%u,%u,%X", 74 + binaryOutputNumber, fields.asyncMode, fields.rateDivisor, groups);
   #else
-  int length = sprintf(toSend, "$VNWRG,%u,%u,%u,%X", 74 + binaryOutputNumber, vn::protocol::uart::ASYNCMODE_PORT1, 16, groups); // serial1, 800/16=50Hz, 
+  int length = sprintf(toSend, "$VNWRG,%u,%u,%u,%X", 74 + binaryOutputNumber, vn::protocol::uart::ASYNCMODE_PORT1, rateDivisor, groups); // serial1, 800/16=50Hz, 
   #endif
 
   if (commonField) {
@@ -818,6 +822,37 @@ void configBinaryOutput(uint8_t binaryOutputNumber, uint8_t fields) {
 
   Serial2.print(toSend);
   Serial2.flush();
+
+}
+
+void pollUserConfiguredBinaryOutput(uint8_t binaryOutputNumber) {
+
+  char toSend[DEFAULT_WRITE_BUFFER_SIZE];
+
+  size_t length = sprintf(toSend, "$VNBOM,%u*", binaryOutputNumber);
+  length += sprintf(toSend + length, "XX\r\n");
+
+  Serial2.print(toSend);
+  Serial2.flush();
+
+  delay(500);
+
+  int index = 0;
+  uint8_t receiveBuffer[DEFAULT_SERIAL_BUFFER_SIZE];
+  while (Serial2.available() && Serial2.read() == 0xFA)
+  {
+    receiveBuffer[index++] = Serial2.read();
+  }
+  
+  Serial.printf("Polled binary output %d raw string:\n", binaryOutputNumber);
+  for (int i = 0; i < index; i++)
+  {
+    Serial.printf("%X ", receiveBuffer[i]);
+  }
+
+  Serial.printf("\nLength: %d", index);
+
+  Serial.printf("\n\n");
 
 }
 
@@ -894,7 +929,7 @@ void checkBinaryOff(uint8_t binaryOutputNumber) {
   size_t length = sprintf(toSend, "$VNRRG,%u*", 74 + binaryOutputNumber);
   #endif
 
-  length += sprintf(toSend + length, "*XX\r\n");
+  length += sprintf(toSend + length, "XX\r\n");
 
   Serial2.print(toSend);
   Serial2.flush();
