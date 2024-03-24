@@ -218,7 +218,7 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
 
     switch(current_page) {
         case 0:
-            display_speeds(&(CAN->drivetrain_rpms));
+            display_speeds(&(CAN->drivetrain_rpms), &(CAN->bms_voltages));
             break;
         case 1:
             display_suspension_data(&(CAN->mcu_suspension), &(CAN->sab_suspension));
@@ -426,9 +426,10 @@ void hytech_dashboard::display_tire_data() {
     _display.setFont(&FreeSans12pt7b);
 }
 
-void hytech_dashboard::display_speeds(DRIVETRAIN_RPMS_TELEM_t* drivetrain_rpms) {
+void hytech_dashboard::display_speeds(DRIVETRAIN_RPMS_TELEM_t* drivetrain_rpms, BMS_VOLTAGES_t* bms_voltages) {
     _display.setFont(&FreeSans24pt7b);
     _display.setTextSize(2);
+
     _display.setCursor(100, 160);
     /** TODO: convert from RPM to MPH*/
     double rpms = drivetrain_rpms->fr_motor_rpm;
@@ -440,12 +441,14 @@ void hytech_dashboard::display_speeds(DRIVETRAIN_RPMS_TELEM_t* drivetrain_rpms) 
     // SerialUSB.println(wheelspeed);
     uint16_t mph = (int) (wheelspeed * METERS_PER_SECOND_TO_MPH);
     // SerialUSB.println(mph);
-    _display.println(twoDigits(mph));
+    // _display.println(twoDigits(mph));
+    _display.println(HYTECH_low_voltage_ro_fromS(bms_voltages->low_voltage_ro));
+
     // _display.println(mph);
     _display.setTextSize(1);
     _display.setFont(&FreeSans12pt7b);
     _display.setCursor(125, 185);
-    _display.print("MPH");
+    _display.print("VOLTS");
     _display.setFont(&FreeSans12pt7b);
 }
         

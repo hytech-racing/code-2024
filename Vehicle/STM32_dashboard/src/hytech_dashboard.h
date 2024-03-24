@@ -222,7 +222,7 @@ class hytech_dashboard {
         */
         void display_tire_data();
 
-        void display_speeds(DRIVETRAIN_RPMS_TELEM_t* drivetrain_rpms);
+        void display_speeds(DRIVETRAIN_RPMS_TELEM_t* drivetrain_rpms, BMS_VOLTAGES_t* bms_voltages);
         void display_segment_voltages();
 
         void display_error();
