@@ -582,7 +582,8 @@ void hytech_dashboard::refresh_neopixels(DashboardCAN* CAN) {
         set_neopixel_color(LED_LIST_e::IMD, CAN->dash_mcu_state.imd_led);
         set_neopixel_color(LED_LIST_e::AMS, CAN->dash_mcu_state.ams_led);
         set_neopixel_color(LED_LIST_e::GLV, 0);
-        set_neopixel_color(LED_LIST_e::CRIT_CHARGE, 0);
+        // set_neopixel_color_gradient(LED_LIST_e::GLV, CAN->dash_mcu_state.glv_led);
+        set_neopixel_color_gradient(LED_LIST_e::CRIT_CHARGE, CAN->dash_mcu_state.pack_charge_led);
         
         _neopixels.show();
         CAN->mcu_state_update = false;
@@ -614,6 +615,26 @@ void hytech_dashboard::set_neopixel_color(LED_LIST_e led, uint8_t state) {
         break;
     }
 
+    _neopixels.setPixelColor(led, color);
+
+}
+
+void hytech_dashboard::set_neopixel_color_gradient(LED_LIST_e led, uint8_t value) {
+
+    uint8_t rgb[] = {0, 0, 0};
+
+    if (value > 128) {
+        rgb[0] = map(value, 128, 255, 255, 0);
+        rgb[1] = 255;
+    } else if (value > 30) {
+        rgb[0] = 255;
+        rgb[1] = map(value, 0, 128, 0, 255);
+    } else {
+        rgb[0] = blink() ? 255 : 0;
+        rgb[1] = 0;
+    }
+
+    uint32_t color = rgb[0] << 16 | rgb[1] << 8 | rgb[2];
     _neopixels.setPixelColor(led, color);
 
 }

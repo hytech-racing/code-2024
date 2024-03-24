@@ -240,6 +240,8 @@ class hytech_dashboard {
         /* Helper function for refresh_neopixels that sets the color of pixels with the enumerated color values */
         void set_neopixel_color(LED_LIST_e led, uint8_t state);
 
+        void set_neopixel_color_gradient(LED_LIST_e led, uint8_t value);
+
         /*
             Display helper function for blinking display elements. Returns true if disp. element
             should be visible for that refresh cycle. Blink period is defined by the BLINK_PERIOD define
