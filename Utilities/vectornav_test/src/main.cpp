@@ -32,11 +32,14 @@
 		return;
 
 Metro timer_vectornav_read = Metro(25);         // default 40Hz
-Metro timer_vectornav_read_binary = Metro(10);  // configured 200Hz
+Metro timer_vectornav_read_binary = Metro(10);  // configured 100Hz
+Metro timer_vectornav_config = Metro(200);   // change config at 5Hz
+Metro timer_read_imu = Metro(20);               // serial delay from polling request
+Metro timer_vectornav_change_reading = Metro(40); // change binary output group 25Hz
 
 // Function declarations
 void queryModelNumber();
-void readUserConfiguredBinaryOutput_1();
+void readUserConfiguredBinaryOutput_1(uint8_t binaryOutputNumber);
 void readUserConfiguredBinaryOutput_2();
 void readUserConfiguredBinaryOutput_3();
 void pollUserConfiguredBinaryOutput(uint8_t binaryOutputNumber);
@@ -57,9 +60,11 @@ void turnOffUnusedBinaryOutput();
 void turnOffAsciiOutput();
 void checkBinaryOff(uint8_t binaryOutputNumber);
 void checkAsciiOff();
+void readPollingBinaryOutput();
 
 // Global
 int counter;
+int binaryOutputNumber;
 
 void setup() {
   // Open Serial Monitor
@@ -73,12 +78,26 @@ void setup() {
   // Init counter
   counter = 0;
 
+  // Init binaryOutputNumber
+  binaryOutputNumber = 0;
+
   // Configure sensor
   turnOffAsciiOutput();
   // turnOffUnusedBinaryOutput();
   configBinaryOutput(1, 0x01, 0);    // 0000 0001
-  configBinaryOutput(2, 0x05, 32);    // 0000 0101
+  configBinaryOutput(2, 0x05, 0);    // 0000 0101
   configBinaryOutput(3, 0x28, 0);    // 0010 1000
+
+/*
+  delay(200);
+  configBinaryOutput(1, 0x01, 32);    // 0000 0001. 25Hz
+
+  delay(200);
+  configBinaryOutput(2, 0x05, 32);    // 0000 0101. 25Hz
+
+  delay(200);
+  configBinaryOutput(3, 0x28, 32);    // 0010 1000. 25Hz
+  */
 
 }
 
@@ -109,10 +128,86 @@ void loop() {
   // checkBinaryOff(2);     // checked: correct
   // checkBinaryOff(3);      // checked: correct
   // checkAsciiOff();   // checked: ascii is off
-  readUserConfiguredBinaryOutput_1();
+  // readUserConfiguredBinaryOutput_1(1);
   // readUserConfiguredBinaryOutput_2();
   // readUserConfiguredBinaryOutput_3();
-  // pollUserConfiguredBinaryOutput(1);
+
+  // Periodic change configuration
+  /*
+  switch (binaryOutputNumber)
+  {
+    case 0:
+      readUserConfiguredBinaryOutput_1(1);
+      break;
+
+    case 1:
+      readUserConfiguredBinaryOutput_1(1);
+      break;
+
+    case 2:
+      readUserConfiguredBinaryOutput_1(1);
+      break;
+    
+    default:
+      break;
+  }
+
+  if (timer_vectornav_config.check())
+  {
+    switch (binaryOutputNumber)
+    {
+      case 0:
+        configBinaryOutput(1, 0x01, 0);    // 0000 0001
+        configBinaryOutput(2, 0x05, 32);    // 0000 0101. 25Hz
+        binaryOutputNumber = 1;
+        break;
+
+      case 1:
+        configBinaryOutput(2, 0x05, 0);    // 0000 0101
+        configBinaryOutput(3, 0x28, 32);    // 0010 1000. 25Hz
+        binaryOutputNumber = 2;
+        break;
+
+      case 2:
+        configBinaryOutput(3, 0x28, 0);    // 0010 1000
+        configBinaryOutput(1, 0x01, 32);    // 0000 0001. 25Hz
+        binaryOutputNumber = 0;
+        break;
+      
+      default:
+        break;
+    }
+  }
+  */
+  
+
+  // Turn binary output reg on only before acquiring data
+  // configBinaryOutput(1, 0x01, 32);    // 0000 0001. 25Hz
+  // readUserConfiguredBinaryOutput_1(1);
+  // configBinaryOutput(1, 0x01, 0);    // 0000 0001
+
+  // configBinaryOutput(2, 0x05, 32);    // 0000 0101. 25Hz
+  // readUserConfiguredBinaryOutput_1(2);
+  // configBinaryOutput(2, 0x05, 0);    // 0000 0101
+
+  // configBinaryOutput(3, 0x28, 0);    // 0010 1000. 25Hz
+  // readUserConfiguredBinaryOutput_1(3);
+  // configBinaryOutput(3, 0x28, 0);    // 0010 1000
+
+
+  if (timer_vectornav_change_reading.check())
+  {
+    binaryOutputNumber = (binaryOutputNumber + 1) % 3;
+  }
+  
+  pollUserConfiguredBinaryOutput(binaryOutputNumber + 1);
+  readPollingBinaryOutput();
+
+  // while (Serial2.available()) {
+  //   Serial.print(Serial2.read(), HEX);
+  // }
+
+  // Serial.println();
 
   // configBinaryOutput(1, 0x01);    // 0000 0001
 
@@ -410,11 +505,14 @@ void readUserConfiguredBinaryOutput_2() {
   }   // end of timer.check()
 }
 
-void readUserConfiguredBinaryOutput_1() {
+void readUserConfiguredBinaryOutput_1(uint8_t binaryOutputNumber) {
 
-  if (timer_vectornav_read_binary.check()) {
+  // bool hasRead = false;
+
+  // while (!hasRead) {
+  if (timer_vectornav_read_binary.check() && Serial2.available()) {
+
     uint8_t data = Serial2.read();
-
     if (data != 0xFA)
       return;
 
@@ -446,8 +544,9 @@ void readUserConfiguredBinaryOutput_1() {
           data = Serial2.read();
           receiveBuffer[index++] = data;
         // }
-      }      
+      }
     // }
+    // hasRead = true;
 /*
     uint8_t syncByte = receiveBuffer[0];
 
@@ -564,7 +663,31 @@ void readUserConfiguredBinaryOutput_1() {
     Serial.println();
 
     */
+
+/*
+    // Turn binary output off once acquired
+    switch (binaryOutputNumber)
+    {
+      case 1:
+        configBinaryOutput(1, 0x01, 0);    // 0000 0001
+        break;
+
+      case 2:
+        configBinaryOutput(2, 0x05, 0);    // 0000 0101
+        break;
+
+      case 3:
+        configBinaryOutput(3, 0x28, 0);    // 0010 1000
+        break;
+      
+      default:
+        break;
+    }
+    */
+    
+
   }   // end of timer.check()
+  // }   // end of !hasRead
 }
 
 void readUserConfiguredBinaryOutput_3() {
@@ -720,13 +843,13 @@ void configBinaryOutput(uint8_t binaryOutputNumber, uint8_t fields, uint16_t rat
 
   char toSend[DEFAULT_WRITE_BUFFER_LONG];
 
-  bool commonField = fields & 0x01;   Serial.printf("common: %d\n", commonField);
-  bool timeField = fields & 0x02;     Serial.printf("time: %d\n", timeField);
-  bool imuField = fields & 0x04;      Serial.printf("imu: %d\n", imuField);
-  bool gpsField = fields & 0x08;      Serial.printf("gps: %d\n", gpsField);
-  bool attitudeField = fields & 0x10; Serial.printf("attitude: %d\n", attitudeField);
-  bool insField = fields & 0x20;      Serial.printf("ins: %d\n", insField);
-  bool gps2Field = fields & 0x40;     Serial.printf("gps2: %d\n", gps2Field);
+  bool commonField = fields & 0x01;   // Serial.printf("common: %d\n", commonField);
+  bool timeField = fields & 0x02;     // Serial.printf("time: %d\n", timeField);
+  bool imuField = fields & 0x04;      // Serial.printf("imu: %d\n", imuField);
+  bool gpsField = fields & 0x08;      // Serial.printf("gps: %d\n", gpsField);
+  bool attitudeField = fields & 0x10; // Serial.printf("attitude: %d\n", attitudeField);
+  bool insField = fields & 0x20;      // Serial.printf("ins: %d\n", insField);
+  bool gps2Field = fields & 0x40;     // Serial.printf("gps2: %d\n", gps2Field);
 
   // First determine which groups are present.
   uint16_t groups = 0;
@@ -827,32 +950,73 @@ void configBinaryOutput(uint8_t binaryOutputNumber, uint8_t fields, uint16_t rat
 
 void pollUserConfiguredBinaryOutput(uint8_t binaryOutputNumber) {
 
-  char toSend[DEFAULT_WRITE_BUFFER_SIZE];
+  // configBinaryOutput(1, 0x01, 32);    // 0000 0001
 
-  size_t length = sprintf(toSend, "$VNBOM,%u*", binaryOutputNumber);
-  length += sprintf(toSend + length, "XX\r\n");
+  if (timer_vectornav_read_binary.check()) {
 
-  Serial2.print(toSend);
-  Serial2.flush();
+    char toSend[DEFAULT_WRITE_BUFFER_SIZE];
 
-  delay(500);
+    size_t length = sprintf(toSend, "$VNBOM,%u*", binaryOutputNumber);
+    length += sprintf(toSend + length, "XX\r\n");
 
-  int index = 0;
-  uint8_t receiveBuffer[DEFAULT_SERIAL_BUFFER_SIZE];
-  while (Serial2.available() && Serial2.read() == 0xFA)
-  {
-    receiveBuffer[index++] = Serial2.read();
-  }
+    Serial2.print(toSend);
+    Serial2.flush();
+
+    // delay(500);
+
+    // int index = 0;
+    // uint8_t receiveBuffer[DEFAULT_SERIAL_BUFFER_SIZE];
+    // while (Serial2.available() && Serial2.read() == 0xFA)
+    // {
+    //   receiveBuffer[index++] = Serial2.read();
+    // }
+    
+    // Serial.printf("Polled binary output %d raw string:\n", binaryOutputNumber);
+    // for (int i = 0; i < index; i++)
+    // {
+    //   Serial.printf("%X ", receiveBuffer[i]);
+    // }
+
+    // Serial.printf("\nLength: %d", index);
+
+    // Serial.printf("\n\n");
+
+    timer_read_imu.reset();
+
+    // delay(20);
+    
+    // while (Serial2.available()) {
+    //   Serial.print(Serial2.read(), HEX);
+    // }
+
+    // Serial.println();
   
-  Serial.printf("Polled binary output %d raw string:\n", binaryOutputNumber);
-  for (int i = 0; i < index; i++)
-  {
-    Serial.printf("%X ", receiveBuffer[i]);
+
   }
 
-  Serial.printf("\nLength: %d", index);
+  // configBinaryOutput(1, 0x01, 0);    // 0000 0001
 
-  Serial.printf("\n\n");
+}
+
+void readPollingBinaryOutput() {
+
+  if (timer_read_imu.check())
+  {
+    while (Serial2.available()) {
+      Serial.print(Serial2.read(), HEX);
+    }
+
+    Serial.println();
+
+    // int index = 0;
+    // uint8_t receiveBuffer[DEFAULT_SERIAL_BUFFER_SIZE];
+
+    // while (Serial2.available())
+    // {
+    //   receiveBuffer[index++] = Serial2.read();
+    // }
+
+  }  
 
 }
 

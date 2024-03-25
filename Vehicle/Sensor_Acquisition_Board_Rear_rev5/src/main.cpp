@@ -33,6 +33,12 @@
 #include "Filter_IIR.h"
 
 /**
+ * Vector Nav
+*/
+#include "types.h"
+#include "hytech.h"
+
+/**
  * Data source
 */
 
@@ -75,7 +81,9 @@ SysClock sys_clock;
 /* Metro timers */
 // Sensor read
 Metro timer_read_all_adcs = Metro(10);
-Metro timer_read_imu = Metro(20);
+Metro timer_read_imu = Metro(20);               // serial delay from polling request
+Metro timer_vectornav_read_binary = Metro(10);  // configured 100Hz
+Metro timer_vectornav_change_reading = Metro(40); // change binary output group 25Hz
 
 /* Utilities */
 // IIR filter for DSP
@@ -83,6 +91,18 @@ Metro timer_read_imu = Metro(20);
 Filter_IIR thermistor_iir[TOTAL_THERMISTOR_COUNT];
 // Loadcells
 // Filter_IIR loadcell_iir[TOTAL_LOADCELL_COUNT] = Filter_IIR{LOADCELL_ALPHA, LOADCELL_ALPHA};  // actually will be done by torque controllers themselves if needed
+
+/* Global variables */
+// Vector Nav
+uint8_t receiveBuffer[DEFAULT_SERIAL_BUFFER_SIZE];
+int binaryOutputNumber;;
+// CAN messages (for now)
+VN_VEL_t vn_vel_body;
+VN_LINEAR_ACCEL_t vn_accel;
+VN_LINEAR_ACCEL_UNCOMP_t vn_uncomp_accel;
+VN_LAT_LON_t vn_position;
+VN_GPS_TIME_t vn_time_gps;
+VN_STATUS_t vn_ins_status;
 
 /* Function prototypes */
 void init_all_CAN_devices();
@@ -95,6 +115,15 @@ void init_all_adcs();
 void init_all_iir_filters();
 void tick_all_interfaces(const SysTick_s &curr_tick);
 void tick_all_systems(const SysTick_s &curr_tick);
+// Vector Nav functions
+void turnOffAsciiOutput();
+void configBinaryOutput(uint8_t binaryOutputNumber, uint8_t fields, uint16_t rateDivisor);
+void pollUserConfiguredBinaryOutput(uint8_t binaryOutputNumber);
+void readPollingBinaryOutput();
+void parseBinaryOutput_1();
+void parseBinaryOutput_2();
+void parseBinaryOutput_3();
+void clearReceiveBuffer();
 
 void setup() {
 
@@ -122,6 +151,13 @@ void setup() {
 
   // RS232
   Serial2.begin(IMU_RS232_SPEED);
+  // Initialize binary output reg. number
+  binaryOutputNumber = 0;
+  // Configure sensor
+  turnOffAsciiOutput();
+  configBinaryOutput(1, 0x01, 0);    // 0000 0001
+  configBinaryOutput(2, 0x05, 0);    // 0000 0101
+  configBinaryOutput(3, 0x28, 0);    // 0010 1000
   Serial.println("VectorNav initialized ... in theory ^^ coming soon");
   Serial.println();
 
@@ -142,6 +178,15 @@ void loop() {
   // Tick systems
   // Not currently needed
 
+  // Vector Nav data acquisition (for now)
+  if (timer_vectornav_change_reading.check())
+  {
+    binaryOutputNumber = (binaryOutputNumber + 1) % 3;
+  }
+  
+  pollUserConfiguredBinaryOutput(binaryOutputNumber + 1);
+  readPollingBinaryOutput();
+  
   // Send outbound CAN messages
   // send_all_CAN_msg(CAN2_txBuffer, &TELEM_CAN);
 
@@ -297,6 +342,31 @@ void send_sab_CAN_msg() {
   msg.id = ID_TCU_STATUS;
   msg.len = sizeof(tcu_status);
   TELEM_CAN.write(msg);
+
+  // Vector Nav
+  auto id = Pack_VN_GPS_TIME_hytech(&vn_time_gps, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
+  msg.id = id;
+  TELEM_CAN.write(msg);
+
+  id = Pack_VN_LAT_LON_hytech(&vn_position, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
+  msg.id = id;
+  TELEM_CAN.write(msg);
+
+  id = Pack_VN_LINEAR_ACCEL_hytech(&vn_accel, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
+  msg.id = id;
+  TELEM_CAN.write(msg);
+
+  id = Pack_VN_STATUS_hytech(&vn_ins_status, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
+  msg.id = id;
+  TELEM_CAN.write(msg);
+
+  id = Pack_VN_LINEAR_ACCEL_UNCOMP_hytech(&vn_uncomp_accel, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
+  msg.id = id;
+  TELEM_CAN.write(msg);
+
+  id = Pack_VN_VEL_hytech(&vn_vel_body, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
+  msg.id = id;
+  TELEM_CAN.write(msg);
 }
 
 /**
@@ -334,6 +404,408 @@ void tick_all_interfaces(const SysTick_s &curr_tick) {
 void tick_all_systems(const SysTick_s &curr_tick) {
   
 }
+
+void turnOffAsciiOutput() { // VNOFF
+
+  char toSend[DEFAULT_WRITE_BUFFER_MIDIUM];
+
+  #if VN_HAVE_SECURE_CRT
+	size_t length = sprintf_s(toSend, size, "$VNWRG,06,%u,%u", ador, port);
+	#else
+	size_t length = sprintf(toSend, "$VNWRG,06,%u", vn::protocol::uart::VNOFF);
+	#endif
+
+  length += sprintf(toSend + length, "*XX\r\n");
+
+  Serial2.print(toSend);
+  Serial2.flush();
+
+}
+
+void configBinaryOutput(uint8_t binaryOutputNumber, uint8_t fields, uint16_t rateDivisor) {
+
+  char toSend[DEFAULT_WRITE_BUFFER_LONG];
+
+  bool commonField = fields & 0x01;   // Serial.printf("common: %d\n", commonField);
+  bool timeField = fields & 0x02;     // Serial.printf("time: %d\n", timeField);
+  bool imuField = fields & 0x04;      // Serial.printf("imu: %d\n", imuField);
+  bool gpsField = fields & 0x08;      // Serial.printf("gps: %d\n", gpsField);
+  bool attitudeField = fields & 0x10; // Serial.printf("attitude: %d\n", attitudeField);
+  bool insField = fields & 0x20;      // Serial.printf("ins: %d\n", insField);
+  bool gps2Field = fields & 0x40;     // Serial.printf("gps2: %d\n", gps2Field);
+
+  // First determine which groups are present.
+  uint16_t groups = 0;
+  if (commonField)
+    groups |= 0x0001;         // 0000 0000 0000 0001. common group selected
+  if (timeField)
+    groups |= 0x0002;
+  if (imuField)
+    groups |= 0x0004;         // 0000 0000 0000 0100. IMU group selected
+  if (gpsField)
+    groups |= 0x0008;         // 0000 0000 0000 1000. GNSS1 group selected
+  if (attitudeField)
+    groups |= 0x0010;
+  if (insField)
+    groups |= 0x0020;         // 0000 0000 0010 0000. INS group selected
+  if (gps2Field)
+    groups |= 0x0040;
+
+  // groups = 0010 1101 = 2D
+
+  #if VN_HAVE_SECURE_CRT
+  int length = sprintf_s(toSend, sizeof(toSend), "$VNWRG,%u,%u,%u,%X", 74 + binaryOutputNumber, fields.asyncMode, fields.rateDivisor, groups);
+  #else
+  int length = sprintf(toSend, "$VNWRG,%u,%u,%u,%X", 74 + binaryOutputNumber, vn::protocol::uart::ASYNCMODE_PORT1, rateDivisor, groups); // serial1, 800/16=50Hz, 
+  #endif
+
+  if (commonField) {
+    #if VN_HAVE_SECURE_CRT
+    length += sprintf_s(toSend + length, sizeof(toSend) - length, ",%X", fields.commonField);
+    #else
+    if (binaryOutputNumber == 1) {
+      length += sprintf(toSend + length, ",%X", vn::protocol::uart::COMMONGROUP_TIMEGPS |     // 0000 0000 0110 0010 = 00 62
+                                                vn::protocol::uart::COMMONGROUP_ANGULARRATE | 
+                                                vn::protocol::uart::COMMONGROUP_POSITION);
+    }
+    else if (binaryOutputNumber == 2) {
+      length += sprintf(toSend + length, ",%X", vn::protocol::uart::COMMONGROUP_ACCEL |       // 0001 0001 0000 0000 = 11 00
+                                                vn::protocol::uart::COMMONGROUP_INSSTATUS);
+    }
+    #endif
+  }
+  if (timeField) {
+  	#if VN_HAVE_SECURE_CRT
+  	length += sprintf_s(toSend + length, sizeof(toSend) - length, ",%X", fields.timeField);
+  	#else
+  	// length += sprintf(toSend + length, ",%X", fields.timeField);
+  	#endif
+  }
+  if (imuField) {
+  	#if VN_HAVE_SECURE_CRT
+  	length += sprintf_s(toSend + length, sizeof(toSend) - length, ",%X", fields.imuField);
+  	#else
+  	length += sprintf(toSend + length, ",%X", vn::protocol::uart::IMUGROUP_UNCOMPACCEL |    // 0000 0000 1000 0100 = 00 84
+                                              vn::protocol::uart::IMUGROUP_DELTAVEL);
+  	#endif
+  }
+  if (gpsField) {
+  	#if VN_HAVE_SECURE_CRT
+  	length += sprintf_s(toSend + length, sizeof(toSend) - length, ",%X", fields.gpsField);
+  	#else
+  	length += sprintf(toSend + length, ",%X", vn::protocol::uart::GPSGROUP_POSECEF);        // 0000 0000 0100 0000 = 00 40
+  	#endif
+  }
+  if (attitudeField) {
+  	#if VN_HAVE_SECURE_CRT
+  	length += sprintf_s(toSend + length, sizeof(toSend) - length, ",%X", fields.attitudeField);
+  	#else
+  	// length += sprintf(toSend + length, ",%X", fields.attitudeField);
+  	#endif
+  }
+  if (insField) {
+    #if VN_HAVE_SECURE_CRT
+    length += sprintf_s(toSend + length, sizeof(toSend) - length, ",%X", fields.insField);
+    #else
+    length += sprintf(toSend + length, ",%X", vn::protocol::uart::INSGROUP_VELBODY);        // 0000 0000 0000 1000 = 00 08
+    #endif
+  }
+  if(gps2Field) {
+    #if VN_HAVE_SECURE_CRT
+    length += sprintf_s(toSend + length, sizeof(toSend) - length, ",%X", fields.gps2Field);
+    #else
+    // length += sprintf(toSend + length, ",%X", fields.gps2Field);
+    #endif
+  }
+
+  #if VN_HAVE_SECURE_CRT
+  length += sprintf_s(toSend + length, sizeof(toSend) - length, "*");
+  #else
+  length += sprintf(toSend + length, "*");
+  #endif
+
+  length += sprintf(toSend + length, "XX\r\n");
+
+  Serial2.print(toSend);
+  Serial2.flush();
+
+}
+
+void pollUserConfiguredBinaryOutput(uint8_t binaryOutputNumber) {
+
+  if (timer_vectornav_read_binary.check()) {
+
+    char toSend[DEFAULT_WRITE_BUFFER_SIZE];
+
+    size_t length = sprintf(toSend, "$VNBOM,%u*", binaryOutputNumber);
+    length += sprintf(toSend + length, "XX\r\n");
+
+    Serial2.print(toSend);
+    Serial2.flush();
+
+    // delay(500);
+
+    // int index = 0;
+    // uint8_t receiveBuffer[DEFAULT_SERIAL_BUFFER_SIZE];
+    // while (Serial2.available() && Serial2.read() == 0xFA)
+    // {
+    //   receiveBuffer[index++] = Serial2.read();
+    // }
+    
+    // Serial.printf("Polled binary output %d raw string:\n", binaryOutputNumber);
+    // for (int i = 0; i < index; i++)
+    // {
+    //   Serial.printf("%X ", receiveBuffer[i]);
+    // }
+
+    // Serial.printf("\nLength: %d", index);
+
+    // Serial.printf("\n\n");
+
+    timer_read_imu.reset();
+
+    // delay(20);
+    
+    // while (Serial2.available()) {
+    //   Serial.print(Serial2.read(), HEX);
+    // }
+
+    // Serial.println();  
+
+  }
+
+}
+
+void readPollingBinaryOutput() {
+
+  if (timer_read_imu.check())
+  {
+    int index = 0;
+    // uint8_t receiveBuffer[DEFAULT_SERIAL_BUFFER_SIZE];
+
+    while (Serial2.available())
+    {
+      receiveBuffer[index++] = Serial2.read();
+    }
+
+    if (receiveBuffer[0] == 0xFA) {
+      switch (receiveBuffer[1])
+      {
+        case 0x01:
+          parseBinaryOutput_1();
+          break;
+
+        case 0x05:
+          parseBinaryOutput_2();
+          break;
+
+        case 0x28:
+          parseBinaryOutput_3();
+          break;
+        
+        default:
+          break;
+      }
+    }    
+
+  }  
+
+}
+
+void parseBinaryOutput_1() {
+
+  uint8_t syncByte = receiveBuffer[0];
+#if SANITY_CHECK
+  if (syncByte != 0xFA)
+    return;
+#endif
+
+  uint8_t groupsByte = receiveBuffer[1];
+#if SANITY_CHECK
+  if (groupsByte != 0x01)   // 0000 0001
+    return;
+#endif
+
+  uint16_t groupField1 = ((uint16_t)receiveBuffer[3] << 8) | receiveBuffer[2];
+#if SANITY_CHECK
+  if (groupField1 != 0x0062)  // 0000 0000 0110 0010
+    return;
+#endif
+
+  uint64_t timeGPS = (receiveBuffer[7 + OFFSET_PADDING_1] << (8 * 7)) | (receiveBuffer[6 + OFFSET_PADDING_1] << (8 * 6)) | 
+                      (receiveBuffer[5 + OFFSET_PADDING_1] << (8 * 5)) | (receiveBuffer[4 + OFFSET_PADDING_1] << (8 * 4)) |
+                      (receiveBuffer[3 + OFFSET_PADDING_1] << (8 * 3)) | (receiveBuffer[2 + OFFSET_PADDING_1] << (8 * 2)) | 
+                      (receiveBuffer[1 + OFFSET_PADDING_1] << (8 * 1)) | receiveBuffer[0 + OFFSET_PADDING_1];
+
+  float angularRateBodyX = (receiveBuffer[11 + OFFSET_PADDING_1] << (8 * 3)) | (receiveBuffer[10 + OFFSET_PADDING_1] << (8 * 2)) | 
+                            (receiveBuffer[9 + OFFSET_PADDING_1] << (8 * 1)) | receiveBuffer[8 + OFFSET_PADDING_1];
+  float angularRateBodyY = (receiveBuffer[15 + OFFSET_PADDING_1] << (8 * 3)) | (receiveBuffer[14 + OFFSET_PADDING_1] << (8 * 2)) | 
+                            (receiveBuffer[13 + OFFSET_PADDING_1] << (8 * 1)) | receiveBuffer[12 + OFFSET_PADDING_1];
+  float angularRateBodyZ = (receiveBuffer[19 + OFFSET_PADDING_1] << (8 * 3)) | (receiveBuffer[18 + OFFSET_PADDING_1] << (8 * 2)) | 
+                            (receiveBuffer[17 + OFFSET_PADDING_1] << (8 * 1)) | receiveBuffer[16 + OFFSET_PADDING_1];
+
+  double latitude = (receiveBuffer[27 + OFFSET_PADDING_1] << (8 * 7)) | (receiveBuffer[26 + OFFSET_PADDING_1] << (8 * 6)) | 
+                    (receiveBuffer[25 + OFFSET_PADDING_1] << (8 * 5)) | (receiveBuffer[24 + OFFSET_PADDING_1] << (8 * 4)) |
+                    (receiveBuffer[23 + OFFSET_PADDING_1] << (8 * 3)) | (receiveBuffer[22 + OFFSET_PADDING_1] << (8 * 2)) | 
+                    (receiveBuffer[21 + OFFSET_PADDING_1] << (8 * 1)) | receiveBuffer[20 + OFFSET_PADDING_1];
+  double longitude = (receiveBuffer[35 + OFFSET_PADDING_1] << (8 * 7)) | (receiveBuffer[34 + OFFSET_PADDING_1] << (8 * 6)) | 
+                      (receiveBuffer[33 + OFFSET_PADDING_1] << (8 * 5)) | (receiveBuffer[32 + OFFSET_PADDING_1] << (8 * 4)) |
+                      (receiveBuffer[31 + OFFSET_PADDING_1] << (8 * 3)) | (receiveBuffer[30 + OFFSET_PADDING_1] << (8 * 2)) | 
+                      (receiveBuffer[29 + OFFSET_PADDING_1] << (8 * 1)) | receiveBuffer[28 + OFFSET_PADDING_1];
+  double altitude = (receiveBuffer[43 + OFFSET_PADDING_1] << (8 * 7)) | (receiveBuffer[42 + OFFSET_PADDING_1] << (8 * 6)) | 
+                    (receiveBuffer[41 + OFFSET_PADDING_1] << (8 * 5)) | (receiveBuffer[40 + OFFSET_PADDING_1] << (8 * 4)) |
+                    (receiveBuffer[39 + OFFSET_PADDING_1] << (8 * 3)) | (receiveBuffer[38 + OFFSET_PADDING_1] << (8 * 2)) | 
+                    (receiveBuffer[37 + OFFSET_PADDING_1] << (8 * 1)) | receiveBuffer[36 + OFFSET_PADDING_1];
+
+  uint16_t crc = (receiveBuffer[45 + OFFSET_PADDING_1] << 8) | receiveBuffer[44 + OFFSET_PADDING_1];
+
+  // Shove onto CAN
+  vn_time_gps.vn_gps_time = timeGPS;  // int64_t
+
+  vn_position.vn_gps_lat_ro = (float)latitude;  // uint32_t
+  vn_position.vn_gps_lon_ro = (float)longitude;
+
+  // Missing CAN message for angular body rate right now
+  
+  clearReceiveBuffer();
+
+}
+
+void parseBinaryOutput_2() {
+
+  uint8_t syncByte = receiveBuffer[0];
+#if SANITY_CHECK
+  if (syncByte != 0xFA)
+    return;
+#endif
+
+  uint8_t groupsByte = receiveBuffer[1];
+#if SANITY_CHECK
+  if (groupsByte != 0x05)   // 0000 0101
+    return;
+#endif
+
+  uint16_t groupField1 = ((uint16_t)receiveBuffer[3] << 8) | receiveBuffer[2];
+#if SANITY_CHECK
+  if (groupField1 != 0x1100)    // 0001 0001 0000 0000
+    return;
+#endif
+
+  uint16_t groupField2 = (receiveBuffer[5] << 8) | receiveBuffer[4];
+#if SANITY_CHECK
+  if (groupField2 != 0x0084)    // 0000 0000 1000 0100
+    return;
+#endif
+
+  float accelBodyX = (receiveBuffer[3 + OFFSET_PADDING_2] << (8 * 3)) | (receiveBuffer[2 + OFFSET_PADDING_2] << (8 * 2)) | 
+                      (receiveBuffer[1 + OFFSET_PADDING_2] << (8 * 1)) | receiveBuffer[0 + OFFSET_PADDING_2];
+  float accelBodyY = (receiveBuffer[7 + OFFSET_PADDING_2] << (8 * 3)) | (receiveBuffer[6 + OFFSET_PADDING_2] << (8 * 2)) | 
+                      (receiveBuffer[5 + OFFSET_PADDING_2] << (8 * 1)) | receiveBuffer[4 + OFFSET_PADDING_2];
+  float accelBodyZ = (receiveBuffer[11 + OFFSET_PADDING_2] << (8 * 3)) | (receiveBuffer[10 + OFFSET_PADDING_2] << (8 * 2)) | 
+                      (receiveBuffer[9 + OFFSET_PADDING_2] << (8 * 1)) | receiveBuffer[8 + OFFSET_PADDING_2];
+
+  uint16_t InsStatus = (receiveBuffer[13 + OFFSET_PADDING_2] << 8) | receiveBuffer[12 + OFFSET_PADDING_2];
+
+  float uncompAccelBodyX = (receiveBuffer[17 + OFFSET_PADDING_2] << (8 * 3)) | (receiveBuffer[16 + OFFSET_PADDING_2] << (8 * 2)) | 
+                            (receiveBuffer[15 + OFFSET_PADDING_2] << (8 * 1)) | receiveBuffer[14 + OFFSET_PADDING_2];
+  float uncompAccelBodyY = (receiveBuffer[21 + OFFSET_PADDING_2] << (8 * 3)) | (receiveBuffer[20 + OFFSET_PADDING_2] << (8 * 2)) | 
+                            (receiveBuffer[19 + OFFSET_PADDING_2] << (8 * 1)) | receiveBuffer[18 + OFFSET_PADDING_2];
+  float uncompAccelBodyZ = (receiveBuffer[25 + OFFSET_PADDING_2] << (8 * 3)) | (receiveBuffer[24 + OFFSET_PADDING_2] << (8 * 2)) | 
+                            (receiveBuffer[23 + OFFSET_PADDING_2] << (8 * 1)) | receiveBuffer[22 + OFFSET_PADDING_2];
+
+  float deltaVelX = (receiveBuffer[29 + OFFSET_PADDING_2] << (8 * 3)) | (receiveBuffer[28 + OFFSET_PADDING_2] << (8 * 2)) | 
+                    (receiveBuffer[27 + OFFSET_PADDING_2] << (8 * 1)) | receiveBuffer[26 + OFFSET_PADDING_2];
+  float deltaVelY = (receiveBuffer[33 + OFFSET_PADDING_2] << (8 * 3)) | (receiveBuffer[32 + OFFSET_PADDING_2] << (8 * 2)) | 
+                    (receiveBuffer[31 + OFFSET_PADDING_2] << (8 * 1)) | receiveBuffer[30 + OFFSET_PADDING_2];
+  float deltaVelZ = (receiveBuffer[37 + OFFSET_PADDING_2] << (8 * 3)) | (receiveBuffer[36 + OFFSET_PADDING_2] << (8 * 2)) | 
+                    (receiveBuffer[35 + OFFSET_PADDING_2] << (8 * 1)) | receiveBuffer[34 + OFFSET_PADDING_2];
+
+  uint16_t crc = (receiveBuffer[39 + OFFSET_PADDING_2] << 8) | receiveBuffer[38 + OFFSET_PADDING_2];
+
+  vn_accel.vn_lin_ins_accel_x_ro = accelBodyX;  // int16_t
+  vn_accel.vn_lin_ins_accel_y_ro = accelBodyY;
+  vn_accel.vn_lin_ins_accel_z_ro = accelBodyZ;
+
+  vn_ins_status.vn_gps_status = InsStatus;  // uint8_t
+
+  vn_uncomp_accel.vn_lin_uncomp_accel_x_ro = uncompAccelBodyX;  // int16_t
+  vn_uncomp_accel.vn_lin_uncomp_accel_y_ro = uncompAccelBodyY;
+  vn_uncomp_accel.vn_lin_uncomp_accel_z_ro = uncompAccelBodyZ;
+
+  // Missing CAN message for deltaVel right now
+
+  clearReceiveBuffer();
+
+}
+
+void parseBinaryOutput_3() {
+
+  uint8_t syncByte = receiveBuffer[0];
+#if SANITY_CHECK
+  if (syncByte != 0xFA)
+    return;
+#endif
+
+  uint8_t groupsByte = receiveBuffer[1];
+#if SANITY_CHECK
+  if (groupsByte != 0x28)   // 0010 1000
+    return;
+#endif
+
+  uint16_t groupField1 = ((uint16_t)receiveBuffer[3] << 8) | receiveBuffer[2];
+#if SANITY_CHECK
+  if (groupField1 != 0x0040)
+    return;
+#endif
+
+  uint16_t groupField2 = (receiveBuffer[5] << 8) | receiveBuffer[4];
+#if SANITY_CHECK
+  if (groupField2 != 0x0008)
+    return;
+#endif
+
+  double posEcef0 = (receiveBuffer[7 + OFFSET_PADDING_3] << (8 * 7)) | (receiveBuffer[6 + OFFSET_PADDING_3] << (8 * 6)) | 
+                    (receiveBuffer[5 + OFFSET_PADDING_3] << (8 * 5)) | (receiveBuffer[4 + OFFSET_PADDING_3] << (8 * 4)) |
+                    (receiveBuffer[3 + OFFSET_PADDING_3] << (8 * 3)) | (receiveBuffer[2 + OFFSET_PADDING_3] << (8 * 2)) | 
+                    (receiveBuffer[1 + OFFSET_PADDING_3] << (8 * 1)) | receiveBuffer[0 + OFFSET_PADDING_3];
+  double posEcef1 = (receiveBuffer[15 + OFFSET_PADDING_3] << (8 * 7)) | (receiveBuffer[14 + OFFSET_PADDING_3] << (8 * 6)) | 
+                    (receiveBuffer[13 + OFFSET_PADDING_3] << (8 * 5)) | (receiveBuffer[12 + OFFSET_PADDING_3] << (8 * 4)) |
+                    (receiveBuffer[11 + OFFSET_PADDING_3] << (8 * 3)) | (receiveBuffer[10 + OFFSET_PADDING_3] << (8 * 2)) | 
+                    (receiveBuffer[9 + OFFSET_PADDING_3] << (8 * 1)) | receiveBuffer[8 + OFFSET_PADDING_3];
+  double posEcef2 = (receiveBuffer[23 + OFFSET_PADDING_3] << (8 * 7)) | (receiveBuffer[22 + OFFSET_PADDING_3] << (8 * 6)) | 
+                    (receiveBuffer[21 + OFFSET_PADDING_3] << (8 * 5)) | (receiveBuffer[20 + OFFSET_PADDING_3] << (8 * 4)) |
+                    (receiveBuffer[19 + OFFSET_PADDING_3] << (8 * 3)) | (receiveBuffer[18 + OFFSET_PADDING_3] << (8 * 2)) | 
+                    (receiveBuffer[17 + OFFSET_PADDING_3] << (8 * 1)) | receiveBuffer[16 + OFFSET_PADDING_3];
+
+  float velBodyX = (receiveBuffer[27 + OFFSET_PADDING_3] << (8 * 3)) | (receiveBuffer[26 + OFFSET_PADDING_3] << (8 * 2)) | 
+                    (receiveBuffer[25 + OFFSET_PADDING_3] << (8 * 1)) | receiveBuffer[24 + OFFSET_PADDING_3];
+  float velBodyY = (receiveBuffer[31 + OFFSET_PADDING_3] << (8 * 3)) | (receiveBuffer[30 + OFFSET_PADDING_3] << (8 * 2)) | 
+                    (receiveBuffer[29 + OFFSET_PADDING_3] << (8 * 1)) | receiveBuffer[28 + OFFSET_PADDING_3];
+  float velBodyZ = (receiveBuffer[35 + OFFSET_PADDING_3] << (8 * 3)) | (receiveBuffer[34 + OFFSET_PADDING_3] << (8 * 2)) | 
+                    (receiveBuffer[33 + OFFSET_PADDING_3] << (8 * 1)) | receiveBuffer[32 + OFFSET_PADDING_3];
+
+  uint16_t crc = (receiveBuffer[37 + OFFSET_PADDING_3] << 8) | receiveBuffer[36 + OFFSET_PADDING_3];
+
+  // Missing CAN message for PosEcef right now
+
+  vn_vel_body.vn_body_vel_x_ro = velBodyX;  // int16_t
+  vn_vel_body.vn_body_vel_y_ro = velBodyY;
+  vn_vel_body.vn_body_vel_z_ro = velBodyZ;
+
+  clearReceiveBuffer();
+
+}
+
+void clearReceiveBuffer() {
+
+  for (int i = 0; i < DEFAULT_SERIAL_BUFFER_SIZE; i++)
+  {
+    receiveBuffer[i] = 0;
+  }
+  
+}
+
+
 
 
 
