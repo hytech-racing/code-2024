@@ -127,7 +127,7 @@ void loop() {
   // checkBinaryOff(1);    // checked: correct
   // checkBinaryOff(2);     // checked: correct
   // checkBinaryOff(3);      // checked: correct
-  // checkAsciiOff();   // checked: ascii is off
+  checkAsciiOff();   // checked: ascii is off
   // readUserConfiguredBinaryOutput_1(1);
   // readUserConfiguredBinaryOutput_2();
   // readUserConfiguredBinaryOutput_3();
@@ -195,13 +195,13 @@ void loop() {
   // configBinaryOutput(3, 0x28, 0);    // 0010 1000
 
 
-  if (timer_vectornav_change_reading.check())
-  {
-    binaryOutputNumber = (binaryOutputNumber + 1) % 3;
-  }
+  // if (timer_vectornav_change_reading.check())
+  // {
+  //   binaryOutputNumber = (binaryOutputNumber + 1) % 3;
+  // }
   
   pollUserConfiguredBinaryOutput(binaryOutputNumber + 1);
-  readPollingBinaryOutput();
+  // readPollingBinaryOutput();
 
   // while (Serial2.available()) {
   //   Serial.print(Serial2.read(), HEX);
@@ -983,13 +983,13 @@ void pollUserConfiguredBinaryOutput(uint8_t binaryOutputNumber) {
 
     timer_read_imu.reset();
 
-    // delay(20);
+    delay(20);
     
-    // while (Serial2.available()) {
-    //   Serial.print(Serial2.read(), HEX);
-    // }
+    while (Serial2.available()) {
+      Serial.print(Serial2.read(), HEX);
+    }
 
-    // Serial.println();
+    Serial.println();
   
 
   }
