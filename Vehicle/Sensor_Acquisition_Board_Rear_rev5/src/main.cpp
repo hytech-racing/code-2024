@@ -236,7 +236,7 @@ void loop() {
   }
   
   pollUserConfiguredBinaryOutput(binaryOutputNumber + 1);
-  readPollingBinaryOutput();
+  // readPollingBinaryOutput();   // should not need to be here now
 
 }
 
@@ -369,51 +369,24 @@ void send_sab_CAN_msg() {
   TELEM_CAN.write(msg);
 
   // Vector Nav
-  /*
-  auto id = Pack_VN_LINEAR_ACCEL_UNCOMP_hytech(&vn_uncomp_accel, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
-  msg.id = id;
-  TELEM_CAN.write(msg);
-
-  id = Pack_VN_VEL_hytech(&vn_vel_body, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
-  msg.id = id;
-  TELEM_CAN.write(msg);
-
-  id = Pack_VN_GPS_TIME_hytech(&vn_time_gps, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
-  msg.id = id;
-  TELEM_CAN.write(msg);
-
-  id = Pack_VN_LAT_LON_hytech(&vn_position, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
-  msg.id = id;
-  TELEM_CAN.write(msg);
-
-  id = Pack_VN_LINEAR_ACCEL_hytech(&vn_accel, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
-  msg.id = id;
-  TELEM_CAN.write(msg);
-
-  id = Pack_VN_STATUS_hytech(&vn_ins_status, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
-  msg.id = id;
-  TELEM_CAN.write(msg);
-
-  // id = Pack_VN_LINEAR_ACCEL_UNCOMP_hytech(&vn_uncomp_accel, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
-  // msg.id = id;
-  // TELEM_CAN.write(msg);
-
-  // id = Pack_VN_VEL_hytech(&vn_vel_body, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
-  // msg.id = id;
-  // TELEM_CAN.write(msg);
+  /**
+   * So it actually cannot be here
+   * Otherwise CAN die a little
   */
 }
 
+/**
+ * Forward vector nav data onto CAN
+*/
 void send_CAN_vectornav() {
-  // if (timer_send_CAN_vectornav.check())
-  // {
-    send_CAN_vn_gps_time();
-    send_CAN_vn_position();
-    send_CAN_vn_accel();
-    send_CAN_vn_ins_status();
-    send_CAN_vn_uncomp_accel();
-    send_CAN_vn_vel_body();
-  // }  
+
+  send_CAN_vn_gps_time();
+  send_CAN_vn_position();
+  send_CAN_vn_accel();
+  send_CAN_vn_ins_status();
+  send_CAN_vn_uncomp_accel();
+  send_CAN_vn_vel_body();
+
 }
 
 void send_CAN_vn_gps_time() {
@@ -658,25 +631,6 @@ void pollUserConfiguredBinaryOutput(uint8_t binaryOutputNumber) {
     Serial2.print(toSend);
     Serial2.flush();
 
-    // delay(500);
-
-    // int index = 0;
-    // uint8_t receiveBuffer[DEFAULT_SERIAL_BUFFER_SIZE];
-    // while (Serial2.available() && Serial2.read() == 0xFA)
-    // {
-    //   receiveBuffer[index++] = Serial2.read();
-    // }
-    
-    // Serial.printf("Polled binary output %d raw string:\n", binaryOutputNumber);
-    // for (int i = 0; i < index; i++)
-    // {
-    //   Serial.printf("%X ", receiveBuffer[i]);
-    // }
-
-    // Serial.printf("\nLength: %d", index);
-
-    // Serial.printf("\n\n");
-
     timer_read_imu.reset();
 
     delay(20);
@@ -695,51 +649,32 @@ void pollUserConfiguredBinaryOutput(uint8_t binaryOutputNumber) {
 
 void readPollingBinaryOutput() {
 
-  // if (timer_read_imu.check()) {
-    int index = 0;
-    // uint8_t receiveBuffer[DEFAULT_SERIAL_BUFFER_SIZE];
+  int index = 0;
 
-    while (Serial2.available())
+  while (Serial2.available())
+  {
+    receiveBuffer[index++] = Serial2.read();
+  }
+
+  if (receiveBuffer[0] == 0xFA) {
+    switch (receiveBuffer[1])
     {
-      receiveBuffer[index++] = Serial2.read();
+      case 0x01:
+        parseBinaryOutput_1();
+        break;
+
+      case 0x05:
+        parseBinaryOutput_2();
+        break;
+
+      case 0x28:
+        parseBinaryOutput_3();
+        break;
+      
+      default:
+        break;
     }
-
-    // while (Serial2.available()) {
-    //   Serial.print(Serial2.read(), HEX);
-    // }
-
-    // Serial.println();
-
-    // for (int i = 0; i < DEFAULT_SERIAL_BUFFER_SIZE; i++)
-    // {
-    //   Serial.printf("%X ", receiveBuffer[i]);
-    // }
-
-    // Serial.printf("\nLength: %d", index);
-
-    // Serial.printf("\n\n");
-
-    if (receiveBuffer[0] == 0xFA) {
-      switch (receiveBuffer[1])
-      {
-        case 0x01:
-          parseBinaryOutput_1();
-          break;
-
-        case 0x05:
-          parseBinaryOutput_2();
-          break;
-
-        case 0x28:
-          parseBinaryOutput_3();
-          break;
-        
-        default:
-          break;
-      }
-    }    
-
-  // }
+  }    
 
 }
 

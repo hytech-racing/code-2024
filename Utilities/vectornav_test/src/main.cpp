@@ -201,7 +201,7 @@ void loop() {
   }
   
   pollUserConfiguredBinaryOutput(binaryOutputNumber + 1);
-  readPollingBinaryOutput();
+  // readPollingBinaryOutput();
 
   // while (Serial2.available()) {
   //   Serial.print(Serial2.read(), HEX);
@@ -981,16 +981,17 @@ void pollUserConfiguredBinaryOutput(uint8_t binaryOutputNumber) {
 
     // Serial.printf("\n\n");
 
-    timer_read_imu.reset();
+    timer_read_imu.reset();   // ideally
 
-    // delay(20);
+    delay(20);
     
     // while (Serial2.available()) {
     //   Serial.print(Serial2.read(), HEX);
     // }
 
     // Serial.println();
-  
+
+    readPollingBinaryOutput(); 
 
   }
 
@@ -1000,9 +1001,9 @@ void pollUserConfiguredBinaryOutput(uint8_t binaryOutputNumber) {
 
 void readPollingBinaryOutput() {
 
-  if (timer_read_imu.check())
-  {
-    Serial.println("IMU read timer checked");
+  // if (timer_read_imu.check())
+  // {
+  //   Serial.println("IMU read timer checked");   // shit does not work
     while (Serial2.available()) {
       Serial.print(Serial2.read(), HEX);
     }
@@ -1017,7 +1018,7 @@ void readPollingBinaryOutput() {
     //   receiveBuffer[index++] = Serial2.read();
     // }
 
-  }  
+  // }  
 
 }
 
