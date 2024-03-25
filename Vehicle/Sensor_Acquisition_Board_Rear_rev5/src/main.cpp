@@ -84,6 +84,12 @@ Metro timer_read_all_adcs = Metro(10);
 Metro timer_read_imu = Metro(20);               // serial delay from polling request
 Metro timer_vectornav_read_binary = Metro(10);  // configured 100Hz
 Metro timer_vectornav_change_reading = Metro(40); // change binary output group 25Hz
+Metro timer_send_CAN_vn_gps_time = Metro(40);   // 25Hz
+Metro timer_send_CAN_vn_position = Metro(50);   // 25Hz
+Metro timer_send_CAN_vn_accel = Metro(40);   // 25Hz
+Metro timer_send_CAN_vn_ins_status = Metro(50);   // 25Hz
+Metro timer_send_CAN_vn_uncomp_accel = Metro(40);   // 25Hz
+Metro timer_send_CAN_vn_vel_body = Metro(50);   // 25Hz
 
 /* Utilities */
 // IIR filter for DSP
@@ -95,7 +101,8 @@ Filter_IIR thermistor_iir[TOTAL_THERMISTOR_COUNT];
 /* Global variables */
 // Vector Nav
 uint8_t receiveBuffer[DEFAULT_SERIAL_BUFFER_SIZE];
-int binaryOutputNumber;;
+int binaryOutputNumber;
+int currentPacketLength;
 // CAN messages (for now)
 VN_VEL_t vn_vel_body;
 VN_LINEAR_ACCEL_t vn_accel;
@@ -109,6 +116,13 @@ void init_all_CAN_devices();
 void parse_telem_CAN_msg(const CAN_message_t &RX_msg);
 void update_all_CAN_msg();
 void send_sab_CAN_msg();
+void send_CAN_vectornav();
+void send_CAN_vn_gps_time();
+void send_CAN_vn_position();
+void send_CAN_vn_accel();
+void send_CAN_vn_ins_status();
+void send_CAN_vn_uncomp_accel();
+void send_CAN_vn_vel_body();
 // void process_ring_buffer(CANBufferType &rx_buffer, unsigned long curr_millis);
 // void send_all_CAN_msg(CANBufferType &tx_buffer, FlexCAN_T4_Base *can_interface);
 void init_all_adcs();
@@ -153,12 +167,14 @@ void setup() {
   Serial2.begin(IMU_RS232_SPEED);
   // Initialize binary output reg. number
   binaryOutputNumber = 0;
+  // Initialize binary packet lengh
+  currentPacketLength = 0;
   // Configure sensor
   turnOffAsciiOutput();
   configBinaryOutput(1, 0x01, 0);    // 0000 0001
   configBinaryOutput(2, 0x05, 0);    // 0000 0101
   configBinaryOutput(3, 0x28, 0);    // 0010 1000
-  Serial.println("VectorNav initialized ... in theory ^^ coming soon");
+  Serial.println("VectorNav initialized ... for real this time!");
   Serial.println();
 
 }
@@ -174,18 +190,10 @@ void loop() {
 
   // Tick interfaces
   tick_all_interfaces(curr_tick);
+  send_CAN_vectornav();
 
   // Tick systems
   // Not currently needed
-
-  // Vector Nav data acquisition (for now)
-  if (timer_vectornav_change_reading.check())
-  {
-    binaryOutputNumber = (binaryOutputNumber + 1) % 3;
-  }
-  
-  pollUserConfiguredBinaryOutput(binaryOutputNumber + 1);
-  readPollingBinaryOutput();
   
   // Send outbound CAN messages
   // send_all_CAN_msg(CAN2_txBuffer, &TELEM_CAN);
@@ -210,8 +218,25 @@ void loop() {
     Serial.println(ADC1.get().conversions[SUS_POT_3].raw);
     Serial.println(ADC2.get().conversions[SUS_POT_4].raw);
     Serial.println();
+    Serial.println("Vector Nav:");
+    for (int i = 0; i < currentPacketLength; i++)
+    {
+      Serial.printf("%X ", receiveBuffer[i]);
+    }
+    Serial.printf("\nCurrent packet length: %d", currentPacketLength);
+    Serial.println();
     Serial.println();
   }
+  
+  // Vector Nav data acquisition (for now)
+  // Involves delay. moved to bottom to preserve timing
+  if (timer_vectornav_change_reading.check())
+  {
+    binaryOutputNumber = (binaryOutputNumber + 1) % 3;
+  }
+  
+  pollUserConfiguredBinaryOutput(binaryOutputNumber + 1);
+  readPollingBinaryOutput();
 
 }
 
@@ -344,7 +369,16 @@ void send_sab_CAN_msg() {
   TELEM_CAN.write(msg);
 
   // Vector Nav
-  auto id = Pack_VN_GPS_TIME_hytech(&vn_time_gps, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
+  /*
+  auto id = Pack_VN_LINEAR_ACCEL_UNCOMP_hytech(&vn_uncomp_accel, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
+  msg.id = id;
+  TELEM_CAN.write(msg);
+
+  id = Pack_VN_VEL_hytech(&vn_vel_body, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
+  msg.id = id;
+  TELEM_CAN.write(msg);
+
+  id = Pack_VN_GPS_TIME_hytech(&vn_time_gps, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
   msg.id = id;
   TELEM_CAN.write(msg);
 
@@ -360,13 +394,92 @@ void send_sab_CAN_msg() {
   msg.id = id;
   TELEM_CAN.write(msg);
 
-  id = Pack_VN_LINEAR_ACCEL_UNCOMP_hytech(&vn_uncomp_accel, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
-  msg.id = id;
-  TELEM_CAN.write(msg);
+  // id = Pack_VN_LINEAR_ACCEL_UNCOMP_hytech(&vn_uncomp_accel, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
+  // msg.id = id;
+  // TELEM_CAN.write(msg);
 
-  id = Pack_VN_VEL_hytech(&vn_vel_body, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
+  // id = Pack_VN_VEL_hytech(&vn_vel_body, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
+  // msg.id = id;
+  // TELEM_CAN.write(msg);
+  */
+}
+
+void send_CAN_vectornav() {
+  // if (timer_send_CAN_vectornav.check())
+  // {
+    send_CAN_vn_gps_time();
+    send_CAN_vn_position();
+    send_CAN_vn_accel();
+    send_CAN_vn_ins_status();
+    send_CAN_vn_uncomp_accel();
+    send_CAN_vn_vel_body();
+  // }  
+}
+
+void send_CAN_vn_gps_time() {
+  if (timer_send_CAN_vn_gps_time.check())
+  {
+  CAN_message_t msg;
+
+  auto id = Pack_VN_GPS_TIME_hytech(&vn_time_gps, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
   msg.id = id;
   TELEM_CAN.write(msg);
+  }
+}
+
+void send_CAN_vn_position() {
+  if (timer_send_CAN_vn_position.check())
+  {
+  CAN_message_t msg;
+
+  auto id = Pack_VN_LAT_LON_hytech(&vn_position, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
+  msg.id = id;
+  TELEM_CAN.write(msg);
+  }
+}
+
+void send_CAN_vn_accel() {
+  if (timer_send_CAN_vn_accel.check())
+  {
+  CAN_message_t msg;
+
+  auto id = Pack_VN_LINEAR_ACCEL_hytech(&vn_accel, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
+  msg.id = id;
+  TELEM_CAN.write(msg);
+  }
+}
+
+void send_CAN_vn_ins_status() {
+  if (timer_send_CAN_vn_ins_status.check())
+  {
+  CAN_message_t msg;
+
+  auto id = Pack_VN_STATUS_hytech(&vn_ins_status, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
+  msg.id = id;
+  TELEM_CAN.write(msg);
+  }
+}
+
+void send_CAN_vn_uncomp_accel() {
+  if (timer_send_CAN_vn_uncomp_accel.check())
+  {
+  CAN_message_t msg;
+
+  auto id = Pack_VN_LINEAR_ACCEL_UNCOMP_hytech(&vn_uncomp_accel, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
+  msg.id = id;
+  TELEM_CAN.write(msg);
+  }
+}
+
+void send_CAN_vn_vel_body() {
+  if (timer_send_CAN_vn_vel_body.check())
+  {
+  CAN_message_t msg;
+
+  auto id = Pack_VN_VEL_hytech(&vn_vel_body, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
+  msg.id = id;
+  TELEM_CAN.write(msg);
+  }
 }
 
 /**
@@ -395,6 +508,8 @@ void tick_all_interfaces(const SysTick_s &curr_tick) {
     update_all_CAN_msg();
     send_sab_CAN_msg();
   }
+
+
 
 }
 
@@ -564,13 +679,15 @@ void pollUserConfiguredBinaryOutput(uint8_t binaryOutputNumber) {
 
     timer_read_imu.reset();
 
-    // delay(20);
+    delay(20);
     
     // while (Serial2.available()) {
     //   Serial.print(Serial2.read(), HEX);
     // }
 
-    // Serial.println();  
+    // Serial.println();
+
+    readPollingBinaryOutput();
 
   }
 
@@ -578,8 +695,7 @@ void pollUserConfiguredBinaryOutput(uint8_t binaryOutputNumber) {
 
 void readPollingBinaryOutput() {
 
-  if (timer_read_imu.check())
-  {
+  // if (timer_read_imu.check()) {
     int index = 0;
     // uint8_t receiveBuffer[DEFAULT_SERIAL_BUFFER_SIZE];
 
@@ -587,6 +703,21 @@ void readPollingBinaryOutput() {
     {
       receiveBuffer[index++] = Serial2.read();
     }
+
+    // while (Serial2.available()) {
+    //   Serial.print(Serial2.read(), HEX);
+    // }
+
+    // Serial.println();
+
+    // for (int i = 0; i < DEFAULT_SERIAL_BUFFER_SIZE; i++)
+    // {
+    //   Serial.printf("%X ", receiveBuffer[i]);
+    // }
+
+    // Serial.printf("\nLength: %d", index);
+
+    // Serial.printf("\n\n");
 
     if (receiveBuffer[0] == 0xFA) {
       switch (receiveBuffer[1])
@@ -608,11 +739,13 @@ void readPollingBinaryOutput() {
       }
     }    
 
-  }  
+  // }
 
 }
 
 void parseBinaryOutput_1() {
+
+  int binaryPacketLength = 1 + 1 + 2 * BINARY_OUTPUT_GROUP_COUNT_1 + BINARY_OUTPUT_PAYLOAD_1 + 2;  // in bytes: sync, groups, group fields, payload, crc
 
   uint8_t syncByte = receiveBuffer[0];
 #if SANITY_CHECK
@@ -666,12 +799,16 @@ void parseBinaryOutput_1() {
   vn_position.vn_gps_lon_ro = (float)longitude;
 
   // Missing CAN message for angular body rate right now
+
+  currentPacketLength = binaryPacketLength;
   
-  clearReceiveBuffer();
+  // clearReceiveBuffer();
 
 }
 
 void parseBinaryOutput_2() {
+
+  int binaryPacketLength = 1 + 1 + 2 * BINARY_OUTPUT_GROUP_COUNT_2 + BINARY_OUTPUT_PAYLOAD_2 + 2;  // in bytes: sync, groups, group fields, payload, crc
 
   uint8_t syncByte = receiveBuffer[0];
 #if SANITY_CHECK
@@ -705,6 +842,7 @@ void parseBinaryOutput_2() {
                       (receiveBuffer[9 + OFFSET_PADDING_2] << (8 * 1)) | receiveBuffer[8 + OFFSET_PADDING_2];
 
   uint16_t InsStatus = (receiveBuffer[13 + OFFSET_PADDING_2] << 8) | receiveBuffer[12 + OFFSET_PADDING_2];
+  // Serial.printf("Ins status: %X\n", InsStatus);
 
   float uncompAccelBodyX = (receiveBuffer[17 + OFFSET_PADDING_2] << (8 * 3)) | (receiveBuffer[16 + OFFSET_PADDING_2] << (8 * 2)) | 
                             (receiveBuffer[15 + OFFSET_PADDING_2] << (8 * 1)) | receiveBuffer[14 + OFFSET_PADDING_2];
@@ -734,11 +872,15 @@ void parseBinaryOutput_2() {
 
   // Missing CAN message for deltaVel right now
 
-  clearReceiveBuffer();
+  currentPacketLength = binaryPacketLength;
+
+  // clearReceiveBuffer();
 
 }
 
 void parseBinaryOutput_3() {
+
+  int binaryPacketLength = 1 + 1 + 2 * BINARY_OUTPUT_GROUP_COUNT_3 + BINARY_OUTPUT_PAYLOAD_3 + 2;  // in bytes: sync, groups, group fields, payload, crc
 
   uint8_t syncByte = receiveBuffer[0];
 #if SANITY_CHECK
@@ -792,7 +934,9 @@ void parseBinaryOutput_3() {
   vn_vel_body.vn_body_vel_y_ro = velBodyY;
   vn_vel_body.vn_body_vel_z_ro = velBodyZ;
 
-  clearReceiveBuffer();
+  currentPacketLength = binaryPacketLength;
+
+  // clearReceiveBuffer();
 
 }
 
