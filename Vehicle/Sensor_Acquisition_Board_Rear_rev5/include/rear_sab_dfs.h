@@ -53,29 +53,5 @@
 #define TOTAL_LOADCELL_COUNT 2
 #define LOADCELL_ALPHA 0.8
 
-/* Vector Nav defines */
-#define DEFAULT_WRITE_BUFFER_SIZE 17
-#define DEFAULT_WRITE_BUFFER_MIDIUM 21
-#define DEFAULT_WRITE_BUFFER_LONG 256
-#define DEFAULT_READ_BUFFER_SIZE 256
-#define DEFAULT_SERIAL_BUFFER_SIZE 64
-
-#define BINARY_OUTPUT_GROUP_COUNT_1 1
-#define BINARY_OUTPUT_GROUP_COUNT_2 2
-#define BINARY_OUTPUT_GROUP_COUNT_3 2
-#define BINARY_OUTPUT_PAYLOAD_1 44   // bytes
-#define BINARY_OUTPUT_PAYLOAD_2 38   // bytes
-#define BINARY_OUTPUT_PAYLOAD_3 36   // bytes
-#define OFFSET_PADDING_1 4
-#define OFFSET_PADDING_2 6
-#define OFFSET_PADDING_3 6
-
-#define SANITY_CHECK 0
-
-#define ATOU32 static_cast<uint32_t>(std::atoi(result))
-#define NEXT result = getNextData(_data, parseIndex); \
-	if (result == NULL) \
-		return;
-
 
 
