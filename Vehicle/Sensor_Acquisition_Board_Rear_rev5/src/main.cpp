@@ -390,68 +390,62 @@ void send_CAN_vectornav() {
 }
 
 void send_CAN_vn_gps_time() {
-  if (timer_send_CAN_vn_gps_time.check())
-  {
-  CAN_message_t msg;
+  if (timer_send_CAN_vn_gps_time.check()) {
+    CAN_message_t msg;
 
-  auto id = Pack_VN_GPS_TIME_hytech(&vn_time_gps, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
-  msg.id = id;
-  TELEM_CAN.write(msg);
+    auto id = Pack_VN_GPS_TIME_hytech(&vn_time_gps, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
+    msg.id = id;
+    TELEM_CAN.write(msg);
   }
 }
 
 void send_CAN_vn_position() {
-  if (timer_send_CAN_vn_position.check())
-  {
-  CAN_message_t msg;
+  if (timer_send_CAN_vn_position.check()) {
+    CAN_message_t msg;
 
-  auto id = Pack_VN_LAT_LON_hytech(&vn_position, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
-  msg.id = id;
-  TELEM_CAN.write(msg);
+    auto id = Pack_VN_LAT_LON_hytech(&vn_position, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
+    msg.id = id;
+    TELEM_CAN.write(msg);
   }
 }
 
 void send_CAN_vn_accel() {
-  if (timer_send_CAN_vn_accel.check())
-  {
-  CAN_message_t msg;
+  if (timer_send_CAN_vn_accel.check()) {
+    CAN_message_t msg;
 
-  auto id = Pack_VN_LINEAR_ACCEL_hytech(&vn_accel, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
-  msg.id = id;
-  TELEM_CAN.write(msg);
+    auto id = Pack_VN_LINEAR_ACCEL_hytech(&vn_accel, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
+    msg.id = id;
+    TELEM_CAN.write(msg);
   }
 }
 
 void send_CAN_vn_ins_status() {
-  if (timer_send_CAN_vn_ins_status.check())
-  {
-  CAN_message_t msg;
+  if (timer_send_CAN_vn_ins_status.check()) {
+    CAN_message_t msg;
 
-  auto id = Pack_VN_STATUS_hytech(&vn_ins_status, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
-  msg.id = id;
-  TELEM_CAN.write(msg);
+    auto id = Pack_VN_STATUS_hytech(&vn_ins_status, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
+    msg.id = id;
+    TELEM_CAN.write(msg);
   }
 }
 
 void send_CAN_vn_uncomp_accel() {
-  if (timer_send_CAN_vn_uncomp_accel.check())
-  {
-  CAN_message_t msg;
+  if (timer_send_CAN_vn_uncomp_accel.check()) {
+    CAN_message_t msg;
 
-  auto id = Pack_VN_LINEAR_ACCEL_UNCOMP_hytech(&vn_uncomp_accel, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
-  msg.id = id;
-  TELEM_CAN.write(msg);
+    auto id = Pack_VN_LINEAR_ACCEL_UNCOMP_hytech(&vn_uncomp_accel, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
+    msg.id = id;
+    TELEM_CAN.write(msg);
   }
 }
 
 void send_CAN_vn_vel_body() {
-  if (timer_send_CAN_vn_vel_body.check())
-  {
-  CAN_message_t msg;
+  if (timer_send_CAN_vn_vel_body.check()) {
+    CAN_message_t msg;
 
-  auto id = Pack_VN_VEL_hytech(&vn_vel_body, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
-  msg.id = id;
-  TELEM_CAN.write(msg);
+    auto id = Pack_VN_VEL_hytech(&vn_vel_body, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
+    msg.id = id;
+    TELEM_CAN.write(msg);
   }
 }
 
