@@ -81,15 +81,16 @@ SysClock sys_clock;
 /* Metro timers */
 // Sensor read
 Metro timer_read_all_adcs = Metro(10);
-Metro timer_read_imu = Metro(20);               // serial delay from polling request
-Metro timer_vectornav_read_binary = Metro(10);  // configured 100Hz
+Metro timer_read_imu = Metro(10);               // serial delay from polling request
+Metro timer_vectornav_read_binary = Metro(20);  // configured 100Hz
 Metro timer_vectornav_change_reading = Metro(40); // change binary output group 25Hz
 Metro timer_send_CAN_vn_gps_time = Metro(40);   // 25Hz
 Metro timer_send_CAN_vn_position = Metro(50);   // 25Hz
-Metro timer_send_CAN_vn_accel = Metro(40);   // 25Hz
+Metro timer_send_CAN_vn_accel = Metro(30);   // 25Hz
 Metro timer_send_CAN_vn_ins_status = Metro(50);   // 25Hz
 Metro timer_send_CAN_vn_uncomp_accel = Metro(40);   // 25Hz
-Metro timer_send_CAN_vn_vel_body = Metro(50);   // 25Hz
+Metro timer_send_CAN_vn_vel_body = Metro(30);   // 25Hz
+Metro timer_send_CAN_vn_angular_rate = Metro(20); // 50Hz
 
 /* Utilities */
 // IIR filter for DSP
@@ -110,6 +111,7 @@ VN_LINEAR_ACCEL_UNCOMP_t vn_uncomp_accel;
 VN_LAT_LON_t vn_position;
 VN_GPS_TIME_t vn_time_gps;
 VN_STATUS_t vn_ins_status;
+VN_ANGULAR_RATE_t vn_angular_rate;
 
 /* Function prototypes */
 void init_all_CAN_devices();
@@ -236,7 +238,7 @@ void loop() {
   }
   
   pollUserConfiguredBinaryOutput(binaryOutputNumber + 1);
-  // readPollingBinaryOutput();   // should not need to be here now
+  readPollingBinaryOutput();   // should not need to be here now
 
 }
 
@@ -449,6 +451,17 @@ void send_CAN_vn_vel_body() {
   }
 }
 
+void send_CAN_vn_angular_rate() {
+  if (timer_send_CAN_vn_angular_rate.check())
+  {
+    CAN_message_t msg;
+
+    auto id = Pack_VN_ANGULAR_RATE_hytech(&vn_angular_rate, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
+    msg.id = id;
+    TELEM_CAN.write(msg);
+  }  
+}
+
 /**
  * Tick interfaces
 */
@@ -627,7 +640,7 @@ void pollUserConfiguredBinaryOutput(uint8_t binaryOutputNumber) {
 
     timer_read_imu.reset();
 
-    delay(20);
+    // delay(20);
     
     // while (Serial2.available()) {
     //   Serial.print(Serial2.read(), HEX);
@@ -635,7 +648,7 @@ void pollUserConfiguredBinaryOutput(uint8_t binaryOutputNumber) {
 
     // Serial.println();
 
-    readPollingBinaryOutput();
+    // readPollingBinaryOutput();
 
   }
 
@@ -643,32 +656,36 @@ void pollUserConfiguredBinaryOutput(uint8_t binaryOutputNumber) {
 
 void readPollingBinaryOutput() {
 
-  int index = 0;
+  if (timer_read_imu.check()) {
 
-  while (Serial2.available())
-  {
-    receiveBuffer[index++] = Serial2.read();
-  }
+    int index = 0;
 
-  if (receiveBuffer[0] == 0xFA) {
-    switch (receiveBuffer[1])
+    while (Serial2.available())
     {
-      case 0x01:
-        parseBinaryOutput_1();
-        break;
-
-      case 0x05:
-        parseBinaryOutput_2();
-        break;
-
-      case 0x28:
-        parseBinaryOutput_3();
-        break;
-      
-      default:
-        break;
+      receiveBuffer[index++] = Serial2.read();
     }
-  }    
+
+    if (receiveBuffer[0] == 0xFA) {
+      switch (receiveBuffer[1])
+      {
+        case 0x01:
+          parseBinaryOutput_1();
+          break;
+
+        case 0x05:
+          parseBinaryOutput_2();
+          break;
+
+        case 0x28:
+          parseBinaryOutput_3();
+          break;
+        
+        default:
+          break;
+      }
+    }
+
+  }
 
 }
 
@@ -722,12 +739,14 @@ void parseBinaryOutput_1() {
   uint16_t crc = (receiveBuffer[45 + OFFSET_PADDING_1] << 8) | receiveBuffer[44 + OFFSET_PADDING_1];
 
   // Shove onto CAN
-  vn_time_gps.vn_gps_time = timeGPS;  // int64_t
+  vn_time_gps.vn_gps_time = timeGPS;  // uint64_t
 
-  vn_position.vn_gps_lat_ro = (float)latitude;  // uint32_t
-  vn_position.vn_gps_lon_ro = (float)longitude;
+  vn_position.vn_gps_lat_ro = HYTECH_vn_gps_lat_ro_toS(latitude);  // uint32_t
+  vn_position.vn_gps_lon_ro = HYTECH_vn_gps_lon_ro_toS(longitude);
 
-  // Missing CAN message for angular body rate right now
+  vn_angular_rate.angular_rate_x_ro = HYTECH_angular_rate_x_ro_toS(angularRateBodyX);
+  vn_angular_rate.angular_rate_y_ro = HYTECH_angular_rate_y_ro_toS(angularRateBodyY);
+  vn_angular_rate.angular_rate_z_ro = HYTECH_angular_rate_z_ro_toS(angularRateBodyZ);
 
   currentPacketLength = binaryPacketLength;
   
@@ -790,14 +809,14 @@ void parseBinaryOutput_2() {
   uint16_t crc = (receiveBuffer[39 + OFFSET_PADDING_2] << 8) | receiveBuffer[38 + OFFSET_PADDING_2];
 
   vn_accel.vn_lin_ins_accel_x_ro = HYTECH_vn_lin_ins_accel_x_ro_toS(accelBodyX);  // int16_t
-  vn_accel.vn_lin_ins_accel_y_ro = accelBodyY;
-  vn_accel.vn_lin_ins_accel_z_ro = accelBodyZ;
+  vn_accel.vn_lin_ins_accel_y_ro = HYTECH_vn_lin_ins_accel_y_ro_toS(accelBodyY);
+  vn_accel.vn_lin_ins_accel_z_ro = HYTECH_vn_lin_ins_accel_z_ro_toS(accelBodyZ);
 
-  vn_ins_status.vn_gps_status = InsStatus;  // uint8_t
+  vn_ins_status.vn_gps_status = InsStatus;  // uint16_t
 
-  vn_uncomp_accel.vn_lin_uncomp_accel_x_ro = uncompAccelBodyX;  // int16_t
-  vn_uncomp_accel.vn_lin_uncomp_accel_y_ro = uncompAccelBodyY;
-  vn_uncomp_accel.vn_lin_uncomp_accel_z_ro = uncompAccelBodyZ;
+  vn_uncomp_accel.vn_lin_uncomp_accel_x_ro = HYTECH_vn_lin_uncomp_accel_x_ro_toS(uncompAccelBodyX);  // int16_t
+  vn_uncomp_accel.vn_lin_uncomp_accel_y_ro = HYTECH_vn_lin_uncomp_accel_y_ro_toS(uncompAccelBodyY);
+  vn_uncomp_accel.vn_lin_uncomp_accel_z_ro = HYTECH_vn_lin_uncomp_accel_z_ro_toS(uncompAccelBodyZ);
 
   // Missing CAN message for deltaVel right now
 
