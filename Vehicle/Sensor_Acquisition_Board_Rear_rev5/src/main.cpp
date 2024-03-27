@@ -789,7 +789,7 @@ void parseBinaryOutput_2() {
 
   uint16_t crc = (receiveBuffer[39 + OFFSET_PADDING_2] << 8) | receiveBuffer[38 + OFFSET_PADDING_2];
 
-  vn_accel.vn_lin_ins_accel_x_ro = accelBodyX;  // int16_t
+  vn_accel.vn_lin_ins_accel_x_ro = HYTECH_vn_lin_ins_accel_x_ro_toS(accelBodyX);  // int16_t
   vn_accel.vn_lin_ins_accel_y_ro = accelBodyY;
   vn_accel.vn_lin_ins_accel_z_ro = accelBodyZ;
 
@@ -859,7 +859,7 @@ void parseBinaryOutput_3() {
 
   // Missing CAN message for PosEcef right now
 
-  vn_vel_body.vn_body_vel_x_ro = velBodyX;  // int16_t
+  vn_vel_body.vn_body_vel_x_ro = HYTECH_vn_body_vel_x_ro_toS(velBodyX);  // int16_t
   vn_vel_body.vn_body_vel_y_ro = velBodyY;
   vn_vel_body.vn_body_vel_z_ro = velBodyZ;
 
