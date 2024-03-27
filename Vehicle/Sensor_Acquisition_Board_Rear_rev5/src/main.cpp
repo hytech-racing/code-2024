@@ -125,6 +125,7 @@ void send_CAN_vn_accel();
 void send_CAN_vn_ins_status();
 void send_CAN_vn_uncomp_accel();
 void send_CAN_vn_vel_body();
+void send_CAN_vn_angular_rate();
 // void process_ring_buffer(CANBufferType &rx_buffer, unsigned long curr_millis);
 // void send_all_CAN_msg(CANBufferType &tx_buffer, FlexCAN_T4_Base *can_interface);
 void init_all_adcs();
@@ -388,6 +389,7 @@ void send_CAN_vectornav() {
   send_CAN_vn_ins_status();
   send_CAN_vn_uncomp_accel();
   send_CAN_vn_vel_body();
+  send_CAN_vn_angular_rate();
 
 }
 
