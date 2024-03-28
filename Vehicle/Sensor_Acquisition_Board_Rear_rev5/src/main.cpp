@@ -91,6 +91,7 @@ Metro timer_send_CAN_vn_ins_status = Metro(50);   // 25Hz
 Metro timer_send_CAN_vn_uncomp_accel = Metro(40);   // 25Hz
 Metro timer_send_CAN_vn_vel_body = Metro(30);   // 25Hz
 Metro timer_send_CAN_vn_angular_rate = Metro(20); // 50Hz
+Metro timer_send_CAN_vn_yaw_pitch_roll = Metro(20); // 50Hz
 
 /* Utilities */
 // IIR filter for DSP
@@ -112,6 +113,7 @@ VN_LAT_LON_t vn_position;
 VN_GPS_TIME_t vn_time_gps;
 VN_STATUS_t vn_ins_status;
 VN_ANGULAR_RATE_t vn_angular_rate;
+VN_YPR_t vn_YPR;
 
 /* Function prototypes */
 void init_all_CAN_devices();
@@ -126,6 +128,7 @@ void send_CAN_vn_ins_status();
 void send_CAN_vn_uncomp_accel();
 void send_CAN_vn_vel_body();
 void send_CAN_vn_angular_rate();
+void send_CAN_vn_yaw_pitch_roll();
 // void process_ring_buffer(CANBufferType &rx_buffer, unsigned long curr_millis);
 // void send_all_CAN_msg(CANBufferType &tx_buffer, FlexCAN_T4_Base *can_interface);
 void init_all_adcs();
@@ -408,6 +411,7 @@ void send_CAN_vectornav() {
   send_CAN_vn_uncomp_accel();
   send_CAN_vn_vel_body();
   send_CAN_vn_angular_rate();
+  send_CAN_vn_yaw_pitch_roll();
 
 }
 
@@ -477,6 +481,17 @@ void send_CAN_vn_angular_rate() {
     CAN_message_t msg;
 
     auto id = Pack_VN_ANGULAR_RATE_hytech(&vn_angular_rate, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
+    msg.id = id;
+    TELEM_CAN.write(msg);
+  }  
+}
+
+void send_CAN_vn_yaw_pitch_roll() {
+  if (timer_send_CAN_vn_yaw_pitch_roll.check())
+  {
+    CAN_message_t msg;
+
+    auto id = Pack_VN_YPR_hytech(&vn_YPR, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
     msg.id = id;
     TELEM_CAN.write(msg);
   }  
@@ -584,7 +599,8 @@ void configBinaryOutput(uint8_t binaryOutputNumber, uint8_t fields, uint16_t rat
                                                 vn::protocol::uart::COMMONGROUP_POSITION);
     }
     else if (binaryOutputNumber == 2) {
-      length += sprintf(toSend + length, ",%X", vn::protocol::uart::COMMONGROUP_ACCEL |       // 0001 0001 0000 0000 = 11 00
+      length += sprintf(toSend + length, ",%X", vn::protocol::uart::COMMONGROUP_YAWPITCHROLL |
+                                                vn::protocol::uart::COMMONGROUP_ACCEL |       // 0001 0001 0000 0000 = 11 00
                                                 vn::protocol::uart::COMMONGROUP_INSSTATUS);
     }
     #endif
@@ -760,13 +776,19 @@ void parseBinaryOutput_1() {
 
   // Shove onto CAN
   vn_time_gps.vn_gps_time = timeGPS;  // uint64_t
+  // Serial.println(timeGPS);
 
   vn_position.vn_gps_lat_ro = HYTECH_vn_gps_lat_ro_toS(latitude);  // uint32_t
+  // Serial.println(HYTECH_vn_gps_lat_ro_toS(latitude));
   vn_position.vn_gps_lon_ro = HYTECH_vn_gps_lon_ro_toS(longitude);
+  // Serial.println(HYTECH_vn_gps_lon_ro_toS(longitude));
 
   vn_angular_rate.angular_rate_x_ro = HYTECH_angular_rate_x_ro_toS(angularRateBodyX);
+  // Serial.println(HYTECH_angular_rate_x_ro_toS(angularRateBodyX));
   vn_angular_rate.angular_rate_y_ro = HYTECH_angular_rate_y_ro_toS(angularRateBodyY);
+  // Serial.println(HYTECH_angular_rate_y_ro_toS(angularRateBodyY));
   vn_angular_rate.angular_rate_z_ro = HYTECH_angular_rate_z_ro_toS(angularRateBodyZ);
+  // Serial.println(HYTECH_angular_rate_z_ro_toS(angularRateBodyZ));
 
   currentPacketLength = binaryPacketLength;
   
@@ -802,6 +824,24 @@ void parseBinaryOutput_2() {
     return;
 #endif
 
+  uint32_t yawBits = (((uint32_t)receiveBuffer[3 + OFFSET_PADDING_2_ORGINAL]) << (8 * 3)) | ((uint32_t)(receiveBuffer[2 + OFFSET_PADDING_2_ORGINAL]) << (8 * 2)) | 
+                      (((uint32_t)receiveBuffer[1 + OFFSET_PADDING_2_ORGINAL]) << (8 * 1)) | ((uint32_t)receiveBuffer[0 + OFFSET_PADDING_2_ORGINAL]);
+  float yaw;                    
+  memcpy(&yaw, &yawBits, 4);
+  Serial.printf("Yaw: %f ", yaw);
+
+  uint32_t pitchBits = (receiveBuffer[7 + OFFSET_PADDING_2_ORGINAL] << (8 * 3)) | (receiveBuffer[6 + OFFSET_PADDING_2_ORGINAL] << (8 * 2)) | 
+                      (receiveBuffer[5 + OFFSET_PADDING_2_ORGINAL] << (8 * 1)) | receiveBuffer[4 + OFFSET_PADDING_2_ORGINAL];
+  float pitch;                    
+  memcpy(&pitch, &pitchBits, 4);                    
+  Serial.printf("Pitch: %f ", pitch);
+
+  uint32_t rollBits = (receiveBuffer[11 + OFFSET_PADDING_2_ORGINAL] << (8 * 3)) | (receiveBuffer[10 + OFFSET_PADDING_2_ORGINAL] << (8 * 2)) | 
+                      (receiveBuffer[9 + OFFSET_PADDING_2_ORGINAL] << (8 * 1)) | receiveBuffer[8 + OFFSET_PADDING_2_ORGINAL]; 
+  float roll;                    
+  memcpy(&roll, &rollBits, 4);  
+  Serial.printf("Roll: %f ", roll);                    
+
   float accelBodyX = (receiveBuffer[3 + OFFSET_PADDING_2] << (8 * 3)) | (receiveBuffer[2 + OFFSET_PADDING_2] << (8 * 2)) | 
                       (receiveBuffer[1 + OFFSET_PADDING_2] << (8 * 1)) | receiveBuffer[0 + OFFSET_PADDING_2];
   float accelBodyY = (receiveBuffer[7 + OFFSET_PADDING_2] << (8 * 3)) | (receiveBuffer[6 + OFFSET_PADDING_2] << (8 * 2)) | 
@@ -813,11 +853,12 @@ void parseBinaryOutput_2() {
   // Serial.printf("Ins status: %X\n", InsStatus);
 
   float uncompAccelBodyX = (receiveBuffer[17 + OFFSET_PADDING_2] << (8 * 3)) | (receiveBuffer[16 + OFFSET_PADDING_2] << (8 * 2)) | 
-                            (receiveBuffer[15 + OFFSET_PADDING_2] << (8 * 1)) | receiveBuffer[14 + OFFSET_PADDING_2];
+                            (receiveBuffer[15 + OFFSET_PADDING_2] << (8 * 1)) | receiveBuffer[14 + OFFSET_PADDING_2];                  
   float uncompAccelBodyY = (receiveBuffer[21 + OFFSET_PADDING_2] << (8 * 3)) | (receiveBuffer[20 + OFFSET_PADDING_2] << (8 * 2)) | 
                             (receiveBuffer[19 + OFFSET_PADDING_2] << (8 * 1)) | receiveBuffer[18 + OFFSET_PADDING_2];
   float uncompAccelBodyZ = (receiveBuffer[25 + OFFSET_PADDING_2] << (8 * 3)) | (receiveBuffer[24 + OFFSET_PADDING_2] << (8 * 2)) | 
-                            (receiveBuffer[23 + OFFSET_PADDING_2] << (8 * 1)) | receiveBuffer[22 + OFFSET_PADDING_2];
+                           (receiveBuffer[23 + OFFSET_PADDING_2] << (8 * 1)) | receiveBuffer[22 + OFFSET_PADDING_2];
+  Serial.printf("UncompAccelBodyZ: %f \n", uncompAccelBodyZ);
 
   float deltaVelX = (receiveBuffer[29 + OFFSET_PADDING_2] << (8 * 3)) | (receiveBuffer[28 + OFFSET_PADDING_2] << (8 * 2)) | 
                     (receiveBuffer[27 + OFFSET_PADDING_2] << (8 * 1)) | receiveBuffer[26 + OFFSET_PADDING_2];
@@ -836,7 +877,11 @@ void parseBinaryOutput_2() {
 
   vn_uncomp_accel.vn_lin_uncomp_accel_x_ro = HYTECH_vn_lin_uncomp_accel_x_ro_toS(uncompAccelBodyX);  // int16_t
   vn_uncomp_accel.vn_lin_uncomp_accel_y_ro = HYTECH_vn_lin_uncomp_accel_y_ro_toS(uncompAccelBodyY);
-  vn_uncomp_accel.vn_lin_uncomp_accel_z_ro = HYTECH_vn_lin_uncomp_accel_z_ro_toS(uncompAccelBodyZ);
+  vn_uncomp_accel.vn_lin_uncomp_accel_z_ro = uncompAccelBodyZ;
+
+  vn_YPR.vn_yaw_ro = yaw;
+  vn_YPR.vn_pitch_ro = pitch;
+  vn_YPR.vn_roll_ro = roll;
 
   // Missing CAN message for deltaVel right now
 
