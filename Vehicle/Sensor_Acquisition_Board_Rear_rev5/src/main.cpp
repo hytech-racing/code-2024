@@ -222,6 +222,24 @@ void loop() {
     Serial.println(ADC2.get().conversions[SUS_POT_4].raw);
     Serial.println();
     Serial.println("Vector Nav:");
+    
+    // u_int8_t fields = 0x05;
+
+    // bool commonField = fields & 0x01;   
+    // Serial.printf("common: %d\n", commonField);
+    // bool timeField = fields & 0x02;     
+    // Serial.printf("time: %d\n", timeField);
+    // bool imuField = fields & 0x04;      
+    // Serial.printf("imu: %d\n", imuField);
+    // bool gpsField = fields & 0x08;     
+    // Serial.printf("gps: %d\n", gpsField);
+    // bool attitudeField = fields & 0x10;
+    // Serial.printf("attitude: %d\n", attitudeField);
+    // bool insField = fields & 0x20;      
+    // Serial.printf("ins: %d\n", insField);
+    // bool gps2Field = fields & 0x40;     
+    // Serial.printf("gps2: %d\n", gps2Field);
+
     for (int i = 0; i < currentPacketLength; i++)
     {
       Serial.printf("%X ", receiveBuffer[i]);
