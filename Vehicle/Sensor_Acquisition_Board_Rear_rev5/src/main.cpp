@@ -91,7 +91,7 @@ Metro timer_send_CAN_vn_ins_status = Metro(50);   // 25Hz
 Metro timer_send_CAN_vn_uncomp_accel = Metro(40);   // 25Hz
 Metro timer_send_CAN_vn_vel_body = Metro(30);   // 25Hz
 Metro timer_send_CAN_vn_angular_rate = Metro(20); // 50Hz
-Metro timer_send_CAN_vn_yaw_pitch_roll = Metro(20); // 50Hz
+Metro timer_send_CAN_vn_yaw_pitch_roll = Metro(50); // 25Hz
 
 /* Utilities */
 // IIR filter for DSP
@@ -344,6 +344,30 @@ void parse_telem_CAN_msg(const CAN_message_t &RX_msg) {
       mcu_status.load(rx_msg.buf);
       break;
   }
+}
+
+float parseFloat(uint8_t buffer[], int startIndex) {
+  uint32_t dataBits = (((u_int32_t) buffer[3 + startIndex] << (8 * 3)) | ((u_int32_t) buffer[2 + startIndex] << (8 * 2)) |
+                        ((u_int32_t) buffer[1 + startIndex] << (8 * 1)) | ((u_int32_t) buffer[0 + startIndex] << (8 * 0)));
+  float data;
+  memcpy(&data, &dataBits, sizeof(float));
+  return data;
+}
+
+double parseDouble(uint8_t buffer[], int startIndex) {
+
+  // double latitude = (receiveBuffer[27 + OFFSET_PADDING_1] << (8 * 7)) | (receiveBuffer[26 + OFFSET_PADDING_1] << (8 * 6)) | 
+  //                   (receiveBuffer[25 + OFFSET_PADDING_1] << (8 * 5)) | (receiveBuffer[24 + OFFSET_PADDING_1] << (8 * 4)) |
+  //                   (receiveBuffer[23 + OFFSET_PADDING_1] << (8 * 3)) | (receiveBuffer[22 + OFFSET_PADDING_1] << (8 * 2)) | 
+  //                   (receiveBuffer[21 + OFFSET_PADDING_1] << (8 * 1)) | receiveBuffer[20 + OFFSET_PADDING_1];
+
+  uint64_t dataBits = (((u_int32_t) buffer[7 + startIndex] << (8 * 7)) | ((u_int32_t) buffer[6 + startIndex] << (8 * 6)) |
+                        ((u_int32_t) buffer[5 + startIndex] << (8 * 5)) | ((u_int32_t) buffer[4 + startIndex] << (8 * 4)) |
+                        ((u_int32_t) buffer[3 + startIndex] << (8 * 3)) | ((u_int32_t) buffer[2 + startIndex] << (8 * 2)) |
+                        ((u_int32_t) buffer[1 + startIndex] << (8 * 1)) | ((u_int32_t) buffer[0 + startIndex] << (8 * 0)));
+  double data;
+  memcpy(&data, &dataBits, sizeof(double));
+  return data;
 }
 
 void update_all_CAN_msg() {
@@ -752,25 +776,13 @@ void parseBinaryOutput_1() {
                       (receiveBuffer[3 + OFFSET_PADDING_1] << (8 * 3)) | (receiveBuffer[2 + OFFSET_PADDING_1] << (8 * 2)) | 
                       (receiveBuffer[1 + OFFSET_PADDING_1] << (8 * 1)) | receiveBuffer[0 + OFFSET_PADDING_1];
 
-  float angularRateBodyX = (receiveBuffer[11 + OFFSET_PADDING_1] << (8 * 3)) | (receiveBuffer[10 + OFFSET_PADDING_1] << (8 * 2)) | 
-                            (receiveBuffer[9 + OFFSET_PADDING_1] << (8 * 1)) | receiveBuffer[8 + OFFSET_PADDING_1];
-  float angularRateBodyY = (receiveBuffer[15 + OFFSET_PADDING_1] << (8 * 3)) | (receiveBuffer[14 + OFFSET_PADDING_1] << (8 * 2)) | 
-                            (receiveBuffer[13 + OFFSET_PADDING_1] << (8 * 1)) | receiveBuffer[12 + OFFSET_PADDING_1];
-  float angularRateBodyZ = (receiveBuffer[19 + OFFSET_PADDING_1] << (8 * 3)) | (receiveBuffer[18 + OFFSET_PADDING_1] << (8 * 2)) | 
-                            (receiveBuffer[17 + OFFSET_PADDING_1] << (8 * 1)) | receiveBuffer[16 + OFFSET_PADDING_1];
+  float angularRateBodyX = parseFloat(receiveBuffer, 8 + OFFSET_PADDING_1);
+  float angularRateBodyY = parseFloat(receiveBuffer, 12 + OFFSET_PADDING_1);
+  float angularRateBodyZ = parseFloat(receiveBuffer, 16 + OFFSET_PADDING_1);
 
-  double latitude = (receiveBuffer[27 + OFFSET_PADDING_1] << (8 * 7)) | (receiveBuffer[26 + OFFSET_PADDING_1] << (8 * 6)) | 
-                    (receiveBuffer[25 + OFFSET_PADDING_1] << (8 * 5)) | (receiveBuffer[24 + OFFSET_PADDING_1] << (8 * 4)) |
-                    (receiveBuffer[23 + OFFSET_PADDING_1] << (8 * 3)) | (receiveBuffer[22 + OFFSET_PADDING_1] << (8 * 2)) | 
-                    (receiveBuffer[21 + OFFSET_PADDING_1] << (8 * 1)) | receiveBuffer[20 + OFFSET_PADDING_1];
-  double longitude = (receiveBuffer[35 + OFFSET_PADDING_1] << (8 * 7)) | (receiveBuffer[34 + OFFSET_PADDING_1] << (8 * 6)) | 
-                      (receiveBuffer[33 + OFFSET_PADDING_1] << (8 * 5)) | (receiveBuffer[32 + OFFSET_PADDING_1] << (8 * 4)) |
-                      (receiveBuffer[31 + OFFSET_PADDING_1] << (8 * 3)) | (receiveBuffer[30 + OFFSET_PADDING_1] << (8 * 2)) | 
-                      (receiveBuffer[29 + OFFSET_PADDING_1] << (8 * 1)) | receiveBuffer[28 + OFFSET_PADDING_1];
-  double altitude = (receiveBuffer[43 + OFFSET_PADDING_1] << (8 * 7)) | (receiveBuffer[42 + OFFSET_PADDING_1] << (8 * 6)) | 
-                    (receiveBuffer[41 + OFFSET_PADDING_1] << (8 * 5)) | (receiveBuffer[40 + OFFSET_PADDING_1] << (8 * 4)) |
-                    (receiveBuffer[39 + OFFSET_PADDING_1] << (8 * 3)) | (receiveBuffer[38 + OFFSET_PADDING_1] << (8 * 2)) | 
-                    (receiveBuffer[37 + OFFSET_PADDING_1] << (8 * 1)) | receiveBuffer[36 + OFFSET_PADDING_1];
+  double latitude = parseDouble(receiveBuffer, 20 + OFFSET_PADDING_1);
+  double longitude = parseDouble(receiveBuffer, 28 + OFFSET_PADDING_1);
+  double altitude = parseDouble(receiveBuffer, 36 + OFFSET_PADDING_1);
 
   uint16_t crc = (receiveBuffer[45 + OFFSET_PADDING_1] << 8) | receiveBuffer[44 + OFFSET_PADDING_1];
 
@@ -824,48 +836,34 @@ void parseBinaryOutput_2() {
     return;
 #endif
 
-  uint32_t yawBits = (((uint32_t)receiveBuffer[3 + OFFSET_PADDING_2_ORGINAL]) << (8 * 3)) | ((uint32_t)(receiveBuffer[2 + OFFSET_PADDING_2_ORGINAL]) << (8 * 2)) | 
-                      (((uint32_t)receiveBuffer[1 + OFFSET_PADDING_2_ORGINAL]) << (8 * 1)) | ((uint32_t)receiveBuffer[0 + OFFSET_PADDING_2_ORGINAL]);
-  float yaw;                    
-  memcpy(&yaw, &yawBits, 4);
-  Serial.printf("Yaw: %f ", yaw);
+  float yaw = parseFloat(receiveBuffer, OFFSET_PADDING_2_ORGINAL);
 
-  uint32_t pitchBits = (receiveBuffer[7 + OFFSET_PADDING_2_ORGINAL] << (8 * 3)) | (receiveBuffer[6 + OFFSET_PADDING_2_ORGINAL] << (8 * 2)) | 
-                      (receiveBuffer[5 + OFFSET_PADDING_2_ORGINAL] << (8 * 1)) | receiveBuffer[4 + OFFSET_PADDING_2_ORGINAL];
-  float pitch;                    
-  memcpy(&pitch, &pitchBits, 4);                    
+  float pitch = parseFloat(receiveBuffer, 4 + OFFSET_PADDING_2_ORGINAL);    
+
+  float roll = parseFloat(receiveBuffer, 8 + OFFSET_PADDING_2_ORGINAL);   
+
+  Serial.printf("Yaw: %f ", yaw);                                 
   Serial.printf("Pitch: %f ", pitch);
+  Serial.printf("Roll: %f ", roll);                  
 
-  uint32_t rollBits = (receiveBuffer[11 + OFFSET_PADDING_2_ORGINAL] << (8 * 3)) | (receiveBuffer[10 + OFFSET_PADDING_2_ORGINAL] << (8 * 2)) | 
-                      (receiveBuffer[9 + OFFSET_PADDING_2_ORGINAL] << (8 * 1)) | receiveBuffer[8 + OFFSET_PADDING_2_ORGINAL]; 
-  float roll;                    
-  memcpy(&roll, &rollBits, 4);  
-  Serial.printf("Roll: %f ", roll);                    
-
-  float accelBodyX = (receiveBuffer[3 + OFFSET_PADDING_2] << (8 * 3)) | (receiveBuffer[2 + OFFSET_PADDING_2] << (8 * 2)) | 
-                      (receiveBuffer[1 + OFFSET_PADDING_2] << (8 * 1)) | receiveBuffer[0 + OFFSET_PADDING_2];
-  float accelBodyY = (receiveBuffer[7 + OFFSET_PADDING_2] << (8 * 3)) | (receiveBuffer[6 + OFFSET_PADDING_2] << (8 * 2)) | 
-                      (receiveBuffer[5 + OFFSET_PADDING_2] << (8 * 1)) | receiveBuffer[4 + OFFSET_PADDING_2];
-  float accelBodyZ = (receiveBuffer[11 + OFFSET_PADDING_2] << (8 * 3)) | (receiveBuffer[10 + OFFSET_PADDING_2] << (8 * 2)) | 
-                      (receiveBuffer[9 + OFFSET_PADDING_2] << (8 * 1)) | receiveBuffer[8 + OFFSET_PADDING_2];
+  float accelBodyX = parseFloat(receiveBuffer, OFFSET_PADDING_2);
+  float accelBodyY = parseFloat(receiveBuffer, 4 + OFFSET_PADDING_2);
+  float accelBodyZ = parseFloat(receiveBuffer, 8 + OFFSET_PADDING_2);
 
   uint16_t InsStatus = (receiveBuffer[13 + OFFSET_PADDING_2] << 8) | receiveBuffer[12 + OFFSET_PADDING_2];
   // Serial.printf("Ins status: %X\n", InsStatus);
 
-  float uncompAccelBodyX = (receiveBuffer[17 + OFFSET_PADDING_2] << (8 * 3)) | (receiveBuffer[16 + OFFSET_PADDING_2] << (8 * 2)) | 
-                            (receiveBuffer[15 + OFFSET_PADDING_2] << (8 * 1)) | receiveBuffer[14 + OFFSET_PADDING_2];                  
-  float uncompAccelBodyY = (receiveBuffer[21 + OFFSET_PADDING_2] << (8 * 3)) | (receiveBuffer[20 + OFFSET_PADDING_2] << (8 * 2)) | 
-                            (receiveBuffer[19 + OFFSET_PADDING_2] << (8 * 1)) | receiveBuffer[18 + OFFSET_PADDING_2];
-  float uncompAccelBodyZ = (receiveBuffer[25 + OFFSET_PADDING_2] << (8 * 3)) | (receiveBuffer[24 + OFFSET_PADDING_2] << (8 * 2)) | 
-                           (receiveBuffer[23 + OFFSET_PADDING_2] << (8 * 1)) | receiveBuffer[22 + OFFSET_PADDING_2];
+  float uncompAccelBodyX = parseFloat(receiveBuffer, 14 + OFFSET_PADDING_2);
+  float uncompAccelBodyY = parseFloat(receiveBuffer, 18 + OFFSET_PADDING_2);
+  float uncompAccelBodyZ = parseFloat(receiveBuffer, 22 + OFFSET_PADDING_2);
+
+  // Serial.printf("UncompAccelBodyZ: %f ", uncompAccelBodyX);
+  // Serial.printf("UncompAccelBodyY: %f ", uncompAccelBodyY);
   Serial.printf("UncompAccelBodyZ: %f \n", uncompAccelBodyZ);
 
-  float deltaVelX = (receiveBuffer[29 + OFFSET_PADDING_2] << (8 * 3)) | (receiveBuffer[28 + OFFSET_PADDING_2] << (8 * 2)) | 
-                    (receiveBuffer[27 + OFFSET_PADDING_2] << (8 * 1)) | receiveBuffer[26 + OFFSET_PADDING_2];
-  float deltaVelY = (receiveBuffer[33 + OFFSET_PADDING_2] << (8 * 3)) | (receiveBuffer[32 + OFFSET_PADDING_2] << (8 * 2)) | 
-                    (receiveBuffer[31 + OFFSET_PADDING_2] << (8 * 1)) | receiveBuffer[30 + OFFSET_PADDING_2];
-  float deltaVelZ = (receiveBuffer[37 + OFFSET_PADDING_2] << (8 * 3)) | (receiveBuffer[36 + OFFSET_PADDING_2] << (8 * 2)) | 
-                    (receiveBuffer[35 + OFFSET_PADDING_2] << (8 * 1)) | receiveBuffer[34 + OFFSET_PADDING_2];
+  float deltaVelX = parseFloat(receiveBuffer, 26 + OFFSET_PADDING_2);
+  float deltaVelY = parseFloat(receiveBuffer, 30 + OFFSET_PADDING_2);
+  float deltaVelZ = parseFloat(receiveBuffer, 34 + OFFSET_PADDING_2);
 
   uint16_t crc = (receiveBuffer[39 + OFFSET_PADDING_2] << 8) | receiveBuffer[38 + OFFSET_PADDING_2];
 
@@ -877,11 +875,11 @@ void parseBinaryOutput_2() {
 
   vn_uncomp_accel.vn_lin_uncomp_accel_x_ro = HYTECH_vn_lin_uncomp_accel_x_ro_toS(uncompAccelBodyX);  // int16_t
   vn_uncomp_accel.vn_lin_uncomp_accel_y_ro = HYTECH_vn_lin_uncomp_accel_y_ro_toS(uncompAccelBodyY);
-  vn_uncomp_accel.vn_lin_uncomp_accel_z_ro = uncompAccelBodyZ;
+  vn_uncomp_accel.vn_lin_uncomp_accel_z_ro = HYTECH_vn_lin_uncomp_accel_z_ro_toS(uncompAccelBodyZ);
 
-  vn_YPR.vn_yaw_ro = yaw;
-  vn_YPR.vn_pitch_ro = pitch;
-  vn_YPR.vn_roll_ro = roll;
+  vn_YPR.vn_yaw_ro = HYTECH_vn_yaw_ro_toS(yaw);
+  vn_YPR.vn_pitch_ro = HYTECH_vn_pitch_ro_toS(pitch);
+  vn_YPR.vn_roll_ro = HYTECH_vn_roll_ro_toS(roll);
 
   // Missing CAN message for deltaVel right now
 
@@ -919,25 +917,13 @@ void parseBinaryOutput_3() {
     return;
 #endif
 
-  double posEcef0 = (receiveBuffer[7 + OFFSET_PADDING_3] << (8 * 7)) | (receiveBuffer[6 + OFFSET_PADDING_3] << (8 * 6)) | 
-                    (receiveBuffer[5 + OFFSET_PADDING_3] << (8 * 5)) | (receiveBuffer[4 + OFFSET_PADDING_3] << (8 * 4)) |
-                    (receiveBuffer[3 + OFFSET_PADDING_3] << (8 * 3)) | (receiveBuffer[2 + OFFSET_PADDING_3] << (8 * 2)) | 
-                    (receiveBuffer[1 + OFFSET_PADDING_3] << (8 * 1)) | receiveBuffer[0 + OFFSET_PADDING_3];
-  double posEcef1 = (receiveBuffer[15 + OFFSET_PADDING_3] << (8 * 7)) | (receiveBuffer[14 + OFFSET_PADDING_3] << (8 * 6)) | 
-                    (receiveBuffer[13 + OFFSET_PADDING_3] << (8 * 5)) | (receiveBuffer[12 + OFFSET_PADDING_3] << (8 * 4)) |
-                    (receiveBuffer[11 + OFFSET_PADDING_3] << (8 * 3)) | (receiveBuffer[10 + OFFSET_PADDING_3] << (8 * 2)) | 
-                    (receiveBuffer[9 + OFFSET_PADDING_3] << (8 * 1)) | receiveBuffer[8 + OFFSET_PADDING_3];
-  double posEcef2 = (receiveBuffer[23 + OFFSET_PADDING_3] << (8 * 7)) | (receiveBuffer[22 + OFFSET_PADDING_3] << (8 * 6)) | 
-                    (receiveBuffer[21 + OFFSET_PADDING_3] << (8 * 5)) | (receiveBuffer[20 + OFFSET_PADDING_3] << (8 * 4)) |
-                    (receiveBuffer[19 + OFFSET_PADDING_3] << (8 * 3)) | (receiveBuffer[18 + OFFSET_PADDING_3] << (8 * 2)) | 
-                    (receiveBuffer[17 + OFFSET_PADDING_3] << (8 * 1)) | receiveBuffer[16 + OFFSET_PADDING_3];
+  double posEcef0 = parseDouble(receiveBuffer, OFFSET_PADDING_3);
+  double posEcef1 = parseDouble(receiveBuffer, 8 + OFFSET_PADDING_3);
+  double posEcef2 = parseDouble(receiveBuffer, 16 + OFFSET_PADDING_3);
 
-  float velBodyX = (receiveBuffer[27 + OFFSET_PADDING_3] << (8 * 3)) | (receiveBuffer[26 + OFFSET_PADDING_3] << (8 * 2)) | 
-                    (receiveBuffer[25 + OFFSET_PADDING_3] << (8 * 1)) | receiveBuffer[24 + OFFSET_PADDING_3];
-  float velBodyY = (receiveBuffer[31 + OFFSET_PADDING_3] << (8 * 3)) | (receiveBuffer[30 + OFFSET_PADDING_3] << (8 * 2)) | 
-                    (receiveBuffer[29 + OFFSET_PADDING_3] << (8 * 1)) | receiveBuffer[28 + OFFSET_PADDING_3];
-  float velBodyZ = (receiveBuffer[35 + OFFSET_PADDING_3] << (8 * 3)) | (receiveBuffer[34 + OFFSET_PADDING_3] << (8 * 2)) | 
-                    (receiveBuffer[33 + OFFSET_PADDING_3] << (8 * 1)) | receiveBuffer[32 + OFFSET_PADDING_3];
+  float velBodyX = parseFloat(receiveBuffer, 24);
+  float velBodyY = parseFloat(receiveBuffer, 28);
+  float velBodyZ = parseFloat(receiveBuffer, 32);
 
   uint16_t crc = (receiveBuffer[37 + OFFSET_PADDING_3] << 8) | receiveBuffer[36 + OFFSET_PADDING_3];
 
