@@ -144,6 +144,11 @@ void parseBinaryOutput_1();
 void parseBinaryOutput_2();
 void parseBinaryOutput_3();
 void clearReceiveBuffer();
+float parseFloat(uint8_t buffer[], int startIndex);
+double parseDouble(uint8_t buffer[], int startIndex);
+uint64_t parseUint64(uint8_t buffer[], int startIndex);
+uint32_t parseUint32(uint8_t buffer[], int startIndex);
+uint16_t parseUint16(uint8_t buffer[], int startIndex);
 
 void setup() {
 
@@ -225,23 +230,6 @@ void loop() {
     Serial.println(ADC2.get().conversions[SUS_POT_4].raw);
     Serial.println();
     Serial.println("Vector Nav:");
-    
-    // u_int8_t fields = 0x05;
-
-    // bool commonField = fields & 0x01;   
-    // Serial.printf("common: %d\n", commonField);
-    // bool timeField = fields & 0x02;     
-    // Serial.printf("time: %d\n", timeField);
-    // bool imuField = fields & 0x04;      
-    // Serial.printf("imu: %d\n", imuField);
-    // bool gpsField = fields & 0x08;     
-    // Serial.printf("gps: %d\n", gpsField);
-    // bool attitudeField = fields & 0x10;
-    // Serial.printf("attitude: %d\n", attitudeField);
-    // bool insField = fields & 0x20;      
-    // Serial.printf("ins: %d\n", insField);
-    // bool gps2Field = fields & 0x40;     
-    // Serial.printf("gps2: %d\n", gps2Field);
 
     for (int i = 0; i < currentPacketLength; i++)
     {
@@ -347,8 +335,9 @@ void parse_telem_CAN_msg(const CAN_message_t &RX_msg) {
 }
 
 float parseFloat(uint8_t buffer[], int startIndex) {
-  uint32_t dataBits = (((u_int32_t) buffer[3 + startIndex] << (8 * 3)) | ((u_int32_t) buffer[2 + startIndex] << (8 * 2)) |
-                        ((u_int32_t) buffer[1 + startIndex] << (8 * 1)) | ((u_int32_t) buffer[0 + startIndex] << (8 * 0)));
+
+  uint32_t dataBits = parseUint32(buffer, startIndex);
+  
   float data;
   memcpy(&data, &dataBits, sizeof(float));
   return data;
@@ -356,18 +345,37 @@ float parseFloat(uint8_t buffer[], int startIndex) {
 
 double parseDouble(uint8_t buffer[], int startIndex) {
 
-  // double latitude = (receiveBuffer[27 + OFFSET_PADDING_1] << (8 * 7)) | (receiveBuffer[26 + OFFSET_PADDING_1] << (8 * 6)) | 
-  //                   (receiveBuffer[25 + OFFSET_PADDING_1] << (8 * 5)) | (receiveBuffer[24 + OFFSET_PADDING_1] << (8 * 4)) |
-  //                   (receiveBuffer[23 + OFFSET_PADDING_1] << (8 * 3)) | (receiveBuffer[22 + OFFSET_PADDING_1] << (8 * 2)) | 
-  //                   (receiveBuffer[21 + OFFSET_PADDING_1] << (8 * 1)) | receiveBuffer[20 + OFFSET_PADDING_1];
+  uint64_t dataBits = parseUint64(buffer, startIndex);
 
-  uint64_t dataBits = (((u_int32_t) buffer[7 + startIndex] << (8 * 7)) | ((u_int32_t) buffer[6 + startIndex] << (8 * 6)) |
-                        ((u_int32_t) buffer[5 + startIndex] << (8 * 5)) | ((u_int32_t) buffer[4 + startIndex] << (8 * 4)) |
-                        ((u_int32_t) buffer[3 + startIndex] << (8 * 3)) | ((u_int32_t) buffer[2 + startIndex] << (8 * 2)) |
-                        ((u_int32_t) buffer[1 + startIndex] << (8 * 1)) | ((u_int32_t) buffer[0 + startIndex] << (8 * 0)));
   double data;
   memcpy(&data, &dataBits, sizeof(double));
   return data;
+}
+
+uint64_t parseUint64(uint8_t buffer[], int startIndex) {
+  
+  uint64_t data = (((uint64_t) buffer[7 + startIndex] << (8 * 7)) | ((uint64_t) buffer[6 + startIndex] << (8 * 6)) |
+                        ((uint64_t) buffer[5 + startIndex] << (8 * 5)) | ((uint64_t) buffer[4 + startIndex] << (8 * 4)) |
+                        ((uint64_t) buffer[3 + startIndex] << (8 * 3)) | ((uint64_t) buffer[2 + startIndex] << (8 * 2)) |
+                        ((uint64_t) buffer[1 + startIndex] << (8 * 1)) | ((uint64_t) buffer[0 + startIndex] << (8 * 0)));
+  
+  return data;
+}
+
+uint32_t parseUint32(uint8_t buffer[], int startIndex) {
+
+  uint32_t data = (((uint32_t) buffer[3 + startIndex] << (8 * 3)) | ((uint32_t) buffer[2 + startIndex] << (8 * 2)) |
+                        ((uint32_t) buffer[1 + startIndex] << (8 * 1)) | ((uint32_t) buffer[0 + startIndex] << (8 * 0)));
+  
+  return data;
+}
+
+uint16_t parseUint16(uint8_t buffer[], int startIndex) {
+  
+  uint16_t data = ((uint16_t) buffer[1 + startIndex] << (8 * 1)) | ((uint16_t) buffer[startIndex]);
+
+  return data;
+
 }
 
 void update_all_CAN_msg() {
@@ -441,6 +449,10 @@ void send_CAN_vectornav() {
 
 void send_CAN_vn_gps_time() {
   if (timer_send_CAN_vn_gps_time.check()) {
+#if DEBUG
+    Serial.printf("gps time in can: %X\n", vn_time_gps.vn_gps_time);
+#endif
+
     CAN_message_t msg;
 
     auto id = Pack_VN_GPS_TIME_hytech(&vn_time_gps, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
@@ -528,7 +540,6 @@ void tick_all_interfaces(const SysTick_s &curr_tick) {
 
   TriggerBits_s t = curr_tick.triggers;
 
-  // Serial.println("Sus tick ADC");
   if (t.trigger100) { // 100Hz
     ADC1.tick();
     ADC2.tick();
@@ -539,7 +550,6 @@ void tick_all_interfaces(const SysTick_s &curr_tick) {
       thermistor_iir[i].filtered_result(ADC3.get().conversions[i].raw);
     }
   }
-  // Serial.println("Sus after tick ADC");
 
   if (t.trigger50) {  // 50Hz
     // telem_interface.tick(ADC1.get(), ADC2.get(), ADC3.get(), btn_pi_shutdown.isPressed(), thermistor_iir);
@@ -771,10 +781,11 @@ void parseBinaryOutput_1() {
     return;
 #endif
 
-  uint64_t timeGPS = (receiveBuffer[7 + OFFSET_PADDING_1] << (8 * 7)) | (receiveBuffer[6 + OFFSET_PADDING_1] << (8 * 6)) | 
-                      (receiveBuffer[5 + OFFSET_PADDING_1] << (8 * 5)) | (receiveBuffer[4 + OFFSET_PADDING_1] << (8 * 4)) |
-                      (receiveBuffer[3 + OFFSET_PADDING_1] << (8 * 3)) | (receiveBuffer[2 + OFFSET_PADDING_1] << (8 * 2)) | 
-                      (receiveBuffer[1 + OFFSET_PADDING_1] << (8 * 1)) | receiveBuffer[0 + OFFSET_PADDING_1];
+#if DEBUG
+  Serial.println("Group 1 output:");
+#endif
+
+  uint64_t timeGPS = parseUint64(receiveBuffer, 0 + OFFSET_PADDING_1);
 
   float angularRateBodyX = parseFloat(receiveBuffer, 8 + OFFSET_PADDING_1);
   float angularRateBodyY = parseFloat(receiveBuffer, 12 + OFFSET_PADDING_1);
@@ -788,19 +799,37 @@ void parseBinaryOutput_1() {
 
   // Shove onto CAN
   vn_time_gps.vn_gps_time = timeGPS;  // uint64_t
-  // Serial.println(timeGPS);
+#if DEBUG
+  Serial.printf("GPS time: %X\n", timeGPS);
+#endif
 
   vn_position.vn_gps_lat_ro = HYTECH_vn_gps_lat_ro_toS(latitude);  // uint32_t
+  vn_time_gps.vn_gps_time = timeGPS;  // uint64_t
+#if DEBUG
+  Serial.printf("Latitude: %f  ", latitude);
   // Serial.println(HYTECH_vn_gps_lat_ro_toS(latitude));
+#endif
   vn_position.vn_gps_lon_ro = HYTECH_vn_gps_lon_ro_toS(longitude);
+#if DEBUG
+  Serial.printf("Longitude: %f\n", longitude);
   // Serial.println(HYTECH_vn_gps_lon_ro_toS(longitude));
+#endif
 
   vn_angular_rate.angular_rate_x_ro = HYTECH_angular_rate_x_ro_toS(angularRateBodyX);
+#if DEBUG
+  Serial.printf("Angular rate X: %f  ", angularRateBodyX);
   // Serial.println(HYTECH_angular_rate_x_ro_toS(angularRateBodyX));
+#endif
   vn_angular_rate.angular_rate_y_ro = HYTECH_angular_rate_y_ro_toS(angularRateBodyY);
+#if DEBUG
+  Serial.printf("Angular rate Y: %f  ", angularRateBodyY);
   // Serial.println(HYTECH_angular_rate_y_ro_toS(angularRateBodyY));
+#endif
   vn_angular_rate.angular_rate_z_ro = HYTECH_angular_rate_z_ro_toS(angularRateBodyZ);
+#if DEBUG
+  Serial.printf("Angular rate Z: %f\n", angularRateBodyZ);
   // Serial.println(HYTECH_angular_rate_z_ro_toS(angularRateBodyZ));
+#endif
 
   currentPacketLength = binaryPacketLength;
   
@@ -836,36 +865,42 @@ void parseBinaryOutput_2() {
     return;
 #endif
 
-  float yaw = parseFloat(receiveBuffer, OFFSET_PADDING_2_ORGINAL);
+#if DEBUG
+  Serial.println("Group 2 output:");
+#endif
 
-  float pitch = parseFloat(receiveBuffer, 4 + OFFSET_PADDING_2_ORGINAL);    
-
-  float roll = parseFloat(receiveBuffer, 8 + OFFSET_PADDING_2_ORGINAL);   
-
-  Serial.printf("Yaw: %f ", yaw);                                 
-  Serial.printf("Pitch: %f ", pitch);
-  Serial.printf("Roll: %f ", roll);                  
+  float yaw   = parseFloat(receiveBuffer, OFFSET_PADDING_2_ORGINAL);
+  float pitch = parseFloat(receiveBuffer, 4 + OFFSET_PADDING_2_ORGINAL);
+  float roll  = parseFloat(receiveBuffer, 8 + OFFSET_PADDING_2_ORGINAL);   
+#if DEBUG
+  Serial.printf("Yaw: %f  ", yaw);                                 
+  Serial.printf("Pitch: %f  ", pitch);
+  Serial.printf("Roll: %f\n", roll);        
+#endif          
 
   float accelBodyX = parseFloat(receiveBuffer, OFFSET_PADDING_2);
   float accelBodyY = parseFloat(receiveBuffer, 4 + OFFSET_PADDING_2);
   float accelBodyZ = parseFloat(receiveBuffer, 8 + OFFSET_PADDING_2);
 
-  uint16_t InsStatus = (receiveBuffer[13 + OFFSET_PADDING_2] << 8) | receiveBuffer[12 + OFFSET_PADDING_2];
-  // Serial.printf("Ins status: %X\n", InsStatus);
+  uint16_t InsStatus = parseUint16(receiveBuffer, 12 + OFFSET_PADDING_2);
+#if DEBUG
+  Serial.printf("Ins status: %X\n", InsStatus);
+#endif
 
   float uncompAccelBodyX = parseFloat(receiveBuffer, 14 + OFFSET_PADDING_2);
   float uncompAccelBodyY = parseFloat(receiveBuffer, 18 + OFFSET_PADDING_2);
   float uncompAccelBodyZ = parseFloat(receiveBuffer, 22 + OFFSET_PADDING_2);
-
-  // Serial.printf("UncompAccelBodyZ: %f ", uncompAccelBodyX);
-  // Serial.printf("UncompAccelBodyY: %f ", uncompAccelBodyY);
-  Serial.printf("UncompAccelBodyZ: %f \n", uncompAccelBodyZ);
+#if DEBUG
+  Serial.printf("UncompAccelBodyZ: %f  ", uncompAccelBodyX);
+  Serial.printf("UncompAccelBodyY: %f  ", uncompAccelBodyY);
+  Serial.printf("UncompAccelBodyZ: %f\n", uncompAccelBodyZ);
+#endif
 
   float deltaVelX = parseFloat(receiveBuffer, 26 + OFFSET_PADDING_2);
   float deltaVelY = parseFloat(receiveBuffer, 30 + OFFSET_PADDING_2);
   float deltaVelZ = parseFloat(receiveBuffer, 34 + OFFSET_PADDING_2);
 
-  uint16_t crc = (receiveBuffer[39 + OFFSET_PADDING_2] << 8) | receiveBuffer[38 + OFFSET_PADDING_2];
+  uint16_t crc = parseUint16(receiveBuffer, 38 + OFFSET_PADDING_2);
 
   vn_accel.vn_lin_ins_accel_x_ro = HYTECH_vn_lin_ins_accel_x_ro_toS(accelBodyX);  // int16_t
   vn_accel.vn_lin_ins_accel_y_ro = HYTECH_vn_lin_ins_accel_y_ro_toS(accelBodyY);
@@ -877,9 +912,9 @@ void parseBinaryOutput_2() {
   vn_uncomp_accel.vn_lin_uncomp_accel_y_ro = HYTECH_vn_lin_uncomp_accel_y_ro_toS(uncompAccelBodyY);
   vn_uncomp_accel.vn_lin_uncomp_accel_z_ro = HYTECH_vn_lin_uncomp_accel_z_ro_toS(uncompAccelBodyZ);
 
-  vn_YPR.vn_yaw_ro = HYTECH_vn_yaw_ro_toS(yaw);
+  vn_YPR.vn_yaw_ro   = HYTECH_vn_yaw_ro_toS(yaw);
   vn_YPR.vn_pitch_ro = HYTECH_vn_pitch_ro_toS(pitch);
-  vn_YPR.vn_roll_ro = HYTECH_vn_roll_ro_toS(roll);
+  vn_YPR.vn_roll_ro  = HYTECH_vn_roll_ro_toS(roll);
 
   // Missing CAN message for deltaVel right now
 
@@ -917,21 +952,34 @@ void parseBinaryOutput_3() {
     return;
 #endif
 
+#if DEBUG
+  Serial.println("Group 3 output:");
+#endif
+
   double posEcef0 = parseDouble(receiveBuffer, OFFSET_PADDING_3);
   double posEcef1 = parseDouble(receiveBuffer, 8 + OFFSET_PADDING_3);
   double posEcef2 = parseDouble(receiveBuffer, 16 + OFFSET_PADDING_3);
 
-  float velBodyX = parseFloat(receiveBuffer, 24);
-  float velBodyY = parseFloat(receiveBuffer, 28);
-  float velBodyZ = parseFloat(receiveBuffer, 32);
+  float velBodyX = parseFloat(receiveBuffer, 24 + OFFSET_PADDING_3);
+  float velBodyY = parseFloat(receiveBuffer, 28 + OFFSET_PADDING_3);
+  float velBodyZ = parseFloat(receiveBuffer, 32 + OFFSET_PADDING_3);
 
   uint16_t crc = (receiveBuffer[37 + OFFSET_PADDING_3] << 8) | receiveBuffer[36 + OFFSET_PADDING_3];
 
   // Missing CAN message for PosEcef right now
 
   vn_vel_body.vn_body_vel_x_ro = HYTECH_vn_body_vel_x_ro_toS(velBodyX);  // int16_t
-  vn_vel_body.vn_body_vel_y_ro = velBodyY;
-  vn_vel_body.vn_body_vel_z_ro = velBodyZ;
+#if DEBUG
+  Serial.printf("Velocity body X: %f  ", velBodyX);
+#endif
+  vn_vel_body.vn_body_vel_y_ro = HYTECH_vn_body_vel_y_ro_toS(velBodyY);
+#if DEBUG
+  Serial.printf("Velocity body Y: %f  ", velBodyY);
+#endif
+  vn_vel_body.vn_body_vel_z_ro = HYTECH_vn_body_vel_z_ro_toS(velBodyZ);
+#if DEBUG
+  Serial.printf("Velocity body Z: %f\n", velBodyZ);
+#endif
 
   currentPacketLength = binaryPacketLength;
 

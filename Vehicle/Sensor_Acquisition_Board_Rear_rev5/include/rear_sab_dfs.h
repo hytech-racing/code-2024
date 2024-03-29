@@ -46,7 +46,7 @@
 #define RR_LOAD_CELL 2
 
 /* Thermistor parameters */
-#define TOTAL_THERMISTOR_COUNT 7
+#define TOTAL_THERMISTOR_COUNT 8
 #define THERM_ALPHA 0.8
 
 /* Loadcell parameters */
@@ -64,7 +64,7 @@
 #define BINARY_OUTPUT_GROUP_COUNT_2 2
 #define BINARY_OUTPUT_GROUP_COUNT_3 2
 #define BINARY_OUTPUT_PAYLOAD_1 44   // bytes
-#define BINARY_OUTPUT_PAYLOAD_2 38   // bytes
+#define BINARY_OUTPUT_PAYLOAD_2 50   // bytes
 #define BINARY_OUTPUT_PAYLOAD_3 36   // bytes
 #define OFFSET_PADDING_1 4
 #define OFFSET_PADDING_2_ORGINAL 6
@@ -72,6 +72,7 @@
 #define OFFSET_PADDING_3 6
 
 #define SANITY_CHECK 0
+#define DEBUG 0
 
 #define ATOU32 static_cast<uint32_t>(std::atoi(result))
 #define NEXT result = getNextData(_data, parseIndex); \
