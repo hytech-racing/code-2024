@@ -804,28 +804,35 @@ void parseBinaryOutput_1() {
   Serial.printf("GPS time: %X\n", timeGPS);
 #endif
 
-  vn_position.vn_gps_lat_ro = HYTECH_vn_gps_lat_ro_toS(latitude);  // uint32_t
+  vn_position.vn_gps_lat_ro = latitude;  // uint32_t
+  // Serial.printf("Raw Latitude: %f  ", latitude);
+  // Serial.printf("Latitude to S: %f ", HYTECH_vn_gps_lat_ro_toS(latitude));
+
 #if DEBUG
   Serial.printf("Latitude: %f  ", latitude);
   // Serial.println(HYTECH_vn_gps_lat_ro_toS(latitude));
 #endif
-  vn_position.vn_gps_lon_ro = HYTECH_vn_gps_lon_ro_toS(longitude);
+  vn_position.vn_gps_lon_ro = longitude;
+  // Serial.printf("Raw Longitude: %f  ", longitude);
+  // Serial.printf("Longitude to S: %f ", HYTECH_vn_gps_lon_ro_toS(longitude));
 #if DEBUG
   Serial.printf("Longitude: %f\n", longitude);
   // Serial.println(HYTECH_vn_gps_lon_ro_toS(longitude));
 #endif
 
-  vn_angular_rate.angular_rate_x_ro = HYTECH_angular_rate_x_ro_toS(angularRateBodyX);
+  vn_angular_rate.angular_rate_x_ro = angularRateBodyX;
 #if DEBUG
   Serial.printf("Angular rate X: %f  ", angularRateBodyX);
   // Serial.println(HYTECH_angular_rate_x_ro_toS(angularRateBodyX));
 #endif
-  vn_angular_rate.angular_rate_y_ro = HYTECH_angular_rate_y_ro_toS(angularRateBodyY);
+  vn_angular_rate.angular_rate_y_ro = angularRateBodyY;
 #if DEBUG
   Serial.printf("Angular rate Y: %f  ", angularRateBodyY);
   // Serial.println(HYTECH_angular_rate_y_ro_toS(angularRateBodyY));
 #endif
-  vn_angular_rate.angular_rate_z_ro = HYTECH_angular_rate_z_ro_toS(angularRateBodyZ);
+  vn_angular_rate.angular_rate_z_ro = angularRateBodyZ;
+  Serial.printf("Angular Rate Z raw: %f  ", angularRateBodyZ);
+  Serial.printf("Angular Rate Z to S: %f \n", HYTECH_angular_rate_z_ro_toS(angularRateBodyZ));
 #if DEBUG
   Serial.printf("Angular rate Z: %f\n", angularRateBodyZ);
   // Serial.println(HYTECH_angular_rate_z_ro_toS(angularRateBodyZ));
@@ -956,9 +963,14 @@ void parseBinaryOutput_3() {
   Serial.println("Group 3 output:");
 #endif
 
-  double posEcef0 = parseDouble(receiveBuffer, OFFSET_PADDING_3);
+  double posEcef0 = parseDouble(receiveBuffer, OFFSET_PADDING_3); /////////////////
   double posEcef1 = parseDouble(receiveBuffer, 8 + OFFSET_PADDING_3);
   double posEcef2 = parseDouble(receiveBuffer, 16 + OFFSET_PADDING_3);
+
+
+  Serial.printf("PosEcf0 raw: %f  ", posEcef0);
+  Serial.printf("PosEcf1 raw: %f  ", posEcef1);
+  Serial.printf("PosEcf2 raw: %f  \n", posEcef2);
 
   float velBodyX = parseFloat(receiveBuffer, 24 + OFFSET_PADDING_3);
   float velBodyY = parseFloat(receiveBuffer, 28 + OFFSET_PADDING_3);
