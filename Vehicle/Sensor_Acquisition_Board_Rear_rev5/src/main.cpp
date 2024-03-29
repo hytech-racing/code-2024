@@ -181,6 +181,7 @@ void setup() {
   // Initialize binary packet lengh
   currentPacketLength = 0;
   // Configure sensor
+  delay(START_UP_DELAY);
   turnOffAsciiOutput();
   configBinaryOutput(1, 0x01, 0);    // 0000 0001
   configBinaryOutput(2, 0x05, 0);    // 0000 0101
@@ -804,7 +805,6 @@ void parseBinaryOutput_1() {
 #endif
 
   vn_position.vn_gps_lat_ro = HYTECH_vn_gps_lat_ro_toS(latitude);  // uint32_t
-  vn_time_gps.vn_gps_time = timeGPS;  // uint64_t
 #if DEBUG
   Serial.printf("Latitude: %f  ", latitude);
   // Serial.println(HYTECH_vn_gps_lat_ro_toS(latitude));
