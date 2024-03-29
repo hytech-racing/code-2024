@@ -35,6 +35,8 @@ hytech_dashboard::hytech_dashboard(){}
     functions, as well as shape drawing functions (pedal bar, pack charge, etc.)
     We can make exceptions for really small helper functions that can go directly below their page draw calls
 
+    We also have helper functions to draw quadrants and hexants. - sid :)
+
 */
 
 
@@ -79,9 +81,6 @@ unsigned int generateSeed() {
 
     return seed;
 }
-
-
-
 
 void hytech_dashboard::startup() {
 
@@ -161,7 +160,8 @@ void hytech_dashboard::startup() {
     _display.clearDisplay();
 
 
-    _display.drawBitmap(60,25, epd_bitmap_cat, 200, 200, BLACK);
+    // _display.drawBitmap(60,25, epd_bitmap_cat, 200, 200, BLACK);
+    _display.drawBitmap(0,0, epd_bitmap_glizzy, 320, 240, BLACK);
     _display.refresh();
     delay(3000);
 
