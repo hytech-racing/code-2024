@@ -19,20 +19,14 @@ DashboardCAN dashboard_can(&stm_can);
 
 void setup(void)
 {
+  // initialize dashboard display pins
+  dashboard->init();
 
-  // set non-needed Display pins low
-  pinMode(PC5, OUTPUT);
-  pinMode(PB1, OUTPUT);
-  pinMode(PA3, OUTPUT);
-  digitalWrite(PC5, LOW);
-  digitalWrite(PB1, LOW);
-  
   // set LED high so we know code is running
   digitalWrite(PA3, HIGH);
 
   // begin usb serial for STM32
   SerialUSB.begin();
-  SerialUSB.println("HELLO");
 
   // run startup sequence for dasboard
   dashboard->startup();

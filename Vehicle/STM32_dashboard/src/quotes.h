@@ -33,5 +33,6 @@ String greetings[NUMBER_OF_MESSAGES] = {
     "12345 is a bad password!",
     "May contain nuts!",
     "Should not be played while driving."
+    // 4 cheesy bean and rice burritos
 };
 

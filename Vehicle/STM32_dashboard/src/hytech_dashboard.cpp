@@ -82,6 +82,15 @@ unsigned int generateSeed() {
     return seed;
 }
 
+void hytech_dashboard::init() {
+    // set non-needed Display pins low
+    pinMode(PC5, OUTPUT);
+    pinMode(PB1, OUTPUT);
+    pinMode(PA3, OUTPUT);
+    digitalWrite(PC5, LOW);
+    digitalWrite(PB1, LOW);
+}
+
 void hytech_dashboard::startup() {
 
     pinMode(PB5, INPUT);
@@ -195,12 +204,13 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     double BRAKE1_RANGE = BRAKE1_MAX_VAL - BRAKE1_MIN_VAL;
 
     // TODO: add mechanical break point to display
-    double BRAKE1_MECH = 2196;
+    float brake_mech_point = HYTECH_mechanical_brake_percent_float_ro_fromS(CAN->mcu_pedal_readings.mechanical_brake_percent_float_ro);
+    float accel_pedal = HYTECH_accel_percent_float_ro_fromS(CAN->mcu_pedal_readings.accel_percent_float_ro);
+    float brake_pedal = HYTECH_brake_percent_float_ro_fromS(CAN->mcu_pedal_readings.brake_percent_float_ro);
+    draw_vertical_pedal_bar(accel_pedal, 285);
+    draw_vertical_pedal_bar(brake_pedal, 17);
 
-    draw_vertical_pedal_bar((int) ((CAN->mcu_pedal_readings.accel_pedal_1 - ACCEL1_MIN_VAL)/(ACCEL1_RANGE) * 100), 285);
-    draw_vertical_pedal_bar( (int) (((CAN->mcu_pedal_readings.brake_pedal_1 - BRAKE1_MIN_VAL)/BRAKE1_RANGE) * 100), 17);
-
-    if (CAN->mcu_pedal_readings.brake_pedal_1 <= BRAKE1_MECH) {
+    if (CAN->mcu_pedal_readings.brake_percent_float_ro >= CAN->mcu_pedal_readings.mechanical_brake_percent_float_ro) {
         CAN->dash_mcu_state.mechanical_brake_led = 2;
     } else {
         CAN->dash_mcu_state.mechanical_brake_led = 0;
@@ -212,14 +222,14 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     draw_current_draw_bar(0);
 
     /** TODO: only show this if GPS lock present (use CAN message when it exists)*/
-    _display.drawBitmap(270-27, 40, epd_bitmap_gps, 27, 27, BLACK);
+    if (blink()) _display.drawBitmap(270-27, 40, epd_bitmap_gps, 27, 27, BLACK);
 
     switch(current_page) {
         case 0:
-            display_speeds(&(CAN->drivetrain_rpms));
+            display_speeds(&(CAN->drivetrain_rpms), &(CAN->bms_voltages));
             break;
         case 1:
-            display_suspension_data(&(CAN->mcu_load_cells)/*, &(CAN->sab_load_cells)*/);
+            display_suspension_data(&(CAN->mcu_suspension), &(CAN->sab_suspension));
             break;
         case 2:
             // tires
@@ -342,7 +352,7 @@ void hytech_dashboard::draw_page_title(String text) {
     _display.setFont(&FreeSans12pt7b);
 }
 
-void hytech_dashboard::display_suspension_data(MCU_LOAD_CELLS_t* front_load_cells/*, SAB_LOAD_CELLS_t* rear_load_cells*/) {
+void hytech_dashboard::display_suspension_data(MCU_SUSPENSION_t* front_suspension, SAB_SUSPENSION_t* rear_suspension) {
     
     draw_quadrants("Suspension");
     _display.setFont(&FreeSans9pt7b);
@@ -351,32 +361,36 @@ void hytech_dashboard::display_suspension_data(MCU_LOAD_CELLS_t* front_load_cell
     set_cursor_in_quadrant(1, 20);
     int x = _display.getCursorX();
     _display.print("LD: ");
-    _display.println(front_load_cells->FR_load_cell);
+    _display.println(front_suspension->load_cell_fr);
     _display.setCursor(x, _display.getCursorY()-6);
-    _display.print("POT: 0");
+    _display.print("POT: ");
+    _display.println(front_suspension->potentiometer_fr);
 
     // q2
     set_cursor_in_quadrant(2, 20);
     x = _display.getCursorX();
     _display.print("LD: ");
-    _display.println(front_load_cells->FL_load_cell);
+    _display.println(front_suspension->load_cell_fl);
     _display.setCursor(x, _display.getCursorY()-6);
-    _display.print("POT: 0");
+    _display.print("POT: ");
+    _display.println(front_suspension->potentiometer_fl);
 
     set_cursor_in_quadrant(3, 20);
     x = _display.getCursorX();
     _display.print("LD: ");
-    // _display.println(rear_load_cells->RL_load_cell);
+    _display.println(rear_suspension->load_cell_rl);
     _display.setCursor(x, _display.getCursorY()-6);
-    _display.print("POT: 0");
+    _display.print("POT: ");
+    _display.println(rear_suspension->potentiometer_rl);
 
 
     set_cursor_in_quadrant(4, 20);
     x = _display.getCursorX();
     _display.print("LD: ");
-    // _display.println(rear_load_cells->RR_load_cell);
+    _display.println(rear_suspension->load_cell_rr);
     _display.setCursor(x, _display.getCursorY()-6);
-    _display.print("POT: 0");
+    _display.print("POT: ");
+    _display.println(rear_suspension->potentiometer_rr);
 
     _display.setFont(&FreeSans12pt7b);
 }
@@ -420,21 +434,29 @@ void hytech_dashboard::display_tire_data() {
     _display.setFont(&FreeSans12pt7b);
 }
 
-void hytech_dashboard::display_speeds(DRIVETRAIN_RPMS_TELEM_t* drivetrain_rpms) {
+void hytech_dashboard::display_speeds(DRIVETRAIN_RPMS_TELEM_t* drivetrain_rpms, BMS_VOLTAGES_t* bms_voltages) {
     _display.setFont(&FreeSans24pt7b);
     _display.setTextSize(2);
+
     _display.setCursor(100, 160);
     /** TODO: convert from RPM to MPH*/
-    double wheelspeed = abs(drivetrain_rpms->fr_motor_rpm * RPM_TO_METERS_PER_SECOND);
+    double rpms = drivetrain_rpms->fr_motor_rpm;
+    rpms += drivetrain_rpms->fl_motor_rpm;
+    rpms += drivetrain_rpms->rr_motor_rpm;
+    rpms += drivetrain_rpms->rl_motor_rpm;
+    rpms /= 4;
+    double wheelspeed = abs(rpms * RPM_TO_METERS_PER_SECOND);
     // SerialUSB.println(wheelspeed);
     uint16_t mph = (int) (wheelspeed * METERS_PER_SECOND_TO_MPH);
     // SerialUSB.println(mph);
-    _display.println(twoDigits(mph));
+    // _display.println(twoDigits(mph));
+    _display.println(HYTECH_low_voltage_ro_fromS(bms_voltages->low_voltage_ro));
+
     // _display.println(mph);
     _display.setTextSize(1);
     _display.setFont(&FreeSans12pt7b);
     _display.setCursor(125, 185);
-    _display.print("MPH");
+    _display.print("VOLTS");
     _display.setFont(&FreeSans12pt7b);
 }
         
@@ -498,10 +520,10 @@ void hytech_dashboard::set_cursor_in_quadrant(uint8_t quadrant, int vertical_off
 }
 
 // draws white rect top down
-void hytech_dashboard::draw_vertical_pedal_bar(int val, int initial_x_coord) {
+void hytech_dashboard::draw_vertical_pedal_bar(float val, int initial_x_coord) {
     double ZERO_PERCENT_VAL = 175;
     val = (val > 100) ? val = 100 : (val < 0) ? val = 0 : val = val;
-    int i = (100-val) * (ZERO_PERCENT_VAL/100.0);
+    int i = (int) (100-val) * (ZERO_PERCENT_VAL/100.0);
     _display.fillRect(initial_x_coord, 35, 18, i, WHITE);
 }
 
@@ -568,7 +590,8 @@ void hytech_dashboard::refresh_neopixels(DashboardCAN* CAN) {
         set_neopixel_color(LED_LIST_e::IMD, CAN->dash_mcu_state.imd_led);
         set_neopixel_color(LED_LIST_e::AMS, CAN->dash_mcu_state.ams_led);
         set_neopixel_color(LED_LIST_e::GLV, 0);
-        set_neopixel_color(LED_LIST_e::CRIT_CHARGE, 0);
+        // set_neopixel_color_gradient(LED_LIST_e::GLV, CAN->dash_mcu_state.glv_led);
+        set_neopixel_color_gradient(LED_LIST_e::CRIT_CHARGE, CAN->dash_mcu_state.pack_charge_led);
         
         _neopixels.show();
         CAN->mcu_state_update = false;
@@ -602,6 +625,36 @@ void hytech_dashboard::set_neopixel_color(LED_LIST_e led, uint8_t state) {
 
     _neopixels.setPixelColor(led, color);
 
+}
+
+void hytech_dashboard::set_neopixel_color_gradient(LED_LIST_e led, uint8_t value) {
+
+    uint8_t rgb[] = {0, 0, 0};
+
+    if (value > 128) {
+        rgb[0] = map(value, 128, 255, 255, 0);
+        rgb[1] = 255;
+    } else if (value > 30) {
+        rgb[0] = 255;
+        rgb[1] = map(value, 0, 128, 0, 255);
+    } else {
+        rgb[0] = blink() ? 255 : 0;
+        rgb[1] = 0;
+    }
+
+    uint32_t color = rgb[0] << 16 | rgb[1] << 8 | rgb[2];
+    _neopixels.setPixelColor(led, color);
+
+}
+
+bool hytech_dashboard::blink() {
+
+    if((millis() - last_blink_millis) > BLINK_PERIOD) {
+        last_blink = !last_blink;
+        last_blink_millis = millis();
+    }
+
+    return last_blink;
 }
 
 

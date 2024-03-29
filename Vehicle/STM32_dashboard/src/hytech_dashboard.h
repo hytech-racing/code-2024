@@ -29,8 +29,10 @@
 
 #define NUM_PAGES 5
 
+#define BLINK_PERIOD 500
+
 #define MAX_BRIGHTNESS 255
-#define MIN_BRIGHTNESS 10
+#define MIN_BRIGHTNESS 3
 #define BRIGHTNESS_STEPS 4
 #define STEP_BRIGHTNESS (MAX_BRIGHTNESS - MIN_BRIGHTNESS) / BRIGHTNESS_STEPS
 
@@ -84,6 +86,11 @@ class hytech_dashboard {
             @return hytech_dashboard pointer to the singleton
         */
         static hytech_dashboard* getInstance();
+
+        /*
+            Initializes display pins
+        */
+        void init();
 
         /*
             The startup function initializes the display devices and runs a short startup animation
@@ -154,6 +161,9 @@ class hytech_dashboard {
 
         int page_offset = -4;
 
+        uint32_t last_blink_millis = 0;
+        bool last_blink = false;
+
         /* Displays the clock and times in m:s.ms format based on the number of milliseconds*/
         void format_millis(String label, uint32_t time);
         
@@ -163,7 +173,7 @@ class hytech_dashboard {
         void draw_page_title(String text);
         
         /* helper function that draws the pedal bar */
-        void draw_vertical_pedal_bar(int val, int initial_x_coord);
+        void draw_vertical_pedal_bar(float val, int initial_x_coord);
 
         /* helper function that draws the regen bar based on regen percentage*/
         void draw_regen_bar(int percent);
@@ -198,11 +208,10 @@ class hytech_dashboard {
             @param front_load_cells A MCU_LOAD_CELLS_t struct from the CAN library that includes data sent from the ECU, gathered from the front corner boards.
             @param rear_load_cells A SAB_LOAD_CELLS_t struct from the CAN library that includes data sent from the SAB, gathered from the rear corner boards.
         */
-        void display_suspension_data(MCU_LOAD_CELLS_t* front_load_cells/*, SAB_LOAD_CELLS_t* rear_load_cells*/);
+        void display_suspension_data(MCU_SUSPENSION_t* front_suspension, SAB_SUSPENSION_t* rear_suspension);
 
         /* resets the clock back to current time*/
         void restart_current_timer();
-
 
         /* helper for displaying data in quadrants, sets the print cursor, based on the seleceted quadrant */
         void set_cursor_in_quadrant(uint8_t quadrant, int vertical_offset);
@@ -213,7 +222,7 @@ class hytech_dashboard {
         */
         void display_tire_data();
 
-        void display_speeds(DRIVETRAIN_RPMS_TELEM_t* drivetrain_rpms);
+        void display_speeds(DRIVETRAIN_RPMS_TELEM_t* drivetrain_rpms, BMS_VOLTAGES_t* bms_voltages);
         void display_segment_voltages();
 
         void display_error();
@@ -230,6 +239,14 @@ class hytech_dashboard {
 
         /* Helper function for refresh_neopixels that sets the color of pixels with the enumerated color values */
         void set_neopixel_color(LED_LIST_e led, uint8_t state);
+
+        void set_neopixel_color_gradient(LED_LIST_e led, uint8_t value);
+
+        /*
+            Display helper function for blinking display elements. Returns true if disp. element
+            should be visible for that refresh cycle. Blink period is defined by the BLINK_PERIOD define
+        */
+        bool blink();
 
 
 };

@@ -50,8 +50,8 @@ class DashboardCAN {
         MCU_ANALOG_READINGS_t mcu_analog_readings;
         BMS_VOLTAGES_t bms_voltages;
         MCU_PEDAL_READINGS_t mcu_pedal_readings;
-        MCU_LOAD_CELLS_t mcu_load_cells;
-        // SAB_LOAD_CELLS_t sab_load_cells;
+        MCU_SUSPENSION_t mcu_suspension;
+        SAB_SUSPENSION_t sab_suspension;
         DRIVETRAIN_RPMS_TELEM_t drivetrain_rpms;
         MC1_STATUS_t mc1_status;
         
