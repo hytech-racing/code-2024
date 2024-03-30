@@ -121,8 +121,7 @@ void DashboardCAN::send_status() {
   //   should_send = true;
   // }
 
-  if ((should_send && send_timer.check())
-      || memcmp(&dash_state, &prev_dash_state, sizeof(DASHBOARD_STATE_t)) != 0) {
+  if ((should_send && send_timer.check())) {
     //update button flags
     // use hytech pack function, passing in reference to message and length
     // length will be set in pack function. Returns msg id.

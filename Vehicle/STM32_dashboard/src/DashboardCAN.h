@@ -14,8 +14,6 @@
 #define OUTSIDE_BRIGHTNESS 255
 #define LOW_BRIGHTNESS 16
 
-#define LED_MIN_FAULT 23
-
 /*
     The DashboardCAN class handles all interaction with the CAN interface through the use
     of a pointer to the STM32_CAN object corresponding to the main CAN interface. All reading/writing
@@ -32,7 +30,7 @@ class DashboardCAN {
         // onto the CAN line if it has not received messages in 1 second
         // A metro of interval 0 will always be true, triggering
         Metro heartbeat_timer = Metro(2000, 1);
-        Metro send_timer = Metro(1000);
+        Metro send_timer = Metro(100);
         Metro mcu_state_timer = Metro(1000);
         uint8_t imd_ams_flags = 0;
         CAN_message_t _msg;

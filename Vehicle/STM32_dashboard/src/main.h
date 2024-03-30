@@ -5,19 +5,8 @@
 #include "Dashboard_Controls.h"
 #include "hytech_dashboard.h"
 
-//Dial pin definition (RANDOM FOR NOW)
-//physical wiring messed up
-#define DIAL_SIZE 6
-#define DIAL_MODE_ONE 9 //mode 0
-#define DIAL_MODE_TWO 8 //mode 1
-#define DIAL_ACCELERATION_LAUNCH_CONTROL 7// mode 2
-#define DIAL_SKIDPAD 6
-#define DIAL_AUTOCROSS 5
-#define DIAL_ENDURANCE 4
-
 #define MCU_HEARTBEAT_TIMEOUT 1000
 
-#define LED_MIN_FAULT 1000
 // Critical read pin definitions
 #define BOTS_READ A2 //BOTS
 #define BRB_READ A3 //BRB

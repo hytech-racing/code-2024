@@ -57,80 +57,29 @@ void Dashboard_Controls::update(DashboardCAN* CAN) {
   for(int i = 0; i < DIAL_SIZE; i++){
     int pin_read = digitalRead(dial_pins[i]);
     if (!pin_read) {
-      // SerialUSB.print(dial_pins[i]);
-      // SerialUSB.print(": ");
-      // SerialUSB.println(DIAL_MODES[i]);
       s->dial_state = i;
       break;
     }
   }
 
-  // for (int i = 0; i < 5; i++) {
-  //   int pin_read = digitalRead(buttons[i]);
-  //   if (!pin_read) {
-  //     SerialUSB.println(buttons[i]);
-  //   }
-  // }
-
   /* Update Buzzer */
   if (CAN->dash_mcu_state.drive_buzzer
-      && !buzzer_last_state
-      && (millis() - buzzer_last_millis) > BUZZER_TIME) {
+      && !buzzer_cur_state
+      && (millis() - buzzer_last_millis) > BUZZER_TIME * 2) {
     digitalWrite(BUZZER_PIN, HIGH);
     buzzer_cur_state = true;
-    buzzer_last_state = true;
     buzzer_timer.reset();
-  } else if (buzzer_last_state && buzzer_timer.check()) {
+  } else if (buzzer_cur_state && buzzer_timer.check()) {
     digitalWrite(BUZZER_PIN, LOW);
-    buzzer_cur_state = true;
-    buzzer_last_state = false;
+    buzzer_cur_state = false;
     buzzer_last_millis = millis();
   }
 
-  s->drive_buzzer = digitalRead(buzzer_cur_state);
+  s->drive_buzzer = buzzer_cur_state;
 
 
   /* Read Shutdown Signals*/
 
   CAN->inertia_read = digitalRead(SHUTDOWN_J_INERTIA_PIN);
   CAN->brb_read = digitalRead(SHUTDOWN_K_COKPIT_BRB_PIN);
-
-  // old code
-
-  // // this sets the button to be high: it is set low in send can
-  // hytech_dashboard::getInstance()->set_neopixel(1, LED_OFF);
-  // if (btn_safe_ctrl.isPressed())  {
-  //   CAN->dashboard_status.toggle_mode_btn();
-  //   if(!previousState) {
-  //     // SerialUSB.println("state incrementing");
-  //     // SerialUSB.println("Previous state false");
-  //     hytech_dashboard::getInstance()->increment_state();
-  //     previousState = true;
-  //   }
-  //   SerialUSB.println("BTN SAFE CTRL PRESSED");
-  //   hytech_dashboard::getInstance()->set_neopixel(1, LED_YELLOW);
-  // } else {
-  //   // SerialUSB.println("Previous state reset");
-  //   previousState = false;
-  // }
-  // if (btn_mc_cycle.isPressed())    {
-  //   CAN->dashboard_status.toggle_mc_cycle_btn();
-  //   SerialUSB.println("BTN MC CYCLE PRESSED");
-  //   hytech_dashboard::getInstance()->set_neopixel(1, LED_BLUE);
-  // }
-  // if (btn_torque_mode.isPressed()) {
-  //   CAN->dashboard_status.toggle_torque_mode_btn();
-  //   SerialUSB.println("BTN TORQUE MODE PRESSED");
-  //   hytech_dashboard::getInstance()->set_neopixel(1, LED_RED);
-  // }
-  // if (btn_led_dimmer.isPressed())  {
-  //   CAN->dashboard_status.toggle_led_dimmer_btn();
-  //   SerialUSB.println("BTN LED DIMMER PRESSED");
-  //   hytech_dashboard::getInstance()->set_neopixel(1, LED_ON_GREEN);
-  // }
-  // if(btn_restart_timer.isPressed()) {
-  //   SerialUSB.println("BTN RESTART TIMER PRESSED");
-  //   hytech_dashboard::getInstance()->restart_current_timer();
-  // }
-  // CAN->dashboard_status.set_start_btn(btn_start.isPressed());
 }

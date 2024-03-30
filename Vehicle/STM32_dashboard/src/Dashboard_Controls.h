@@ -58,7 +58,6 @@ class Dashboard_Controls {
 
 
         bool previousState = false;
-        bool buzzer_last_state = false;
         unsigned long buzzer_last_millis = 0;
         bool buzzer_cur_state = false;
         Metro buzzer_timer = Metro(BUZZER_TIME);
