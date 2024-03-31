@@ -481,7 +481,15 @@ void parse_CAN_CCU_status() {
 void parse_energy_meter_can_message(const CAN_message_t& RX_msg) {
   static CAN_message_t rx_msg = RX_msg;
   switch (rx_msg.id) {
-    case ID_EM_MEASUREMENT:   em_measurement.load_from_emeter(rx_msg.buf);    break;
+    case ID_EM_MEASUREMENT:   em_measurement.load_from_emeter(rx_msg.buf);   
+    Serial.print("Received 0x");
+        Serial.print(msg.id, HEX);
+        Serial.print(": ");
+        for (unsigned int i = 0; i < msg.len; i++) {
+            Serial.print(msg.buf[i]);
+            Serial.print(" ");
+        }
+        Serial.println(); break;
     case ID_EM_STATUS:        em_status.load(rx_msg.buf);         break;
   }         
 }
