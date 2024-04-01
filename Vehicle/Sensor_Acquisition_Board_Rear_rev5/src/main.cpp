@@ -92,6 +92,8 @@ Metro timer_send_CAN_vn_uncomp_accel = Metro(40);   // 25Hz
 Metro timer_send_CAN_vn_vel_body = Metro(30);   // 25Hz
 Metro timer_send_CAN_vn_angular_rate = Metro(20); // 50Hz
 Metro timer_send_CAN_vn_yaw_pitch_roll = Metro(50); // 25Hz
+Metro timer_send_CAN_vn_ecef_pos_xy = Metro(50); // 50Hz
+Metro timer_send_CAN_vn_ecef_pos_z = Metro(50); // 50Hz
 
 /* Utilities */
 // IIR filter for DSP
@@ -131,6 +133,8 @@ void send_CAN_vn_uncomp_accel();
 void send_CAN_vn_vel_body();
 void send_CAN_vn_angular_rate();
 void send_CAN_vn_yaw_pitch_roll();
+void send_CAN_vn_ecef_pos_xy();
+void send_CAN_vn_ecef_pos_z();
 // void process_ring_buffer(CANBufferType &rx_buffer, unsigned long curr_millis);
 // void send_all_CAN_msg(CANBufferType &tx_buffer, FlexCAN_T4_Base *can_interface);
 void init_all_adcs();
@@ -447,6 +451,8 @@ void send_CAN_vectornav() {
   send_CAN_vn_vel_body();
   send_CAN_vn_angular_rate();
   send_CAN_vn_yaw_pitch_roll();
+  send_CAN_vn_ecef_pos_xy();
+  send_CAN_vn_ecef_pos_z();
 
 }
 
@@ -531,6 +537,28 @@ void send_CAN_vn_yaw_pitch_roll() {
     CAN_message_t msg;
 
     auto id = Pack_VN_YPR_hytech(&vn_YPR, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
+    msg.id = id;
+    TELEM_CAN.write(msg);
+  }  
+}
+
+void send_CAN_vn_ecef_pos_xy() {
+  if (timer_send_CAN_vn_ecef_pos_xy.check())
+  {
+    CAN_message_t msg;
+
+    auto id = Pack_VN_ECEF_POS_XY_hytech(&vn_ecef_pos_xy, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
+    msg.id = id;
+    TELEM_CAN.write(msg);
+  }  
+}
+
+void send_CAN_vn_ecef_pos_z() {
+  if (timer_send_CAN_vn_ecef_pos_z.check())
+  {
+    CAN_message_t msg;
+
+    auto id = Pack_VN_ECEF_POS_Z_hytech(&vn_ecef_pos_z, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
     msg.id = id;
     TELEM_CAN.write(msg);
   }  
@@ -973,9 +1001,9 @@ void parseBinaryOutput_3() {
   vn_ecef_pos_z.vn_ecef_pos_z_ro = HYTECH_vn_ecef_pos_z_ro_toS(posEcefZ);
 
 #if DEBUG
-  Serial.printf("PosEcf0 raw: %f  ", (float)posEcef0);
-  Serial.printf("PosEcf1 raw: %f  ", (float)posEcef1);
-  Serial.printf("PosEcf2 raw: %f  \n", (float)posEcef2);
+  Serial.printf("PosEcf0 raw: %f  ", (float)posEcefX);
+  Serial.printf("PosEcf1 raw: %f  ", (float)posEcefY);
+  Serial.printf("PosEcf2 raw: %f  \n", (float)posEcefZ);
 #endif
   float velBodyX = parseFloat(receiveBuffer, 24 + OFFSET_PADDING_3);
   float velBodyY = parseFloat(receiveBuffer, 28 + OFFSET_PADDING_3);
