@@ -81,19 +81,19 @@ SysClock sys_clock;
 /* Metro timers */
 // Sensor read
 Metro timer_read_all_adcs = Metro(10);
-Metro timer_read_imu = Metro(10);               // serial delay from polling request
-Metro timer_vectornav_read_binary = Metro(20);  // configured 100Hz
-Metro timer_vectornav_change_reading = Metro(40); // change binary output group 25Hz
-Metro timer_send_CAN_vn_gps_time = Metro(40);   // 25Hz
-Metro timer_send_CAN_vn_position = Metro(50);   // 25Hz
-Metro timer_send_CAN_vn_accel = Metro(30);   // 25Hz
-Metro timer_send_CAN_vn_ins_status = Metro(50);   // 25Hz
-Metro timer_send_CAN_vn_uncomp_accel = Metro(40);   // 25Hz
-Metro timer_send_CAN_vn_vel_body = Metro(30);   // 25Hz
-Metro timer_send_CAN_vn_angular_rate = Metro(20); // 50Hz
-Metro timer_send_CAN_vn_yaw_pitch_roll = Metro(50); // 25Hz
-Metro timer_send_CAN_vn_ecef_pos_xy = Metro(50); // 50Hz
-Metro timer_send_CAN_vn_ecef_pos_z = Metro(50); // 50Hz
+Metro timer_read_imu = Metro(10);                      // serial delay from polling request
+Metro timer_vectornav_read_binary = Metro(20);         // configured 50Hz
+Metro timer_vectornav_change_reading = Metro(40);      // change binary output group 25Hz
+Metro timer_send_CAN_vn_gps_time = Metro(40);          // 25Hz
+Metro timer_send_CAN_vn_position = Metro(50);          // 20Hz
+Metro timer_send_CAN_vn_accel = Metro(20);             // 50Hz
+Metro timer_send_CAN_vn_ins_status = Metro(50);        // 20Hz
+Metro timer_send_CAN_vn_uncomp_accel = Metro(40);      // 25Hz
+Metro timer_send_CAN_vn_vel_body = Metro(20);          // 50Hz
+Metro timer_send_CAN_vn_angular_rate = Metro(20);      // 50Hz
+Metro timer_send_CAN_vn_yaw_pitch_roll = Metro(50);    // 20Hz
+Metro timer_send_CAN_vn_ecef_pos_xy = Metro(20);       // 50Hz
+Metro timer_send_CAN_vn_ecef_pos_z = Metro(20);        // 50Hz
 
 /* Utilities */
 // IIR filter for DSP
@@ -665,7 +665,7 @@ void configBinaryOutput(uint8_t binaryOutputNumber, uint8_t fields, uint16_t rat
     }
     else if (binaryOutputNumber == 2) {
       length += sprintf(toSend + length, ",%X", vn::protocol::uart::COMMONGROUP_YAWPITCHROLL |
-                                                vn::protocol::uart::COMMONGROUP_ACCEL |       // 0001 0001 0000 0000 = 11 00
+                                                vn::protocol::uart::COMMONGROUP_ACCEL |       // 0001 0001 0000 1000 = 11 08
                                                 vn::protocol::uart::COMMONGROUP_INSSTATUS);
     }
     #endif
@@ -919,6 +919,14 @@ void parseBinaryOutput_2() {
 #endif
 
   uint16_t InsStatus = parseUint16(receiveBuffer, 12 + OFFSET_PADDING_2);
+
+  // (Refer to VN300 manual p164)
+  // 00 not tracking
+  // 01 aligning
+  // 10 tracking
+  // 11 loss of GNSS for >45 seconds
+  uint16_t insMode = InsStatus & 0x0003; // Only take the last two bits
+  // Serial.printf("Ins status: %X\n", insMode);
 #if DEBUG
   Serial.printf("Ins status: %X\n", InsStatus);
 #endif
@@ -942,7 +950,7 @@ void parseBinaryOutput_2() {
   vn_accel.vn_lin_ins_accel_y_ro = HYTECH_vn_lin_ins_accel_y_ro_toS(accelBodyY);
   vn_accel.vn_lin_ins_accel_z_ro = HYTECH_vn_lin_ins_accel_z_ro_toS(accelBodyZ);
 
-  vn_ins_status.vn_gps_status = InsStatus;  // uint16_t
+  vn_ins_status.vn_gps_status = insMode;  // uint16_t
 
   vn_uncomp_accel.vn_lin_uncomp_accel_x_ro = HYTECH_vn_lin_uncomp_accel_x_ro_toS(uncompAccelBodyX);  // int16_t
   vn_uncomp_accel.vn_lin_uncomp_accel_y_ro = HYTECH_vn_lin_uncomp_accel_y_ro_toS(uncompAccelBodyY);
