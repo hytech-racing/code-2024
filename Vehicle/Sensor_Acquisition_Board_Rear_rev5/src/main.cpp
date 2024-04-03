@@ -81,19 +81,20 @@ SysClock sys_clock;
 /* Metro timers */
 // Sensor read
 Metro timer_read_all_adcs = Metro(10);
-Metro timer_read_imu = Metro(10);                      // serial delay from polling request
-Metro timer_vectornav_read_binary = Metro(20);         // configured 50Hz
+Metro timer_read_imu = Metro(8);                      // serial delay from polling request
+Metro timer_vectornav_read_binary = Metro(10);         // configured 100Hz
 Metro timer_vectornav_change_reading = Metro(40);      // change binary output group 25Hz
-Metro timer_send_CAN_vn_gps_time = Metro(40);          // 25Hz
-Metro timer_send_CAN_vn_position = Metro(50);          // 20Hz
-Metro timer_send_CAN_vn_accel = Metro(20);             // 50Hz
-Metro timer_send_CAN_vn_ins_status = Metro(50);        // 20Hz
-Metro timer_send_CAN_vn_uncomp_accel = Metro(40);      // 25Hz
-Metro timer_send_CAN_vn_vel_body = Metro(20);          // 50Hz
-Metro timer_send_CAN_vn_angular_rate = Metro(20);      // 50Hz
-Metro timer_send_CAN_vn_yaw_pitch_roll = Metro(50);    // 20Hz
-Metro timer_send_CAN_vn_ecef_pos_xy = Metro(20);       // 50Hz
-Metro timer_send_CAN_vn_ecef_pos_z = Metro(20);        // 50Hz
+// CAN send
+Metro timer_send_CAN_vn_gps_time = Metro(0);          // imm. after polling
+Metro timer_send_CAN_vn_position = Metro(4);          // 4ms after polling
+Metro timer_send_CAN_vn_angular_rate = Metro(8);      // 8ms after polling
+Metro timer_send_CAN_vn_accel = Metro(0);             // imm. after polling
+Metro timer_send_CAN_vn_ins_status = Metro(2);        // 2ms after polling
+Metro timer_send_CAN_vn_uncomp_accel = Metro(5);      // 5ms after polling
+Metro timer_send_CAN_vn_yaw_pitch_roll = Metro(7);    // 7ms after polling
+Metro timer_send_CAN_vn_ecef_pos_xy = Metro(0);       // imm. after polling
+Metro timer_send_CAN_vn_ecef_pos_z = Metro(4);        // 4ms after polling
+Metro timer_send_CAN_vn_vel_body = Metro(8);          // 8ms after polling
 
 /* Utilities */
 // IIR filter for DSP
@@ -105,8 +106,9 @@ Filter_IIR thermistor_iir[TOTAL_THERMISTOR_COUNT];
 /* Global variables */
 // Vector Nav
 uint8_t receiveBuffer[DEFAULT_SERIAL_BUFFER_SIZE];
-int binaryOutputNumber;
+uint8_t binaryOutputNumber;
 int currentPacketLength;
+int binaryReadingStart = false;
 // CAN messages (for now)
 VN_VEL_t vn_vel_body;
 VN_LINEAR_ACCEL_t vn_accel;
@@ -142,13 +144,15 @@ void init_all_iir_filters();
 void tick_all_interfaces(const SysTick_s &curr_tick);
 void tick_all_systems(const SysTick_s &curr_tick);
 // Vector Nav functions
+void setSerialBaudrate(uint32_t baudrate);
+void checkSerialBaudrate();
 void turnOffAsciiOutput();
 void configBinaryOutput(uint8_t binaryOutputNumber, uint8_t fields, uint16_t rateDivisor);
-void pollUserConfiguredBinaryOutput(uint8_t binaryOutputNumber);
+void pollUserConfiguredBinaryOutput(uint8_t *binaryOutputNumber);
 void readPollingBinaryOutput();
-void parseBinaryOutput_1();
-void parseBinaryOutput_2();
-void parseBinaryOutput_3();
+void parseBinaryOutput_1(int receivedPacketLength);
+void parseBinaryOutput_2(int receivedPacketLength);
+void parseBinaryOutput_3(int receivedPacketLength);
 void clearReceiveBuffer();
 float parseFloat(uint8_t buffer[], int startIndex);
 double parseDouble(uint8_t buffer[], int startIndex);
@@ -182,12 +186,19 @@ void setup() {
 
   // RS232
   Serial2.begin(IMU_RS232_SPEED);
+  // Wait for IMU to wake up   - Shayan
+  delay(START_UP_DELAY);
+  // Jack up baudrate. This is the highest we can go, limitation unknown
+  setSerialBaudrate(SERIAL_BAUDRATE6);
+  // End current serial comm.
+  Serial2.end();
+  // Resart serial with new baudrate
+  Serial2.begin(SERIAL_BAUDRATE6);
   // Initialize binary output reg. number
   binaryOutputNumber = 0;
   // Initialize binary packet lengh
   currentPacketLength = 0;
   // Configure sensor
-  delay(START_UP_DELAY);
   turnOffAsciiOutput();
   configBinaryOutput(1, 0x01, 0);    // 0000 0001
   configBinaryOutput(2, 0x05, 0);    // 0000 0101
@@ -208,7 +219,6 @@ void loop() {
 
   // Tick interfaces
   tick_all_interfaces(curr_tick);
-  send_CAN_vectornav();
 
   // Tick systems
   // Not currently needed
@@ -238,8 +248,7 @@ void loop() {
     Serial.println();
     Serial.println("Vector Nav:");
 
-    for (int i = 0; i < currentPacketLength; i++)
-    {
+    for (int i = 0; i < currentPacketLength; i++) {
       Serial.printf("%X ", receiveBuffer[i]);
     }
     Serial.printf("\nCurrent packet length: %d", currentPacketLength);
@@ -249,12 +258,15 @@ void loop() {
   
   // Vector Nav data acquisition (for now)
   // Involves delay. moved to bottom to preserve timing
-  if (timer_vectornav_change_reading.check())
-  {
-    binaryOutputNumber = (binaryOutputNumber + 1) % 3;
-  }
+  // if (timer_vectornav_change_reading.check())
+  // {
+  //   binaryOutputNumber = (binaryOutputNumber + 1) % 3;
+  // }
+
+  // checkSerialBaudrate();
   
-  pollUserConfiguredBinaryOutput(binaryOutputNumber + 1);
+  pollUserConfiguredBinaryOutput(&binaryOutputNumber);
+  // binaryOutputNumber = (binaryOutputNumber + 1) % 3; // skill issue
   readPollingBinaryOutput();   // do need to be here now
 
 }
@@ -587,6 +599,7 @@ void tick_all_interfaces(const SysTick_s &curr_tick) {
 
     update_all_CAN_msg();
     send_sab_CAN_msg();
+    send_CAN_vectornav();
   }
 
 
@@ -598,6 +611,53 @@ void tick_all_interfaces(const SysTick_s &curr_tick) {
 */
 void tick_all_systems(const SysTick_s &curr_tick) {
   
+}
+
+void setSerialBaudrate(uint32_t baudrate) {
+
+  char toSend[DEFAULT_WRITE_BUFFER_MIDIUM];
+
+  size_t length = sprintf(toSend, "$VNWRG,05,%u", baudrate);
+
+  length += sprintf(toSend + length, "*XX\r\n");
+
+  Serial2.print(toSend);
+  Serial2.flush();
+
+  delay(10);
+  
+  int index = 0;
+  char receiveBuffer[DEFAULT_READ_BUFFER_SIZE] = {'\0'};
+  while (Serial2.available() > 0 && index < DEFAULT_READ_BUFFER_SIZE - 1) {
+    receiveBuffer[index++] = Serial2.read();
+  }
+  Serial.print("Set serial baudrate: ");
+  Serial.println(receiveBuffer);
+
+  Serial.println();
+
+}
+
+void checkSerialBaudrate() {
+  char toSend[DEFAULT_WRITE_BUFFER_SIZE];
+
+  size_t length = sprintf(toSend, "$VNRRG,05");
+  length += sprintf(toSend + length, "*XX\r\n");
+
+  Serial2.print(toSend);
+  Serial2.flush();
+
+  delay(10);
+  
+  int index = 0;
+  char receiveBuffer[DEFAULT_READ_BUFFER_SIZE] = {'\0'};
+  while (Serial2.available() > 0 && index < DEFAULT_READ_BUFFER_SIZE - 1) {
+    receiveBuffer[index++] = Serial2.read();
+  }
+  Serial.print("Read serial baudrate: ");
+  Serial.println(receiveBuffer);
+
+  Serial.println();
 }
 
 void turnOffAsciiOutput() { // VNOFF
@@ -727,19 +787,24 @@ void configBinaryOutput(uint8_t binaryOutputNumber, uint8_t fields, uint16_t rat
 
 }
 
-void pollUserConfiguredBinaryOutput(uint8_t binaryOutputNumber) {
+void pollUserConfiguredBinaryOutput(uint8_t *binaryOutputNumber) {
 
   if (timer_vectornav_read_binary.check()) {
 
     char toSend[DEFAULT_WRITE_BUFFER_SIZE];
 
-    size_t length = sprintf(toSend, "$VNBOM,%u*", binaryOutputNumber);
+    size_t length = sprintf(toSend, "$VNBOM,%u*", *binaryOutputNumber + 1);
     length += sprintf(toSend + length, "XX\r\n");
 
     Serial2.print(toSend);
     Serial2.flush();
 
     timer_read_imu.reset();
+
+    if (!binaryReadingStart)
+      binaryReadingStart = true;
+
+    *binaryOutputNumber = (*binaryOutputNumber + 1) % 3;
 
     // delay(20);
     
@@ -757,28 +822,34 @@ void pollUserConfiguredBinaryOutput(uint8_t binaryOutputNumber) {
 
 void readPollingBinaryOutput() {
 
-  if (timer_read_imu.check()) {
+  if (timer_read_imu.check() && binaryReadingStart) {
+
+    // while (Serial2.available()) {
+    //   Serial.print(Serial2.read(), HEX);
+    // }
+
+    // Serial.println();
 
     int index = 0;
 
-    while (Serial2.available())
-    {
+    while (Serial2.available()) {
       receiveBuffer[index++] = Serial2.read();
     }
+    currentPacketLength = index;
 
     if (receiveBuffer[0] == 0xFA) {
       switch (receiveBuffer[1])
       {
         case 0x01:
-          parseBinaryOutput_1();
+          parseBinaryOutput_1(currentPacketLength);
           break;
 
         case 0x05:
-          parseBinaryOutput_2();
+          parseBinaryOutput_2(currentPacketLength);
           break;
 
         case 0x28:
-          parseBinaryOutput_3();
+          parseBinaryOutput_3(currentPacketLength);
           break;
         
         default:
@@ -790,9 +861,13 @@ void readPollingBinaryOutput() {
 
 }
 
-void parseBinaryOutput_1() {
+void parseBinaryOutput_1(int receivedPacketLength) {
 
   int binaryPacketLength = 1 + 1 + 2 * BINARY_OUTPUT_GROUP_COUNT_1 + BINARY_OUTPUT_PAYLOAD_1 + 2;  // in bytes: sync, groups, group fields, payload, crc
+
+  if (receivedPacketLength != binaryPacketLength) {
+    return;
+  }  
 
   uint8_t syncByte = receiveBuffer[0];
 #if SANITY_CHECK
@@ -833,18 +908,19 @@ void parseBinaryOutput_1() {
 #if DEBUG
   Serial.printf("GPS time: %X\n", timeGPS);
 #endif
+  timer_send_CAN_vn_gps_time.reset();
 
-  vn_position.vn_gps_lat_ro = latitude;  // uint32_t
-
+  vn_position.vn_gps_lat_ro = HYTECH_vn_gps_lat_ro_toS((float)latitude);  // uint32_t
 #if DEBUG
   Serial.printf("Raw Latitude: %f  ", latitude);
   // Serial.printf("Latitude to S: %d ", HYTECH_vn_gps_lat_ro_toS(latitude));
 #endif
-  vn_position.vn_gps_lon_ro = longitude;
+  vn_position.vn_gps_lon_ro = HYTECH_vn_gps_lon_ro_toS((float)longitude);
 #if DEBUG
   Serial.printf("Raw Longitude: %f  ", longitude);
   // Serial.printf("Longitude to S: %d ", HYTECH_vn_gps_lon_ro_toS(longitude));
 #endif
+  timer_send_CAN_vn_position.reset();
 
   vn_angular_rate.angular_rate_x_ro = HYTECH_angular_rate_x_ro_toS(angularRateBodyX);
 #if DEBUG
@@ -861,16 +937,19 @@ void parseBinaryOutput_1() {
   Serial.printf("Angular Rate Z raw: %f  ", angularRateBodyZ);
   // Serial.printf("Angular Rate Z to S: %d \n", HYTECH_angular_rate_z_ro_toS(angularRateBodyZ));
 #endif
-
-  currentPacketLength = binaryPacketLength;
+  timer_send_CAN_vn_angular_rate.reset();
   
   // clearReceiveBuffer();
 
 }
 
-void parseBinaryOutput_2() {
+void parseBinaryOutput_2(int receivedPacketLength) {
 
   int binaryPacketLength = 1 + 1 + 2 * BINARY_OUTPUT_GROUP_COUNT_2 + BINARY_OUTPUT_PAYLOAD_2 + 2;  // in bytes: sync, groups, group fields, payload, crc
+
+  if (receivedPacketLength != binaryPacketLength) {
+    return;
+  }
 
   uint8_t syncByte = receiveBuffer[0];
 #if SANITY_CHECK
@@ -949,28 +1028,34 @@ void parseBinaryOutput_2() {
   vn_accel.vn_lin_ins_accel_x_ro = HYTECH_vn_lin_ins_accel_x_ro_toS(accelBodyX);  // int16_t
   vn_accel.vn_lin_ins_accel_y_ro = HYTECH_vn_lin_ins_accel_y_ro_toS(accelBodyY);
   vn_accel.vn_lin_ins_accel_z_ro = HYTECH_vn_lin_ins_accel_z_ro_toS(accelBodyZ);
+  timer_send_CAN_vn_accel.reset();
 
   vn_ins_status.vn_gps_status = insMode;  // uint16_t
+  timer_send_CAN_vn_ins_status.reset();
 
   vn_uncomp_accel.vn_lin_uncomp_accel_x_ro = HYTECH_vn_lin_uncomp_accel_x_ro_toS(uncompAccelBodyX);  // int16_t
   vn_uncomp_accel.vn_lin_uncomp_accel_y_ro = HYTECH_vn_lin_uncomp_accel_y_ro_toS(uncompAccelBodyY);
   vn_uncomp_accel.vn_lin_uncomp_accel_z_ro = HYTECH_vn_lin_uncomp_accel_z_ro_toS(uncompAccelBodyZ);
+  timer_send_CAN_vn_uncomp_accel.reset();
 
   vn_YPR.vn_yaw_ro   = HYTECH_vn_yaw_ro_toS(yaw);
   vn_YPR.vn_pitch_ro = HYTECH_vn_pitch_ro_toS(pitch);
   vn_YPR.vn_roll_ro  = HYTECH_vn_roll_ro_toS(roll);
+  timer_send_CAN_vn_yaw_pitch_roll.reset();
 
   // Missing CAN message for deltaVel right now
-
-  currentPacketLength = binaryPacketLength;
 
   // clearReceiveBuffer();
 
 }
 
-void parseBinaryOutput_3() {
+void parseBinaryOutput_3(int receivedPacketLength) {
 
   int binaryPacketLength = 1 + 1 + 2 * BINARY_OUTPUT_GROUP_COUNT_3 + BINARY_OUTPUT_PAYLOAD_3 + 2;  // in bytes: sync, groups, group fields, payload, crc
+
+  if (receivedPacketLength != binaryPacketLength) {
+    return;
+  }
 
   uint8_t syncByte = receiveBuffer[0];
 #if SANITY_CHECK
@@ -1003,16 +1088,18 @@ void parseBinaryOutput_3() {
   double posEcefX = parseDouble(receiveBuffer, OFFSET_PADDING_3);
   double posEcefY = parseDouble(receiveBuffer, 8 + OFFSET_PADDING_3);
   double posEcefZ = parseDouble(receiveBuffer, 16 + OFFSET_PADDING_3);
-
-  vn_ecef_pos_xy.vn_ecef_pos_x_ro = HYTECH_vn_ecef_pos_x_ro_toS(posEcefX);
-  vn_ecef_pos_xy.vn_ecef_pos_y_ro = HYTECH_vn_ecef_pos_y_ro_toS(posEcefY);
-  vn_ecef_pos_z.vn_ecef_pos_z_ro = HYTECH_vn_ecef_pos_z_ro_toS(posEcefZ);
-
 #if DEBUG
   Serial.printf("PosEcf0 raw: %f  ", (float)posEcefX);
   Serial.printf("PosEcf1 raw: %f  ", (float)posEcefY);
   Serial.printf("PosEcf2 raw: %f  \n", (float)posEcefZ);
 #endif
+  vn_ecef_pos_xy.vn_ecef_pos_x_ro = HYTECH_vn_ecef_pos_x_ro_toS(posEcefX);
+  vn_ecef_pos_xy.vn_ecef_pos_y_ro = HYTECH_vn_ecef_pos_y_ro_toS(posEcefY);
+  timer_send_CAN_vn_ecef_pos_xy.reset();
+
+  vn_ecef_pos_z.vn_ecef_pos_z_ro = HYTECH_vn_ecef_pos_z_ro_toS(posEcefZ);
+  timer_send_CAN_vn_ecef_pos_z.reset();
+
   float velBodyX = parseFloat(receiveBuffer, 24 + OFFSET_PADDING_3);
   float velBodyY = parseFloat(receiveBuffer, 28 + OFFSET_PADDING_3);
   float velBodyZ = parseFloat(receiveBuffer, 32 + OFFSET_PADDING_3);
@@ -1033,8 +1120,7 @@ void parseBinaryOutput_3() {
 #if DEBUG
   Serial.printf("Velocity body Z: %f\n", velBodyZ);
 #endif
-
-  currentPacketLength = binaryPacketLength;
+  timer_send_CAN_vn_vel_body.reset();
 
   // clearReceiveBuffer();
 
