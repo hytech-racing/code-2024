@@ -266,7 +266,6 @@ void loop() {
   // checkSerialBaudrate();
   
   pollUserConfiguredBinaryOutput(&binaryOutputNumber);
-  // binaryOutputNumber = (binaryOutputNumber + 1) % 3; // skill issue
   readPollingBinaryOutput();   // do need to be here now
 
 }
@@ -804,7 +803,7 @@ void pollUserConfiguredBinaryOutput(uint8_t *binaryOutputNumber) {
     if (!binaryReadingStart)
       binaryReadingStart = true;
 
-    *binaryOutputNumber = (*binaryOutputNumber + 1) % 3;
+    *binaryOutputNumber = (*binaryOutputNumber + 1) % 3;  // skill issue fixed by Andy
 
     // delay(20);
     
