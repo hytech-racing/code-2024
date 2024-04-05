@@ -34,7 +34,6 @@
 #define BALANCE_CONTINUOUS 2000     // Sets balancing duty cycle as 100%
 #define BALANCE_MODE 1            // Mode 0 is normal balance, mode 1 is progressive balance
 
-
 //shunt def
 #define CURR_SHUNT A2
 // VARIABLE DECLARATIONS
@@ -262,7 +261,7 @@ void coulomb_counter() {
   // integrate shunt current over time to count coulombs and provide state of charge
   current_shunt_read = (analogRead(CURR_SHUNT) * 3.3) / 1024; //.68
   shunt_voltage_input = (current_shunt_read * (9.22 / 5.1)) - 3.3;
-  shunt_current = (shunt_voltage_input / 0.01);
+  shunt_current = (shunt_voltage_input / 0.005);
   charge -= (CC_integrator_timer * shunt_current) / 1000000;
   state_of_charge = charge / MAX_PACK_CHARGE;
   CC_integrator_timer = 0;
