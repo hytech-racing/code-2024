@@ -88,7 +88,7 @@ Metro timer_read_imu = Metro(20);
 
 Metro timer_inverter_enable = Metro(5000);
 Metro timer_reset_inverter = Metro(5000);
-Metro timer_watchdog_timer = Metro(10);
+Metro timer_watchdog_timer = Metro(7);
 
 elapsedMillis pedal_implausability_duration;
 
@@ -287,6 +287,12 @@ void loop() {
     Serial.println(mcu_load_cells.get_FR_load_cell());
     Serial.println(mcu_load_cells.get_RL_load_cell());
     Serial.println(mcu_load_cells.get_RR_load_cell());
+    Serial.println("SUS POTS");
+    Serial.println(mcu_front_potentiometers.get_pot1());
+    Serial.println(mcu_front_potentiometers.get_pot3());
+    Serial.println(mcu_rear_potentiometers.get_pot4());
+    Serial.println(mcu_rear_potentiometers.get_pot6());
+    
     Serial.println(torque_setpoint_array[0]);
     Serial.println(torque_setpoint_array[1]);
     Serial.println(torque_setpoint_array[2]);
@@ -874,26 +880,51 @@ inline void set_inverter_torques() {
         speed_setpoint_array[i] = MAX_ALLOWED_SPEED;
       }
       launch_state = launch_not_ready;
-      // Original load cell torque vectoring
+      // standard no torque vectoring
 
-    
       max_front_power = 19000.0;
       max_rear_power = 36000.0;
-
       
-      load_cell_alpha = 0.95;
-      total_torque = 4 * (avg_accel - avg_brake) ;
-      total_load_cells = mcu_load_cells.get_FL_load_cell() + mcu_load_cells.get_FR_load_cell() + mcu_load_cells.get_RL_load_cell() + mcu_load_cells.get_RR_load_cell();
-      if (avg_accel >= avg_brake) {
-        torque_setpoint_array[0] = (int16_t)((float)mcu_load_cells.get_FL_load_cell() / (float)total_load_cells * (float)total_torque);
-        torque_setpoint_array[1] = (int16_t)((float)mcu_load_cells.get_FR_load_cell() / (float)total_load_cells * (float)total_torque);
-        torque_setpoint_array[2] = (int16_t)((float)mcu_load_cells.get_RL_load_cell() / (float)total_load_cells * (float)total_torque);
-        torque_setpoint_array[3] = (int16_t)((float)mcu_load_cells.get_RR_load_cell() / (float)total_load_cells * (float)total_torque);
+      // Based on Nissan ATTESA ET-S
+      // 1. Determine F/R torque allocation. Default to rear bias, but increase front bias as rear begins to slip more than front.
+      // Send up to 50% of torque to the front.
+      // Slip is determined by observing how much faster the rear axle is spinning than the front axle.
+      // Slip equation is clamp((avg rear speed) / (avg front speed) * (tunable slip factor), 0, 1).
+      // Torque equation is (default split) * (1 - slip) + (alt split) * slip
+
+      if (avg_accel - avg_brake >= 0) {
+        // Accelerating
+
+        fr_slip_clamped = (((float)mc_status[2].get_speed() + (float)mc_status[3].get_speed() + 250.0) / ((float)mc_status[0].get_speed() + (float)mc_status[1].get_speed() + 250.0) - 1.0) * fr_slip_factor;
+        fr_slip_clamped = min(1, max(0, fr_slip_clamped));
+
+        // set front torque
+        f_torque = 2 * ((1 - attesa_def_split) * (1 - fr_slip_clamped) + (1 - attesa_alt_split) * fr_slip_clamped) * (avg_accel -  avg_brake);
+        torque_setpoint_array[0] = f_torque / 2;
+        torque_setpoint_array[1] = f_torque / 2;
+
+        // set rear torques. eLSD
+        r_torque = 2 * ((attesa_def_split) * (1 - fr_slip_clamped) + (attesa_alt_split) * fr_slip_clamped) * (avg_accel -  avg_brake);
+        if (mc_status[2].get_speed() > mc_status[3].get_speed()) {
+          // Rear left is spinning faster than rear right, allocate torque more to rear right
+          rear_lr_slip_clamped = (((float)(mc_status[2].get_speed()) + 250.0) / ((float)(mc_status[3].get_speed()) + 250.0) - 1.0) * lsd_slip_factor;
+          rear_lr_slip_clamped = min(0.5, max(0, rear_lr_slip_clamped));
+          lsd_right_split = 0.5 + rear_lr_slip_clamped;
+        } else {
+          // Rear right is spinning faster than rear left, allocate torque more to rear left
+          rear_lr_slip_clamped = (((float)(mc_status[3].get_speed()) + 250.0) / ((float)(mc_status[2].get_speed()) + 250.0) - 1.0) * lsd_slip_factor;
+          rear_lr_slip_clamped = min(0.5, max(0, rear_lr_slip_clamped));
+          lsd_right_split = 0.5 - rear_lr_slip_clamped;
+        }
+
+        torque_setpoint_array[2] = r_torque * (1 - lsd_right_split);
+        torque_setpoint_array[3] = r_torque * lsd_right_split;
       } else {
-        torque_setpoint_array[0] = (int16_t)((float)mcu_load_cells.get_FL_load_cell() / (float)total_load_cells * (float)total_torque);
-        torque_setpoint_array[1] = (int16_t)((float)mcu_load_cells.get_FR_load_cell() / (float)total_load_cells * (float)total_torque);
-        torque_setpoint_array[2] = (int16_t)((float)mcu_load_cells.get_RL_load_cell() / (float)total_load_cells * (float)total_torque / 2.0);
-        torque_setpoint_array[3] = (int16_t)((float)mcu_load_cells.get_RR_load_cell() / (float)total_load_cells * (float)total_torque / 2.0);
+        // Braking
+        torque_setpoint_array[0] = 2.0 * front_brake_balance * (avg_accel - avg_brake);
+        torque_setpoint_array[1] = 2.0 * front_brake_balance * (avg_accel - avg_brake);
+        torque_setpoint_array[2] = 2.0 * rear_brake_balance * (avg_accel - avg_brake);
+        torque_setpoint_array[3] = 2.0 * rear_brake_balance * (avg_accel - avg_brake);
       }
       break;
     case 2:
@@ -1059,33 +1090,33 @@ inline void set_inverter_torques() {
         torque_setpoint_array[3] = (int16_t)((float)mcu_load_cells.get_RR_load_cell() / (float)total_load_cells * (float)total_torque / 2.0);
       }
       break;
-    case 5:
-      for (int i = 0; i < 4; i++) {
-        speed_setpoint_array[i] = MAX_ALLOWED_SPEED;
-      }
-      launch_state = launch_not_ready;
-      // Original load cell torque vectoring
+    // case 5:
+    //   for (int i = 0; i < 4; i++) {
+    //     speed_setpoint_array[i] = MAX_ALLOWED_SPEED;
+    //   }
+    //   launch_state = launch_not_ready;
+    //   // Original load cell torque vectoring
 
     
-      max_front_power = 21760.0;
-      max_rear_power = 41240.0;
+    //   max_front_power = 21760.0;
+    //   max_rear_power = 41240.0;
 
       
-      load_cell_alpha = 0.95;
-      total_torque = 4 * (avg_accel - avg_brake) ;
-      total_load_cells = mcu_load_cells.get_FL_load_cell() + mcu_load_cells.get_FR_load_cell() + mcu_load_cells.get_RL_load_cell() + mcu_load_cells.get_RR_load_cell();
-      if (avg_accel >= avg_brake) {
-        torque_setpoint_array[0] = (int16_t)((float)mcu_load_cells.get_FL_load_cell() / (float)total_load_cells * (float)total_torque);
-        torque_setpoint_array[1] = (int16_t)((float)mcu_load_cells.get_FR_load_cell() / (float)total_load_cells * (float)total_torque);
-        torque_setpoint_array[2] = (int16_t)((float)mcu_load_cells.get_RL_load_cell() / (float)total_load_cells * (float)total_torque);
-        torque_setpoint_array[3] = (int16_t)((float)mcu_load_cells.get_RR_load_cell() / (float)total_load_cells * (float)total_torque);
-      } else {
-        torque_setpoint_array[0] = (int16_t)((float)mcu_load_cells.get_FL_load_cell() / (float)total_load_cells * (float)total_torque);
-        torque_setpoint_array[1] = (int16_t)((float)mcu_load_cells.get_FR_load_cell() / (float)total_load_cells * (float)total_torque);
-        torque_setpoint_array[2] = (int16_t)((float)mcu_load_cells.get_RL_load_cell() / (float)total_load_cells * (float)total_torque / 2.0);
-        torque_setpoint_array[3] = (int16_t)((float)mcu_load_cells.get_RR_load_cell() / (float)total_load_cells * (float)total_torque / 2.0);
-      }
-      break;
+    //   load_cell_alpha = 0.95;
+    //   total_torque = 4 * (avg_accel - avg_brake) ;
+    //   total_load_cells = mcu_load_cells.get_FL_load_cell() + mcu_load_cells.get_FR_load_cell() + mcu_load_cells.get_RL_load_cell() + mcu_load_cells.get_RR_load_cell();
+    //   if (avg_accel >= avg_brake) {
+    //     torque_setpoint_array[0] = (int16_t)((float)mcu_load_cells.get_FL_load_cell() / (float)total_load_cells * (float)total_torque);
+    //     torque_setpoint_array[1] = (int16_t)((float)mcu_load_cells.get_FR_load_cell() / (float)total_load_cells * (float)total_torque);
+    //     torque_setpoint_array[2] = (int16_t)((float)mcu_load_cells.get_RL_load_cell() / (float)total_load_cells * (float)total_torque);
+//     torque_setpoint_array[3] = (int16_t)((float)mcu_load_cells.get_RR_load_cell() / (float)total_load_cells * (float)total_torque);
+    //   } else {
+    //     torque_setpoint_array[0] = (int16_t)((float)mcu_load_cells.get_FL_load_cell() / (float)total_load_cells * (float)total_torque);
+    //     torque_setpoint_array[1] = (int16_t)((float)mcu_load_cells.get_FR_load_cell() / (float)total_load_cells * (float)total_torque);
+    //     torque_setpoint_array[2] = (int16_t)((float)mcu_load_cells.get_RL_load_cell() / (float)total_load_cells * (float)total_torque / 2.0);
+    //     torque_setpoint_array[3] = (int16_t)((float)mcu_load_cells.get_RR_load_cell() / (float)total_load_cells * (float)total_torque / 2.0);
+    //   }
+    //   break;
   }
 
 
