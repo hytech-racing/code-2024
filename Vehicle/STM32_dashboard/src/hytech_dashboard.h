@@ -27,7 +27,7 @@
 #define NEOPIXEL_PIN PC14
 #define NEOPIXEL_COUNT 12
 
-#define NUM_PAGES 6
+#define NUM_PAGES 7
 
 #define BLINK_PERIOD 500
 
@@ -158,6 +158,19 @@ class hytech_dashboard {
         uint8_t current_brightness = MIN_BRIGHTNESS;
 
         int page_offset = -4;
+
+        /* accel max, min*/
+        uint32_t max_accel_1 = 0;
+        uint32_t max_accel_2 = 0;
+        uint32_t min_accel_1 = 0;
+        uint32_t min_accel_2 = 0;
+
+        /* brake max, min*/
+        uint32_t max_brake_1 = 0;
+        uint32_t max_brake_2 = 0;
+        uint32_t min_brake_1 = 0;
+        uint32_t min_brake_2 = 0;
+        
 
         uint32_t last_blink_millis = 0;
         bool last_blink = false;

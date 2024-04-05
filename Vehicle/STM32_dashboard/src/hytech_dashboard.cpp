@@ -172,6 +172,14 @@ void hytech_dashboard::startup() {
     _display.drawBitmap(0,0, epd_bitmap_hytech_dashboard, 320, 240, BLACK);
 }
 
+uint32_t max(uint32_t val1, uint32_t val2) {
+    return (val1 >= val2) ? val1 : val2;
+}
+
+uint32_t min(uint32_t val1, uint32_t val2) {
+    return (val1 <= val2) ? val1 : val2;
+}
+
 
 void hytech_dashboard::refresh(DashboardCAN* CAN) {
     // update neopixels
@@ -223,7 +231,59 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
 
     switch(current_page) {
         case 0:
-            _display.setCursor(100,100);
+            _display.setCursor(70,100);
+            _display.setTextSize(1);
+
+            max_accel_1 = max(CAN->pedal_raw.accel_1_raw, max_accel_1);
+            max_accel_2 = max(CAN->pedal_raw.accel_2_raw, max_accel_2);
+            min_accel_1 = min(CAN->pedal_raw.accel_1_raw, min_accel_1);
+            min_accel_2 = min(CAN->pedal_raw.accel_2_raw, min_accel_2);
+
+            max_brake_1 = max(CAN->pedal_raw.brake_1_raw, max_brake_1);
+            max_brake_2 = max(CAN->pedal_raw.brake_2_raw, max_brake_2);
+            min_brake_1 = max(CAN->pedal_raw.brake_1_raw, min_brake_1);
+            min_brake_2 = max(CAN->pedal_raw.brake_2_raw, min_brake_2);
+
+            _display.print("max a1: ");
+            _display.println(max_accel_1);
+            _display.setCursor(100, _display.getCursorY());
+
+            _display.print("min a1: ");
+            _display.println(min_accel_1);
+            _display.setCursor(100, _display.getCursorY());
+
+            _display.print("max a2: ");
+            _display.println(max_accel_2);
+            _display.setCursor(100, _display.getCursorY());
+
+            _display.print("min a2: ");
+            _display.println(min_accel_2);
+            _display.setCursor(100, _display.getCursorY());
+
+            
+            /* BRAKE */
+
+            _display.print("max b1: ");
+            _display.println(max_brake_1);
+            _display.setCursor(100, _display.getCursorY());
+
+            _display.print("min b1: ");
+            _display.println(min_brake_1);
+            _display.setCursor(100, _display.getCursorY());
+
+            _display.print("max b2: ");
+            _display.println(max_brake_2);
+            _display.setCursor(100, _display.getCursorY());
+
+            _display.print("min b2: ");
+            _display.println(min_brake_2);
+            _display.setCursor(100, _display.getCursorY());
+
+
+            break;        
+        case 1:
+            _display.setCursor(70,100);
+            _display.setTextSize(1);
 
             _display.print("a1: ");
             _display.println(CAN->pedal_raw.accel_1_raw);
@@ -241,21 +301,21 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
             _display.println(CAN->pedal_raw.brake_2_raw);
             _display.setCursor(100, _display.getCursorY());
             break;
-        case 1:
+        case 2:
             display_speeds(&(CAN->drivetrain_rpms), &(CAN->bms_voltages));
             break;
-        case 2:
+        case 3:
             display_suspension_data(&(CAN->mcu_suspension), &(CAN->sab_suspension));
             break;
-        case 3:
+        case 4:
             // tires
             //temp,pressure
             display_tire_data();
             break;
-        case 4:
+        case 5:
             show_lap_times(&(CAN->lap_times), &(CAN->driver_msg));
             break;
-        case 5:
+        case 6:
             display_segment_voltages();
             break;
         default:
