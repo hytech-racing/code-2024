@@ -201,7 +201,10 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     float brake_mech_point = HYTECH_mechanical_brake_percent_float_ro_fromS(CAN->mcu_pedal_readings.mechanical_brake_percent_float_ro);
     float accel_pedal = HYTECH_accel_percent_float_ro_fromS(CAN->mcu_pedal_readings.accel_percent_float_ro);
     float brake_pedal = HYTECH_brake_percent_float_ro_fromS(CAN->mcu_pedal_readings.brake_percent_float_ro);
-    draw_vertical_pedal_bar(accel_pedal, 285);
+
+    float current = CAN->em_measurement.em_current;
+    SerialUSB.println(current);
+    // draw_vertical_pedal_bar(accel_pedal, 285);
     draw_vertical_pedal_bar(brake_pedal, 17);
 
     if (CAN->mcu_pedal_readings.brake_percent_float_ro >= CAN->mcu_pedal_readings.mechanical_brake_percent_float_ro) {
@@ -220,20 +223,39 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
 
     switch(current_page) {
         case 0:
-            display_speeds(&(CAN->drivetrain_rpms), &(CAN->bms_voltages));
+            _display.setCursor(100,100);
+
+            _display.print("a1: ");
+            _display.println(CAN->pedal_raw.accel_1_raw);
+            _display.setCursor(100, _display.getCursorY());
+
+            _display.print("a2: ");
+            _display.println(CAN->pedal_raw.accel_2_raw);
+            _display.setCursor(100, _display.getCursorY());
+
+            _display.print("b1: ");
+            _display.println(CAN->pedal_raw.brake_1_raw);
+            _display.setCursor(100, _display.getCursorY());
+
+            _display.print("b2: ");
+            _display.println(CAN->pedal_raw.brake_2_raw);
+            _display.setCursor(100, _display.getCursorY());
             break;
         case 1:
-            display_suspension_data(&(CAN->mcu_suspension), &(CAN->sab_suspension));
+            display_speeds(&(CAN->drivetrain_rpms), &(CAN->bms_voltages));
             break;
         case 2:
+            display_suspension_data(&(CAN->mcu_suspension), &(CAN->sab_suspension));
+            break;
+        case 3:
             // tires
             //temp,pressure
             display_tire_data();
             break;
-        case 3:
+        case 4:
             show_lap_times(&(CAN->lap_times), &(CAN->driver_msg));
             break;
-        case 4:
+        case 5:
             display_segment_voltages();
             break;
         default:

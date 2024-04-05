@@ -27,7 +27,7 @@
 #define NEOPIXEL_PIN PC14
 #define NEOPIXEL_COUNT 12
 
-#define NUM_PAGES 5
+#define NUM_PAGES 6
 
 #define BLINK_PERIOD 500
 

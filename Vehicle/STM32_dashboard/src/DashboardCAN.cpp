@@ -58,6 +58,16 @@ void DashboardCAN::read_CAN()
       Unpack_MCU_SUSPENSION_hytech(&mcu_suspension, _msg.buf, _msg.len);
       break;
 
+    case EM_MEASUREMENT_CANID:
+      Unpack_EM_MEASUREMENT_hytech(&em_measurement, _msg.buf, _msg.len);
+      SerialUSB.println("Received EM measurement");
+      break;
+
+    case MCU_PEDAL_RAW_CANID:
+      Unpack_MCU_PEDAL_RAW_hytech(&pedal_raw, _msg.buf, _msg.len);
+      SerialUSB.println("Received Pedal measurement");
+      break;
+
     case DRIVETRAIN_RPMS_TELEM_CANID:
       // SerialUSB.println("Received Drivetrain RPMs");
       Unpack_DRIVETRAIN_RPMS_TELEM_hytech(&drivetrain_rpms, _msg.buf, _msg.len);

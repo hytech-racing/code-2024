@@ -52,10 +52,13 @@ class DashboardCAN {
         SAB_SUSPENSION_t sab_suspension;
         DRIVETRAIN_RPMS_TELEM_t drivetrain_rpms;
         MC1_STATUS_t mc1_status;
+        EM_MEASUREMENT_t em_measurement;
+        MCU_PEDAL_RAW_t pedal_raw;
         
         TCU_LAP_TIMES_t lap_times;
         TCU_DRIVER_MSG_t driver_msg;
         DASHBOARD_MCU_STATE_t dash_mcu_state;
+
         bool mcu_state_update = true;
         bool send_now = false;
 
