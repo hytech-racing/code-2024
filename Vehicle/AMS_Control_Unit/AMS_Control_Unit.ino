@@ -204,7 +204,7 @@ void loop() {
     currently_balancing = false;
   }
 
-  forward_CAN_em();
+//  forward_CAN_em();
 }
 
 inline void forward_CAN_em() {
@@ -507,8 +507,14 @@ void parse_CAN_CCU_status() {
 void parse_energy_meter_can_message(const CAN_message_t& RX_msg) {
   static CAN_message_t rx_msg = RX_msg;
   switch (rx_msg.id) {
-    case ID_EM_MEASUREMENT:   em_measurement.load_from_emeter(rx_msg.buf);    break;
-    case ID_EM_STATUS:        em_status.load(rx_msg.buf);         break;
+    case ID_EM_MEASUREMENT:
+//      em_measurement.load(rx_msg.buf);
+      TELEM_CAN.write(rx_msg);
+      break;
+    case ID_EM_STATUS:
+//      em_status.load(rx_msg.buf);
+      TELEM_CAN.write(rx_msg);
+      break;
   }         
 }
 
