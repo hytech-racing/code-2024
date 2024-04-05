@@ -299,8 +299,8 @@ void coulomb_counter() {
   
   acu_shunt_measurements.set_shunt_voltage((uint16_t) (shunt_voltage_input*100));
   acu_shunt_measurements.set_shunt_current((uint16_t) (shunt_current));
-  Serial.print(state_of_charge);
-  Serial.print('\n');
+//  Serial.print(state_of_charge);
+//  Serial.print('\n');
 }
 
 void voltage_fault_check() {
