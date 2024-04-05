@@ -8,7 +8,7 @@
 #define BMS_STATE_BALANCING_OVERHEATED 4
 
 #include "CAN_ID.h"
-
+#include "ACU_shunt_measurements.h"
 #include "BMS_balancing_status.h"
 #include "BMS_coulomb_counts.h"
 #include "BMS_detailed_temperatures.h"
