@@ -137,7 +137,7 @@ class hytech_dashboard {
 
         Metro pixel_refresh = Metro(100);
 
-        String torque_modes[4] = {"Simple", "Load Cell Vectoring", "SimpleLaunch", "PIDTV"};
+        String torque_modes[4] = {"Simple", "Load Cell", "Launch", "PIDTV"};
 
         /* current page displayed */
         uint8_t current_page = 0;
@@ -164,14 +164,14 @@ class hytech_dashboard {
         /* accel max, min*/
         uint32_t max_accel_1 = 0;
         uint32_t max_accel_2 = 0;
-        uint32_t min_accel_1 = 0;
-        uint32_t min_accel_2 = 0;
+        uint32_t min_accel_1 = 4294967295;
+        uint32_t min_accel_2 = 4294967295;
 
         /* brake max, min*/
         uint32_t max_brake_1 = 0;
         uint32_t max_brake_2 = 0;
-        uint32_t min_brake_1 = 0;
-        uint32_t min_brake_2 = 0;
+        uint32_t min_brake_1 = 4294967295;
+        uint32_t min_brake_2 = 4294967295;
         
 
         uint32_t last_blink_millis = 0;

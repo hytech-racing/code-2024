@@ -215,10 +215,10 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     // draw_vertical_pedal_bar(accel_pedal, 285);
     draw_vertical_pedal_bar(brake_pedal, 17);
 
-    _display.setCursor(200, 10);
-    _display.println(torque_modes[CAN->mcu_status.torque_mode]);
-    _display.setCursor(200, _display.getCursorY());
-    _display.println(torque_modes[CAN->mcu_status.max_torque]);
+    _display.setCursor(45, 25);
+    _display.print(torque_modes[CAN->mcu_status.torque_mode]);
+    _display.setCursor(190, _display.getCursorY());
+    _display.println(CAN->mcu_status.max_torque);
 
     if (CAN->mcu_pedal_readings.brake_percent_float_ro >= CAN->mcu_pedal_readings.mechanical_brake_percent_float_ro) {
         CAN->dash_mcu_state.mechanical_brake_led = 2;
@@ -227,16 +227,16 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     }
 
     /** TODO: add real data to these bars*/
-    draw_battery_bar(0);
-    draw_regen_bar(0);
-    draw_current_draw_bar(0);
+    // draw_battery_bar(0);
+    // draw_regen_bar(0);
+    // draw_current_draw_bar(0);
 
     /** TODO: only show this if GPS lock present (use CAN message when it exists)*/
     if (blink()) _display.drawBitmap(270-27, 40, epd_bitmap_gps, 27, 27, BLACK);
 
     switch(current_page) {
-        case 0:
-            _display.setCursor(70,100);
+        case 1:
+            _display.setCursor(90,50);
             _display.setTextSize(1);
 
             max_accel_1 = max(CAN->pedal_raw.accel_1_raw, max_accel_1);
@@ -246,47 +246,47 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
 
             max_brake_1 = max(CAN->pedal_raw.brake_1_raw, max_brake_1);
             max_brake_2 = max(CAN->pedal_raw.brake_2_raw, max_brake_2);
-            min_brake_1 = max(CAN->pedal_raw.brake_1_raw, min_brake_1);
-            min_brake_2 = max(CAN->pedal_raw.brake_2_raw, min_brake_2);
+            min_brake_1 = min(CAN->pedal_raw.brake_1_raw, min_brake_1);
+            min_brake_2 = min(CAN->pedal_raw.brake_2_raw, min_brake_2);
 
             _display.print("max a1: ");
             _display.println(max_accel_1);
-            _display.setCursor(100, _display.getCursorY());
+            _display.setCursor(90, _display.getCursorY()-5);
 
             _display.print("min a1: ");
             _display.println(min_accel_1);
-            _display.setCursor(100, _display.getCursorY());
+            _display.setCursor(90, _display.getCursorY()-5);
 
             _display.print("max a2: ");
             _display.println(max_accel_2);
-            _display.setCursor(100, _display.getCursorY());
+            _display.setCursor(90, _display.getCursorY()-5);
 
             _display.print("min a2: ");
             _display.println(min_accel_2);
-            _display.setCursor(100, _display.getCursorY());
+            _display.setCursor(90, _display.getCursorY()-5);
 
             
             /* BRAKE */
 
             _display.print("max b1: ");
             _display.println(max_brake_1);
-            _display.setCursor(100, _display.getCursorY());
+            _display.setCursor(90, _display.getCursorY()-5);
 
             _display.print("min b1: ");
             _display.println(min_brake_1);
-            _display.setCursor(100, _display.getCursorY());
+            _display.setCursor(90, _display.getCursorY()-5);
 
             _display.print("max b2: ");
             _display.println(max_brake_2);
-            _display.setCursor(100, _display.getCursorY());
+            _display.setCursor(90, _display.getCursorY()-5);
 
             _display.print("min b2: ");
             _display.println(min_brake_2);
-            _display.setCursor(100, _display.getCursorY());
+            _display.setCursor(90, _display.getCursorY()-5);
 
 
             break;        
-        case 1:
+        case 2:
             _display.setCursor(70,100);
             _display.setTextSize(1);
 
@@ -306,7 +306,7 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
             _display.println(CAN->pedal_raw.brake_2_raw);
             _display.setCursor(100, _display.getCursorY());
             break;
-        case 2:
+        case 0:
             display_speeds(&(CAN->drivetrain_rpms), &(CAN->bms_voltages));
             break;
         case 3:
@@ -530,14 +530,14 @@ void hytech_dashboard::display_speeds(DRIVETRAIN_RPMS_TELEM_t* drivetrain_rpms, 
     // SerialUSB.println(wheelspeed);
     uint16_t mph = (int) (wheelspeed * METERS_PER_SECOND_TO_MPH);
     // SerialUSB.println(mph);
-    // _display.println(twoDigits(mph));
-    _display.println(HYTECH_low_voltage_ro_fromS(bms_voltages->low_voltage_ro));
+    _display.println(twoDigits(mph));
+    // _display.println(HYTECH_low_voltage_ro_fromS(bms_voltages->low_voltage_ro));
 
     // _display.println(mph);
     _display.setTextSize(1);
     _display.setFont(&FreeSans12pt7b);
     _display.setCursor(125, 185);
-    _display.print("VOLTS");
+    _display.print("MPH");
     _display.setFont(&FreeSans12pt7b);
 }
         
@@ -663,7 +663,6 @@ void hytech_dashboard::refresh_neopixels(DashboardCAN* CAN) {
         set_neopixel_color(LED_LIST_e::BOTS, CAN->dash_mcu_state.bots_led);
         set_neopixel_color(LED_LIST_e::LAUNCH_CTRL, CAN->dash_mcu_state.launch_control_led);
         set_neopixel_color(LED_LIST_e::TORQUE_MODE, CAN->dash_mcu_state.mode_led);
-        set_neopixel_color(LED_LIST_e::BRAKE_ENGAGE, CAN->dash_mcu_state.mechanical_brake_led);
         set_neopixel_color(LED_LIST_e::COCKPIT_BRB, CAN->brb_read ? 1 : 3);
         set_neopixel_color(LED_LIST_e::INERTIA, CAN->inertia_read ? 1 : 3);
         set_neopixel_color(LED_LIST_e::RDY_DRIVE, CAN->dash_mcu_state.start_status_led);
@@ -673,7 +672,13 @@ void hytech_dashboard::refresh_neopixels(DashboardCAN* CAN) {
         set_neopixel_color(LED_LIST_e::GLV, 0);
         // set_neopixel_color_gradient(LED_LIST_e::GLV, CAN->dash_mcu_state.glv_led);
         set_neopixel_color_gradient(LED_LIST_e::CRIT_CHARGE, CAN->dash_mcu_state.pack_charge_led);
-        
+        SerialUSB.println(CAN->mcu_status.no_brake_implausability);
+        if (!CAN->mcu_status.no_brake_implausability) {
+            set_neopixel_color(LED_LIST_e::BRAKE_ENGAGE, 3);
+            if (blink()) { set_neopixel_color(LED_LIST_e::BRAKE_ENGAGE, 0); }
+        } else {s
+            set_neopixel_color(LED_LIST_e::BRAKE_ENGAGE, CAN->dash_mcu_state.mechanical_brake_led);
+        }
         _neopixels.show();
         CAN->mcu_state_update = false;
 
