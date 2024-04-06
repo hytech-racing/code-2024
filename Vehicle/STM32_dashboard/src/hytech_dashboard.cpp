@@ -676,7 +676,7 @@ void hytech_dashboard::refresh_neopixels(DashboardCAN* CAN) {
         if (!CAN->mcu_status.no_brake_implausability) {
             set_neopixel_color(LED_LIST_e::BRAKE_ENGAGE, 3);
             if (blink()) { set_neopixel_color(LED_LIST_e::BRAKE_ENGAGE, 0); }
-        } else {s
+        } else {
             set_neopixel_color(LED_LIST_e::BRAKE_ENGAGE, CAN->dash_mcu_state.mechanical_brake_led);
         }
         _neopixels.show();
