@@ -137,6 +137,8 @@ class hytech_dashboard {
 
         Metro pixel_refresh = Metro(100);
 
+        String torque_modes[4] = {"Simple", "Load Cell Vectoring", "SimpleLaunch", "PIDTV"};
+
         /* current page displayed */
         uint8_t current_page = 0;
         /* number encodings for use with the IO expander that drives the seven segment display */

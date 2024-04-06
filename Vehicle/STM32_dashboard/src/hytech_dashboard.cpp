@@ -215,6 +215,11 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     // draw_vertical_pedal_bar(accel_pedal, 285);
     draw_vertical_pedal_bar(brake_pedal, 17);
 
+    _display.setCursor(200, 10);
+    _display.println(torque_modes[CAN->mcu_status.torque_mode]);
+    _display.setCursor(200, _display.getCursorY());
+    _display.println(torque_modes[CAN->mcu_status.max_torque]);
+
     if (CAN->mcu_pedal_readings.brake_percent_float_ro >= CAN->mcu_pedal_readings.mechanical_brake_percent_float_ro) {
         CAN->dash_mcu_state.mechanical_brake_led = 2;
     } else {
