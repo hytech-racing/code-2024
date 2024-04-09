@@ -168,6 +168,18 @@ void hytech_dashboard::startup() {
     delay(2000);
     _display.clearDisplay();
 
+    _display.drawBitmap(0,0, epd_bitmap_david, 320, 240, BLACK);
+    _display.refresh();
+    delay(4000);
+
+    // _display.drawBitmap(60,25, epd_bitmap_cat, 200, 200, BLACK);
+    // _display.refresh();
+    // delay(3000);
+
+    // _display.drawBitmap(0,0, epd_bitmap_glizzy, 320, 240, BLACK);
+    // _display.refresh();
+    // delay(3000);
+
     _display.clearDisplay();
     _display.drawBitmap(0,0, epd_bitmap_hytech_dashboard, 320, 240, BLACK);
 }
@@ -232,7 +244,11 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     // draw_current_draw_bar(0);
 
     /** TODO: only show this if GPS lock present (use CAN message when it exists)*/
-    if (blink()) _display.drawBitmap(270-27, 40, epd_bitmap_gps, 27, 27, BLACK);
+    if (CAN->vn_status.vn_gps_status >= 2) {
+        _display.drawBitmap(270-27, 40, epd_bitmap_gps, 27, 27, BLACK);
+    } else {
+        if (blink()) { _display.drawBitmap(270-27, 40, epd_bitmap_gps, 27, 27, BLACK); }
+    }
 
     switch(current_page) {
         case 1:

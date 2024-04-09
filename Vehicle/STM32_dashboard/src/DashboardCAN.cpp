@@ -42,6 +42,11 @@ void DashboardCAN::read_CAN()
       // mcu_analog_readings_received();
       break;
 
+    case VN_STATUS_CANID:
+      SerialUSB.println("VN_status");
+      Unpack_VN_STATUS_hytech(&vn_status, _msg.buf, _msg.len);
+      break;
+
     case BMS_VOLTAGES_CANID:
       Unpack_BMS_VOLTAGES_hytech(&bms_voltages, _msg.buf, _msg.len);
       // include bms timer
