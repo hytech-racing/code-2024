@@ -180,6 +180,46 @@ void hytech_dashboard::startup() {
     // _display.refresh();
     // delay(3000);
 
+    // for (int i = 0; i < 10; i++) {
+    //     unsigned char draw;
+    //     switch(i) {
+    //         case 1:
+    //             _display.drawBitmap(0,0, isp1, 320, 240, BLACK);
+    //             break;
+    //         case 2:
+    //             _display.drawBitmap(0,0, isp2, 320, 240, BLACK);
+    //             break;
+    //         case 3:
+    //             _display.drawBitmap(0,0, isp3, 320, 240, BLACK);
+    //             break;
+    //         case 4:
+    //             _display.drawBitmap(0,0, isp4, 320, 240, BLACK);
+    //             break;
+    //         case 5:
+    //             _display.drawBitmap(0,0, isp5, 320, 240, BLACK);
+    //             break;
+    //         case 6:
+    //             _display.drawBitmap(0,0, isp6, 320, 240, BLACK);
+    //             break;
+    //         case 7:
+    //             _display.drawBitmap(0,0, isp7, 320, 240, BLACK);
+    //             break;
+    //         case 8:
+    //             _display.drawBitmap(0,0, isp8, 320, 240, BLACK);
+    //             break;
+    //         case 9:
+    //             _display.drawBitmap(0,0, isp9, 320, 240, BLACK);
+    //             break;
+    //         case 10:
+    //             _display.drawBitmap(0,0, isp10, 320, 240, BLACK);
+    //             break;
+
+    //     }
+    //     _display.refresh();
+    //     delay(200);
+    //     _display.clearDisplay();
+    // }
+
     _display.clearDisplay();
     _display.drawBitmap(0,0, epd_bitmap_hytech_dashboard, 320, 240, BLACK);
 }
