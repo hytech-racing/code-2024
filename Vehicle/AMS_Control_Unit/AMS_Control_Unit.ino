@@ -510,7 +510,7 @@ void parse_CAN_CCU_status() {
 }
 
 void parse_energy_meter_can_message(const CAN_message_t& RX_msg) {
-  static CAN_message_t rx_msg = RX_msg;
+  CAN_message_t rx_msg = RX_msg;
   switch (rx_msg.id) {
     case ID_EM_MEASUREMENT:
 //      em_measurement.load(rx_msg.buf);
