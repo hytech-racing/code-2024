@@ -178,6 +178,8 @@ void setup() {
   bms_status.set_state(BMS_STATE_DISCHARGING);
   parse_CAN_CCU_status();
 
+  analogReadResolution(12);
+
 }
 void loop() {
   // put your main code here, to run repeatedly:
@@ -290,17 +292,20 @@ void read_voltages() {
 
 void coulomb_counter() {
   // integrate shunt current over time to count coulombs and provide state of charge
-  current_shunt_read = (analogRead(CURR_SHUNT) * 3.3) / 1024; //.68
+  current_shunt_read = (analogRead(CURR_SHUNT) * 3.3) / 4096; //.68
   shunt_voltage_input = (current_shunt_read * (9.22 / 5.1)) - 3.3;
   shunt_current = (shunt_voltage_input / 0.005);
   charge -= (CC_integrator_timer * shunt_current) / 1000000;
   state_of_charge = charge / MAX_PACK_CHARGE;
   CC_integrator_timer = 0;
   
-  acu_shunt_measurements.set_shunt_voltage((uint16_t) (shunt_voltage_input*100));
-  acu_shunt_measurements.set_shunt_current((uint16_t) (shunt_current));
+  acu_shunt_measurements.set_shunt_voltage((shunt_voltage_input)); // sending as mV
+  acu_shunt_measurements.set_shunt_current((shunt_current)); // sending as mA
 //  Serial.print(state_of_charge);
 //  Serial.print('\n');
+  // Serial.print(shunt_voltage_input);
+  Serial.print('\n');
+  Serial.print(analogRead(CURR_SHUNT));
 }
 
 void voltage_fault_check() {
