@@ -292,20 +292,24 @@ void read_voltages() {
 
 void coulomb_counter() {
   // integrate shunt current over time to count coulombs and provide state of charge
-  current_shunt_read = (analogRead(CURR_SHUNT) * 3.3) / 4096; //.68
-  shunt_voltage_input = (current_shunt_read * (9.22 / 5.1)) - 3.3;
+  current_shunt_read = (analogRead(CURR_SHUNT) * 3.3) / 4095; //.68
+  shunt_voltage_input = (current_shunt_read * (9.22 / 5.1)) - 3.3 - 0.03;
   shunt_current = (shunt_voltage_input / 0.005);
   charge -= (CC_integrator_timer * shunt_current) / 1000000;
   state_of_charge = charge / MAX_PACK_CHARGE;
   CC_integrator_timer = 0;
   
-  acu_shunt_measurements.set_shunt_voltage((shunt_voltage_input)); // sending as mV
-  acu_shunt_measurements.set_shunt_current((shunt_current)); // sending as mA
-//  Serial.print(state_of_charge);
-//  Serial.print('\n');
+  acu_shunt_measurements.set_shunt_voltage(0.0); // stupid
+  acu_shunt_measurements.set_shunt_current(shunt_current*1000); // sending as mA
+  // Serial.print(state_of_charge);
+  // Serial.print('\n');
   // Serial.print(shunt_voltage_input);
-  Serial.print('\n');
-  Serial.print(analogRead(CURR_SHUNT));
+  // if(timer_shunt.check()){
+  // // Serial.print(analogRead(CURR_SHUNT));
+  //   Serial.println(shunt_current, 6);
+  //   Serial.println(shunt_voltage_input,6);
+  //   // Serial.println(shunt_voltage_input, 3);
+  // }
 }
 
 void voltage_fault_check() {
@@ -548,6 +552,15 @@ void write_CAN_messages() {
     msg.len = sizeof(acu_shunt_measurements);
     acu_shunt_measurements.write(msg.buf);
     TELEM_CAN.write(msg);
+
+    // Serial.println(acu_shunt_measurements.get_shunt_current());
+    // Serial.println(acu_shunt_measurements.get_shunt_voltage());
+    
+    // for(int i =0; i<8; i++){
+    // Serial.print(msg.buf[i], HEX);
+    // Serial.print(" ");
+    // }
+    // Serial.println();
   }
   //Write BMS_status message
   if (can_bms_status_timer > 100) {
