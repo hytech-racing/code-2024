@@ -262,7 +262,7 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     float accel_pedal = HYTECH_accel_percent_float_ro_fromS(CAN->mcu_pedal_readings.accel_percent_float_ro);
     float brake_pedal = HYTECH_brake_percent_float_ro_fromS(CAN->mcu_pedal_readings.brake_percent_float_ro);
 
-    float current = CAN->em_measurement.em_current;
+    float current = CAN->em_measurement.em_current_ro;
     SerialUSB.println(current);
     // draw_vertical_pedal_bar(accel_pedal, 285);
     draw_vertical_pedal_bar(brake_pedal, 17);
@@ -363,7 +363,41 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
             _display.setCursor(100, _display.getCursorY());
             break;
         case 0:
-            display_speeds(&(CAN->drivetrain_rpms), &(CAN->bms_voltages));
+            // display_speeds(&(CAN->drivetrain_rpms), &(CAN->bms_voltages));
+            
+            _display.setCursor(40,60);
+            switch (CAN->controller_power_lim.controller_power_lim_status) {
+                case 0:
+                    _display.println("no power lim");
+                    break;
+                case 1:
+                    _display.println("pid power lim");
+                    break;
+                case 2:
+                    _display.println("mech power lim");
+                    break;
+            }
+            _display.setCursor(40, _display.getCursorY());
+
+            _display.print("use launch: ");
+            _display.println(CAN->controller_boolean.controller_use_launch);
+            _display.setCursor(40, _display.getCursorY());
+
+            _display.print("use NF: ");
+            _display.println(CAN->controller_boolean.controller_use_normal_force);
+            _display.setCursor(40, _display.getCursorY());
+
+            _display.print("use pid power lim: ");
+            _display.println(CAN->controller_boolean.controller_use_pid_power_limit);
+            _display.setCursor(40, _display.getCursorY());
+
+            _display.print("use pid tv: ");
+            _display.println(CAN->controller_boolean.controller_use_pid_tv);
+            _display.setCursor(40, _display.getCursorY());
+
+            _display.print("use power lim: ");
+            _display.println(CAN->controller_boolean.controller_use_power_limit);
+            _display.setCursor(40, _display.getCursorY());
             break;
         case 3:
             display_suspension_data(&(CAN->mcu_suspension), &(CAN->sab_suspension));

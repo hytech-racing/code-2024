@@ -43,7 +43,7 @@ void DashboardCAN::read_CAN()
       break;
 
     case VN_STATUS_CANID:
-      SerialUSB.println("VN_status");
+      // SerialUSB.println("VN_status");
       Unpack_VN_STATUS_hytech(&vn_status, _msg.buf, _msg.len);
       break;
 
@@ -65,12 +65,12 @@ void DashboardCAN::read_CAN()
 
     case EM_MEASUREMENT_CANID:
       Unpack_EM_MEASUREMENT_hytech(&em_measurement, _msg.buf, _msg.len);
-      SerialUSB.println("Received EM measurement");
+      // SerialUSB.println("Received EM measurement");
       break;
 
     case MCU_PEDAL_RAW_CANID:
       Unpack_MCU_PEDAL_RAW_hytech(&pedal_raw, _msg.buf, _msg.len);
-      SerialUSB.println("Received Pedal measurement");
+      // SerialUSB.println("Received Pedal measurement");
       break;
 
     case DRIVETRAIN_RPMS_TELEM_CANID:
@@ -79,6 +79,16 @@ void DashboardCAN::read_CAN()
       // SerialUSB.println(drivetrain_rpms.fr_motor_rpm);
       break;
 
+     case CONTROLLER_BOOLEAN_CANID:
+      SerialUSB.println("Received Controller Boolean msg");
+      Unpack_CONTROLLER_BOOLEAN_hytech(&controller_boolean, _msg.buf, _msg.len);
+      break;
+
+    case CONTROLLER_POWER_LIM_CANID:
+      SerialUSB.println("Received Controller Power Lim msg");
+      Unpack_CONTROLLER_POWER_LIM_hytech(&controller_power_lim, _msg.buf, _msg.len);
+      break;
+    
     case SAB_SUSPENSION_CANID:
       // SerialUSB.println("Received SAB Suspension");
       Unpack_SAB_SUSPENSION_hytech(&sab_suspension, _msg.buf, _msg.len);
@@ -93,6 +103,7 @@ void DashboardCAN::read_CAN()
       // SerialUSB.println("Received TCU drive message");
       Unpack_TCU_DRIVER_MSG_hytech(&driver_msg, _msg.buf, _msg.len);
       break;
+
 
     case DASHBOARD_MCU_STATE_CANID:
       // SerialUSB.println("Received mcu state");
