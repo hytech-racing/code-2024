@@ -298,7 +298,7 @@ void coulomb_counter() {
   CC_integrator_timer = 0;
   
   acu_shunt_measurements.set_shunt_voltage((uint16_t) (shunt_voltage_input*100));
-  acu_shunt_measurements.set_shunt_current((uint16_t) (shunt_current));
+  acu_shunt_measurements.set_shunt_current((uint16_t) (shunt_current*100));
 //  Serial.print(state_of_charge);
 //  Serial.print('\n');
 }
@@ -505,7 +505,7 @@ void parse_CAN_CCU_status() {
 }
 
 void parse_energy_meter_can_message(const CAN_message_t& RX_msg) {
-  static CAN_message_t rx_msg = RX_msg;
+  CAN_message_t rx_msg = RX_msg;
   switch (rx_msg.id) {
     case ID_EM_MEASUREMENT:
 //      em_measurement.load(rx_msg.buf);
