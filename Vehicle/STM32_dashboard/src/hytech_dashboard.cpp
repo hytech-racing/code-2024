@@ -168,9 +168,9 @@ void hytech_dashboard::startup() {
     delay(2000);
     _display.clearDisplay();
 
-    _display.drawBitmap(0,0, epd_bitmap_david, 320, 240, BLACK);
-    _display.refresh();
-    delay(4000);
+    // _display.drawBitmap(0,0, epd_bitmap_david, 320, 240, BLACK);
+    // _display.refresh();
+    // delay(4000);
 
     // _display.drawBitmap(60,25, epd_bitmap_cat, 200, 200, BLACK);
     // _display.refresh();
@@ -180,45 +180,45 @@ void hytech_dashboard::startup() {
     // _display.refresh();
     // delay(3000);
 
-    // for (int i = 0; i < 10; i++) {
-    //     unsigned char draw;
-    //     switch(i) {
-    //         case 1:
-    //             _display.drawBitmap(0,0, isp1, 320, 240, BLACK);
-    //             break;
-    //         case 2:
-    //             _display.drawBitmap(0,0, isp2, 320, 240, BLACK);
-    //             break;
-    //         case 3:
-    //             _display.drawBitmap(0,0, isp3, 320, 240, BLACK);
-    //             break;
-    //         case 4:
-    //             _display.drawBitmap(0,0, isp4, 320, 240, BLACK);
-    //             break;
-    //         case 5:
-    //             _display.drawBitmap(0,0, isp5, 320, 240, BLACK);
-    //             break;
-    //         case 6:
-    //             _display.drawBitmap(0,0, isp6, 320, 240, BLACK);
-    //             break;
-    //         case 7:
-    //             _display.drawBitmap(0,0, isp7, 320, 240, BLACK);
-    //             break;
-    //         case 8:
-    //             _display.drawBitmap(0,0, isp8, 320, 240, BLACK);
-    //             break;
-    //         case 9:
-    //             _display.drawBitmap(0,0, isp9, 320, 240, BLACK);
-    //             break;
-    //         case 10:
-    //             _display.drawBitmap(0,0, isp10, 320, 240, BLACK);
-    //             break;
+    for (int i = 0; i < 10; i++) {
+        unsigned char draw;
+        switch(i) {
+            case 1:
+                _display.drawBitmap(0,0, isp1, 320, 240, BLACK);
+                break;
+            case 2:
+                _display.drawBitmap(0,0, isp2, 320, 240, BLACK);
+                break;
+            case 3:
+                _display.drawBitmap(0,0, isp3, 320, 240, BLACK);
+                break;
+            case 4:
+                _display.drawBitmap(0,0, isp4, 320, 240, BLACK);
+                break;
+            case 5:
+                _display.drawBitmap(0,0, isp5, 320, 240, BLACK);
+                break;
+            case 6:
+                _display.drawBitmap(0,0, isp6, 320, 240, BLACK);
+                break;
+            case 7:
+                _display.drawBitmap(0,0, isp7, 320, 240, BLACK);
+                break;
+            case 8:
+                _display.drawBitmap(0,0, isp8, 320, 240, BLACK);
+                break;
+            case 9:
+                _display.drawBitmap(0,0, isp9, 320, 240, BLACK);
+                break;
+            case 10:
+                _display.drawBitmap(0,0, isp10, 320, 240, BLACK);
+                break;
 
-    //     }
-    //     _display.refresh();
-    //     delay(200);
-    //     _display.clearDisplay();
-    // }
+        }
+        _display.refresh();
+        delay(200);
+        _display.clearDisplayBuffer();
+    }
 
     _display.clearDisplay();
     _display.drawBitmap(0,0, epd_bitmap_hytech_dashboard, 320, 240, BLACK);
@@ -236,15 +236,30 @@ uint32_t min(uint32_t val1, uint32_t val2) {
 void hytech_dashboard::refresh(DashboardCAN* CAN) {
     // update neopixels
     refresh_neopixels(CAN);
-
-    // add page to dashboard showing if shutdown tripped
-
     _expander.digitalWrite(number_encodings[CAN->dash_state.dial_state]);
-
-    // refresh display
 
     _display.clearDisplayBuffer();
     _display.drawBitmap(0,0, epd_bitmap_hytech_dashboard, 320, 240, BLACK);
+
+    // if shutdown tripped
+    // if (CAN->mcu_status.shutdown_b_above_threshold || CAN->mcu_status.shutdown_c_above_threshold || CAN->mcu_status.shutdown_d_above_threshold || CAN->mcu_status.shutdown_e_above_threshold) {
+    //     _display.clearDisplay();
+    //     display_error();
+    // }
+
+    bool launch = CAN->controller_boolean.controller_use_launch;
+
+    // if launch mode active
+    if (launch) {
+        _display.clearDisplayBuffer();
+        _display.setCursor(50,50);
+        _display.println("launch active");
+        _display.refresh();
+        return;
+    }
+
+    // refresh display
+
 
 
     /** TODO: scale these values down to [0,100]*/
@@ -305,60 +320,60 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
             min_brake_1 = min(CAN->pedal_raw.brake_1_raw, min_brake_1);
             min_brake_2 = min(CAN->pedal_raw.brake_2_raw, min_brake_2);
 
-            _display.print("max a1: ");
+            _display.print("Max A1: ");
             _display.println(max_accel_1);
             _display.setCursor(90, _display.getCursorY()-5);
 
-            _display.print("min a1: ");
+            _display.print("Min A1: ");
             _display.println(min_accel_1);
             _display.setCursor(90, _display.getCursorY()-5);
 
-            _display.print("max a2: ");
+            _display.print("Max A2: ");
             _display.println(max_accel_2);
             _display.setCursor(90, _display.getCursorY()-5);
 
-            _display.print("min a2: ");
+            _display.print("Min A2: ");
             _display.println(min_accel_2);
             _display.setCursor(90, _display.getCursorY()-5);
 
             
             /* BRAKE */
 
-            _display.print("max b1: ");
+            _display.print("Max B1: ");
             _display.println(max_brake_1);
             _display.setCursor(90, _display.getCursorY()-5);
 
-            _display.print("min b1: ");
+            _display.print("Min B1: ");
             _display.println(min_brake_1);
             _display.setCursor(90, _display.getCursorY()-5);
 
-            _display.print("max b2: ");
+            _display.print("Max B2: ");
             _display.println(max_brake_2);
             _display.setCursor(90, _display.getCursorY()-5);
 
-            _display.print("min b2: ");
+            _display.print("Min B2: ");
             _display.println(min_brake_2);
             _display.setCursor(90, _display.getCursorY()-5);
 
 
             break;        
         case 2:
-            _display.setCursor(70,100);
+            _display.setCursor(100,100);
             _display.setTextSize(1);
 
-            _display.print("a1: ");
+            _display.print("A1: ");
             _display.println(CAN->pedal_raw.accel_1_raw);
             _display.setCursor(100, _display.getCursorY());
 
-            _display.print("a2: ");
+            _display.print("A2: ");
             _display.println(CAN->pedal_raw.accel_2_raw);
             _display.setCursor(100, _display.getCursorY());
 
-            _display.print("b1: ");
+            _display.print("B1: ");
             _display.println(CAN->pedal_raw.brake_1_raw);
             _display.setCursor(100, _display.getCursorY());
 
-            _display.print("b2: ");
+            _display.print("B2: ");
             _display.println(CAN->pedal_raw.brake_2_raw);
             _display.setCursor(100, _display.getCursorY());
             break;
@@ -368,34 +383,34 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
             _display.setCursor(40,60);
             switch (CAN->controller_power_lim.controller_power_lim_status) {
                 case 0:
-                    _display.println("no power lim");
+                    _display.println("No Power Limit");
                     break;
                 case 1:
-                    _display.println("pid power lim");
+                    _display.println("PID Power Limit");
                     break;
                 case 2:
-                    _display.println("mech power lim");
+                    _display.println("Mech Power Limit");
                     break;
             }
             _display.setCursor(40, _display.getCursorY());
 
-            _display.print("use launch: ");
+            _display.print("Use Launch: ");
             _display.println(CAN->controller_boolean.controller_use_launch);
             _display.setCursor(40, _display.getCursorY());
 
-            _display.print("use NF: ");
+            _display.print("Use NF: ");
             _display.println(CAN->controller_boolean.controller_use_normal_force);
             _display.setCursor(40, _display.getCursorY());
 
-            _display.print("use pid power lim: ");
+            _display.print("Use PID power lim: ");
             _display.println(CAN->controller_boolean.controller_use_pid_power_limit);
             _display.setCursor(40, _display.getCursorY());
 
-            _display.print("use pid tv: ");
+            _display.print("Use PID tv: ");
             _display.println(CAN->controller_boolean.controller_use_pid_tv);
             _display.setCursor(40, _display.getCursorY());
 
-            _display.print("use power lim: ");
+            _display.print("Use power lim: ");
             _display.println(CAN->controller_boolean.controller_use_power_limit);
             _display.setCursor(40, _display.getCursorY());
             break;
@@ -636,9 +651,7 @@ void hytech_dashboard::display_segment_voltages() {
 }
 
 void hytech_dashboard::display_error() {
-    // set_cursor_in_quadrant(2);
-    // _display.fillRoundRect();
-    _display.print("Error");
+
 }
 
 /* DISPLAY HELPER FUNCTIONS */
@@ -846,4 +859,5 @@ bool hytech_dashboard::blink() {
   pop-up msgs
   launch inverting colors
   ice spice
+  add page to dashboard showing if shutdown tripped
 */
