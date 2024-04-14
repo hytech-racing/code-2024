@@ -47,6 +47,7 @@ uint16_t cell_voltages[TOTAL_IC][12]; // 2D Array to hold cell voltages being re
 bool cell_balance_status[TOTAL_IC][12]; // 2D array where true indicates cell is balancing
 bool currently_balancing = false;
 uint32_t total_voltage;             // the total voltage of the pack
+float avg_cell_voltage = total_voltage / 126; // avg voltage on one pack cell
 int min_voltage_location[2]; // [0]: IC#; [1]: Cell#
 int max_voltage_location[2]; // [0]: IC#; [1]: Cell#
 uint16_t min_voltage = 65535;
@@ -64,11 +65,19 @@ uint16_t min_thermistor_voltage = 65535;
 uint16_t max_board_temp_voltage = 0;
 uint16_t min_board_temp_voltage = 65535;
 float current_shunt_read;
-float charge = MAX_PACK_CHARGE;
+float charge;
 float shunt_voltage_input;
 float shunt_current;
 float state_of_charge;
+float voltage_lookup_table[101] = {3.972, 3.945, 3.918, 3.891, 3.885, 3.874, 3.864, 3.858, 3.847, 3.836, 3.82, 3.815, 3.815, 3.798, 3.788,
+  3.782, 3.771, 3.755, 3.744, 3.744, 3.733, 3.728, 3.723, 3.712, 3,701, 3.695, 3.69, 3.679, 3.679, 3.668, 3.663, 3.657, 3.647,
+  3.647, 3.636, 3.625, 3.625, 3.625, 3.614, 3.609, 3.603, 3.603, 3.592, 3.592, 3.592, 3.581, 3.581, 3.571, 3.571, 3.571, 3.56,
+  3.56, 3.56, 3.549, 3.549, 3.549, 3.549, 3.538, 3.538, 3.551, 3.546, 3.535, 3.535, 3.535, 3.53, 3.524, 3.524, 3.524, 3.513,
+  3.513, 3.513, 3.503, 3.503, 3.492, 3.492, 3.492, 3.487, 3.481, 3.481, 3.476, 3.471, 3.46, 3.46, 3.449, 3.444, 3.428, 3.428,
+  3.417, 3.401, 3.39, 3.379, 3.363, 3.331, 3.299, 3.267, 3.213, 3.149, 3.041, 3, 3, 0};;
 float total_board_temps = 0;
+// underestimate state of charge
+// pack voltage divided by 126
 float total_thermistor_temps = 0;
 Metro charging_timer = Metro(5000); // Timer to check if charger is still talking to ACU
 Metro CAN_timer = Metro(2); // Timer that spaces apart writes for CAN messages so as to not saturate CAN bus
@@ -127,7 +136,12 @@ void setup() {
   pinMode(6, OUTPUT);
   pinMode(5, OUTPUT);
   
-  
+  // initialize charge 
+  int i = 0;
+  while (abs(avg_cell_voltage - voltage_lookuptable[i]) <= abs(avg_cell_voltage - voltage_lookuptable[i+1])) {
+    i++;
+  }
+  charge = ((100 - i)/100) * MAX_PACK_CHARGE;
   
   digitalWrite(6, HIGH); //write Teensy_OK pin high
 
@@ -298,7 +312,7 @@ void coulomb_counter() {
   charge -= (CC_integrator_timer * shunt_current) / 1000000;
   state_of_charge = charge / MAX_PACK_CHARGE;
   CC_integrator_timer = 0;
-  
+
   acu_shunt_measurements.set_shunt_voltage(0.0); // stupid
   acu_shunt_measurements.set_shunt_current(shunt_current*1000); // sending as mA
   // Serial.print(state_of_charge);
@@ -310,7 +324,7 @@ void coulomb_counter() {
   //   Serial.println(shunt_voltage_input,6);
   //   // Serial.println(shunt_voltage_input, 3);
   // }
-}
+  }
 
 void voltage_fault_check() {
   // detect any uv fault conditions, set appropriate error flags, and print relevant message to console
