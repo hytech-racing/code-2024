@@ -74,7 +74,7 @@ float voltage_lookup_table[101] = {3.972, 3.945, 3.918, 3.891, 3.885, 3.874, 3.8
   3.647, 3.636, 3.625, 3.625, 3.625, 3.614, 3.609, 3.603, 3.603, 3.592, 3.592, 3.592, 3.581, 3.581, 3.571, 3.571, 3.571, 3.56,
   3.56, 3.56, 3.549, 3.549, 3.549, 3.549, 3.538, 3.538, 3.551, 3.546, 3.535, 3.535, 3.535, 3.53, 3.524, 3.524, 3.524, 3.513,
   3.513, 3.513, 3.503, 3.503, 3.492, 3.492, 3.492, 3.487, 3.481, 3.481, 3.476, 3.471, 3.46, 3.46, 3.449, 3.444, 3.428, 3.428,
-  3.417, 3.401, 3.39, 3.379, 3.363, 3.331, 3.299, 3.267, 3.213, 3.149, 3.041, 3, 3, 0};;
+  3.417, 3.401, 3.39, 3.379, 3.363, 3.331, 3.299, 3.267, 3.213, 3.149, 3.041, 3, 0};;
 float total_board_temps = 0;
 // underestimate state of charge
 // pack voltage divided by 126
@@ -138,7 +138,7 @@ void setup() {
   
   // initialize charge 
   int i = 0;
-  while (abs(avg_cell_voltage - voltage_lookuptable[i]) <= abs(avg_cell_voltage - voltage_lookuptable[i+1])) {
+  while (abs(avg_cell_voltage - voltage_lookup_table[i]) <= abs(avg_cell_voltage - voltage_lookup_table[i+1])) {
     i++;
   }
   charge = ((100 - i)/100) * MAX_PACK_CHARGE;
