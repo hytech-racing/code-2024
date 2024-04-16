@@ -313,7 +313,7 @@ void coulomb_counter() {
   state_of_charge = charge / MAX_PACK_CHARGE;
   CC_integrator_timer = 0;
 
-  acu_shunt_measurements.set_shunt_voltage(0.0); // stupid
+  acu_shunt_measurements.set_state_of_charge(state_of_charge*100); // stupid
   acu_shunt_measurements.set_shunt_current(shunt_current*1000); // sending as mA
   // Serial.print(state_of_charge);
   // Serial.print('\n');
