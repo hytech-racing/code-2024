@@ -166,7 +166,7 @@ void hytech_dashboard::startup() {
 
     delay(2000);
     _display.clearDisplay();
-    display_startup_animation(StartupAnimations::ICE_SPICE);
+    display_startup_animation(StartupAnimations::NONE);
 }
 
 uint32_t max(uint32_t val1, uint32_t val2) {
@@ -363,6 +363,7 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
 
     draw_icons(&CAN->mcu_status, &CAN->vn_status);
     if (CAN->dash_state.dial_state == 1) draw_launch_screen();
+    draw_popup("Error");
     _display.refresh();
 }
 
@@ -791,6 +792,18 @@ void hytech_dashboard::draw_battery_bar(int percent) {
     // 100% 0
     int w = (100-percent) * (59.0/100);
     draw_rectangle_right_corner(103, 220, w, 8, WHITE);
+}
+
+void hytech_dashboard::draw_popup(String title) {
+    int width = 200;
+    int height = 150;
+    _display.fillRect(160-(width/2), 120 - (height/2), width, height, BLACK);
+    width-=10;
+    height-=10;
+    _display.fillRect(160-(width/2), 120 - (height/2), width, height, WHITE);
+    _display.setFont(&FreeSansBold12pt7b);
+    _display.setCursor(160-(width/2)+1, 120 - (height/2)+20);
+    _display.println(title);
 }
 
 /* NEOPIXEL HELPER FUNCTIONS */

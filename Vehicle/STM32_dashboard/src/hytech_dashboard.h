@@ -226,6 +226,8 @@ class hytech_dashboard {
 
         void draw_battery_bar(int percent);
 
+        void draw_popup(String title);
+
         /* helper function that draws quadrants on the display for tire/suspension data */
         void draw_quadrants(String text);
         void draw_hexant(String text);
