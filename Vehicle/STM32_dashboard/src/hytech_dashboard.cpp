@@ -362,7 +362,6 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     }
 
     draw_icons(&CAN->mcu_status, &CAN->vn_status);
-
     if (CAN->dash_state.dial_state == 1) draw_launch_screen();
     _display.refresh();
 }
@@ -623,7 +622,6 @@ void hytech_dashboard::draw_launch_screen() {
     else _display.clearDisplayBuffer();
     _display.setCursor(55,135);
     _display.setTextColor(flash() ? WHITE : BLACK);
-    // _display.setTextSize(2);
     _display.setFont(&FreeSansBold24pt7b);
     _display.println("LAUNCH");
 }
