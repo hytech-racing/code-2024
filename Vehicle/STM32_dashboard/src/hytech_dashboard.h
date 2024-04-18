@@ -30,6 +30,7 @@
 #define NUM_PAGES 7
 
 #define BLINK_PERIOD 500
+#define FLASH_PERIOD 100
 
 #define MAX_BRIGHTNESS 255
 #define MIN_BRIGHTNESS 3
@@ -65,6 +66,14 @@ enum ErrorTypes {
     INVERTER_ERROR,
     IMD_FAULT,
     NO_ERROR
+};
+
+enum StartupAnimations {
+    NONE,
+    MIKHAIL_CAT,
+    DAVID_KNIGHT_GLIZZY,
+    DAVID_KNIGHT_2,
+    ICE_SPICE
 };
 
 // String errorTypes[8] = {"Brake Implaus", "Accel Implaus", "MCU State", "Software Bad", "Shutdown Bad", "Inverter Error", "IMD Fault", "No Error"};
@@ -193,6 +202,11 @@ class hytech_dashboard {
         uint32_t last_blink_millis = 0;
         bool last_blink = false;
 
+        bool last_flash;
+        uint32_t last_flash_millis;
+
+        void display_startup_animation(StartupAnimations);
+
         /* Displays the clock and times in m:s.ms format based on the number of milliseconds*/
         void format_millis(String label, uint32_t time);
         
@@ -263,6 +277,8 @@ class hytech_dashboard {
         bool first_latch = false;
         bool first_ready_to_drive = false;
         void display_error();
+        void draw_icons(MCU_STATUS_t *, VN_STATUS_t *);
+        void draw_launch_screen();
 
         /*!
             refresh_neopixels handles changing the color of indicator LEDs on the display. This function
@@ -284,6 +300,7 @@ class hytech_dashboard {
             should be visible for that refresh cycle. Blink period is defined by the BLINK_PERIOD define
         */
         bool blink();
+        bool flash(); // faster
 
 
 };

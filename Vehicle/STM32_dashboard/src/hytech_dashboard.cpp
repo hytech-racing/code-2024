@@ -7,6 +7,8 @@
 #include <Fonts/FreeSansBold12pt7b.h>
 #include <Fonts/FreeSans9pt7b.h>
 #include <Fonts/FreeSans24pt7b.h>
+#include <Fonts/FreeSansBold24pt7b.h>
+
 
 // Definition of display and neopixel globals
 // For some reason, code complains when these are defined in the header file
@@ -164,61 +166,7 @@ void hytech_dashboard::startup() {
 
     delay(2000);
     _display.clearDisplay();
-
-    // _display.drawBitmap(0,0, epd_bitmap_david, 320, 240, BLACK);
-    // _display.refresh();
-    // delay(4000);
-
-    // _display.drawBitmap(60,25, epd_bitmap_cat, 200, 200, BLACK);
-    // _display.refresh();
-    // delay(3000);
-
-    // _display.drawBitmap(0,0, epd_bitmap_glizzy, 320, 240, BLACK);
-    // _display.refresh();
-    // delay(3000);
-
-    // for (int i = 0; i < 10; i++) {
-    //     unsigned char draw;
-    //     switch(i) {
-    //         case 1:
-    //             _display.drawBitmap(0,0, isp1, 320, 240, BLACK);
-    //             break;
-    //         case 2:
-    //             _display.drawBitmap(0,0, isp2, 320, 240, BLACK);
-    //             break;
-    //         case 3:
-    //             _display.drawBitmap(0,0, isp3, 320, 240, BLACK);
-    //             break;
-    //         case 4:
-    //             _display.drawBitmap(0,0, isp4, 320, 240, BLACK);
-    //             break;
-    //         case 5:
-    //             _display.drawBitmap(0,0, isp5, 320, 240, BLACK);
-    //             break;
-    //         case 6:
-    //             _display.drawBitmap(0,0, isp6, 320, 240, BLACK);
-    //             break;
-    //         case 7:
-    //             _display.drawBitmap(0,0, isp7, 320, 240, BLACK);
-    //             break;
-    //         case 8:
-    //             _display.drawBitmap(0,0, isp8, 320, 240, BLACK);
-    //             break;
-    //         case 9:
-    //             _display.drawBitmap(0,0, isp9, 320, 240, BLACK);
-    //             break;
-    //         case 10:
-    //             _display.drawBitmap(0,0, isp10, 320, 240, BLACK);
-    //             break;
-
-    //     }
-    //     _display.refresh();
-    //     delay(200);
-    //     _display.clearDisplayBuffer();
-    // }
-
-    _display.clearDisplay();
-    _display.drawBitmap(0,0, epd_bitmap_hytech_dashboard, 320, 240, BLACK);
+    display_startup_animation(StartupAnimations::ICE_SPICE);
 }
 
 uint32_t max(uint32_t val1, uint32_t val2) {
@@ -233,8 +181,6 @@ uint32_t min(uint32_t val1, uint32_t val2) {
 void hytech_dashboard::refresh(DashboardCAN* CAN) {
 
     error = check_for_errors(CAN);
-    // SerialUSB.print("Error: ");
-    // SerialUSB.println(error);
 
     refresh_neopixels(CAN);
     _expander.digitalWrite(number_encodings[CAN->dash_state.dial_state]);
@@ -253,7 +199,6 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     SerialUSB.println(first_latch);
 
     if ((!check_latched(&CAN->mcu_status) && first_latch) || (!check_ready_to_drive(&CAN->mcu_status) && first_ready_to_drive)) {
-        SerialUSB.println("latched, now delatched");
         display_ecu_state(&CAN->mcu_status);
         _display.refresh();
         return;
@@ -270,23 +215,10 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     // draw_regen_bar(0);
     // draw_current_draw_bar(0);
 
-    if (CAN->vn_status.vn_gps_status >= 2) {
-        _display.drawBitmap(270-27, 40, epd_bitmap_gps, 27, 27, BLACK);
-    } else {
-        if (blink()) { _display.drawBitmap(270-27, 40, epd_bitmap_gps, 27, 27, BLACK); }
-    }
-
-    if (check_ready_to_drive(&CAN->mcu_status)) {
-        _display.drawBitmap(270-27, 40+27+5, epd_bitmap_rtd, 27, 27, BLACK);
-    } else {
-        if (blink()) { _display.drawBitmap(270-27, 40+27+5, epd_bitmap_rtd, 27, 27, BLACK); }
-    }
 
     if (error != ErrorTypes::NO_ERROR && CAN->mcu_status.ecu_state != 0) {
         prev_page = current_page;
         current_page = -1; // show error page
-    } else {
-        current_page = prev_page;
     }
 
     switch(current_page) {
@@ -399,6 +331,10 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
             _display.setCursor(40, _display.getCursorY());
             break;
 
+        case 5:
+            show_lap_times(&(CAN->lap_times), &(CAN->driver_msg));
+            break;
+
         case 6:
             _display.setCursor(100,100);
             _display.setTextSize(1);
@@ -420,14 +356,14 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
             _display.setCursor(100, _display.getCursorY());
             break;
             
-        case 5:
-            show_lap_times(&(CAN->lap_times), &(CAN->driver_msg));
-            break;
         default:
             display_error();
             break;
     }
 
+    draw_icons(&CAN->mcu_status, &CAN->vn_status);
+
+    if (CAN->dash_state.dial_state == 1) draw_launch_screen();
     _display.refresh();
 }
 
@@ -682,6 +618,98 @@ void hytech_dashboard::display_error() {
     _display.println(message);
 }
 
+void hytech_dashboard::draw_launch_screen() {
+    if (flash()) _display.fillScreen(BLACK);
+    else _display.clearDisplayBuffer();
+    _display.setCursor(55,135);
+    _display.setTextColor(flash() ? WHITE : BLACK);
+    // _display.setTextSize(2);
+    _display.setFont(&FreeSansBold24pt7b);
+    _display.println("LAUNCH");
+}
+
+void hytech_dashboard::display_startup_animation(StartupAnimations animation) {
+    switch (animation) {
+        case StartupAnimations::DAVID_KNIGHT_GLIZZY:
+            _display.drawBitmap(0,0, epd_bitmap_glizzy, 320, 240, BLACK);
+            _display.refresh();
+            delay(3000);
+            break;
+        case StartupAnimations::DAVID_KNIGHT_2:
+            _display.drawBitmap(0,0, epd_bitmap_david, 320, 240, BLACK);
+            _display.refresh();
+            delay(3000);
+            break;
+        case StartupAnimations::MIKHAIL_CAT:
+            _display.drawBitmap(60,25, epd_bitmap_cat, 200, 200, BLACK);
+            _display.refresh();
+            delay(3000);
+            break;
+        case StartupAnimations::ICE_SPICE:
+            for (int i = 0; i < 10; i++) {
+                switch(i) {
+                    case 1:
+                        _display.drawBitmap(0,0, isp1, 320, 240, BLACK);
+                        break;
+                    case 2:
+                        _display.drawBitmap(0,0, isp2, 320, 240, BLACK);
+                        break;
+                    case 3:
+                        _display.drawBitmap(0,0, isp3, 320, 240, BLACK);
+                        break;
+                    case 4:
+                        _display.drawBitmap(0,0, isp4, 320, 240, BLACK);
+                        break;
+                    case 5:
+                        _display.drawBitmap(0,0, isp5, 320, 240, BLACK);
+                        break;
+                    case 6:
+                        _display.drawBitmap(0,0, isp6, 320, 240, BLACK);
+                        break;
+                    case 7:
+                        _display.drawBitmap(0,0, isp7, 320, 240, BLACK);
+                        break;
+                    case 8:
+                        _display.drawBitmap(0,0, isp8, 320, 240, BLACK);
+                        break;
+                    case 9:
+                        _display.drawBitmap(0,0, isp9, 320, 240, BLACK);
+                        break;
+                    case 10:
+                        _display.drawBitmap(0,0, isp10, 320, 240, BLACK);
+                        break;
+                }
+            _display.refresh();
+            delay(100);
+            _display.clearDisplayBuffer();
+            }
+        default:
+            break;
+    }
+    _display.clearDisplayBuffer();
+    _display.drawBitmap(0,0, epd_bitmap_hytech_dashboard, 320, 240, BLACK);
+}
+
+void hytech_dashboard::draw_icons(MCU_STATUS_t *m, VN_STATUS_t *v) {
+    if (v->vn_gps_status >= 2) {
+        _display.drawBitmap(270-27, 40, epd_bitmap_gps, 27, 27, BLACK);
+    } else {
+        if (blink()) { _display.drawBitmap(270-27, 40, epd_bitmap_gps, 27, 27, BLACK); }
+    }
+
+    if (check_ready_to_drive(m)) {
+        _display.drawBitmap(270-27, 40+27+5, epd_bitmap_rtd, 27, 27, BLACK);
+    } else {
+        if (blink()) { _display.drawBitmap(270-27, 40+27+5, epd_bitmap_rtd, 27, 27, BLACK); }
+    }
+
+    if (check_latched(m)) {
+        _display.drawBitmap(270-27, 40+27+5+27+5, epd_bitmap_latch_symbol, 27, 27, BLACK);
+    } else {
+        if (blink()) { _display.drawBitmap(270-27, 40+27+5+27+5, epd_bitmap_latch_symbol, 27, 27, BLACK); }
+    }
+}
+
 /* DISPLAY HELPER FUNCTIONS */
 
 void hytech_dashboard::draw_quadrants(String text) {
@@ -870,6 +898,14 @@ bool hytech_dashboard::blink() {
         last_blink_millis = millis();
     }
     return last_blink;
+}
+
+bool hytech_dashboard::flash() {
+    if((millis() - last_flash_millis) > FLASH_PERIOD) {
+        last_flash = !last_flash;
+        last_flash_millis = millis();
+    }
+    return last_flash;
 }
 
 ErrorTypes hytech_dashboard::check_for_errors(DashboardCAN *CAN) {
