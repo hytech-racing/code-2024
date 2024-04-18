@@ -17,8 +17,6 @@ Adafruit_NeoPixel _neopixels(NEOPIXEL_COUNT, NEOPIXEL_PIN, NEO_GRBW + NEO_KHZ800
 //PB6 // bots read
 // Pb7 // inertia read
 
-/* Null, because instance will be initialized on demand. */
-
 hytech_dashboard::hytech_dashboard(){}
 
 /*
@@ -41,7 +39,6 @@ hytech_dashboard::hytech_dashboard(){}
 
 
 SPIClass spi(MOSI, MISO, SCLK);
-// TODO change pins
 MCP23S08 _expander(&spi, IO_ADDR, IO_CS);
 
 hytech_dashboard* hytech_dashboard::getInstance() {
@@ -180,45 +177,45 @@ void hytech_dashboard::startup() {
     // _display.refresh();
     // delay(3000);
 
-    for (int i = 0; i < 10; i++) {
-        unsigned char draw;
-        switch(i) {
-            case 1:
-                _display.drawBitmap(0,0, isp1, 320, 240, BLACK);
-                break;
-            case 2:
-                _display.drawBitmap(0,0, isp2, 320, 240, BLACK);
-                break;
-            case 3:
-                _display.drawBitmap(0,0, isp3, 320, 240, BLACK);
-                break;
-            case 4:
-                _display.drawBitmap(0,0, isp4, 320, 240, BLACK);
-                break;
-            case 5:
-                _display.drawBitmap(0,0, isp5, 320, 240, BLACK);
-                break;
-            case 6:
-                _display.drawBitmap(0,0, isp6, 320, 240, BLACK);
-                break;
-            case 7:
-                _display.drawBitmap(0,0, isp7, 320, 240, BLACK);
-                break;
-            case 8:
-                _display.drawBitmap(0,0, isp8, 320, 240, BLACK);
-                break;
-            case 9:
-                _display.drawBitmap(0,0, isp9, 320, 240, BLACK);
-                break;
-            case 10:
-                _display.drawBitmap(0,0, isp10, 320, 240, BLACK);
-                break;
+    // for (int i = 0; i < 10; i++) {
+    //     unsigned char draw;
+    //     switch(i) {
+    //         case 1:
+    //             _display.drawBitmap(0,0, isp1, 320, 240, BLACK);
+    //             break;
+    //         case 2:
+    //             _display.drawBitmap(0,0, isp2, 320, 240, BLACK);
+    //             break;
+    //         case 3:
+    //             _display.drawBitmap(0,0, isp3, 320, 240, BLACK);
+    //             break;
+    //         case 4:
+    //             _display.drawBitmap(0,0, isp4, 320, 240, BLACK);
+    //             break;
+    //         case 5:
+    //             _display.drawBitmap(0,0, isp5, 320, 240, BLACK);
+    //             break;
+    //         case 6:
+    //             _display.drawBitmap(0,0, isp6, 320, 240, BLACK);
+    //             break;
+    //         case 7:
+    //             _display.drawBitmap(0,0, isp7, 320, 240, BLACK);
+    //             break;
+    //         case 8:
+    //             _display.drawBitmap(0,0, isp8, 320, 240, BLACK);
+    //             break;
+    //         case 9:
+    //             _display.drawBitmap(0,0, isp9, 320, 240, BLACK);
+    //             break;
+    //         case 10:
+    //             _display.drawBitmap(0,0, isp10, 320, 240, BLACK);
+    //             break;
 
-        }
-        _display.refresh();
-        delay(200);
-        _display.clearDisplayBuffer();
-    }
+    //     }
+    //     _display.refresh();
+    //     delay(200);
+    //     _display.clearDisplayBuffer();
+    // }
 
     _display.clearDisplay();
     _display.drawBitmap(0,0, epd_bitmap_hytech_dashboard, 320, 240, BLACK);
@@ -234,58 +231,33 @@ uint32_t min(uint32_t val1, uint32_t val2) {
 
 
 void hytech_dashboard::refresh(DashboardCAN* CAN) {
-    // update neopixels
+
+    error = check_for_errors(CAN);
+    // SerialUSB.print("Error: ");
+    // SerialUSB.println(error);
+
     refresh_neopixels(CAN);
     _expander.digitalWrite(number_encodings[CAN->dash_state.dial_state]);
-
     _display.clearDisplayBuffer();
     _display.drawBitmap(0,0, epd_bitmap_hytech_dashboard, 320, 240, BLACK);
 
-    // if shutdown tripped
-    // if (CAN->mcu_status.shutdown_b_above_threshold || CAN->mcu_status.shutdown_c_above_threshold || CAN->mcu_status.shutdown_d_above_threshold || CAN->mcu_status.shutdown_e_above_threshold) {
-    //     _display.clearDisplay();
-    //     display_error();
-    // }
+    float brake_mech_point = HYTECH_mechanical_brake_percent_float_ro_fromS(CAN->mcu_pedal_readings.mechanical_brake_percent_float_ro);
+    float accel_pedal_percentage = HYTECH_accel_percent_float_ro_fromS(CAN->mcu_pedal_readings.accel_percent_float_ro);
+    float brake_pedal_percentage = HYTECH_brake_percent_float_ro_fromS(CAN->mcu_pedal_readings.brake_percent_float_ro);
+    draw_vertical_pedal_bar(brake_pedal_percentage, 17);
 
-    bool launch = CAN->controller_boolean.controller_use_launch;
+    if (check_latched(&CAN->mcu_status)) { first_latch = true; }
+    if (check_ready_to_drive(&CAN->mcu_status)) { first_ready_to_drive = true; }
 
-    // if launch mode active
-    if (launch) {
-        _display.clearDisplayBuffer();
-        _display.setCursor(50,50);
-        _display.println("launch active");
+    SerialUSB.print("first latch: ");
+    SerialUSB.println(first_latch);
+
+    if ((!check_latched(&CAN->mcu_status) && first_latch) || (!check_ready_to_drive(&CAN->mcu_status) && first_ready_to_drive)) {
+        SerialUSB.println("latched, now delatched");
+        display_ecu_state(&CAN->mcu_status);
         _display.refresh();
         return;
     }
-
-    // refresh display
-
-
-
-    /** TODO: scale these values down to [0,100]*/
-
-    double ACCEL1_MIN_VAL = 2167;
-    double ACCEL1_MAX_VAL = 3285;
-    double ACCEL1_RANGE = ACCEL1_MAX_VAL - ACCEL1_MIN_VAL;
-
-    double BRAKE1_MIN_VAL = 2587;
-    double BRAKE1_MAX_VAL = 1947;
-    double BRAKE1_RANGE = BRAKE1_MAX_VAL - BRAKE1_MIN_VAL;
-
-    // TODO: add mechanical break point to display
-    float brake_mech_point = HYTECH_mechanical_brake_percent_float_ro_fromS(CAN->mcu_pedal_readings.mechanical_brake_percent_float_ro);
-    float accel_pedal = HYTECH_accel_percent_float_ro_fromS(CAN->mcu_pedal_readings.accel_percent_float_ro);
-    float brake_pedal = HYTECH_brake_percent_float_ro_fromS(CAN->mcu_pedal_readings.brake_percent_float_ro);
-
-    float current = CAN->em_measurement.em_current_ro;
-    SerialUSB.println(current);
-    // draw_vertical_pedal_bar(accel_pedal, 285);
-    draw_vertical_pedal_bar(brake_pedal, 17);
-
-    _display.setCursor(45, 25);
-    _display.print(torque_modes[CAN->mcu_status.torque_mode]);
-    _display.setCursor(190, _display.getCursorY());
-    _display.println(CAN->mcu_status.max_torque);
 
     if (CAN->mcu_pedal_readings.brake_percent_float_ro >= CAN->mcu_pedal_readings.mechanical_brake_percent_float_ro) {
         CAN->dash_mcu_state.mechanical_brake_led = 2;
@@ -298,15 +270,45 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     // draw_regen_bar(0);
     // draw_current_draw_bar(0);
 
-    /** TODO: only show this if GPS lock present (use CAN message when it exists)*/
     if (CAN->vn_status.vn_gps_status >= 2) {
         _display.drawBitmap(270-27, 40, epd_bitmap_gps, 27, 27, BLACK);
     } else {
         if (blink()) { _display.drawBitmap(270-27, 40, epd_bitmap_gps, 27, 27, BLACK); }
     }
 
+    if (check_ready_to_drive(&CAN->mcu_status)) {
+        _display.drawBitmap(270-27, 40+27+5, epd_bitmap_rtd, 27, 27, BLACK);
+    } else {
+        if (blink()) { _display.drawBitmap(270-27, 40+27+5, epd_bitmap_rtd, 27, 27, BLACK); }
+    }
+
+    if (error != ErrorTypes::NO_ERROR && CAN->mcu_status.ecu_state != 0) {
+        prev_page = current_page;
+        current_page = -1; // show error page
+    } else {
+        current_page = prev_page;
+    }
+
     switch(current_page) {
+
+        case 0:
+            display_speeds(&(CAN->drivetrain_rpms), &(CAN->bms_voltages));
+            break;
+
         case 1:
+            display_lowest_segment_voltage(&CAN->bms_voltages);
+            _display.setFont(&FreeSans24pt7b);
+            _display.setTextSize(2);
+            _display.setCursor(75, 160);
+            _display.println(HYTECH_low_voltage_ro_fromS(CAN->bms_voltages.low_voltage_ro));
+            _display.setTextSize(1);
+            _display.setFont(&FreeSans12pt7b);
+            _display.setCursor(125, 185);
+            _display.print("VOLTS");
+            _display.setFont(&FreeSans12pt7b);
+            break;
+
+        case 2:
             _display.setCursor(90,50);
             _display.setTextSize(1);
 
@@ -354,32 +356,14 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
             _display.print("Min B2: ");
             _display.println(min_brake_2);
             _display.setCursor(90, _display.getCursorY()-5);
-
-
             break;        
-        case 2:
-            _display.setCursor(100,100);
-            _display.setTextSize(1);
 
-            _display.print("A1: ");
-            _display.println(CAN->pedal_raw.accel_1_raw);
-            _display.setCursor(100, _display.getCursorY());
-
-            _display.print("A2: ");
-            _display.println(CAN->pedal_raw.accel_2_raw);
-            _display.setCursor(100, _display.getCursorY());
-
-            _display.print("B1: ");
-            _display.println(CAN->pedal_raw.brake_1_raw);
-            _display.setCursor(100, _display.getCursorY());
-
-            _display.print("B2: ");
-            _display.println(CAN->pedal_raw.brake_2_raw);
-            _display.setCursor(100, _display.getCursorY());
+        case 3:
+            display_suspension_data(&(CAN->mcu_suspension), &(CAN->sab_suspension));
             break;
-        case 0:
-            // display_speeds(&(CAN->drivetrain_rpms), &(CAN->bms_voltages));
-            
+
+        case 4:
+            // display_segment_voltages();
             _display.setCursor(40,60);
             switch (CAN->controller_power_lim.controller_power_lim_status) {
                 case 0:
@@ -414,19 +398,30 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
             _display.println(CAN->controller_boolean.controller_use_power_limit);
             _display.setCursor(40, _display.getCursorY());
             break;
-        case 3:
-            display_suspension_data(&(CAN->mcu_suspension), &(CAN->sab_suspension));
+
+        case 6:
+            _display.setCursor(100,100);
+            _display.setTextSize(1);
+
+            _display.print("A1: ");
+            _display.println(CAN->pedal_raw.accel_1_raw);
+            _display.setCursor(100, _display.getCursorY());
+
+            _display.print("A2: ");
+            _display.println(CAN->pedal_raw.accel_2_raw);
+            _display.setCursor(100, _display.getCursorY());
+
+            _display.print("B1: ");
+            _display.println(CAN->pedal_raw.brake_1_raw);
+            _display.setCursor(100, _display.getCursorY());
+
+            _display.print("B2: ");
+            _display.println(CAN->pedal_raw.brake_2_raw);
+            _display.setCursor(100, _display.getCursorY());
             break;
-        case 4:
-            // tires
-            //temp,pressure
-            display_tire_data();
-            break;
+            
         case 5:
             show_lap_times(&(CAN->lap_times), &(CAN->driver_msg));
-            break;
-        case 6:
-            display_segment_voltages();
             break;
         default:
             display_error();
@@ -534,7 +529,8 @@ void hytech_dashboard::draw_page_title(String text) {
     _display.setTextColor(BLACK);
     _display.setTextSize(1);
     _display.setFont(&FreeSansBold12pt7b);
-    _display.print(text);
+    _display.println(text);
+    _display.setCursor(50, _display.getCursorY());
     _display.setFont(&FreeSans12pt7b);
 }
 
@@ -646,12 +642,44 @@ void hytech_dashboard::display_speeds(DRIVETRAIN_RPMS_TELEM_t* drivetrain_rpms, 
     _display.setFont(&FreeSans12pt7b);
 }
         
+void hytech_dashboard::display_lowest_segment_voltage(BMS_VOLTAGES_t *v) {
+    draw_page_title("Lowest Voltage");
+
+}
+
 void hytech_dashboard::display_segment_voltages() {
-    draw_hexant("Segment Voltages");
+    // draw_hexant("Segment Voltages");
+    draw_page_title("Lowest Voltage");
+    // _display.println(CAN->bms_vol)
 }
 
 void hytech_dashboard::display_error() {
-
+    draw_page_title("Error");
+    String message = "";
+    switch (error) {
+        case ErrorTypes::NO_ERROR:
+            message = "No Error";
+            break;
+        case ErrorTypes::BRAKE_IMPLAUSIBILITY:
+            message = "Brake Implausible";
+            break;
+        case ErrorTypes::ACCEL_IMPLAUSIBILITY:
+            message = "Accel Implausible";
+            break;
+        case ErrorTypes::IMD_FAULT:
+            message = "IMD Fault";
+            break;
+        case ErrorTypes::INVERTER_ERROR:
+            message = "Inverter Error";
+            break;
+        case ErrorTypes::SOFTWARE_NOT_OK:
+            message = "Software Bad";
+            break;
+        case ErrorTypes::SHUTDOWN:
+            message = "Shutdown Fault";
+            break;
+    }
+    _display.println(message);
 }
 
 /* DISPLAY HELPER FUNCTIONS */
@@ -837,13 +865,62 @@ void hytech_dashboard::set_neopixel_color_gradient(LED_LIST_e led, uint8_t value
 }
 
 bool hytech_dashboard::blink() {
-
     if((millis() - last_blink_millis) > BLINK_PERIOD) {
         last_blink = !last_blink;
         last_blink_millis = millis();
     }
-
     return last_blink;
+}
+
+ErrorTypes hytech_dashboard::check_for_errors(DashboardCAN *CAN) {
+    if (!CAN->mcu_status.no_brake_implausability) return ErrorTypes::BRAKE_IMPLAUSIBILITY;
+    // else if (!CAN->mcu_status.no_accel_implausability) return ErrorTypes::ACCEL_IMPLAUSIBILITY;
+    else if (!CAN->mcu_status.software_ok) return ErrorTypes::SOFTWARE_NOT_OK;
+    else if (CAN->mcu_status.inverter_error) return ErrorTypes::INVERTER_ERROR;
+    else if (!CAN->mcu_status.imd_ok_high) return ErrorTypes::IMD_FAULT;
+    return ErrorTypes::NO_ERROR;
+}
+
+String convert_error_to_string(ErrorTypes error) {
+    switch (error) {
+        case ErrorTypes::NO_ERROR:
+            return "No Error";
+        case ErrorTypes::BRAKE_IMPLAUSIBILITY:
+            return "Brake Implaus";
+        case ErrorTypes::ACCEL_IMPLAUSIBILITY:
+            return "Accel Implaus";
+        case ErrorTypes::IMD_FAULT:
+            return "IMD Fault";
+        case ErrorTypes::INVERTER_ERROR:
+            return "Inverter Error";
+        case ErrorTypes::SOFTWARE_NOT_OK:
+            return "Software Bad";
+        case ErrorTypes::SHUTDOWN:
+            return "Shutdown Fault";
+    }
+    return "";
+}
+
+int hytech_dashboard::check_latched(MCU_STATUS_t *status) { return status->ecu_state>=2; }
+int hytech_dashboard::check_ready_to_drive(MCU_STATUS_t *status) { return status->ecu_state==5; }
+
+
+void hytech_dashboard::display_ecu_state(MCU_STATUS_t *status) {
+
+    String state = "";
+    switch (status->ecu_state) {
+        case 0:
+            state = "MCU Startup";
+            break;
+        case 1:
+            state = "TS Not Active";
+            break;
+        default:
+            state = "TS Active";
+            break;
+    }
+    draw_page_title("Not Ready to Drive");
+    _display.print(state);
 }
 
 
@@ -853,8 +930,6 @@ bool hytech_dashboard::blink() {
   tire data
   skip splash screen
   random msgs
-  speed page
-  gradient for
   RAINBOW LED
   pop-up msgs
   launch inverting colors

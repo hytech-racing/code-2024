@@ -49,6 +49,7 @@ void DashboardCAN::read_CAN()
 
     case BMS_VOLTAGES_CANID:
       Unpack_BMS_VOLTAGES_hytech(&bms_voltages, _msg.buf, _msg.len);
+      // bms_voltages.low_voltage_ro =  HYTECH_low_voltage_ro_fromS(bms_voltages.low_voltage_ro);
       // include bms timer
       // bms_voltages_received();
       break;

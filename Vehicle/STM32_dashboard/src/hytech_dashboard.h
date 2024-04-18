@@ -56,6 +56,19 @@ enum class LED_colors_e
     RED = 0xFF0000,
 };
 
+enum ErrorTypes {
+    BRAKE_IMPLAUSIBILITY,
+    ACCEL_IMPLAUSIBILITY,
+    MCU_STATE,
+    SOFTWARE_NOT_OK,
+    SHUTDOWN,
+    INVERTER_ERROR,
+    IMD_FAULT,
+    NO_ERROR
+};
+
+// String errorTypes[8] = {"Brake Implaus", "Accel Implaus", "MCU State", "Software Bad", "Shutdown Bad", "Inverter Error", "IMD Fault", "No Error"};
+
 #define LED_INIT 0xFF007F
 #define LED_BLUE 0xFF
 #define LED_WHITE 0xFFFFFFFF
@@ -139,8 +152,11 @@ class hytech_dashboard {
 
         String torque_modes[4] = {"Simple", "Load Cell", "Launch", "PIDTV"};
 
+        ErrorTypes error;
+
         /* current page displayed */
         uint8_t current_page = 0;
+        uint8_t prev_page = 0;
         /* number encodings for use with the IO expander that drives the seven segment display */
         uint8_t number_encodings[11] = {0b01000000, 0b01111001, 0b00100100, 0b00110000, 0b00011001, 0b00010010, 0b00000010, 0b01111000, 0b10000000, 0b00011000, 0b11111111};
         uint8_t curr_num = 0;
@@ -236,8 +252,16 @@ class hytech_dashboard {
         void display_tire_data();
 
         void display_speeds(DRIVETRAIN_RPMS_TELEM_t* drivetrain_rpms, BMS_VOLTAGES_t* bms_voltages);
+        void display_lowest_segment_voltage(BMS_VOLTAGES_t *);
         void display_segment_voltages();
 
+        ErrorTypes check_for_errors(DashboardCAN *CAN);
+        String convert_error_to_string(ErrorTypes error);
+        void display_ecu_state(MCU_STATUS_t *);
+        int check_latched(MCU_STATUS_t *);
+        int check_ready_to_drive(MCU_STATUS_t *);
+        bool first_latch = false;
+        bool first_ready_to_drive = false;
         void display_error();
 
         /*!
