@@ -363,7 +363,7 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
 
     draw_icons(&CAN->mcu_status, &CAN->vn_status);
     if (CAN->dash_state.dial_state == 1) draw_launch_screen();
-    draw_popup("Error");
+    // draw_popup("Error");
     _display.refresh();
 }
 
