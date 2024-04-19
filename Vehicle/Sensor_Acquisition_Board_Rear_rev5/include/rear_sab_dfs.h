@@ -32,11 +32,11 @@
 /* ADC read channels */
 // SAB MCP3208
 #define THERM_3 0   // RR motor     // the rest is on ECU. don't try
-#define THERM_4 1
-#define THERM_5 2
-#define THERM_6 3
-#define THERM_7 4
-#define THERM_8 5
+#define THERM_4 1   // inverter beheaded
+#define THERM_5 2   // pump (right)
+#define THERM_6 3   // inverter flying leed
+#define THERM_7 4   // accumulator across penthouse (right)
+#define THERM_8 5   // accumulator (left)
 #define THERM_9 6   // RL motor
 // CB RL MCP3204
 #define SUS_POT_3 1
