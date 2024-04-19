@@ -210,6 +210,11 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
         CAN->dash_mcu_state.mechanical_brake_led = 0;
     }
 
+    _display.setCursor(45, 25);
+    _display.print(dial_modes[CAN->dash_mcu_state.dial_state]);
+    _display.setCursor(190, _display.getCursorY());
+    _display.println(CAN->mcu_status.max_torque);
+
     /** TODO: add real data to these bars*/
     // draw_battery_bar(0);
     // draw_regen_bar(0);
@@ -362,7 +367,7 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     }
 
     draw_icons(&CAN->mcu_status, &CAN->vn_status);
-    if (CAN->dash_state.dial_state == 1) draw_launch_screen();
+    if (CAN->dash_state.dial_state == 3) draw_launch_screen();
     // draw_popup("Error");
     _display.refresh();
 }
@@ -842,8 +847,8 @@ void hytech_dashboard::refresh_neopixels(DashboardCAN* CAN) {
         set_neopixel_color(LED_LIST_e::GLV, 0);
         // set_neopixel_color_gradient(LED_LIST_e::GLV, CAN->dash_mcu_state.glv_led);
         set_neopixel_color_gradient(LED_LIST_e::CRIT_CHARGE, CAN->dash_mcu_state.pack_charge_led);
-        SerialUSB.println(CAN->mcu_status.no_brake_implausability);
-        if (!CAN->mcu_status.no_brake_implausability) {
+        SerialUSB.println(CAN->mcu_status.no_brake_implausibility);
+        if (!CAN->mcu_status.no_brake_implausibility) {
             set_neopixel_color(LED_LIST_e::BRAKE_ENGAGE, 3);
             if (blink()) { set_neopixel_color(LED_LIST_e::BRAKE_ENGAGE, 0); }
         } else {
@@ -920,8 +925,8 @@ bool hytech_dashboard::flash() {
 }
 
 ErrorTypes hytech_dashboard::check_for_errors(DashboardCAN *CAN) {
-    if (!CAN->mcu_status.no_brake_implausability) return ErrorTypes::BRAKE_IMPLAUSIBILITY;
-    // else if (!CAN->mcu_status.no_accel_implausability) return ErrorTypes::ACCEL_IMPLAUSIBILITY;
+    if (!CAN->mcu_status.no_brake_implausibility) return ErrorTypes::BRAKE_IMPLAUSIBILITY;
+    // else if (!CAN->mcu_status.no_accel_implausibility) return ErrorTypes::ACCEL_IMPLAUSIBILITY;
     else if (!CAN->mcu_status.software_ok) return ErrorTypes::SOFTWARE_NOT_OK;
     else if (CAN->mcu_status.inverter_error) return ErrorTypes::INVERTER_ERROR;
     else if (!CAN->mcu_status.imd_ok_high) return ErrorTypes::IMD_FAULT;
