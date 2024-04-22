@@ -205,10 +205,7 @@ class hytech_dashboard {
         bool last_flash;
         uint32_t last_flash_millis;
 
-        void draw_hytech_startup();
         void display_startup_animation(StartupAnimations);
-        void initialize_neopixels();
-        void initialize_io_expander();
 
         /* Displays the clock and times in m:s.ms format based on the number of milliseconds*/
         void format_millis(String label, uint32_t time);
