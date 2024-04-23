@@ -695,20 +695,28 @@ void hytech_dashboard::display_startup_animation(StartupAnimations animation) {
 }
 
 void hytech_dashboard::draw_icons(MCU_STATUS_t *m, VN_STATUS_t *v) {
+
+    /* no gps icon = 0 */
+    /* vn flashing = 1 */
+    /* vn solid = 2    */
     if (v->vn_gps_status >= 2) {
         _display.drawBitmap(270-27, 40, epd_bitmap_gps, 27, 27, BLACK);
-    } else {
+    } else if (v->vn_gps_status == 1){
         if (blink()) { _display.drawBitmap(270-27, 40, epd_bitmap_gps, 27, 27, BLACK); }
+    } else if (v->vn_gps_status == 0) {
+        _display.drawBitmap(270-27, 40, epd_bitmap_nogps, 27, 27, BLACK);
     }
 
     if (check_ready_to_drive(m)) {
-        _display.drawBitmap(270-27, 40+27+5, epd_bitmap_rtd, 27, 27, BLACK);
+        SerialUSB.println("delatched");
+        _display.drawBitmap(270-27, 40+27+5+27+5, epd_bitmap_rtd, 27, 27, BLACK);
     } else {
         if (blink()) { _display.drawBitmap(270-27, 40+27+5, epd_bitmap_rtd, 27, 27, BLACK); }
     }
 
     if (check_latched(m)) {
-        _display.drawBitmap(270-27, 40+27+5+27+5, epd_bitmap_latch_symbol, 27, 27, BLACK);
+        SerialUSB.println("latched");
+        _display.drawBitmap(270-27, 40+27+5, epd_bitmap_latch_symbol, 27, 27, BLACK);
     } else {
         if (blink()) { _display.drawBitmap(270-27, 40+27+5+27+5, epd_bitmap_latch_symbol, 27, 27, BLACK); }
     }
