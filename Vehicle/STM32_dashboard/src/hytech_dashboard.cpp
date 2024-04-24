@@ -91,81 +91,12 @@ void hytech_dashboard::init() {
 }
 
 void hytech_dashboard::startup() {
-
     pinMode(PB5, INPUT);
     pinMode(PB6, INPUT);
     pinMode(PB7, INPUT);
-
-    _expander.begin();
-
-    for (int i = 0; i < 8; i++) {
-        _expander.pinMode(i, OUTPUT);
-        _expander.digitalWrite(i, HIGH);
-    }
-
-    // begin, clear display, set rotation
-    _display.begin();
-    _display.clearDisplay();
-    _display.setRotation(0);
-
-    // draw Hytech logo in center of screen
-    _display.drawBitmap(hytech_logo_x, hytech_logo_y, epd_bitmap_Hytech_Logo, hytech_logo_size, hytech_logo_size, BLACK);
-    _display.refresh();
-
-    // begin neopixels and set half brightness to not flashbang driver
-    _neopixels.begin();
-    _neopixels.setBrightness(MIN_BRIGHTNESS);
-
-    //set init color for every led
-    for (int i = 0; i < NEOPIXEL_COUNT; i++) {
-        _neopixels.setPixelColor(i, LED_INIT);
-
-        // AMS and IMD are off according to rules
-        if (i == LED_LIST_e::AMS || i == LED_LIST_e::IMD){
-            _neopixels.setPixelColor(i, 0);
-        }
-            
-    }
-    // write data to neopixels
-    _neopixels.show();
-
-    delay(2000);
-
-    // for loop that continues to write logo with x offset of i
-    // shifts logo left to make room for Hytech Racing words
-    for (int i = 1; i > -116; i-=3) {
-        _display.clearDisplayBuffer();
-        _display.drawBitmap(hytech_logo_x + i, hytech_logo_y, epd_bitmap_Hytech_Logo, hytech_logo_size, hytech_logo_size, BLACK);
-        _display.refresh();
-    }
-
-    delay(20);
-
-    //display "Hytech Racing" on display
-    _display.drawBitmap(hytech_words_x + 45, hytech_words_y, epd_bitmap_HytechWords, hytech_words_x_size, hytech_words_y_size, BLACK);
-    _display.refresh();
-
-    _display.setFont(&FreeSans12pt7b);
-
-    unsigned int seed = generateSeed();
-    std::mt19937 gen(seed);
-
-    // Generate a random number between 1 and 100
-    std::uniform_int_distribution<> dis(1, 100000);
-    int randomNumber = dis(gen);
-
-    // String greeting = greetings[randomNumber % NUMBER_OF_MESSAGES];
-    String greeting = "Undefeated";
-    int length = greeting.length();
-    _display.setCursor(hytech_logo_x-length*3, hytech_logo_y + hytech_logo_size + 30);
-    _display.setTextColor(BLACK);
-    _display.setTextSize(1);
-    srand(micros());
-    _display.println(greeting);
-    _display.refresh();
-
-    delay(2000);
-    _display.clearDisplay();
+    init_io_expander();
+    init_neopixels();
+    display_hytech_animation();
     display_startup_animation(StartupAnimations::NONE);
 }
 
@@ -692,6 +623,56 @@ void hytech_dashboard::display_startup_animation(StartupAnimations animation) {
     }
     _display.clearDisplayBuffer();
     _display.drawBitmap(0,0, epd_bitmap_hytech_dashboard, 320, 240, BLACK);
+}
+
+void hytech_dashboard::display_hytech_animation() {
+    _display.begin();
+    _display.clearDisplay();
+    _display.setRotation(0);
+    _display.drawBitmap(hytech_logo_x, hytech_logo_y, epd_bitmap_Hytech_Logo, hytech_logo_size, hytech_logo_size, BLACK);
+    _display.refresh();
+    delay(2000);
+    for (int i = 1; i > -116; i-=3) {
+        _display.clearDisplayBuffer();
+        _display.drawBitmap(hytech_logo_x + i, hytech_logo_y, epd_bitmap_Hytech_Logo, hytech_logo_size, hytech_logo_size, BLACK);
+        _display.refresh();
+    }
+    delay(20);
+    _display.drawBitmap(hytech_words_x + 45, hytech_words_y, epd_bitmap_HytechWords, hytech_words_x_size, hytech_words_y_size, BLACK);
+    _display.refresh();
+    _display.setFont(&FreeSans12pt7b);
+    String greeting = "Undefeated";
+    int length = greeting.length();
+    _display.setCursor(hytech_logo_x-length*3, hytech_logo_y + hytech_logo_size + 30);
+    _display.setTextColor(BLACK);
+    _display.setTextSize(1);
+    _display.println(greeting);
+    _display.refresh();
+    delay(2000);
+    _display.clearDisplay();
+}
+
+void hytech_dashboard::init_neopixels() {
+    _neopixels.begin();
+    _neopixels.setBrightness(MIN_BRIGHTNESS);
+    //set init color for every led
+    for (int i = 0; i < NEOPIXEL_COUNT; i++) {
+        _neopixels.setPixelColor(i, LED_INIT);
+        // AMS and IMD are off according to rules
+        if (i == LED_LIST_e::AMS || i == LED_LIST_e::IMD){
+            _neopixels.setPixelColor(i, 0);
+        }
+    }
+    // write data to neopixels
+    _neopixels.show();
+}
+
+void hytech_dashboard::init_io_expander() {
+    _expander.begin();
+    for (int i = 0; i < 8; i++) {
+        _expander.pinMode(i, OUTPUT);
+        _expander.digitalWrite(i, HIGH);
+    }
 }
 
 void hytech_dashboard::draw_icons(MCU_STATUS_t *m, VN_STATUS_t *v) {
