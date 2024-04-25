@@ -137,10 +137,7 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
         case 6:
             display_raw_pedal_readings(&CAN->pedal_raw);
             break;
-            
-        default:
-            display_error();
-            break;
+
     }
 
     draw_icons(&CAN->mcu_status, &CAN->vn_status);
