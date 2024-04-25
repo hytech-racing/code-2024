@@ -146,6 +146,7 @@ void tick_all_systems(const SysTick_s &curr_tick);
 // Vector Nav functions
 void setSerialBaudrate(uint32_t baudrate);
 void checkSerialBaudrate();
+void setInitialHeading(uint32_t initHeading);
 void turnOffAsciiOutput();
 void configBinaryOutput(uint8_t binaryOutputNumber, uint8_t fields, uint16_t rateDivisor);
 void pollUserConfiguredBinaryOutput(uint8_t *binaryOutputNumber);
@@ -199,6 +200,7 @@ void setup() {
   // Initialize binary packet lengh
   currentPacketLength = 0;
   // Configure sensor
+  setInitialHeading(INIT_HEADING);
   turnOffAsciiOutput();
   configBinaryOutput(1, 0x01, 0);    // 0000 0001
   configBinaryOutput(2, 0x05, 0);    // 0000 0101
@@ -657,6 +659,28 @@ void checkSerialBaudrate() {
   Serial.println(receiveBuffer);
 
   Serial.println();
+}
+
+void setInitialHeading(uint32_t initHeading) {
+    char toSend[DEFAULT_WRITE_BUFFER_SIZE];
+
+    size_t length = sprintf(toSend, "$VNSIH,+%03u", initHeading);
+    length += sprintf(toSend + length, "*XX\r\n");
+
+    Serial2.print(toSend);
+    Serial2.flush();
+
+    delay(10);
+
+    int index = 0;
+    char receiveBuffer[DEFAULT_READ_BUFFER_SIZE] = {'\0'};
+    while (Serial2.available() > 0 && index < DEFAULT_READ_BUFFER_SIZE - 1) {
+        receiveBuffer[index++] = Serial2.read();
+    }
+    Serial.print("Set initial heading: ");
+    Serial.println(receiveBuffer);
+
+    Serial.println();
 }
 
 void turnOffAsciiOutput() { // VNOFF
