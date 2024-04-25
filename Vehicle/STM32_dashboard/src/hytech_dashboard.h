@@ -159,7 +159,7 @@ class hytech_dashboard {
 
         Metro pixel_refresh = Metro(100);
 
-        String dial_modes[6] = {"Mode 0", "Mode 1", "CASE", "Simple Launch", "Slip Launch", "No Controller"};
+        String dial_modes[6] = {"M0", "M1", "CASE", "Simple Launch", "Slip Launch", "None"};
 
         ErrorTypes error;
 

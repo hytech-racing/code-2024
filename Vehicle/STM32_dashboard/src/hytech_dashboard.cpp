@@ -79,48 +79,31 @@ uint32_t min(uint32_t val1, uint32_t val2) {
 
 void hytech_dashboard::refresh(DashboardCAN* CAN) {
 
-    error = check_for_errors(CAN);
-
+    /* refresh neopixels, redraw buffer, write to 7-seg display*/
     refresh_neopixels(CAN);
     _expander.digitalWrite(number_encodings[CAN->dash_state.dial_state]);
     _display.clearDisplayBuffer();
     _display.drawBitmap(0,0, epd_bitmap_hytech_dashboard, 320, 240, BLACK);
 
+    /* draw brake pedal */
     float brake_mech_point = HYTECH_mechanical_brake_percent_float_ro_fromS(CAN->mcu_pedal_readings.mechanical_brake_percent_float_ro);
     float accel_pedal_percentage = HYTECH_accel_percent_float_ro_fromS(CAN->mcu_pedal_readings.accel_percent_float_ro);
     float brake_pedal_percentage = HYTECH_brake_percent_float_ro_fromS(CAN->mcu_pedal_readings.brake_percent_float_ro);
     draw_vertical_pedal_bar(brake_pedal_percentage, 17);
 
-    if (check_latched(&CAN->mcu_status)) { first_latch = true; }
-    if (check_ready_to_drive(&CAN->mcu_status)) { first_ready_to_drive = true; }
+    /* set mechanical brake led */
+    CAN->dash_mcu_state.mechanical_brake_led = (CAN->mcu_pedal_readings.brake_percent_float_ro >= CAN->mcu_pedal_readings.mechanical_brake_percent_float_ro) ? 2 : 0;
 
-    if ((!check_latched(&CAN->mcu_status) && first_latch) || (!check_ready_to_drive(&CAN->mcu_status) && first_ready_to_drive)) {
-        display_ecu_state(&CAN->mcu_status);
-        _display.refresh();
-        return;
-    }
-
-    if (CAN->mcu_pedal_readings.brake_percent_float_ro >= CAN->mcu_pedal_readings.mechanical_brake_percent_float_ro) {
-        CAN->dash_mcu_state.mechanical_brake_led = 2;
-    } else {
-        CAN->dash_mcu_state.mechanical_brake_led = 0;
-    }
-
-    _display.setCursor(45, 25);
+    /* display current torque mode and torque limit */
+    _display.setCursor(14, 25);
     _display.print(dial_modes[CAN->dash_mcu_state.dial_state]);
-    _display.setCursor(190, _display.getCursorY());
+    _display.print(": ");
     _display.println(CAN->mcu_status.max_torque);
 
     /** TODO: add real data to these bars*/
     // draw_battery_bar(0);
     // draw_regen_bar(0);
     // draw_current_draw_bar(0);
-
-
-    // if (error != ErrorTypes::NO_ERROR && CAN->mcu_status.ecu_state != 0) {
-    //     prev_page = current_page;
-    //     current_page = -1; // show error page
-    // }
 
     current_page = 5;
 
@@ -498,13 +481,17 @@ void hytech_dashboard::display_torque_diagnostics(CONTROLLER_BOOLEAN_t *c, CONTR
 }
 
 void hytech_dashboard::display_torque_requests() {
-    int x_off = 50;
-    int bar_height = 80;
+    draw_page_title("Torque Requests");
+    int x_off = 70;
+    int bar_height = 70;
     int bar_width = 20;
-    int starty = 50;
+    int starty = 60;
+    int y_offset = bar_height + 10;
     int mid = 320/2;
     _display.fillRect(mid-x_off,starty,bar_width,bar_height, BLACK);
     _display.fillRect(mid+x_off,starty,bar_width,bar_height, BLACK);
+    _display.fillRect(mid-x_off,starty+y_offset,bar_width,bar_height, BLACK);
+    _display.fillRect(mid+x_off,starty+y_offset,bar_width,bar_height, BLACK);
 
 }
 
