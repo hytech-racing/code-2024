@@ -39,7 +39,6 @@ hytech_dashboard::hytech_dashboard(){}
 
 */
 
-
 SPIClass spi(MOSI, MISO, SCLK);
 MCP23S08 _expander(&spi, IO_ADDR, IO_CS);
 
@@ -48,37 +47,6 @@ hytech_dashboard* hytech_dashboard::getInstance() {
         _instance = new hytech_dashboard();
     }
     return _instance;
-}
-
-unsigned int generateSeed() {
-    // You can use any source of variability available on your system
-    unsigned int seed = 0;
-
-    // Example: Use the current tick count of the microcontroller
-    // seed ^= HAL_GetTick();
-
-    // Example: Use the memory address of a volatile variable
-    volatile int dummy;
-    // seed ^= reinterpret_cast<unsigned int>(&dummy);
-
-    // Use analog input value
-    seed ^= analogRead(PA3);
-    seed ^= analogRead(PA2);
-    seed ^= analogRead(PA1);
-    // seed ^= analogRead(PA0);
-    // seed ^= analogRead(PB0);
-    // seed ^= analogRead(PB1);
-    // seed ^= analogRead(PB1);
-    // seed ^= analogRead(PB3);
-
-    // uint32_t mem;
-    // memcpy(mem, 0x0, 4);
-    // seed ^= mem;
-
-
-    // Add more sources of variability as needed
-
-    return seed;
 }
 
 void hytech_dashboard::init() {
@@ -126,9 +94,6 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     if (check_latched(&CAN->mcu_status)) { first_latch = true; }
     if (check_ready_to_drive(&CAN->mcu_status)) { first_ready_to_drive = true; }
 
-    SerialUSB.print("first latch: ");
-    SerialUSB.println(first_latch);
-
     if ((!check_latched(&CAN->mcu_status) && first_latch) || (!check_ready_to_drive(&CAN->mcu_status) && first_ready_to_drive)) {
         display_ecu_state(&CAN->mcu_status);
         _display.refresh();
@@ -152,10 +117,12 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     // draw_current_draw_bar(0);
 
 
-    if (error != ErrorTypes::NO_ERROR && CAN->mcu_status.ecu_state != 0) {
-        prev_page = current_page;
-        current_page = -1; // show error page
-    }
+    // if (error != ErrorTypes::NO_ERROR && CAN->mcu_status.ecu_state != 0) {
+    //     prev_page = current_page;
+    //     current_page = -1; // show error page
+    // }
+
+    current_page = 5;
 
     switch(current_page) {
 
@@ -165,65 +132,10 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
 
         case 1:
             display_lowest_segment_voltage(&CAN->bms_voltages);
-            _display.setFont(&FreeSans24pt7b);
-            _display.setTextSize(2);
-            _display.setCursor(75, 160);
-            _display.println(HYTECH_low_voltage_ro_fromS(CAN->bms_voltages.low_voltage_ro));
-            _display.setTextSize(1);
-            _display.setFont(&FreeSans12pt7b);
-            _display.setCursor(125, 185);
-            _display.print("VOLTS");
-            _display.setFont(&FreeSans12pt7b);
             break;
 
         case 2:
-            _display.setCursor(90,50);
-            _display.setTextSize(1);
-
-            max_accel_1 = max(CAN->pedal_raw.accel_1_raw, max_accel_1);
-            max_accel_2 = max(CAN->pedal_raw.accel_2_raw, max_accel_2);
-            min_accel_1 = min(CAN->pedal_raw.accel_1_raw, min_accel_1);
-            min_accel_2 = min(CAN->pedal_raw.accel_2_raw, min_accel_2);
-
-            max_brake_1 = max(CAN->pedal_raw.brake_1_raw, max_brake_1);
-            max_brake_2 = max(CAN->pedal_raw.brake_2_raw, max_brake_2);
-            min_brake_1 = min(CAN->pedal_raw.brake_1_raw, min_brake_1);
-            min_brake_2 = min(CAN->pedal_raw.brake_2_raw, min_brake_2);
-
-            _display.print("Max A1: ");
-            _display.println(max_accel_1);
-            _display.setCursor(90, _display.getCursorY()-5);
-
-            _display.print("Min A1: ");
-            _display.println(min_accel_1);
-            _display.setCursor(90, _display.getCursorY()-5);
-
-            _display.print("Max A2: ");
-            _display.println(max_accel_2);
-            _display.setCursor(90, _display.getCursorY()-5);
-
-            _display.print("Min A2: ");
-            _display.println(min_accel_2);
-            _display.setCursor(90, _display.getCursorY()-5);
-
-            
-            /* BRAKE */
-
-            _display.print("Max B1: ");
-            _display.println(max_brake_1);
-            _display.setCursor(90, _display.getCursorY()-5);
-
-            _display.print("Min B1: ");
-            _display.println(min_brake_1);
-            _display.setCursor(90, _display.getCursorY()-5);
-
-            _display.print("Max B2: ");
-            _display.println(max_brake_2);
-            _display.setCursor(90, _display.getCursorY()-5);
-
-            _display.print("Min B2: ");
-            _display.println(min_brake_2);
-            _display.setCursor(90, _display.getCursorY()-5);
+            display_min_max_pedals(&CAN->pedal_raw);
             break;        
 
         case 3:
@@ -231,65 +143,16 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
             break;
 
         case 4:
-            // display_segment_voltages();
-            _display.setCursor(40,60);
-            switch (CAN->controller_power_lim.controller_power_lim_status) {
-                case 0:
-                    _display.println("No Power Limit");
-                    break;
-                case 1:
-                    _display.println("PID Power Limit");
-                    break;
-                case 2:
-                    _display.println("Mech Power Limit");
-                    break;
-            }
-            _display.setCursor(40, _display.getCursorY());
-
-            _display.print("Use Launch: ");
-            _display.println(CAN->controller_boolean.controller_use_launch);
-            _display.setCursor(40, _display.getCursorY());
-
-            _display.print("Use NF: ");
-            _display.println(CAN->controller_boolean.controller_use_normal_force);
-            _display.setCursor(40, _display.getCursorY());
-
-            _display.print("Use PID power lim: ");
-            _display.println(CAN->controller_boolean.controller_use_pid_power_limit);
-            _display.setCursor(40, _display.getCursorY());
-
-            _display.print("Use PID tv: ");
-            _display.println(CAN->controller_boolean.controller_use_pid_tv);
-            _display.setCursor(40, _display.getCursorY());
-
-            _display.print("Use power lim: ");
-            _display.println(CAN->controller_boolean.controller_use_power_limit);
-            _display.setCursor(40, _display.getCursorY());
+            display_torque_diagnostics(&CAN->controller_boolean, &CAN->controller_power_lim);
             break;
 
         case 5:
-            show_lap_times(&(CAN->lap_times), &(CAN->driver_msg));
+            // show_lap_times(&(CAN->lap_times), &(CAN->driver_msg));
+            display_torque_requests();
             break;
 
         case 6:
-            _display.setCursor(100,100);
-            _display.setTextSize(1);
-
-            _display.print("A1: ");
-            _display.println(CAN->pedal_raw.accel_1_raw);
-            _display.setCursor(100, _display.getCursorY());
-
-            _display.print("A2: ");
-            _display.println(CAN->pedal_raw.accel_2_raw);
-            _display.setCursor(100, _display.getCursorY());
-
-            _display.print("B1: ");
-            _display.println(CAN->pedal_raw.brake_1_raw);
-            _display.setCursor(100, _display.getCursorY());
-
-            _display.print("B2: ");
-            _display.println(CAN->pedal_raw.brake_2_raw);
-            _display.setCursor(100, _display.getCursorY());
+            display_raw_pedal_readings(&CAN->pedal_raw);
             break;
             
         default:
@@ -516,13 +379,133 @@ void hytech_dashboard::display_speeds(DRIVETRAIN_RPMS_TELEM_t* drivetrain_rpms, 
         
 void hytech_dashboard::display_lowest_segment_voltage(BMS_VOLTAGES_t *v) {
     draw_page_title("Lowest Voltage");
-
+    _display.setFont(&FreeSans24pt7b);
+    _display.setTextSize(2);
+    _display.setCursor(75, 160);
+    _display.println(HYTECH_low_voltage_ro_fromS(v->low_voltage_ro));
+    _display.setTextSize(1);
+    _display.setFont(&FreeSans12pt7b);
+    _display.setCursor(125, 185);
+    _display.print("VOLTS");
+    _display.setFont(&FreeSans12pt7b);
 }
 
-void hytech_dashboard::display_segment_voltages() {
-    // draw_hexant("Segment Voltages");
-    draw_page_title("Lowest Voltage");
-    // _display.println(CAN->bms_vol)
+void hytech_dashboard::display_min_max_pedals(MCU_PEDAL_RAW_t *p) {
+    _display.setCursor(90,50);
+    _display.setTextSize(1);
+
+    max_accel_1 = max(p->accel_1_raw, max_accel_1);
+    max_accel_2 = max(p->accel_2_raw, max_accel_2);
+    min_accel_1 = min(p->accel_1_raw, min_accel_1);
+    min_accel_2 = min(p->accel_2_raw, min_accel_2);
+
+    max_brake_1 = max(p->brake_1_raw, max_brake_1);
+    max_brake_2 = max(p->brake_2_raw, max_brake_2);
+    min_brake_1 = min(p->brake_1_raw, min_brake_1);
+    min_brake_2 = min(p->brake_2_raw, min_brake_2);
+
+    /* ACCEL */
+    _display.print("Max A1: ");
+    _display.println(max_accel_1);
+    _display.setCursor(90, _display.getCursorY()-5);
+
+    _display.print("Min A1: ");
+    _display.println(min_accel_1);
+    _display.setCursor(90, _display.getCursorY()-5);
+
+    _display.print("Max A2: ");
+    _display.println(max_accel_2);
+    _display.setCursor(90, _display.getCursorY()-5);
+
+    _display.print("Min A2: ");
+    _display.println(min_accel_2);
+    _display.setCursor(90, _display.getCursorY()-5);
+
+    
+    /* BRAKE */
+    _display.print("Max B1: ");
+    _display.println(max_brake_1);
+    _display.setCursor(90, _display.getCursorY()-5);
+
+    _display.print("Min B1: ");
+    _display.println(min_brake_1);
+    _display.setCursor(90, _display.getCursorY()-5);
+
+    _display.print("Max B2: ");
+    _display.println(max_brake_2);
+    _display.setCursor(90, _display.getCursorY()-5);
+
+    _display.print("Min B2: ");
+    _display.println(min_brake_2);
+    _display.setCursor(90, _display.getCursorY()-5);
+}
+
+void hytech_dashboard::display_raw_pedal_readings(MCU_PEDAL_RAW_t *p) {
+    _display.setCursor(100,100);
+    _display.setTextSize(1);
+
+    _display.print("A1: ");
+    _display.println(p->accel_1_raw);
+    _display.setCursor(100, _display.getCursorY());
+
+    _display.print("A2: ");
+    _display.println(p->accel_2_raw);
+    _display.setCursor(100, _display.getCursorY());
+
+    _display.print("B1: ");
+    _display.println(p->brake_1_raw);
+    _display.setCursor(100, _display.getCursorY());
+
+    _display.print("B2: ");
+    _display.println(p->brake_2_raw);
+    _display.setCursor(100, _display.getCursorY());
+}
+
+void hytech_dashboard::display_torque_diagnostics(CONTROLLER_BOOLEAN_t *c, CONTROLLER_POWER_LIM_t *p) {
+    _display.setCursor(40,60);
+    switch (p->controller_power_lim_status) {
+        case 0:
+            _display.println("No Power Limit");
+            break;
+        case 1:
+            _display.println("PID Power Limit");
+            break;
+        case 2:
+            _display.println("Mech Power Limit");
+            break;
+    }
+    _display.setCursor(40, _display.getCursorY());
+
+    _display.print("Use Launch: ");
+    _display.println(c->controller_use_launch);
+    _display.setCursor(40, _display.getCursorY());
+
+    _display.print("Use NF: ");
+    _display.println(c->controller_use_normal_force);
+    _display.setCursor(40, _display.getCursorY());
+
+    _display.print("Use PID power lim: ");
+    _display.println(c->controller_use_pid_power_limit);
+    _display.setCursor(40, _display.getCursorY());
+
+    _display.print("Use PID tv: ");
+    _display.println(c->controller_use_pid_tv);
+    _display.setCursor(40, _display.getCursorY());
+
+    _display.print("Use power lim: ");
+    _display.println(c->controller_use_power_limit);
+    _display.setCursor(40, _display.getCursorY());
+}
+
+void hytech_dashboard::display_torque_requests() {
+    int x_off = 50;
+    int bar_height = 80;
+    int bar_width = 20;
+    int starty = 50;
+    int mid = 320/2;
+    _display.fillRect(mid-x_off,starty,bar_width,bar_height, BLACK);
+    _display.fillRect(mid+x_off,starty,bar_width,bar_height, BLACK);
+
 }
 
 void hytech_dashboard::display_error() {
@@ -677,29 +660,36 @@ void hytech_dashboard::init_io_expander() {
 
 void hytech_dashboard::draw_icons(MCU_STATUS_t *m, VN_STATUS_t *v) {
 
-    /* no gps icon = 0 */
-    /* vn flashing = 1 */
-    /* vn solid = 2    */
+    /* no gps icon   = 0 */
+    /* vn flashing   = 1 */
+    /* vn solid      = 2 */
+
+    /* all units are pixels */
+    int offset = 5;
+    int icon_size = 27;
+    int gps_icon_pos_x = 320 - icon_size - offset;
+    int rtd_icon_pos_x = gps_icon_pos_x - icon_size - offset;
+    int latched_icon_pos_x = rtd_icon_pos_x - icon_size - 1;
+    int icon_pos_y = 2;
+
     if (v->vn_gps_status >= 2) {
-        _display.drawBitmap(270-27, 40, epd_bitmap_gps, 27, 27, BLACK);
+        _display.drawBitmap(gps_icon_pos_x, icon_pos_y, epd_bitmap_gps, 27, 27, BLACK);
     } else if (v->vn_gps_status == 1){
-        if (blink()) { _display.drawBitmap(270-27, 40, epd_bitmap_gps, 27, 27, BLACK); }
+        if (blink()) { _display.drawBitmap(gps_icon_pos_x, icon_pos_y, epd_bitmap_gps, 27, 27, BLACK); }
     } else if (v->vn_gps_status == 0) {
-        _display.drawBitmap(270-27, 40, epd_bitmap_nogps, 27, 27, BLACK);
+        _display.drawBitmap(gps_icon_pos_x, icon_pos_y, epd_bitmap_nogps, 27, 27, BLACK);
     }
 
     if (check_ready_to_drive(m)) {
-        SerialUSB.println("delatched");
-        _display.drawBitmap(270-27, 40+27+5+27+5, epd_bitmap_rtd, 27, 27, BLACK);
+        _display.drawBitmap(rtd_icon_pos_x, icon_pos_y, epd_bitmap_rtd, 27, 27, BLACK);
     } else {
-        if (blink()) { _display.drawBitmap(270-27, 40+27+5, epd_bitmap_rtd, 27, 27, BLACK); }
+        if (blink()) { _display.drawBitmap(rtd_icon_pos_x, icon_pos_y, epd_bitmap_rtd, 27, 27, BLACK); }
     }
 
     if (check_latched(m)) {
-        SerialUSB.println("latched");
-        _display.drawBitmap(270-27, 40+27+5, epd_bitmap_latch_symbol, 27, 27, BLACK);
+        _display.drawBitmap(latched_icon_pos_x, icon_pos_y, epd_bitmap_latch_symbol, 27, 27, BLACK);
     } else {
-        if (blink()) { _display.drawBitmap(270-27, 40+27+5+27+5, epd_bitmap_latch_symbol, 27, 27, BLACK); }
+        if (blink()) { _display.drawBitmap(latched_icon_pos_x, icon_pos_y, epd_bitmap_latch_symbol, 27, 27, BLACK); }
     }
 }
 

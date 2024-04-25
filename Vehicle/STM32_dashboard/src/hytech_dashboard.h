@@ -186,6 +186,8 @@ class hytech_dashboard {
 
         int page_offset = -4;
 
+        int prev_dial_state = 0;
+
         /* accel max, min*/
         uint32_t max_accel_1 = 0;
         uint32_t max_accel_2 = 0;
@@ -205,6 +207,7 @@ class hytech_dashboard {
         bool last_flash;
         uint32_t last_flash_millis;
 
+        /* startup functions */
         void display_startup_animation(StartupAnimations);
         void display_hytech_animation();
         void init_neopixels();
@@ -272,7 +275,11 @@ class hytech_dashboard {
 
         void display_speeds(DRIVETRAIN_RPMS_TELEM_t* drivetrain_rpms, BMS_VOLTAGES_t* bms_voltages);
         void display_lowest_segment_voltage(BMS_VOLTAGES_t *);
+        void display_min_max_pedals(MCU_PEDAL_RAW_t *);
+        void display_raw_pedal_readings(MCU_PEDAL_RAW_t *);
+        void display_torque_diagnostics(CONTROLLER_BOOLEAN_t *, CONTROLLER_POWER_LIM_t *);
         void display_segment_voltages();
+        void display_torque_requests();
 
         ErrorTypes check_for_errors(DashboardCAN *CAN);
         String convert_error_to_string(ErrorTypes error);
