@@ -27,7 +27,7 @@
 #define NEOPIXEL_PIN PC14
 #define NEOPIXEL_COUNT 12
 
-#define NUM_PAGES 7
+#define NUM_PAGES 8
 
 #define BLINK_PERIOD 500
 #define FLASH_PERIOD 100
@@ -186,7 +186,11 @@ class hytech_dashboard {
 
         int page_offset = -4;
 
-        int prev_dial_state = 0;
+        int prev_dial_state = 2;
+        unsigned long dial_prev_time = 0;
+        unsigned long popup_time = 1000; // 1 second
+        bool time_reset = false;
+
 
         /* accel max, min*/
         uint32_t max_accel_1 = 0;
@@ -213,6 +217,8 @@ class hytech_dashboard {
         void init_neopixels();
         void init_io_expander();
 
+        void draw_background_bitmap();
+
         /* Displays the clock and times in m:s.ms format based on the number of milliseconds*/
         void format_millis(String label, uint32_t time);
         
@@ -233,6 +239,8 @@ class hytech_dashboard {
         void draw_battery_bar(int percent);
 
         void draw_popup(String title);
+        void rotate_and_draw_bitmap(const unsigned char bmp[], int size, double rotation, int x, int y);
+        void draw_bitmap(const unsigned char bmp[], int size, int x, int y);
 
         /* helper function that draws quadrants on the display for tire/suspension data */
         void draw_quadrants(String text);

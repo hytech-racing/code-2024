@@ -82,8 +82,7 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     /* refresh neopixels, redraw buffer, write to 7-seg display*/
     refresh_neopixels(CAN);
     _expander.digitalWrite(number_encodings[CAN->dash_state.dial_state]);
-    _display.clearDisplayBuffer();
-    _display.drawBitmap(0,0, epd_bitmap_hytech_dashboard, 320, 240, BLACK);
+    draw_background_bitmap();
 
     /* draw brake pedal */
     float brake_mech_point = HYTECH_mechanical_brake_percent_float_ro_fromS(CAN->mcu_pedal_readings.mechanical_brake_percent_float_ro);
@@ -102,10 +101,10 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
 
     /** TODO: add real data to these bars*/
     // draw_battery_bar(0);
-    // draw_regen_bar(0);
+    draw_regen_bar(47);
     // draw_current_draw_bar(0);
 
-    current_page = 5;
+    current_page = 0;
 
     switch(current_page) {
 
@@ -138,11 +137,34 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
             display_raw_pedal_readings(&CAN->pedal_raw);
             break;
 
+        case 7:
+            display_tire_data();
+            break;
+
     }
 
     draw_icons(&CAN->mcu_status, &CAN->vn_status);
+    // rotate_and_draw_bitmap(epd_bitmap_gps, 27, M_PI/6, 20, 20);
+    // draw_bitmap(epd_bitmap_gps, 27, 50, 50);
     // if (CAN->dash_state.dial_state == 3) draw_launch_screen();
     // draw_popup("Error");
+
+    if (prev_dial_state != CAN->dash_state.dial_state) {
+        prev_dial_state = CAN->dash_state.dial_state;
+        dial_prev_time = millis();
+        SerialUSB.print("Prev: ");
+        SerialUSB.println(prev_dial_state);
+        SerialUSB.print("Current: ");
+        SerialUSB.println(CAN->dash_state.dial_state);
+    }
+
+    if (dial_prev_time + popup_time > millis()) {
+        draw_popup("Dial Change");
+        _display.print("Mode: ");
+        _display.print(CAN->dash_state.dial_state);
+    }
+
+
     _display.refresh();
 }
 
@@ -237,6 +259,39 @@ String hytech_dashboard::twoDigits(int number) {
         return String(number/10);
     }
     return String(number);
+}
+
+void hytech_dashboard::rotate_and_draw_bitmap(const unsigned char bmp[], int size, double angle, int initialX, int Y) {
+    float cosA = cos(angle);
+    float sinA = sin(angle);
+    // for (int i = 0; i < 92; y++) {
+    //     const unsigned char hex = bmp[i]; // hex number corresponding to the 8 pixels
+    //     for (int j = 0; j < 7; j++) {
+    //         // 8 pixels per hex number
+
+    //     }
+    //     int x = i % 27;
+    //     int y = i /= 27;
+    //     // int pixel = hex & 
+    //     int newX = (cosA * x) - (sinA * y) + x;
+    //     int newY = (sinA * x) + (cosA * y) + y;
+    //     _display.drawPixel(newX, newY, pixel);
+    // }
+}
+
+void hytech_dashboard::draw_bitmap(const unsigned char bmp[], int size, int initialX, int initialY) {
+    for (int i = 0; i < 92; i++) {
+        for (int j = 0; j < 8; j++) {
+            unsigned char val = bmp[i];
+            
+        }
+        int index = i/8;
+        int pos = i % 8;
+        int bit = (bmp[index] & (1 << (8-pos))) >> (8-pos);
+        int y = i / 27;
+        int x = i % 27;
+        _display.drawPixel(initialX + x, initialY + y, bit);
+    }
 }
 
 void hytech_dashboard::draw_page_title(String text) {
@@ -439,6 +494,16 @@ void hytech_dashboard::display_raw_pedal_readings(MCU_PEDAL_RAW_t *p) {
     _display.print("B2: ");
     _display.println(p->brake_2_raw);
     _display.setCursor(100, _display.getCursorY());
+}
+
+void hytech_dashboard::draw_background_bitmap() {
+    _display.clearDisplayBuffer();
+    _display.drawBitmap(0,0, epd_bitmap_hytech_dashboard, 320, 240, BLACK);
+    _display.fillRect(320-40, 30, 40, 200, WHITE);
+    _display.fillRect(283, 36, 305-283, 210-36, BLACK);
+    _display.fillRect(283-3, (36 + 210 - 36)/2+15, 25, 7, WHITE);
+    _display.fillRect(0, 215, 130, 25, WHITE);
+    _display.fillRect(100, 5, 100, 20, BLACK);
 }
 
 void hytech_dashboard::display_torque_diagnostics(CONTROLLER_BOOLEAN_t *c, CONTROLLER_POWER_LIM_t *p) {
@@ -771,7 +836,10 @@ void hytech_dashboard::draw_popup(String title) {
     _display.fillRect(160-(width/2), 120 - (height/2), width, height, WHITE);
     _display.setFont(&FreeSansBold12pt7b);
     _display.setCursor(160-(width/2)+1, 120 - (height/2)+20);
+    int x = _display.getCursorX();
     _display.println(title);
+    _display.setFont(&FreeSans12pt7b);
+    _display.setCursor(x, _display.getCursorY());
 }
 
 /* NEOPIXEL HELPER FUNCTIONS */
