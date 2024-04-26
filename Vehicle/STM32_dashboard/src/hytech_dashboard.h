@@ -186,10 +186,11 @@ class hytech_dashboard {
 
         int page_offset = -4;
 
-        int prev_dial_state = 2;
+        int prev_dial_state = 0;
         unsigned long dial_prev_time = 0;
         unsigned long popup_time = 1000; // 1 second
         bool time_reset = false;
+        int initialized = false;
 
 
         /* accel max, min*/
@@ -239,6 +240,8 @@ class hytech_dashboard {
         void draw_battery_bar(int percent);
 
         void draw_popup(String title);
+        void draw_popup_on_dial_change(DASHBOARD_STATE_t *);
+        void draw_mcu_reported_torque_mode(DASHBOARD_MCU_STATE_t *t, MCU_STATUS_t *m);
         void rotate_and_draw_bitmap(const unsigned char bmp[], int size, double rotation, int x, int y);
         void draw_bitmap(const unsigned char bmp[], int size, int x, int y);
 

@@ -83,6 +83,7 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     refresh_neopixels(CAN);
     _expander.digitalWrite(number_encodings[CAN->dash_state.dial_state]);
     draw_background_bitmap();
+    if (!initialized) {initialized = true; prev_dial_state = CAN->dash_state.dial_state; }
 
     /* draw brake pedal */
     float brake_mech_point = HYTECH_mechanical_brake_percent_float_ro_fromS(CAN->mcu_pedal_readings.mechanical_brake_percent_float_ro);
@@ -93,18 +94,12 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     /* set mechanical brake led */
     CAN->dash_mcu_state.mechanical_brake_led = (CAN->mcu_pedal_readings.brake_percent_float_ro >= CAN->mcu_pedal_readings.mechanical_brake_percent_float_ro) ? 2 : 0;
 
-    /* display current torque mode and torque limit */
-    _display.setCursor(14, 25);
-    _display.print(dial_modes[CAN->dash_mcu_state.dial_state]);
-    _display.print(": ");
-    _display.println(CAN->mcu_status.max_torque);
-
     /** TODO: add real data to these bars*/
     // draw_battery_bar(0);
-    draw_regen_bar(47);
+    // draw_regen_bar(47);
     // draw_current_draw_bar(0);
 
-    current_page = 0;
+    // current_page = 0;
 
     switch(current_page) {
 
@@ -143,28 +138,14 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
 
     }
 
-    draw_icons(&CAN->mcu_status, &CAN->vn_status);
     // rotate_and_draw_bitmap(epd_bitmap_gps, 27, M_PI/6, 20, 20);
     // draw_bitmap(epd_bitmap_gps, 27, 50, 50);
     // if (CAN->dash_state.dial_state == 3) draw_launch_screen();
     // draw_popup("Error");
 
-    if (prev_dial_state != CAN->dash_state.dial_state) {
-        prev_dial_state = CAN->dash_state.dial_state;
-        dial_prev_time = millis();
-        SerialUSB.print("Prev: ");
-        SerialUSB.println(prev_dial_state);
-        SerialUSB.print("Current: ");
-        SerialUSB.println(CAN->dash_state.dial_state);
-    }
-
-    if (dial_prev_time + popup_time > millis()) {
-        draw_popup("Dial Change");
-        _display.print("Mode: ");
-        _display.print(CAN->dash_state.dial_state);
-    }
-
-
+    draw_icons(&CAN->mcu_status, &CAN->vn_status);
+    draw_popup_on_dial_change(&CAN->dash_state);
+    draw_mcu_reported_torque_mode(&CAN->dash_mcu_state, &CAN->mcu_status);
     _display.refresh();
 }
 
@@ -503,7 +484,7 @@ void hytech_dashboard::draw_background_bitmap() {
     _display.fillRect(283, 36, 305-283, 210-36, BLACK);
     _display.fillRect(283-3, (36 + 210 - 36)/2+15, 25, 7, WHITE);
     _display.fillRect(0, 215, 130, 25, WHITE);
-    _display.fillRect(100, 5, 100, 20, BLACK);
+    // _display.fillRect(100, 5, 100, 20, BLACK);
 }
 
 void hytech_dashboard::display_torque_diagnostics(CONTROLLER_BOOLEAN_t *c, CONTROLLER_POWER_LIM_t *p) {
@@ -742,6 +723,14 @@ void hytech_dashboard::draw_icons(MCU_STATUS_t *m, VN_STATUS_t *v) {
     }
 }
 
+void hytech_dashboard::draw_mcu_reported_torque_mode(DASHBOARD_MCU_STATE_t *d, MCU_STATUS_t *m) {
+/* display current torque mode and torque limit */
+_display.setCursor(14, 25);
+_display.print(dial_modes[d->dial_state]);
+_display.print(": ");
+_display.println(m->max_torque);
+}
+
 /* DISPLAY HELPER FUNCTIONS */
 
 void hytech_dashboard::draw_quadrants(String text) {
@@ -840,6 +829,18 @@ void hytech_dashboard::draw_popup(String title) {
     _display.println(title);
     _display.setFont(&FreeSans12pt7b);
     _display.setCursor(x, _display.getCursorY());
+}
+
+void hytech_dashboard::draw_popup_on_dial_change(DASHBOARD_STATE_t *s) {
+    if (prev_dial_state != s->dial_state) {
+        prev_dial_state = s->dial_state;
+        dial_prev_time = millis();
+    }
+    if (dial_prev_time + popup_time > millis()) {
+        draw_popup("Dial Change");
+        _display.print("Mode: ");
+        _display.print(s->dial_state);
+    }
 }
 
 /* NEOPIXEL HELPER FUNCTIONS */
