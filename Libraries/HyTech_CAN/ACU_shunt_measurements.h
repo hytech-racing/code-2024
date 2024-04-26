@@ -9,7 +9,7 @@
 
 // @Parseclass @Prefix(ACU)
 class ACU_shunt_measurements {
-    
+
     public:
     ACU_shunt_measurements() = default;
     ACU_shunt_measurements(uint8_t buf[]) { load(buf); }
@@ -25,7 +25,7 @@ class ACU_shunt_measurements {
     // Setters
     inline void set_shunt_current(float shunt_current) {this->shunt_current = (uint16_t) (shunt_current);}
     inline void set_pack_filtered(float pack_filtered) {this->pack_filtered = (uint16_t) (pack_filtered);}
-    inline void set_shunt_current(float ts_out_filtered) {this->ts_out_filtered = (uint16_t) (ts_out_filtered);}
+    inline void set_ts_out_filtered(float ts_out_filtered) {this->ts_out_filtered = (uint16_t) (ts_out_filtered);}
 
     // Member variables
     private:
