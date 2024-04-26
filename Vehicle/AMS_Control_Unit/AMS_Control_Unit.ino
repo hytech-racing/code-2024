@@ -38,6 +38,9 @@
 
 //shunt def
 #define CURR_SHUNT A2
+#define PACK_FILTERED A3
+#define TS_OUT_FILTERED A4
+
 // VARIABLE DECLARATIONS
 uint16_t pec15Table[256];          // Array containing lookup table for PEC generator
 uint16_t* LTC6811_2::pec15Table_pointer = pec15Table;   // Pointer to the PEC lookup table
@@ -306,15 +309,20 @@ void read_voltages() {
 
 void coulomb_counter() {
   // integrate shunt current over time to count coulombs and provide state of charge
-  current_shunt_read = (analogRead(CURR_SHUNT) * 3.3) / 4095; //.68
-  shunt_voltage_input = (current_shunt_read * (9.22 / 5.1)) - 3.3 - 0.03;
-  shunt_current = (shunt_voltage_input / 0.005);
-  charge -= (CC_integrator_timer * shunt_current) / 1000000;
-  state_of_charge = charge / MAX_PACK_CHARGE;
-  CC_integrator_timer = 0;
 
-  acu_shunt_measurements.set_state_of_charge(state_of_charge*100); // stupid
-  acu_shunt_measurements.set_shunt_current(shunt_current*1000); // sending as mA
+  // ----------- THIS CODE HAS BEEN COMMENTED SO THAT MCU WILL HANDLE THE INTEGRATION ---------- //
+  // current_shunt_read = (analogRead(CURR_SHUNT) * 3.3) / 4095; //.68
+  // shunt_voltage_input = (current_shunt_read * (9.22 / 5.1)) - 3.3 - 0.03;
+  // shunt_current = (shunt_voltage_input / 0.005);
+  // charge -= (CC_integrator_timer * shunt_current) / 1000000;
+  // state_of_charge = charge / MAX_PACK_CHARGE;
+  // CC_integrator_timer = 0;
+  // ----------- THIS CODE HAS BEEN COMMENTED SO THAT MCU WILL HANDLE THE INTEGRATION ---------- //
+
+  acu_shunt_measurements.set_shunt_current(analogRead(CURR_SHUNT));
+  acu_shunt_measurements.set_pack_filtered(analogRead(PACK_FILTERED));
+  acu_shunt_measurements.set_ts_out_filtered(analogRead(TS_OUT_FILTERED));
+
   // Serial.print(state_of_charge);
   // Serial.print('\n');
   // Serial.print(shunt_voltage_input);

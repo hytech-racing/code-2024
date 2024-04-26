@@ -9,20 +9,29 @@
 
 // @Parseclass @Prefix(ACU)
 class ACU_shunt_measurements {
+    
     public:
     ACU_shunt_measurements() = default;
     ACU_shunt_measurements(uint8_t buf[]) { load(buf); }
 
     inline void load(uint8_t buf[])         { memcpy(this, buf, sizeof(*this)); }
     inline void write(uint8_t buf[])  const { memcpy(buf, this, sizeof(*this)); }
-    inline int32_t get_state_of_charge()         const {return state_of_charge;}
-    inline int32_t get_shunt_current()         const {return shunt_current;}
 
-    inline void set_state_of_charge(float state_of_charge) {this->state_of_charge = (int32_t) (state_of_charge);}
-    inline void set_shunt_current(float shunt_current) {this->shunt_current = (int32_t) (shunt_current);}
+    // Getters
+    inline uint16_t get_shunt_current()         const {return shunt_current;}
+    inline uint16_t get_pack_filtered()         const {return pack_filtered;}
+    inline uint16_t get_ts_out_filtered()         const {return ts_out_filtered;}
+
+    // Setters
+    inline void set_shunt_current(float shunt_current) {this->shunt_current = (uint16_t) (shunt_current);}
+    inline void set_pack_filtered(float pack_filtered) {this->pack_filtered = (uint16_t) (pack_filtered);}
+    inline void set_shunt_current(float ts_out_filtered) {this->ts_out_filtered = (uint16_t) (ts_out_filtered);}
+
+    // Member variables
     private:
-        int32_t state_of_charge;
-        int32_t shunt_current;
+        uint16_t shunt_current;
+        uint16_t pack_filtered;
+        uint16_t ts_out_filtered;
 };
 
 #pragma pack(pop)
