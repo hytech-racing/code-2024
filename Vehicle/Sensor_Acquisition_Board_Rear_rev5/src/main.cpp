@@ -403,7 +403,7 @@ void update_all_CAN_msg() {
   sab_thermistors_1.set_thermistor3(thermistor_iir[THERM_4].get_prev_reading());    // inverter beheaded
   sab_thermistors_1.set_thermistor4(thermistor_iir[THERM_6].get_prev_reading());    // inverter flying leed
   sab_thermistors_1.set_thermistor5(thermistor_iir[THERM_7].get_prev_reading());    // accumulator across penthouse (right)
-  sab_thermistors_1.set_thermistor6(thermistor_iir[THERM_8].get_prev_reading());    // accumulator (left)
+  sab_thermistors_1.set_thermistor6(thermistor_iir[THERM_8].get_prev_reading());    // accumulator (left), also gone unfortunately
 
   sab_thermistors_2.set_thermistor7(thermistor_iir[THERM_9].get_prev_reading());    // RL motor
   sab_thermistors_2.set_thermistor8(thermistor_iir[THERM_3].get_prev_reading());    // RR motor
