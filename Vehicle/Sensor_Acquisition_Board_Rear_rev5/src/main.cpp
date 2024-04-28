@@ -400,14 +400,14 @@ uint16_t parseUint16(uint8_t buffer[], int startIndex) {
 
 void update_all_CAN_msg() {
 
-  sab_thermistors_1.set_thermistor3(thermistor_iir[THERM_3].get_prev_reading());
-  sab_thermistors_1.set_thermistor4(thermistor_iir[THERM_4].get_prev_reading());
-  sab_thermistors_1.set_thermistor5(thermistor_iir[THERM_5].get_prev_reading());
-  sab_thermistors_1.set_thermistor6(thermistor_iir[THERM_6].get_prev_reading());
+  sab_thermistors_1.set_thermistor3(thermistor_iir[THERM_4].get_prev_reading());    // inverter beheaded
+  sab_thermistors_1.set_thermistor4(thermistor_iir[THERM_6].get_prev_reading());    // inverter flying leed
+  sab_thermistors_1.set_thermistor5(thermistor_iir[THERM_7].get_prev_reading());    // accumulator across penthouse (right)
+  sab_thermistors_1.set_thermistor6(thermistor_iir[THERM_8].get_prev_reading());    // accumulator (left)
 
-  sab_thermistors_2.set_thermistor7(thermistor_iir[THERM_7].get_prev_reading());
-  sab_thermistors_2.set_thermistor8(thermistor_iir[THERM_8].get_prev_reading());
-  sab_thermistors_2.set_thermistor9(thermistor_iir[THERM_9].get_prev_reading());
+  sab_thermistors_2.set_thermistor7(thermistor_iir[THERM_9].get_prev_reading());    // RL motor
+  sab_thermistors_2.set_thermistor8(thermistor_iir[THERM_3].get_prev_reading());    // RR motor
+  sab_thermistors_2.set_thermistor9(thermistor_iir[THERM_5].get_prev_reading());    // right pump
 
   sab_cb.set_pot3(ADC1.get().conversions[SUS_POT_3].raw);
   sab_cb.set_pot4(ADC2.get().conversions[SUS_POT_4].raw);
