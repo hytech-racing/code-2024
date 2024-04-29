@@ -138,14 +138,16 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
 
     }
 
-    // rotate_and_draw_bitmap(epd_bitmap_gps, 27, M_PI/6, 20, 20);
-    // draw_bitmap(epd_bitmap_gps, 27, 50, 50);
-    // if (CAN->dash_state.dial_state == 3) draw_launch_screen();
-    // draw_popup("Error");
-
     draw_icons(&CAN->mcu_status, &CAN->vn_status);
-    draw_popup_on_dial_change(&CAN->dash_state);
     draw_mcu_reported_torque_mode(&CAN->dash_mcu_state, &CAN->mcu_status);
+
+    /* draw launch screen */
+    if ((CAN->dash_state.dial_state == 3 || CAN->dash_state.dial_state == 4) && CAN->dash_mcu_state.launch_control_led == 1) draw_launch_screen();
+
+    draw_popup_on_dial_change(&CAN->dash_state, &CAN->mcu_status);
+    draw_popup_on_mcu_state_change(&CAN->mcu_status);
+    draw_popup_on_error();
+
     _display.refresh();
 }
 
@@ -538,35 +540,6 @@ void hytech_dashboard::display_torque_requests() {
 
 }
 
-void hytech_dashboard::display_error() {
-    draw_page_title("Error");
-    String message = "";
-    switch (error) {
-        case ErrorTypes::NO_ERROR:
-            message = "No Error";
-            break;
-        case ErrorTypes::BRAKE_IMPLAUSIBILITY:
-            message = "Brake Implausible";
-            break;
-        case ErrorTypes::ACCEL_IMPLAUSIBILITY:
-            message = "Accel Implausible";
-            break;
-        case ErrorTypes::IMD_FAULT:
-            message = "IMD Fault";
-            break;
-        case ErrorTypes::INVERTER_ERROR:
-            message = "Inverter Error";
-            break;
-        case ErrorTypes::SOFTWARE_NOT_OK:
-            message = "Software Bad";
-            break;
-        case ErrorTypes::SHUTDOWN:
-            message = "Shutdown Fault";
-            break;
-    }
-    _display.println(message);
-}
-
 void hytech_dashboard::draw_launch_screen() {
     if (flash()) _display.fillScreen(BLACK);
     else _display.clearDisplayBuffer();
@@ -831,18 +804,44 @@ void hytech_dashboard::draw_popup(String title) {
     _display.setCursor(x, _display.getCursorY());
 }
 
-void hytech_dashboard::draw_popup_on_dial_change(DASHBOARD_STATE_t *s) {
+void hytech_dashboard::draw_popup_on_dial_change(DASHBOARD_STATE_t *s, MCU_STATUS_t *m) {
     if (prev_dial_state != s->dial_state) {
         prev_dial_state = s->dial_state;
         dial_prev_time = millis();
     }
     if (dial_prev_time + popup_time > millis()) {
         draw_popup("Dial Change");
+        int x = _display.getCursorX();
         _display.print("Mode: ");
-        _display.print(s->dial_state);
+        _display.println(s->dial_state);
+        _display.setCursor(x, _display.getCursorY());
+        _display.println(dial_modes[s->dial_state]);
+        _display.setCursor(x, _display.getCursorY());
+        _display.print("Max Torque: ");
+        _display.println(m->max_torque);
     }
 }
 
+void hytech_dashboard::draw_popup_on_mcu_state_change(MCU_STATUS_t *s) {
+    if (prev_ecu_state != s->ecu_state) {
+        prev_ecu_state = s->ecu_state;
+        mcu_prev_time = millis();
+    }
+    if (mcu_prev_time + mcu_popup_time > millis()) {
+        draw_popup("MCU State Change");
+        int x = _display.getCursorX();
+        _display.print("State: ");
+        _display.println(s->ecu_state);
+        _display.setCursor(x, _display.getCursorY());
+        _display.println(ecu_states[s->ecu_state]);
+    }
+}
+
+void hytech_dashboard::draw_popup_on_error() {
+    if (memcmp(current_errors, prev_errors, sizeof(errors_s))) {
+
+    }
+}
 /* NEOPIXEL HELPER FUNCTIONS */
 
 void hytech_dashboard::dim_neopixels() {
@@ -956,33 +955,14 @@ bool hytech_dashboard::flash() {
     return last_flash;
 }
 
-ErrorTypes hytech_dashboard::check_for_errors(DashboardCAN *CAN) {
-    if (!CAN->mcu_status.no_brake_implausibility) return ErrorTypes::BRAKE_IMPLAUSIBILITY;
-    // else if (!CAN->mcu_status.no_accel_implausibility) return ErrorTypes::ACCEL_IMPLAUSIBILITY;
-    else if (!CAN->mcu_status.software_ok) return ErrorTypes::SOFTWARE_NOT_OK;
-    else if (CAN->mcu_status.inverter_error) return ErrorTypes::INVERTER_ERROR;
-    else if (!CAN->mcu_status.imd_ok_high) return ErrorTypes::IMD_FAULT;
-    return ErrorTypes::NO_ERROR;
-}
-
-String convert_error_to_string(ErrorTypes error) {
-    switch (error) {
-        case ErrorTypes::NO_ERROR:
-            return "No Error";
-        case ErrorTypes::BRAKE_IMPLAUSIBILITY:
-            return "Brake Implaus";
-        case ErrorTypes::ACCEL_IMPLAUSIBILITY:
-            return "Accel Implaus";
-        case ErrorTypes::IMD_FAULT:
-            return "IMD Fault";
-        case ErrorTypes::INVERTER_ERROR:
-            return "Inverter Error";
-        case ErrorTypes::SOFTWARE_NOT_OK:
-            return "Software Bad";
-        case ErrorTypes::SHUTDOWN:
-            return "Shutdown Fault";
-    }
-    return "";
+void hytech_dashboard::check_for_errors(DashboardCAN *CAN) {
+    current_errors->BRAKE_IMPLAUSIBILITY = !CAN->mcu_status.no_brake_implausibility;
+    current_errors->ACCEL_IMPLAUSIBILITY = !CAN->mcu_status.no_accel_implausibility;
+    current_errors->SOFTWARE_NOT_OK = !CAN->mcu_status.software_ok;
+    current_errors->INVERTER_ERROR = CAN->mcu_status.inverter_error;
+    current_errors->IMD_FAULT = !CAN->mcu_status.imd_ok_high;
+    current_errors->SHUTDOWN = CAN->mcu_status.shutdown_b_above_threshold || CAN->mcu_status.shutdown_c_above_threshold
+    || CAN->mcu_status.shutdown_d_above_threshold || CAN->mcu_status.shutdown_e_above_threshold;
 }
 
 int hytech_dashboard::check_latched(MCU_STATUS_t *status) { return status->ecu_state>=2; }
@@ -1015,8 +995,6 @@ void hytech_dashboard::display_ecu_state(MCU_STATUS_t *status) {
   skip splash screen
   random msgs
   RAINBOW LED
-  pop-up msgs
   launch inverting colors
-  ice spice
   add page to dashboard showing if shutdown tripped
 */

@@ -57,17 +57,6 @@ enum class LED_colors_e
     RED = 0xFF0000,
 };
 
-enum ErrorTypes {
-    BRAKE_IMPLAUSIBILITY,
-    ACCEL_IMPLAUSIBILITY,
-    MCU_STATE,
-    SOFTWARE_NOT_OK,
-    SHUTDOWN,
-    INVERTER_ERROR,
-    IMD_FAULT,
-    NO_ERROR
-};
-
 enum StartupAnimations {
     NONE,
     MIKHAIL_CAT,
@@ -75,8 +64,6 @@ enum StartupAnimations {
     DAVID_KNIGHT_2,
     ICE_SPICE
 };
-
-// String errorTypes[8] = {"Brake Implaus", "Accel Implaus", "MCU State", "Software Bad", "Shutdown Bad", "Inverter Error", "IMD Fault", "No Error"};
 
 #define LED_INIT 0xFF007F
 #define LED_BLUE 0xFF
@@ -160,8 +147,19 @@ class hytech_dashboard {
         Metro pixel_refresh = Metro(100);
 
         String dial_modes[6] = {"M0", "M1", "CASE", "Simple Launch", "Slip Launch", "None"};
+        String ecu_states[6] = {"Startup", "TS Not Active", "TS Active", "Enabling Inverters", "Wait RTD", "RTD"};
 
-        ErrorTypes error;
+        typedef struct Errors {
+            bool BRAKE_IMPLAUSIBILITY;
+            bool ACCEL_IMPLAUSIBILITY;
+            bool SOFTWARE_NOT_OK;
+            bool SHUTDOWN;
+            bool INVERTER_ERROR;
+            bool IMD_FAULT;
+        } errors_s;
+
+        errors_s *current_errors = (errors_s *) calloc(1, sizeof(errors_s));
+        errors_s *prev_errors = (errors_s *) calloc(1, sizeof(errors_s));
 
         /* current page displayed */
         uint8_t current_page = 0;
@@ -192,6 +190,10 @@ class hytech_dashboard {
         bool time_reset = false;
         int initialized = false;
 
+        int prev_ecu_state = 0;
+        unsigned long mcu_prev_time = 0;
+        unsigned long mcu_popup_time = 1000; // 1 second
+
 
         /* accel max, min*/
         uint32_t max_accel_1 = 0;
@@ -209,7 +211,7 @@ class hytech_dashboard {
         uint32_t last_blink_millis = 0;
         bool last_blink = false;
 
-        bool last_flash;
+        bool last_flash = false;
         uint32_t last_flash_millis;
 
         /* startup functions */
@@ -240,7 +242,9 @@ class hytech_dashboard {
         void draw_battery_bar(int percent);
 
         void draw_popup(String title);
-        void draw_popup_on_dial_change(DASHBOARD_STATE_t *);
+        void draw_popup_on_dial_change(DASHBOARD_STATE_t *, MCU_STATUS_t *m);
+        void draw_popup_on_mcu_state_change(MCU_STATUS_t *m);
+        void draw_popup_on_error();
         void draw_mcu_reported_torque_mode(DASHBOARD_MCU_STATE_t *t, MCU_STATUS_t *m);
         void rotate_and_draw_bitmap(const unsigned char bmp[], int size, double rotation, int x, int y);
         void draw_bitmap(const unsigned char bmp[], int size, int x, int y);
@@ -292,14 +296,12 @@ class hytech_dashboard {
         void display_segment_voltages();
         void display_torque_requests();
 
-        ErrorTypes check_for_errors(DashboardCAN *CAN);
-        String convert_error_to_string(ErrorTypes error);
+        void check_for_errors(DashboardCAN *CAN);
         void display_ecu_state(MCU_STATUS_t *);
         int check_latched(MCU_STATUS_t *);
         int check_ready_to_drive(MCU_STATUS_t *);
         bool first_latch = false;
         bool first_ready_to_drive = false;
-        void display_error();
         void draw_icons(MCU_STATUS_t *, VN_STATUS_t *);
         void draw_launch_screen();
 
