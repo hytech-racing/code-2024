@@ -146,7 +146,7 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
 
     draw_popup_on_dial_change(&CAN->dash_state, &CAN->mcu_status);
     draw_popup_on_mcu_state_change(&CAN->mcu_status);
-    draw_popup_on_error();
+    // draw_popup_on_error();
 
     _display.refresh();
 }
@@ -838,8 +838,8 @@ void hytech_dashboard::draw_popup_on_mcu_state_change(MCU_STATUS_t *s) {
 }
 
 void hytech_dashboard::draw_popup_on_error() {
-    if (memcmp(current_errors, prev_errors, sizeof(errors_s))) {
-
+    if (memcmp(current_errors, prev_errors, sizeof(errors_s)) != 0) {
+        *prev_errors = *current_errors;
     }
 }
 /* NEOPIXEL HELPER FUNCTIONS */
@@ -967,34 +967,3 @@ void hytech_dashboard::check_for_errors(DashboardCAN *CAN) {
 
 int hytech_dashboard::check_latched(MCU_STATUS_t *status) { return status->ecu_state>=2; }
 int hytech_dashboard::check_ready_to_drive(MCU_STATUS_t *status) { return status->ecu_state==5; }
-
-
-void hytech_dashboard::display_ecu_state(MCU_STATUS_t *status) {
-
-    String state = "";
-    switch (status->ecu_state) {
-        case 0:
-            state = "MCU Startup";
-            break;
-        case 1:
-            state = "TS Not Active";
-            break;
-        default:
-            state = "TS Active";
-            break;
-    }
-    draw_page_title("Not Ready to Drive");
-    _display.print(state);
-}
-
-
-// todo
-/*
-* suspension data (pots, load cells)
-  tire data
-  skip splash screen
-  random msgs
-  RAINBOW LED
-  launch inverting colors
-  add page to dashboard showing if shutdown tripped
-*/

@@ -297,7 +297,6 @@ class hytech_dashboard {
         void display_torque_requests();
 
         void check_for_errors(DashboardCAN *CAN);
-        void display_ecu_state(MCU_STATUS_t *);
         int check_latched(MCU_STATUS_t *);
         int check_ready_to_drive(MCU_STATUS_t *);
         bool first_latch = false;
