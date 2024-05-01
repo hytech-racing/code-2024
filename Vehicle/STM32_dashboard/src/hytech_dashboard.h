@@ -190,7 +190,7 @@ class hytech_dashboard {
         bool time_reset = false;
         int initialized = false;
 
-        int prev_ecu_state = 0;
+        int prev_ecu_state = 1;
         unsigned long mcu_prev_time = 0;
         unsigned long mcu_popup_time = 1000; // 1 second
 

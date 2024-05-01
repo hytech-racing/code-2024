@@ -99,8 +99,6 @@ void hytech_dashboard::refresh(DashboardCAN* CAN) {
     // draw_regen_bar(47);
     // draw_current_draw_bar(0);
 
-    // current_page = 0;
-
     switch(current_page) {
 
         case 0:

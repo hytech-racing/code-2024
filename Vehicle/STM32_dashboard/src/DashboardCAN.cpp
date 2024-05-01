@@ -107,13 +107,8 @@ void DashboardCAN::read_CAN()
 
 
     case DASHBOARD_MCU_STATE_CANID:
-      // SerialUSB.println("Received mcu state");
-      // compare cached CAN message of same type to incoming message
-      // If they are the same, don't unpack it, and don't refresh neopixels
-
 
       if (mcu_state_timer.check() || (&prev_dash_mcu_state, _msg.buf, sizeof(_msg.buf)) != 0) {
-        // SerialUSB.println("New message! Unpacking");
         int prev_brake_state = dash_mcu_state.mechanical_brake_led;
         Unpack_DASHBOARD_MCU_STATE_hytech(&dash_mcu_state, _msg.buf, _msg.len);
         dash_mcu_state.mechanical_brake_led = prev_brake_state;
@@ -123,9 +118,7 @@ void DashboardCAN::read_CAN()
       } else {
         mcu_state_update = false;
       }
-
       // SerialUSB.printf("LEDS:\n%d\n%d\n%d\n",dash_mcu_state.ams_led, dash_mcu_state.imd_led, dash_mcu_state.bots_led);
-      
       break;
 
     default:
