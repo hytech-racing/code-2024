@@ -38,6 +38,16 @@ void Dashboard_Controls::update(DashboardCAN* CAN) {
     page_switch_timer.reset();
   }
 
+  if (btn_left_shifter.isPressed() && page_switch_timer.check()) {
+    hytech_dashboard::getInstance()->decrement_page();
+    page_switch_timer.reset();
+  }
+
+  if (btn_right_shifter.isPressed() && page_switch_timer.check()) {
+    hytech_dashboard::getInstance()->increment_page();
+    page_switch_timer.reset();
+  }
+
   DASHBOARD_STATE_t* s = &CAN->dash_state;
 
   s->start_button = btn_start.isPressed();

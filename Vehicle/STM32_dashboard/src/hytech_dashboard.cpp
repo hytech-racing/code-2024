@@ -287,7 +287,7 @@ void hytech_dashboard::draw_page_title(String text) {
 
 void hytech_dashboard::display_suspension_data(MCU_SUSPENSION_t* front_suspension, SAB_SUSPENSION_t* rear_suspension) {
     
-    draw_quadrants("Suspension");
+    draw_quadrants("Sus...");
     _display.setFont(&FreeSans9pt7b);
 
     // q1
@@ -371,7 +371,7 @@ void hytech_dashboard::display_speeds(DRIVETRAIN_RPMS_TELEM_t* drivetrain_rpms, 
     _display.setFont(&FreeSans24pt7b);
     _display.setTextSize(2);
 
-    _display.setCursor(100, 160);
+    _display.setCursor(100, 140);
     /** TODO: convert from RPM to MPH*/
     double rpms = drivetrain_rpms->fr_motor_rpm;
     rpms += drivetrain_rpms->fl_motor_rpm;
@@ -388,13 +388,13 @@ void hytech_dashboard::display_speeds(DRIVETRAIN_RPMS_TELEM_t* drivetrain_rpms, 
     // _display.println(mph);
     _display.setTextSize(1);
     _display.setFont(&FreeSans12pt7b);
-    _display.setCursor(125, 185);
+    _display.setCursor(125, 165);
     _display.print("MPH");
     _display.setFont(&FreeSans12pt7b);
 }
         
 void hytech_dashboard::display_lowest_segment_voltage(BMS_VOLTAGES_t *v) {
-    draw_page_title("Lowest Voltage");
+    draw_page_title("Low Volt...");
     _display.setFont(&FreeSans24pt7b);
     _display.setTextSize(2);
     _display.setCursor(75, 160);
@@ -407,7 +407,8 @@ void hytech_dashboard::display_lowest_segment_voltage(BMS_VOLTAGES_t *v) {
 }
 
 void hytech_dashboard::display_min_max_pedals(MCU_PEDAL_RAW_t *p) {
-    _display.setCursor(90,50);
+    int x = 70;
+    _display.setCursor(x,50);
     _display.setTextSize(1);
 
     max_accel_1 = max(p->accel_1_raw, max_accel_1);
@@ -423,37 +424,37 @@ void hytech_dashboard::display_min_max_pedals(MCU_PEDAL_RAW_t *p) {
     /* ACCEL */
     _display.print("Max A1: ");
     _display.println(max_accel_1);
-    _display.setCursor(90, _display.getCursorY()-5);
+    _display.setCursor(x, _display.getCursorY()-5);
 
     _display.print("Min A1: ");
     _display.println(min_accel_1);
-    _display.setCursor(90, _display.getCursorY()-5);
+    _display.setCursor(x, _display.getCursorY()-5);
 
     _display.print("Max A2: ");
     _display.println(max_accel_2);
-    _display.setCursor(90, _display.getCursorY()-5);
+    _display.setCursor(x, _display.getCursorY()-5);
 
     _display.print("Min A2: ");
     _display.println(min_accel_2);
-    _display.setCursor(90, _display.getCursorY()-5);
+    _display.setCursor(x, _display.getCursorY()-5);
 
     
     /* BRAKE */
     _display.print("Max B1: ");
     _display.println(max_brake_1);
-    _display.setCursor(90, _display.getCursorY()-5);
+    _display.setCursor(x, _display.getCursorY()-5);
 
     _display.print("Min B1: ");
     _display.println(min_brake_1);
-    _display.setCursor(90, _display.getCursorY()-5);
+    _display.setCursor(x, _display.getCursorY()-5);
 
     _display.print("Max B2: ");
     _display.println(max_brake_2);
-    _display.setCursor(90, _display.getCursorY()-5);
+    _display.setCursor(x, _display.getCursorY()-5);
 
     _display.print("Min B2: ");
     _display.println(min_brake_2);
-    _display.setCursor(90, _display.getCursorY()-5);
+    _display.setCursor(x, _display.getCursorY()-5);
 }
 
 void hytech_dashboard::display_raw_pedal_readings(MCU_PEDAL_RAW_t *p) {
@@ -666,12 +667,14 @@ void hytech_dashboard::draw_icons(MCU_STATUS_t *m, VN_STATUS_t *v) {
     /* vn solid      = 2 */
 
     /* all units are pixels */
-    int offset = 5;
+    int offset = 3;
     int icon_size = 27;
-    int gps_icon_pos_x = 320 - icon_size - offset;
+
+    /* horizontal icons on top of the screen */
+    int gps_icon_pos_x = 270 - icon_size - offset;
     int rtd_icon_pos_x = gps_icon_pos_x - icon_size - offset;
     int latched_icon_pos_x = rtd_icon_pos_x - icon_size - 1;
-    int icon_pos_y = 2;
+    int icon_pos_y = 40;
 
     if (v->vn_gps_status >= 2) {
         _display.drawBitmap(gps_icon_pos_x, icon_pos_y, epd_bitmap_gps, 27, 27, BLACK);
@@ -826,7 +829,7 @@ void hytech_dashboard::draw_popup_on_mcu_state_change(MCU_STATUS_t *s) {
         mcu_prev_time = millis();
     }
     if (mcu_prev_time + mcu_popup_time > millis()) {
-        draw_popup("MCU State Change");
+        draw_popup("State Change");
         int x = _display.getCursorX();
         _display.print("State: ");
         _display.println(s->ecu_state);
