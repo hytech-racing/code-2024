@@ -36,7 +36,7 @@
 #define BALANCE_CONTINUOUS 2000     // Sets balancing duty cycle as 100%
 #define BALANCE_MODE 1            // Mode 0 is normal balance, mode 1 is progressive balance
 
-//shunt def
+// ACU Shunt measurements pin definitions
 #define CURR_SHUNT A2
 #define PACK_FILTERED A3
 #define TS_OUT_FILTERED A4
@@ -67,17 +67,6 @@ uint16_t max_thermistor_voltage = 0;
 uint16_t min_thermistor_voltage = 65535;
 uint16_t max_board_temp_voltage = 0;
 uint16_t min_board_temp_voltage = 65535;
-float current_shunt_read;
-float charge;
-float shunt_voltage_input;
-float shunt_current;
-float state_of_charge;
-float voltage_lookup_table[101] = {3.972, 3.945, 3.918, 3.891, 3.885, 3.874, 3.864, 3.858, 3.847, 3.836, 3.82, 3.815, 3.815, 3.798, 3.788,
-  3.782, 3.771, 3.755, 3.744, 3.744, 3.733, 3.728, 3.723, 3.712, 3,701, 3.695, 3.69, 3.679, 3.679, 3.668, 3.663, 3.657, 3.647,
-  3.647, 3.636, 3.625, 3.625, 3.625, 3.614, 3.609, 3.603, 3.603, 3.592, 3.592, 3.592, 3.581, 3.581, 3.571, 3.571, 3.571, 3.56,
-  3.56, 3.56, 3.549, 3.549, 3.549, 3.549, 3.538, 3.538, 3.551, 3.546, 3.535, 3.535, 3.535, 3.53, 3.524, 3.524, 3.524, 3.513,
-  3.513, 3.513, 3.503, 3.503, 3.492, 3.492, 3.492, 3.487, 3.481, 3.481, 3.476, 3.471, 3.46, 3.46, 3.449, 3.444, 3.428, 3.428,
-  3.417, 3.401, 3.39, 3.379, 3.363, 3.331, 3.299, 3.267, 3.213, 3.149, 3.041, 3, 0};;
 float total_board_temps = 0;
 // underestimate state of charge
 // pack voltage divided by 126
@@ -138,13 +127,6 @@ void setup() {
   // put your setup code here, to run once:
   pinMode(6, OUTPUT);
   pinMode(5, OUTPUT);
-  
-  // initialize charge 
-  int i = 0;
-  while (abs(avg_cell_voltage - voltage_lookup_table[i]) <= abs(avg_cell_voltage - voltage_lookup_table[i+1])) {
-    i++;
-  }
-  charge = ((100 - i)/100) * MAX_PACK_CHARGE;
   
   digitalWrite(6, HIGH); //write Teensy_OK pin high
 
@@ -208,8 +190,8 @@ void loop() {
   }
   read_voltages();
   read_gpio();
+  send_acu_shunt_measurements();
   write_CAN_messages();
-  coulomb_counter();
   if (print_timer.check()) {
     print_voltages();
     print_gpios();
@@ -307,7 +289,7 @@ void read_voltages() {
   }
 }
 
-void coulomb_counter() {
+void send_acu_shunt_measurements() {
   // integrate shunt current over time to count coulombs and provide state of charge
 
   // ----------- THIS CODE HAS BEEN COMMENTED SO THAT MCU WILL HANDLE THE INTEGRATION ---------- //
@@ -323,16 +305,7 @@ void coulomb_counter() {
   acu_shunt_measurements.set_pack_filtered(analogRead(PACK_FILTERED));
   acu_shunt_measurements.set_ts_out_filtered(analogRead(TS_OUT_FILTERED));
 
-  // Serial.print(state_of_charge);
-  // Serial.print('\n');
-  // Serial.print(shunt_voltage_input);
-  // if(timer_shunt.check()){
-  // // Serial.print(analogRead(CURR_SHUNT));
-  //   Serial.println(shunt_current, 6);
-  //   Serial.println(shunt_voltage_input,6);
-  //   // Serial.println(shunt_voltage_input, 3);
-  // }
-  }
+}
 
 void voltage_fault_check() {
   // detect any uv fault conditions, set appropriate error flags, and print relevant message to console
@@ -567,24 +540,14 @@ void write_CAN_messages() {
 
 
 
-  //shunt status message
-
+  // Write ACU Shunt measurement message
   if(timer_shunt.check()){
     msg.id = ID_ACU_SHUNT_MEASUREMENT;
     msg.len = sizeof(acu_shunt_measurements);
     acu_shunt_measurements.write(msg.buf);
     TELEM_CAN.write(msg);
-
-    // Serial.println(acu_shunt_measurements.get_shunt_current());
-    // Serial.println(acu_shunt_measurements.get_shunt_voltage());
-    
-    // for(int i =0; i<8; i++){
-    // Serial.print(msg.buf[i], HEX);
-    // Serial.print(" ");
-    // }
-    // Serial.println();
   }
-  //Write BMS_status message
+  // Write BMS_status message
   if (can_bms_status_timer > 100) {
     msg.id = ID_BMS_STATUS;
     msg.len = sizeof(bms_status);
