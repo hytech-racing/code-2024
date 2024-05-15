@@ -65,10 +65,15 @@ int16_t STEERING_RS422::read_steering_continuous() {
         readByte[2] = _serial->read(); //detailed status b7-b0
         encoder_position = (int16_t)(((uint16_t)readByte[0]) << 8) | ((uint16_t)readByte[1]);
         encoder_position = encoder_position >> 2; //b1-b0 general status
+        uint16_t encoder_position_raw = (((uint16_t)readByte[0]) << 8) | ((uint16_t)readByte[1]);
+        encoder_position_raw = encoder_position_raw >> 2; //b1-b0 general status
         error = readByte[1] & 2; //if high, current data is not valid, previous data is sent
         warning = readByte[1] & 1; //if high, some operating conditions are close to limits
         status = readByte[2];
+        Serial.print("Signed interpretation: ");
         Serial.println(encoder_position);
+        Serial.print("Encoder raw reading: ");
+        Serial.println(encoder_position_raw);
     
         interpret_error_messages(status);
         //_serial->clear();

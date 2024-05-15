@@ -34,10 +34,13 @@ void setup() {
   //Block 2 
   //steering.continuous_start();
   Serial.println("get ready..");
+  Serial.println();
   delay(500);
 
-  steering.calibrate_steering(3933);
-  steering.save_parameters();
+//  Serial.print("Calibrate offset position to: ");
+//  steering.calibrate_steering(11072);
+//  Serial.println("Saving parameter...");
+//  steering.save_parameters();
   
 //  steering.self_calibration();
 }
@@ -45,8 +48,10 @@ void setup() {
 void loop() {
   if (read_steering_timer.check()) {
     //steering.read_steering_continuous();
+    Serial.print("Check self-calibration status (idk why this is here tbh but): ");
     Serial.println(steering.check_calibration_status(),BIN);
     steering.read_steering();
+    Serial.println();
     
   }
 }
