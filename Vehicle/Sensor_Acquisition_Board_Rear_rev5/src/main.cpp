@@ -9,6 +9,7 @@
 /* Framework */
 #include <Arduino.h>
 #include <stdint.h>
+#include <string.h>
 
 /* Libraries */
 #include "FlexCAN_T4.h"
@@ -105,10 +106,13 @@ Filter_IIR thermistor_iir[TOTAL_THERMISTOR_COUNT];
 
 /* Global variables */
 // Vector Nav
-uint8_t receiveBuffer[DEFAULT_SERIAL_BUFFER_SIZE];
+uint8_t receiveBuffer[DEFAULT_SERIAL_BUFFER_SIZE] = {0};
+char receiveBufferAscii[DEFAULT_SERIAL_BUFFER_SIZE] = {'\0'};
 uint8_t binaryOutputNumber;
+uint8_t requestCounter;
 int currentPacketLength;
-int binaryReadingStart = false;
+bool binaryReadingStart = false;
+bool asciiReadingStart = false;
 // CAN messages (for now)
 VN_VEL_t vn_vel_body;
 VN_LINEAR_ACCEL_t vn_accel;
@@ -147,6 +151,12 @@ void tick_all_systems(const SysTick_s &curr_tick);
 void setSerialBaudrate(uint32_t baudrate);
 void checkSerialBaudrate();
 void setInitialHeading(uint32_t initHeading);
+void requestGNSSSignalStrength();
+void readGNSSSignalStrength();
+void parseGNSSSignalStrength();
+char* startAsciiPacketParse(char* packetStart, size_t& index);
+char* getNextData(char* str, size_t& startIndex);
+char* vnstrtok(char* str, size_t& startIndex);
 void turnOffAsciiOutput();
 void configBinaryOutput(uint8_t binaryOutputNumber, uint8_t fields, uint16_t rateDivisor);
 void pollUserConfiguredBinaryOutput(uint8_t *binaryOutputNumber);
@@ -163,114 +173,125 @@ uint16_t parseUint16(uint8_t buffer[], int startIndex);
 
 void setup() {
 
-  // Tick system clock
-  SysTick_s curr_tick = sys_clock.tick(micros());
+    // Tick system clock
+    SysTick_s curr_tick = sys_clock.tick(micros());
 
-  // Debug print
-  Serial.begin(DEBUG_PRINT_BAUDRATE);
-  Serial.println("Starting...");
+    // Debug print
+    Serial.begin(DEBUG_PRINT_BAUDRATE);
+    Serial.println("Starting...");
 
-  // Initialize CAN
-  init_all_CAN_devices();
+    // Initialize CAN
+    init_all_CAN_devices();
 
-  // Initialize all SPI devices
-  init_all_adcs();
-  Serial.println("SPI initialized");
+    // Initialize all SPI devices
+    init_all_adcs();
+    Serial.println("SPI initialized");
 
-  // Set IIR filter alpha for thermistors
-  init_all_iir_filters();
-  Serial.println("IIR filter initialized");
+    // Set IIR filter alpha for thermistors
+    init_all_iir_filters();
+    Serial.println("IIR filter initialized");
 
-  // Initialize debounced button
-  btn_pi_shutdown.begin(PI_SHUTDOWN, 100);
-  Serial.println("Debounce button initialized for Pi shutdown");
+    // Initialize debounced button
+    btn_pi_shutdown.begin(PI_SHUTDOWN, 100);
+    Serial.println("Debounce button initialized for Pi shutdown");
 
-  // RS232
-  Serial2.begin(IMU_RS232_SPEED);
-  // Wait for IMU to wake up   - Shayan
-  delay(START_UP_DELAY);
-  // Jack up baudrate. This is the highest we can go, limitation unknown
-  setSerialBaudrate(SERIAL_BAUDRATE6);
-  // End current serial comm.
-  Serial2.end();
-  // Resart serial with new baudrate
-  Serial2.begin(SERIAL_BAUDRATE6);
-  // Initialize binary output reg. number
-  binaryOutputNumber = 0;
-  // Initialize binary packet lengh
-  currentPacketLength = 0;
-  // Configure sensor
-  setInitialHeading(INIT_HEADING);
-  turnOffAsciiOutput();
-  configBinaryOutput(1, 0x01, 0);    // 0000 0001
-  configBinaryOutput(2, 0x05, 0);    // 0000 0101
-  configBinaryOutput(3, 0x28, 0);    // 0010 1000
-  Serial.println("VectorNav initialized ... for real this time!");
-  Serial.println();
+    // RS232
+    Serial2.begin(IMU_RS232_SPEED);
+    // Wait for IMU to wake up   - Shayan
+    delay(START_UP_DELAY);
+    // Jack up baudrate. This is the highest we can go, limitation unknown
+    setSerialBaudrate(SERIAL_BAUDRATE6);
+    // End current serial comm.
+    Serial2.end();
+    // Resart serial with new baudrate
+    Serial2.begin(SERIAL_BAUDRATE6);
+    // Initialize binary output reg. number
+    binaryOutputNumber = 0;
+    // Initialize data request counter
+    requestCounter = 0;
+    // Initialize binary packet lengh
+    currentPacketLength = 0;
+    // Configure sensor
+    setInitialHeading(INIT_HEADING);
+    turnOffAsciiOutput();
+    configBinaryOutput(1, 0x01, 0);    // 0000 0001
+    configBinaryOutput(2, 0x05, 0);    // 0000 0101
+    configBinaryOutput(3, 0x28, 0);    // 0010 1000
+    Serial.println("VectorNav initialized ... for real this time!");
+    Serial.println();
 
-}
+}   /* end of setup */
 
 void loop() {
 
-  // Tick system clock
-  SysTick_s curr_tick = sys_clock.tick(micros());
+    // Tick system clock
+    SysTick_s curr_tick = sys_clock.tick(micros());
 
-  // Process received CAN messages
-  // Not currently needed
-  TELEM_CAN.events();
+    // Process received CAN messages
+    // Not currently needed
+    TELEM_CAN.events();
 
-  // Tick interfaces
-  tick_all_interfaces(curr_tick);
+    // Tick interfaces
+    tick_all_interfaces(curr_tick);
 
-  // Tick systems
-  // Not currently needed
-  
-  // Send outbound CAN messages
-  // send_all_CAN_msg(CAN2_txBuffer, &TELEM_CAN);
+    // Tick systems
+    // Not currently needed
 
-  // Debug prints to see if we're tripping balls
-  TriggerBits_s t = curr_tick.triggers;
-  if (t.trigger5) {
-    Serial.println("Thermistors:");
-    Serial.println(ADC3.get().conversions[THERM_3].raw);
-    Serial.println(ADC3.get().conversions[THERM_4].raw);
-    Serial.println(ADC3.get().conversions[THERM_5].raw);
-    Serial.println(ADC3.get().conversions[THERM_6].raw);
-    Serial.println(ADC3.get().conversions[THERM_7].raw);
-    Serial.println(ADC3.get().conversions[THERM_8].raw);
-    Serial.println(ADC3.get().conversions[THERM_9].raw);
-    Serial.println();
-    Serial.println("Load cells:");
-    Serial.println(ADC1.get().conversions[RL_LOAD_CELL].raw);
-    Serial.println(ADC2.get().conversions[RR_LOAD_CELL].raw);
-    Serial.println();
-    Serial.println("Sus pots:");
-    Serial.println(ADC1.get().conversions[SUS_POT_3].raw);
-    Serial.println(ADC2.get().conversions[SUS_POT_4].raw);
-    Serial.println();
-    Serial.println("Vector Nav:");
+    // Send outbound CAN messages
+    // send_all_CAN_msg(CAN2_txBuffer, &TELEM_CAN);
 
-    for (int i = 0; i < currentPacketLength; i++) {
-      Serial.printf("%X ", receiveBuffer[i]);
+    // Debug prints to see if we're tripping balls
+    TriggerBits_s t = curr_tick.triggers;
+    if (t.trigger5)
+    {
+        Serial.println("Thermistors:");
+        Serial.println(ADC3.get().conversions[THERM_3].raw);
+        Serial.println(ADC3.get().conversions[THERM_4].raw);
+        Serial.println(ADC3.get().conversions[THERM_5].raw);
+        Serial.println(ADC3.get().conversions[THERM_6].raw);
+        Serial.println(ADC3.get().conversions[THERM_7].raw);
+        Serial.println(ADC3.get().conversions[THERM_8].raw);
+        Serial.println(ADC3.get().conversions[THERM_9].raw);
+        Serial.println();
+        Serial.println("Load cells:");
+        Serial.println(ADC1.get().conversions[RL_LOAD_CELL].raw);
+        Serial.println(ADC2.get().conversions[RR_LOAD_CELL].raw);
+        Serial.println();
+        Serial.println("Sus pots:");
+        Serial.println(ADC1.get().conversions[SUS_POT_3].raw);
+        Serial.println(ADC2.get().conversions[SUS_POT_4].raw);
+        Serial.println();
+        Serial.println("Vector Nav:");
+
+        for (int i = 0; i < currentPacketLength; i++)
+        {
+            Serial.printf("%X ", receiveBuffer[i]);
+        }
+        Serial.printf("\nCurrent packet length: %d", currentPacketLength);
+        Serial.println();
+        Serial.println();
     }
-    Serial.printf("\nCurrent packet length: %d", currentPacketLength);
-    Serial.println();
-    Serial.println();
-  }
-  
-  // Vector Nav data acquisition (for now)
-  // Involves delay. moved to bottom to preserve timing
-  // if (timer_vectornav_change_reading.check())
-  // {
-  //   binaryOutputNumber = (binaryOutputNumber + 1) % 3;
-  // }
 
-  // checkSerialBaudrate();
-  
-  pollUserConfiguredBinaryOutput(&binaryOutputNumber);
-  readPollingBinaryOutput();   // do need to be here now
+    // Vector Nav data acquisition (for now)
+    // Involves delay. moved to bottom to preserve timing
+    // if (timer_vectornav_change_reading.check())
+    // {
+    //   binaryOutputNumber = (binaryOutputNumber + 1) % 3;
+    // }
 
-}
+    // checkSerialBaudrate();
+
+    // Request data  
+    if (requestCounter == 3)
+        requestGNSSSignalStrength();
+    else
+        pollUserConfiguredBinaryOutput(&binaryOutputNumber);
+
+    // Read data
+    readGNSSSignalStrength();
+    readPollingBinaryOutput();   // do need to be here now 
+
+}   /* end of loop */
 
 /**
  * Initialize CAN lines 
@@ -683,6 +704,137 @@ void setInitialHeading(uint32_t initHeading) {
     Serial.println();
 }
 
+void requestGNSSSignalStrength()
+{
+    if (timer_vectornav_read_binary.check())
+    {
+        char toSend[DEFAULT_WRITE_BUFFER_SIZE];
+
+        size_t length = sprintf(toSend, "$VNRRG,86", initHeading);
+        length += sprintf(toSend + length, "*XX\r\n");
+
+        Serial2.print(toSend);
+        Serial2.flush();
+
+        timer_read_imu.reset();
+
+        if (!asciiReadingStart)
+            asciiReadingStart = true;
+        
+        requestCounter = (requestCounter + 1) % 4;
+    }    
+}
+
+void readGNSSSignalStrength()
+{
+    if (timer_read_imu.check() && asciiReadingStart)
+    {
+        // char data = Serial2.read();
+
+        // if (data != '$')
+        // return;
+
+        // int index = 0;
+        // bool startCountdown = false;
+        // int countDown = 2;
+
+        // receiveBufferAscii[index++] = data;  // put '$' here
+
+        // while (countDown > 0)
+        // {
+        //     if (Serial2.available())
+        //     {
+        //         data = Serial2.read();
+        //         receiveBuffer[index++] = data;
+
+        //         if (startCountdown)
+        //         {
+        //             countDown--;
+        //         }
+        //     }
+
+        //     if (data == '*')
+        //     {
+        //         startCountdown = true;
+        //     }
+        // }
+
+        int index = 0;
+
+        while (Serial2.available())
+        {
+            receiveBufferAscii[index++] = Serial2.read();
+        }
+        
+        // Parse Ascii string response
+        float numSatsPVT_1, numSatsRTK_1, highestCN0_1, 
+              numSatsPVT_2, numSatsRTK_2, highestCN0_2, 
+              numComSatsPVT, numComSatsRTK;
+        parseGNSSSignalStrength(receiveBufferAscii, 
+                                &numSatsPVT_1, &numSatsRTK_1, &highestCN0_1, 
+                                &numSatsPVT_2, &numSatsRTK_2, highestCN0_2, 
+                                numComSatsPVT, numComSatsRTK);
+
+        // Reset ascii reading start flag
+        asciiReadingStart = false;
+    }    
+}
+
+void parseGNSSSignalStrength(char *receiveBufferAscii, float *numSatsPVT_1, float *numSatsRTK_1, float *highestCN0_1, float *numSatsPVT_2, float *numSatsRTK_2, float *highestCN0_2, float *numComSatsPVT, float *numComSatsRTK)
+{
+    char *vnAsciiHeader = "$VNRRG,86";
+
+    // Sanity check receive string
+    if (strncmp(receiveBufferAscii, vnAsciiHeader, 9))
+    {
+        return;
+    }
+
+    size_t parseIndex;
+
+	char* result = startAsciiPacketParse(receiveBufferAscii, parseIndex);
+
+    *numSatsPVT_1 = ATOFF; NEXT
+    *numSatsRTK_1 = ATOFF; NEXT
+    *highestCN0_1 = ATOFF; NEXT
+    *numSatsPVT_2 = ATOFF; NEXT
+    *numSatsRTK_2 = ATOFF; NEXT
+    *highestCN0_2 = ATOFF; NEXT
+    *numComSatsPVT = ATOFF; NEXT
+    *numComSatsRTK = ATOFF;
+    
+}
+
+char* startAsciiPacketParse(char* packetStart, size_t& index)
+{
+	index = 7;
+	return vnstrtok(packetStart, index);
+}
+
+char* getNextData(char* str, size_t& startIndex)
+{
+	return vnstrtok(str, startIndex);
+}
+
+char* vnstrtok(char* str, size_t& startIndex)
+{
+	size_t origIndex = startIndex;
+
+	if (str[startIndex-1] == '*') // attempting to read too many fields
+		return NULL;
+		
+	while (str[startIndex] != ',' && str[startIndex] != '*')
+	{
+		if((str[startIndex] < ' ') || (str[startIndex] > '~') || (str[startIndex] == '$')) // check for garbage characters
+			return NULL;
+		startIndex++;
+	}
+	
+	str[startIndex++] = '\0';
+
+	return str + origIndex;
+}
+
 void turnOffAsciiOutput() { // VNOFF
 
   char toSend[DEFAULT_WRITE_BUFFER_MIDIUM];
@@ -829,6 +981,8 @@ void pollUserConfiguredBinaryOutput(uint8_t *binaryOutputNumber) {
 
     *binaryOutputNumber = (*binaryOutputNumber + 1) % 3;  // skill issue fixed by Andy
 
+    requestCounter = (requestCounter + 1) % 4;
+
     // delay(20);
     
     // while (Serial2.available()) {
@@ -879,6 +1033,9 @@ void readPollingBinaryOutput() {
           break;
       }
     }
+
+    // Reset binary reading start flag
+    binaryReadingStart = false;
 
   }
 
