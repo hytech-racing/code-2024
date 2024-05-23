@@ -89,7 +89,7 @@
 
 #define ATOU32 static_cast<uint32_t>(std::atoi(result))
 #define ATOFF static_cast<float>(std::atof(result))
-#define NEXT result = getNextData(receiveBufferAscii, parseIndex); \
+#define NEXT result = getNextData(_data, parseIndex); \
 	if (result == NULL) \
 		return;
 
