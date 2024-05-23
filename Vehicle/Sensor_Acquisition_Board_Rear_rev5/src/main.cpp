@@ -153,7 +153,7 @@ void checkSerialBaudrate();
 void setInitialHeading(uint32_t initHeading);
 void requestGNSSSignalStrength();
 void readGNSSSignalStrength();
-void parseGNSSSignalStrength();
+void parseGNSSSignalStrength(char *receiveBufferAscii, float *numSatsPVT_1, float *numSatsRTK_1, float *highestCN0_1, float *numSatsPVT_2, float *numSatsRTK_2, float *highestCN0_2, float *numComSatsPVT, float *numComSatsRTK);
 char* startAsciiPacketParse(char* packetStart, size_t& index);
 char* getNextData(char* str, size_t& startIndex);
 char* vnstrtok(char* str, size_t& startIndex);
@@ -710,7 +710,7 @@ void requestGNSSSignalStrength()
     {
         char toSend[DEFAULT_WRITE_BUFFER_SIZE];
 
-        size_t length = sprintf(toSend, "$VNRRG,86", initHeading);
+        size_t length = sprintf(toSend, "$VNRRG,86");
         length += sprintf(toSend + length, "*XX\r\n");
 
         Serial2.print(toSend);
@@ -772,8 +772,8 @@ void readGNSSSignalStrength()
               numComSatsPVT, numComSatsRTK;
         parseGNSSSignalStrength(receiveBufferAscii, 
                                 &numSatsPVT_1, &numSatsRTK_1, &highestCN0_1, 
-                                &numSatsPVT_2, &numSatsRTK_2, highestCN0_2, 
-                                numComSatsPVT, numComSatsRTK);
+                                &numSatsPVT_2, &numSatsRTK_2, &highestCN0_2, 
+                                &numComSatsPVT, &numComSatsRTK);
 
         // Reset ascii reading start flag
         asciiReadingStart = false;
