@@ -83,6 +83,7 @@ SysClock sys_clock;
 // Sensor read
 Metro timer_read_all_adcs = Metro(10);
 Metro timer_read_imu = Metro(8);                      // serial delay from polling request
+Metro timer_read_ascii = Metro(8);
 Metro timer_vectornav_read_binary = Metro(10);         // configured 100Hz
 Metro timer_vectornav_change_reading = Metro(40);      // change binary output group 25Hz
 // CAN send
@@ -291,14 +292,14 @@ void loop() {
     // checkSerialBaudrate();
 
     // Request data  
-    if (requestCounter == 3)
+    // if (requestCounter == 3)
         requestGNSSSignalStrength();
-    else
-        pollUserConfiguredBinaryOutput(&binaryOutputNumber);
+    // else
+    //     pollUserConfiguredBinaryOutput(&binaryOutputNumber);
 
     // Read data
     readGNSSSignalStrength();
-    readPollingBinaryOutput();   // do need to be here now 
+    // readPollingBinaryOutput();   // do need to be here now 
 
 }   /* end of loop */
 
@@ -734,18 +735,32 @@ void requestGNSSSignalStrength()
         Serial2.print(toSend);
         Serial2.flush();
 
-        timer_read_imu.reset();
+        // delay(7);
+  
+        // int index = 0;
+        // char receiveBuffer[DEFAULT_READ_BUFFER_SIZE] = {'\0'};
+        // while (Serial2.available() > 0) {
+        //     receiveBuffer[index++] = Serial2.read();
+        // }
+        // Serial.print("Read GNSS compass health: ");
+        // Serial.println(receiveBuffer);
+
+        // Serial.println();
+
+        timer_read_ascii.reset();
 
         if (!asciiReadingStart)
             asciiReadingStart = true;
+
+        // readGNSSSignalStrength();
         
         requestCounter = (requestCounter + 1) % 4;
-    }    
+    }
 }
 
 void readGNSSSignalStrength()
 {
-    if (timer_read_imu.check() && asciiReadingStart)
+    if (timer_read_ascii.check() && asciiReadingStart)
     {
         // char data = Serial2.read();
 
@@ -778,11 +793,20 @@ void readGNSSSignalStrength()
         // }
 
         int index = 0;
+        char receiveBufferAscii[DEFAULT_READ_BUFFER_SIZE] = {'\0'};
 
         while (Serial2.available())
         {
             receiveBufferAscii[index++] = Serial2.read();
         }
+
+#if DEBUG_GNSS_HEALTH
+        Serial.print("Read GNSS compass health: ");
+        Serial.println(receiveBufferAscii);
+
+        Serial.println();
+#endif
+        
         currentAsciiLength = index;
         
         // Parse Ascii string response
@@ -793,6 +817,12 @@ void readGNSSSignalStrength()
                                 &numSatsPVT_1, &numSatsRTK_1, &highestCN0_1, 
                                 &numSatsPVT_2, &numSatsRTK_2, &highestCN0_2, 
                                 &numComSatsPVT, &numComSatsRTK);
+
+#if DEBUG_GNSS_HEALTH
+        Serial.printf("numSatsPVT_1 = %f, numSatsRTK_1 = %f, highestCN0_1 = %f\n", numSatsPVT_1, numSatsRTK_1, highestCN0_1);
+        Serial.printf("numSatsPVT_2 = %f, numSatsRTK_2 = %f, highestCN0_2 = %f\n", numSatsPVT_2, numSatsRTK_2, highestCN0_2);
+        Serial.printf("numComSatsPVT = %f, numComSatsRTK = %f\n\n", numComSatsPVT, numComSatsRTK);
+#endif
 
         vn_gnss_comp_health.num_sats_pvt_1 = numSatsPVT_1;
         vn_gnss_comp_health.num_sats_rtk_1 = numSatsRTK_1;
@@ -806,7 +836,7 @@ void readGNSSSignalStrength()
 
         // Reset ascii reading start flag
         asciiReadingStart = false;
-    }    
+    }
 }
 
 void parseGNSSSignalStrength(char *receiveBufferAscii, float *numSatsPVT_1, float *numSatsRTK_1, float *highestCN0_1, float *numSatsPVT_2, float *numSatsRTK_2, float *highestCN0_2, float *numComSatsPVT, float *numComSatsRTK)
@@ -821,7 +851,7 @@ void parseGNSSSignalStrength(char *receiveBufferAscii, float *numSatsPVT_1, floa
 
     size_t parseIndex;
 
-	char* result = startAsciiPacketParse(receiveBufferAscii, parseIndex);
+	char* result = startAsciiPacketParse(receiveBufferAscii, parseIndex); NEXT
 
     *numSatsPVT_1 = ATOFF; NEXT
     *numSatsRTK_1 = ATOFF; NEXT
