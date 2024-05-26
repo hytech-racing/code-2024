@@ -111,6 +111,7 @@ char receiveBufferAscii[DEFAULT_SERIAL_BUFFER_SIZE] = {'\0'};
 uint8_t binaryOutputNumber;
 uint8_t requestCounter;
 int currentPacketLength;
+int currentAsciiLength;
 bool binaryReadingStart = false;
 bool asciiReadingStart = false;
 // CAN messages (for now)
@@ -124,6 +125,7 @@ VN_ANGULAR_RATE_t vn_angular_rate;
 VN_YPR_t vn_YPR;
 VN_ECEF_POS_XY_t vn_ecef_pos_xy;
 VN_ECEF_POS_Z_t vn_ecef_pos_z;
+VN_GNSS_COMP_SIG_HEALTH_t vn_gnss_comp_health;
 
 /* Function prototypes */
 void init_all_CAN_devices();
@@ -141,6 +143,7 @@ void send_CAN_vn_angular_rate();
 void send_CAN_vn_yaw_pitch_roll();
 void send_CAN_vn_ecef_pos_xy();
 void send_CAN_vn_ecef_pos_z();
+void send_CAN_vn_gnss_comp_sig_health();
 // void process_ring_buffer(CANBufferType &rx_buffer, unsigned long curr_millis);
 // void send_all_CAN_msg(CANBufferType &tx_buffer, FlexCAN_T4_Base *can_interface);
 void init_all_adcs();
@@ -263,12 +266,18 @@ void loop() {
         Serial.println();
         Serial.println("Vector Nav:");
 
+        Serial.print("Binary: ");
         for (int i = 0; i < currentPacketLength; i++)
         {
             Serial.printf("%X ", receiveBuffer[i]);
         }
-        Serial.printf("\nCurrent packet length: %d", currentPacketLength);
+        Serial.printf("\nCurrent binary packet length: %d", currentPacketLength);
         Serial.println();
+
+        Serial.print("Ascii: ");
+        Serial.println(receiveBufferAscii);
+        Serial.println();
+
         Serial.println();
     }
 
@@ -598,6 +607,15 @@ void send_CAN_vn_ecef_pos_z() {
   }  
 }
 
+void send_CAN_vn_gnss_comp_sig_health()
+{
+    CAN_message_t msg;
+
+    auto id = Pack_VN_GNSS_COMP_SIG_HEALTH_hytech(&vn_gnss_comp_health, msg.buf, &msg.len, (uint8_t*) &msg.flags.extended);
+    msg.id = id;
+    TELEM_CAN.write(msg);
+}
+
 /**
  * Tick interfaces
 */
@@ -765,6 +783,7 @@ void readGNSSSignalStrength()
         {
             receiveBufferAscii[index++] = Serial2.read();
         }
+        currentAsciiLength = index;
         
         // Parse Ascii string response
         float numSatsPVT_1, numSatsRTK_1, highestCN0_1, 
@@ -774,6 +793,16 @@ void readGNSSSignalStrength()
                                 &numSatsPVT_1, &numSatsRTK_1, &highestCN0_1, 
                                 &numSatsPVT_2, &numSatsRTK_2, &highestCN0_2, 
                                 &numComSatsPVT, &numComSatsRTK);
+
+        vn_gnss_comp_health.num_sats_pvt_1 = numSatsPVT_1;
+        vn_gnss_comp_health.num_sats_rtk_1 = numSatsRTK_1;
+        vn_gnss_comp_health.highest_cn0_1 = highestCN0_1;
+        vn_gnss_comp_health.num_sats_pvt_2 = numSatsPVT_2;
+        vn_gnss_comp_health.num_sats_rtk_2 = numSatsRTK_2;
+        vn_gnss_comp_health.num_com_sats_pvt = numComSatsPVT;
+        vn_gnss_comp_health.num_com_sats_rtk = numComSatsRTK;
+
+        send_CAN_vn_gnss_comp_sig_health();
 
         // Reset ascii reading start flag
         asciiReadingStart = false;
