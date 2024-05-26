@@ -997,7 +997,8 @@ void configBinaryOutput(uint8_t binaryOutputNumber, uint8_t fields, uint16_t rat
     #if VN_HAVE_SECURE_CRT
     length += sprintf_s(toSend + length, sizeof(toSend) - length, ",%X", fields.insField);
     #else
-    length += sprintf(toSend + length, ",%X", vn::protocol::uart::INSGROUP_VELBODY);        // 0000 0000 0000 1000 = 00 08
+    length += sprintf(toSend + length, ",%X", vn::protocol::uart::INSGROUP_VELBODY |
+                                              vn::protocol::uart::INSGROUP_VELU);        // 0000 0100 0000 1000 = 00 08
     #endif
   }
   if(gps2Field) {
@@ -1327,25 +1328,29 @@ void parseBinaryOutput_3(int receivedPacketLength) {
   double posEcefX = parseDouble(receiveBuffer, OFFSET_PADDING_3);
   double posEcefY = parseDouble(receiveBuffer, 8 + OFFSET_PADDING_3);
   double posEcefZ = parseDouble(receiveBuffer, 16 + OFFSET_PADDING_3);
+
 #if DEBUG
   Serial.printf("PosEcf0 raw: %f  ", (float)posEcefX);
   Serial.printf("PosEcf1 raw: %f  ", (float)posEcefY);
   Serial.printf("PosEcf2 raw: %f  \n", (float)posEcefZ);
 #endif
+  
+  float velBodyX = parseFloat(receiveBuffer, 24 + OFFSET_PADDING_3);
+  float velBodyY = parseFloat(receiveBuffer, 28 + OFFSET_PADDING_3);
+  float velBodyZ = parseFloat(receiveBuffer, 32 + OFFSET_PADDING_3);
+
+  float velU = parseFloat(receiveBuffer, 36 + OFFSET_PADDING_3);
+
+  uint16_t crc = (receiveBuffer[41 + OFFSET_PADDING_3] << 8) | receiveBuffer[40 + OFFSET_PADDING_3];
+
+  // Missing CAN message for PosEcef right now
+
   vn_ecef_pos_xy.vn_ecef_pos_x_ro = HYTECH_vn_ecef_pos_x_ro_toS(posEcefX);
   vn_ecef_pos_xy.vn_ecef_pos_y_ro = HYTECH_vn_ecef_pos_y_ro_toS(posEcefY);
   timer_send_CAN_vn_ecef_pos_xy.reset();
 
   vn_ecef_pos_z.vn_ecef_pos_z_ro = HYTECH_vn_ecef_pos_z_ro_toS(posEcefZ);
   timer_send_CAN_vn_ecef_pos_z.reset();
-
-  float velBodyX = parseFloat(receiveBuffer, 24 + OFFSET_PADDING_3);
-  float velBodyY = parseFloat(receiveBuffer, 28 + OFFSET_PADDING_3);
-  float velBodyZ = parseFloat(receiveBuffer, 32 + OFFSET_PADDING_3);
-
-  uint16_t crc = (receiveBuffer[37 + OFFSET_PADDING_3] << 8) | receiveBuffer[36 + OFFSET_PADDING_3];
-
-  // Missing CAN message for PosEcef right now
 
   vn_vel_body.vn_body_vel_x_ro = HYTECH_vn_body_vel_x_ro_toS(velBodyX);  // int16_t
 #if DEBUG
@@ -1359,7 +1364,8 @@ void parseBinaryOutput_3(int receivedPacketLength) {
 #if DEBUG
   Serial.printf("Velocity body Z: %f\n", velBodyZ);
 #endif
-  timer_send_CAN_vn_vel_body.reset();
+  vn_vel_body.vn_vel_uncertainty_ro = HYTECH_vn_vel_uncertainty_ro_toS(velU);
+  timer_send_CAN_vn_vel_body.reset();  
 
   // clearReceiveBuffer();
 
