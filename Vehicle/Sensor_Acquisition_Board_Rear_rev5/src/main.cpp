@@ -107,8 +107,8 @@ Filter_IIR thermistor_iir[TOTAL_THERMISTOR_COUNT];
 
 /* Global variables */
 // Vector Nav
-uint8_t receiveBuffer[DEFAULT_SERIAL_BUFFER_SIZE] = {0};
-char receiveBufferAscii[DEFAULT_SERIAL_BUFFER_SIZE] = {'\0'};
+uint8_t receiveBufferExt[DEFAULT_SERIAL_BUFFER_SIZE] = {0};
+char receiveBufferAsciiExt[DEFAULT_SERIAL_BUFFER_SIZE] = {'\0'};
 uint8_t binaryOutputNumber;
 uint8_t requestCounter;
 int currentPacketLength;
@@ -165,10 +165,10 @@ void turnOffAsciiOutput();
 void configBinaryOutput(uint8_t binaryOutputNumber, uint8_t fields, uint16_t rateDivisor);
 void pollUserConfiguredBinaryOutput(uint8_t *binaryOutputNumber);
 void readPollingBinaryOutput();
-void parseBinaryOutput_1(int receivedPacketLength);
-void parseBinaryOutput_2(int receivedPacketLength);
-void parseBinaryOutput_3(int receivedPacketLength);
-void clearReceiveBuffer();
+void parseBinaryOutput_1(uint8_t receiveBuffer[], int receivedPacketLength);
+void parseBinaryOutput_2(uint8_t receiveBuffer[], int receivedPacketLength);
+void parseBinaryOutput_3(uint8_t receiveBuffer[], int receivedPacketLength);
+void clearReceiveBuffer(uint8_t receiveBuffer[]);
 float parseFloat(uint8_t buffer[], int startIndex);
 double parseDouble(uint8_t buffer[], int startIndex);
 uint64_t parseUint64(uint8_t buffer[], int startIndex);
@@ -270,13 +270,13 @@ void loop() {
         Serial.print("Binary: ");
         for (int i = 0; i < currentPacketLength; i++)
         {
-            Serial.printf("%X ", receiveBuffer[i]);
+            Serial.printf("%X ", receiveBufferExt[i]);
         }
         Serial.printf("\nCurrent binary packet length: %d", currentPacketLength);
         Serial.println();
 
         Serial.print("Ascii: ");
-        Serial.println(receiveBufferAscii);
+        Serial.println(receiveBufferAsciiExt);
         Serial.println();
 
         Serial.println();
@@ -292,14 +292,14 @@ void loop() {
     // checkSerialBaudrate();
 
     // Request data  
-    // if (requestCounter == 3)
+    if (requestCounter == 3)
         requestGNSSSignalStrength();
-    // else
-    //     pollUserConfiguredBinaryOutput(&binaryOutputNumber);
+    else
+        pollUserConfiguredBinaryOutput(&binaryOutputNumber);
 
     // Read data
     readGNSSSignalStrength();
-    // readPollingBinaryOutput();   // do need to be here now 
+    readPollingBinaryOutput();   // do need to be here now 
 
 }   /* end of loop */
 
@@ -806,6 +806,8 @@ void readGNSSSignalStrength()
 
         Serial.println();
 #endif
+
+        strcpy(receiveBufferAsciiExt, receiveBufferAscii);
         
         currentAsciiLength = index;
         
@@ -1068,25 +1070,33 @@ void readPollingBinaryOutput() {
     // Serial.println();
 
     int index = 0;
+    uint8_t receiveBuffer[DEFAULT_SERIAL_BUFFER_SIZE] = {0};
 
-    while (Serial2.available()) {
-      receiveBuffer[index++] = Serial2.read();
+    while (Serial2.available())
+    {
+        receiveBuffer[index++] = Serial2.read();
     }
+
+    for (int i = 0; i < index; i++)
+    {
+        receiveBufferExt[i] = receiveBuffer[i];
+    }    
+
     currentPacketLength = index;
 
     if (receiveBuffer[0] == 0xFA) {
       switch (receiveBuffer[1])
       {
         case 0x01:
-          parseBinaryOutput_1(currentPacketLength);
+          parseBinaryOutput_1(receiveBuffer, currentPacketLength);
           break;
 
         case 0x05:
-          parseBinaryOutput_2(currentPacketLength);
+          parseBinaryOutput_2(receiveBuffer, currentPacketLength);
           break;
 
         case 0x28:
-          parseBinaryOutput_3(currentPacketLength);
+          parseBinaryOutput_3(receiveBuffer, currentPacketLength);
           break;
         
         default:
@@ -1101,7 +1111,7 @@ void readPollingBinaryOutput() {
 
 }
 
-void parseBinaryOutput_1(int receivedPacketLength) {
+void parseBinaryOutput_1(uint8_t receiveBuffer[], int receivedPacketLength) {
 
   int binaryPacketLength = 1 + 1 + 2 * BINARY_OUTPUT_GROUP_COUNT_1 + BINARY_OUTPUT_PAYLOAD_1 + 2;  // in bytes: sync, groups, group fields, payload, crc
 
@@ -1183,7 +1193,7 @@ void parseBinaryOutput_1(int receivedPacketLength) {
 
 }
 
-void parseBinaryOutput_2(int receivedPacketLength) {
+void parseBinaryOutput_2(uint8_t receiveBuffer[], int receivedPacketLength) {
 
   int binaryPacketLength = 1 + 1 + 2 * BINARY_OUTPUT_GROUP_COUNT_2 + BINARY_OUTPUT_PAYLOAD_2 + 2;  // in bytes: sync, groups, group fields, payload, crc
 
@@ -1289,7 +1299,7 @@ void parseBinaryOutput_2(int receivedPacketLength) {
 
 }
 
-void parseBinaryOutput_3(int receivedPacketLength) {
+void parseBinaryOutput_3(uint8_t receiveBuffer[], int receivedPacketLength) {
 
   int binaryPacketLength = 1 + 1 + 2 * BINARY_OUTPUT_GROUP_COUNT_3 + BINARY_OUTPUT_PAYLOAD_3 + 2;  // in bytes: sync, groups, group fields, payload, crc
 
@@ -1371,7 +1381,7 @@ void parseBinaryOutput_3(int receivedPacketLength) {
 
 }
 
-void clearReceiveBuffer() {
+void clearReceiveBuffer(uint8_t receiveBuffer[]) {
 
   for (int i = 0; i < DEFAULT_SERIAL_BUFFER_SIZE; i++)
   {

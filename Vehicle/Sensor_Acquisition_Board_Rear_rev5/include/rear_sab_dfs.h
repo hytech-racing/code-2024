@@ -85,7 +85,7 @@
 
 #define SANITY_CHECK 0
 #define DEBUG 0
-#define DEBUG_GNSS_HEALTH 1
+#define DEBUG_GNSS_HEALTH 0
 #define START_UP_DELAY 5000
 
 #define ATOU32 static_cast<uint32_t>(std::atoi(result))
