@@ -60,10 +60,6 @@ MCU_status mcu_status;
 MCP_ADC<4> ADC1 = MCP_ADC<4>(ADC1_CS, ADC_ISOSPI_SPEED);  // RL corner board
 MCP_ADC<4> ADC2 = MCP_ADC<4>(ADC2_CS, ADC_ISOSPI_SPEED);  // RR corner board
 MCP_ADC<8> ADC3 = MCP_ADC<8>(ADC3_CS, ADC_SPI_SPEED);  // Thermistors
-
-// ADC_SPI ADC1(ADC1_CS, ADC_SPI_SPEED);
-
-
 // Pi shutdown
 DebouncedButton btn_pi_shutdown;
 // VectorNav
@@ -102,8 +98,6 @@ Metro timer_send_CAN_vn_vel_body = Metro(8);          // 8ms after polling
 // IIR filter for DSP
 // Thermistors
 Filter_IIR<uint16_t> thermistor_iir[TOTAL_THERMISTOR_COUNT];
-// Loadcells
-// Filter_IIR loadcell_iir[TOTAL_LOADCELL_COUNT] = Filter_IIR{LOADCELL_ALPHA, LOADCELL_ALPHA};  // actually will be done by torque controllers themselves if needed
 
 /* Global variables */
 // Vector Nav
@@ -406,9 +400,9 @@ double parseDouble(uint8_t buffer[], int startIndex) {
 uint64_t parseUint64(uint8_t buffer[], int startIndex) {
   
   uint64_t data = (((uint64_t) buffer[7 + startIndex] << (8 * 7)) | ((uint64_t) buffer[6 + startIndex] << (8 * 6)) |
-                        ((uint64_t) buffer[5 + startIndex] << (8 * 5)) | ((uint64_t) buffer[4 + startIndex] << (8 * 4)) |
-                        ((uint64_t) buffer[3 + startIndex] << (8 * 3)) | ((uint64_t) buffer[2 + startIndex] << (8 * 2)) |
-                        ((uint64_t) buffer[1 + startIndex] << (8 * 1)) | ((uint64_t) buffer[0 + startIndex] << (8 * 0)));
+                   ((uint64_t) buffer[5 + startIndex] << (8 * 5)) | ((uint64_t) buffer[4 + startIndex] << (8 * 4)) |
+                   ((uint64_t) buffer[3 + startIndex] << (8 * 3)) | ((uint64_t) buffer[2 + startIndex] << (8 * 2)) |
+                   ((uint64_t) buffer[1 + startIndex] << (8 * 1)) | ((uint64_t) buffer[0 + startIndex] << (8 * 0)));
   
   return data;
 }
@@ -416,7 +410,7 @@ uint64_t parseUint64(uint8_t buffer[], int startIndex) {
 uint32_t parseUint32(uint8_t buffer[], int startIndex) {
 
   uint32_t data = (((uint32_t) buffer[3 + startIndex] << (8 * 3)) | ((uint32_t) buffer[2 + startIndex] << (8 * 2)) |
-                        ((uint32_t) buffer[1 + startIndex] << (8 * 1)) | ((uint32_t) buffer[0 + startIndex] << (8 * 0)));
+                   ((uint32_t) buffer[1 + startIndex] << (8 * 1)) | ((uint32_t) buffer[0 + startIndex] << (8 * 0)));
   
   return data;
 }
@@ -1254,10 +1248,10 @@ void parseBinaryOutput_2(uint8_t receiveBuffer[], int receivedPacketLength) {
   // 01 aligning
   // 10 tracking
   // 11 loss of GNSS for >45 seconds
-  uint16_t insMode = InsStatus & 0x0003; // Only take the last two bits
-  // Serial.printf("Ins status: %X\n", insMode);
+  uint16_t insMode = InsStatus & 0x0003; // Only take the last two bits  
 #if DEBUG
   Serial.printf("Ins status: %X\n", InsStatus);
+  Serial.printf("Ins status: %X\n", insMode);
 #endif
 
   float uncompAccelBodyX = parseFloat(receiveBuffer, 14 + OFFSET_PADDING_2);

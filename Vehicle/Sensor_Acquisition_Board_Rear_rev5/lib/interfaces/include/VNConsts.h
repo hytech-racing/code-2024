@@ -1,0 +1,25 @@
+#ifndef __VN_CONSTS__
+#define __VN_CONSTS__
+
+// Serial buffer
+const int DEFAULT_SERIAL_BUFFER_SIZE = 64;
+const int DEFAULT_WRITE_BUFFER_SIZE = 17;
+const int DEFAULT_WRITE_BUFFER_MIDIUM = 21;
+const int DEFAULT_WRITE_BUFFER_LONG = 256;
+const int DEFAULT_READ_BUFFER_SIZE = 256;
+
+// Serial baudrate
+const int VN_SERIAL_BAUDRATE1 = 9600;
+const int VN_SERIAL_BAUDRATE2 = 19200;
+const int VN_SERIAL_BAUDRATE3 = 38400;
+const int VN_SERIAL_BAUDRATE4 = 57600;
+const int VN_SERIAL_BAUDRATE5 = 115200;
+const int VN_SERIAL_BAUDRATE6 = 128000;
+const int VN_SERIAL_BAUDRATE7 = 230400;
+const int VN_SERIAL_BAUDRATE8 = 460800;
+const int VN_SERIAL_BAUDRATE9 = 921600;
+
+// Binary group
+
+
+#endif
