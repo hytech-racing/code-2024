@@ -101,7 +101,7 @@ Metro timer_send_CAN_vn_vel_body = Metro(8);          // 8ms after polling
 /* Utilities */
 // IIR filter for DSP
 // Thermistors
-Filter_IIR thermistor_iir[TOTAL_THERMISTOR_COUNT];
+Filter_IIR<uint16_t> thermistor_iir[TOTAL_THERMISTOR_COUNT];
 // Loadcells
 // Filter_IIR loadcell_iir[TOTAL_LOADCELL_COUNT] = Filter_IIR{LOADCELL_ALPHA, LOADCELL_ALPHA};  // actually will be done by torque controllers themselves if needed
 
