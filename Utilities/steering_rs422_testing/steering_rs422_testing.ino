@@ -36,9 +36,9 @@ void setup() {
   Serial.println("get ready..");
   Serial.println();
   delay(500);
-
+//
 //  Serial.print("Calibrate offset position to: ");
-//  steering.calibrate_steering(128);
+//  steering.calibrate_steering(317);
 //  Serial.println("Saving parameter...");
 //  steering.save_parameters();
   
