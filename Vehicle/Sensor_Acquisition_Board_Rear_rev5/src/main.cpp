@@ -216,7 +216,7 @@ void setup() {
     // Initialize binary packet lengh
     currentPacketLength = 0;
     // Configure sensor
-    // setInitialHeading(INIT_HEADING);
+    setInitialHeading(INIT_HEADING);
     turnOffAsciiOutput();
     configBinaryOutput(1, 0x01, 0);    // 0000 0001
     configBinaryOutput(2, 0x05, 0);    // 0000 0101
