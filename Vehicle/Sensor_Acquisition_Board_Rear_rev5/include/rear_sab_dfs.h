@@ -71,7 +71,7 @@
 #define SERIAL_BAUDRATE9 921600
 
 // #define INIT_HEADING 320    // Rome endurance
-#define INIT_HEADING 20
+#define INIT_HEADING 200    // Edurance
 
 #define BINARY_OUTPUT_GROUP_COUNT_1 1
 #define BINARY_OUTPUT_GROUP_COUNT_2 2
