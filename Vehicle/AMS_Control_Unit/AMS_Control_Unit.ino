@@ -1,10 +1,10 @@
 /* ACU CONTROL UNIT CODE
-   The AMS Control Unit code is used to control and communicate with Analog Devices LTC6811-2 battery stack monitors, per the HyTech Racing HT06 Accumulator Design.
+   The AMS Control Unit code is used to control and communicate with Analog Devices LTC6811-2 battery stack monitors, per the HyTech Racing HT06-HT07 Accumulator Design.
    It also handles CAN communications with the mainECU and energy meter and drives a watchdog timer on the ACU.
    See LTC6811_2.cpp and LTC6811-2 Datasheet provided by Analog Devices for more details.
-   Author: Zekun Li, Liwei Sun
-   Version: 1.05
-   Since: 05/29/2022
+   Authors: Zekun Li, Liwei Sun
+   Version: 1.10
+   Since: 04/23/2023
 */
 
 
@@ -15,22 +15,31 @@
 #include <LTC6811_2.h>
 #include <Metro.h>
 
+
 // CONSTANT DEFINITIONS: define important values, such as IC count and cells per IC
 #define TOTAL_IC 12                 // Number of LTC6811-2 ICs that are used in the accumulator
 #define EVEN_IC_CELLS 12           // Number of cells monitored by ICs with even addresses
 #define ODD_IC_CELLS 9             // Number of cells monitored by ICS with odd addresses
+#define CHIP_SELECT_GROUP_ONE 9   // Chip select for first LTC6820 corresponding to first group of cells 
+#define CHIP_SELECT_GROUP_TWO 10  // Chip select for second LTC6820 corresponding to second group of cells 
 #define THERMISTORS_PER_IC 4       // Number of cell temperature monitoring thermistors connected to each IC
-#define MAX_SUCCESSIVE_FAULTS 20   // Number of successive faults permitted before AMS fault is broadcast over CAN
+#define MAX_SUCCESSIVE_FAULTS 50   // Number of successive faults permitted before AMS fault is broadcast over CAN
 #define MIN_VOLTAGE 30000          // Minimum allowable single cell voltage in units of 100μV
 #define MAX_VOLTAGE 42000          // Maxiumum allowable single cell voltage in units of 100μV
 #define MAX_TOTAL_VOLTAGE 5330000  // Maximum allowable pack total voltage in units of 100μV
 #define MAX_THERMISTOR_VOLTAGE 26225   // Maximum allowable pack temperature corresponding to 60C in units 100μV
+#define MAX_PACK_CHARGE 48600     // Maximum charge on cells
 #define BALANCE_ON true
 #define BALANCE_COOL 6000             // Sets balancing duty cycle as 33.3%
 #define BALANCE_STANDARD 4000         // Sets balancing duty cycle as 50%
 #define BALANCE_HOT 3000             // Sets balancing duty cycle as 66%
 #define BALANCE_CONTINUOUS 2000     // Sets balancing duty cycle as 100%
 #define BALANCE_MODE 1            // Mode 0 is normal balance, mode 1 is progressive balance
+
+// ACU Shunt measurements pin definitions
+#define CURR_SHUNT A2
+#define PACK_FILTERED A3
+#define TS_OUT_FILTERED A4
 
 // VARIABLE DECLARATIONS
 uint16_t pec15Table[256];          // Array containing lookup table for PEC generator
@@ -41,6 +50,7 @@ uint16_t cell_voltages[TOTAL_IC][12]; // 2D Array to hold cell voltages being re
 bool cell_balance_status[TOTAL_IC][12]; // 2D array where true indicates cell is balancing
 bool currently_balancing = false;
 uint32_t total_voltage;             // the total voltage of the pack
+float avg_cell_voltage = total_voltage / 126; // avg voltage on one pack cell
 int min_voltage_location[2]; // [0]: IC#; [1]: Cell#
 int max_voltage_location[2]; // [0]: IC#; [1]: Cell#
 uint16_t min_voltage = 65535;
@@ -58,12 +68,15 @@ uint16_t min_thermistor_voltage = 65535;
 uint16_t max_board_temp_voltage = 0;
 uint16_t min_board_temp_voltage = 65535;
 float total_board_temps = 0;
+// underestimate state of charge
+// pack voltage divided by 126
 float total_thermistor_temps = 0;
 Metro charging_timer = Metro(5000); // Timer to check if charger is still talking to ACU
 Metro CAN_timer = Metro(2); // Timer that spaces apart writes for CAN messages so as to not saturate CAN bus
 Metro print_timer = Metro(500);
 Metro balance_timer(BALANCE_STANDARD);
 Metro timer_CAN_em_forward(100);
+Metro timer_shunt(100);
 IntervalTimer pulse_timer;    //AMS ok pulse timer
 bool next_pulse = true; //AMS ok pulse
 uint8_t can_voltage_ic = 0; //counter for the current IC data to send for detailed voltage CAN message
@@ -76,6 +89,7 @@ elapsedMillis can_bms_detailed_temps_timer = 4;
 elapsedMillis can_bms_voltages_timer = 6;
 elapsedMillis can_bms_temps_timer = 8;
 elapsedMillis can_bms_onboard_temps_timer = 10;
+elapsedMicros CC_integrator_timer = 0; // Timer used to provide estimation of pack charge from shunt current
 
 // CONSECUTIVE FAULT COUNTERS: counts successive faults; resets to zero if normal reading breaks fault chain
 unsigned long uv_fault_counter = 0;             // undervoltage fault counter
@@ -106,24 +120,32 @@ BMS_temperatures bms_temperatures; //Message class containing general temperatur
 BMS_onboard_temperatures bms_onboard_temperatures; //Message class containing general AMS temperature information
 BMS_detailed_voltages bms_detailed_voltages; //Message class containing detailed voltage information
 BMS_detailed_temperatures bms_detailed_temperatures; // message class containing detailed temperature information
-
+ACU_shunt_measurements acu_shunt_measurements;
 CCU_status ccu_status;
 
 void setup() {
   // put your setup code here, to run once:
   pinMode(6, OUTPUT);
   pinMode(5, OUTPUT);
+  
   digitalWrite(6, HIGH); //write Teensy_OK pin high
+
+  //chip select defines
+  pinMode(CHIP_SELECT_GROUP_ONE, OUTPUT); 
+  pinMode(CHIP_SELECT_GROUP_TWO, OUTPUT); 
+  digitalWrite(CHIP_SELECT_GROUP_ONE, HIGH);
+  digitalWrite(CHIP_SELECT_GROUP_TWO, HIGH);
+  
   pulse_timer.begin(ams_ok_pulse, 50000); //timer to pulse pin 5 every 50 milliseconds
   Serial.begin(115200);
   SPI.begin();
   TELEM_CAN.begin();
   TELEM_CAN.setBaudRate(500000);
+//  TELEM_CAN.setBaudRate(1000000);    // Test CAN capacity 1,000,000 baud
   ENERGY_METER_CAN.begin();
   ENERGY_METER_CAN.setBaudRate(500000);
   ENERGY_METER_CAN.enableMBInterrupts();
   ENERGY_METER_CAN.onReceive(parse_energy_meter_can_message);
-
   for (int i = 0; i < 64; i++) { // Fill all filter slots with Charger Control Unit message filter
     TELEM_CAN.setMBFilter(static_cast<FLEXCAN_MAILBOX>(i), ID_CCU_STATUS); // Set CAN mailbox filtering to only watch for charger controller status CAN messages
   }
@@ -132,9 +154,30 @@ void setup() {
   // add 12 (TOTAL_IC) instances of LTC6811_2 to the object array, each addressed appropriately
   for (int i = 0; i < TOTAL_IC; i++) {
     ic[i] = LTC6811_2(i);
+    switch(i) {
+      case 2:
+      case 3:
+      case 4:
+      case 5:
+      case 10:
+      case 11:
+        ic[i].spi_set_chip_select(CHIP_SELECT_GROUP_TWO);
+        break;
+
+      case 0:
+      case 1:
+      case 6:
+      case 7:
+      case 8:
+      case 9:
+        ic[i].spi_set_chip_select(CHIP_SELECT_GROUP_ONE);
+        break;
+    }
   }
   bms_status.set_state(BMS_STATE_DISCHARGING);
   parse_CAN_CCU_status();
+
+  analogReadResolution(12);
 
 }
 void loop() {
@@ -147,6 +190,7 @@ void loop() {
   }
   read_voltages();
   read_gpio();
+  send_acu_shunt_measurements();
   write_CAN_messages();
   if (print_timer.check()) {
     print_voltages();
@@ -161,12 +205,11 @@ void loop() {
     currently_balancing = false;
   }
 
-  forward_CAN_em();
+//  forward_CAN_em();
 }
 
 inline void forward_CAN_em() {
   if (timer_CAN_em_forward.check()) {
-
     em_measurement.write(msg.buf);
     msg.id = ID_EM_MEASUREMENT;
     msg.len = sizeof(em_measurement);
@@ -244,6 +287,24 @@ void read_voltages() {
     }
     voltage_fault_check();
   }
+}
+
+void send_acu_shunt_measurements() {
+  // integrate shunt current over time to count coulombs and provide state of charge
+
+  // ----------- THIS CODE HAS BEEN COMMENTED SO THAT MCU WILL HANDLE THE INTEGRATION ---------- //
+  // current_shunt_read = (analogRead(CURR_SHUNT) * 3.3) / 4095; //.68
+  // shunt_voltage_input = (current_shunt_read * (9.22 / 5.1)) - 3.3 - 0.03;
+  // shunt_current = (shunt_voltage_input / 0.005);
+  // charge -= (CC_integrator_timer * shunt_current) / 1000000;
+  // state_of_charge = charge / MAX_PACK_CHARGE;
+  // CC_integrator_timer = 0;
+  // ----------- THIS CODE HAS BEEN COMMENTED SO THAT MCU WILL HANDLE THE INTEGRATION ---------- //
+
+  acu_shunt_measurements.set_shunt_current(analogRead(CURR_SHUNT));
+  acu_shunt_measurements.set_pack_filtered(analogRead(PACK_FILTERED));
+  acu_shunt_measurements.set_ts_out_filtered(analogRead(TS_OUT_FILTERED));
+
 }
 
 void voltage_fault_check() {
@@ -448,10 +509,16 @@ void parse_CAN_CCU_status() {
 }
 
 void parse_energy_meter_can_message(const CAN_message_t& RX_msg) {
-   CAN_message_t rx_msg = RX_msg;
+  CAN_message_t rx_msg = RX_msg;
   switch (rx_msg.id) {
-    case ID_EM_MEASUREMENT:   em_measurement.load_from_emeter(rx_msg.buf);    break;
-    case ID_EM_STATUS:        em_status.load(rx_msg.buf);         break;
+    case ID_EM_MEASUREMENT:
+//      em_measurement.load(rx_msg.buf);
+      TELEM_CAN.write(rx_msg);
+      break;
+    case ID_EM_STATUS:
+//      em_status.load(rx_msg.buf);
+      TELEM_CAN.write(rx_msg);
+      break;
   }         
 }
 
@@ -471,7 +538,16 @@ void write_CAN_messages() {
   bms_onboard_temperatures.set_high_temperature(gpio_temps[max_board_temp_location[0]][max_board_temp_location[1]] * 100);
   bms_onboard_temperatures.set_average_temperature(total_board_temps * 100 / 6);
 
-  //Write BMS_status message
+
+
+  // Write ACU Shunt measurement message
+  if(timer_shunt.check()){
+    msg.id = ID_ACU_SHUNT_MEASUREMENT;
+    msg.len = sizeof(acu_shunt_measurements);
+    acu_shunt_measurements.write(msg.buf);
+    TELEM_CAN.write(msg);
+  }
+  // Write BMS_status message
   if (can_bms_status_timer > 100) {
     msg.id = ID_BMS_STATUS;
     msg.len = sizeof(bms_status);

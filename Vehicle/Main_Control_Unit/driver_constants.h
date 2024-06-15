@@ -6,15 +6,27 @@
     #if DRIVER == DEFAULT_DRIVER
       #define BRAKE_ACTIVE 2200                // Threshold for brake pedal active  
 
-        #define MIN_ACCELERATOR_PEDAL_1 1000    // Low accelerator implausibility threshold
-        #define START_ACCELERATOR_PEDAL_1 1370  // Position to start acceleration //1140 + pressure 1151
-        #define END_ACCELERATOR_PEDAL_1 2108    // Position to max out acceleration //1905
-        #define MAX_ACCELERATOR_PEDAL_1 2400    // High accelerator implausibility threshold
+//        #define MIN_ACCELERATOR_PEDAL_1 1000    // Low accelerator implausibility threshold
+//        #define MIN_ACCELERATOR_PEDAL_1 700    // Low accelerator implausibility threshold
+        #define MIN_ACCELERATOR_PEDAL_1 600
+//        #define START_ACCELERATOR_PEDAL_1 1370  // Position to start acceleration //1140 + pressure 1151
+//        #define END_ACCELERATOR_PEDAL_1 2108    // Position to max out acceleration //1905
+//        #define START_ACCELERATOR_PEDAL_1 850  // Position to start acceleration //1140 + pressure 1151
+        #define START_ACCELERATOR_PEDAL_1 770
+        #define END_ACCELERATOR_PEDAL_1 1140    // Position to max out acceleration //1905
+//        #define MAX_ACCELERATOR_PEDAL_1 2400    // High accelerator implausibility threshold
+        #define MAX_ACCELERATOR_PEDAL_1 1340    // High accelerator implausibility threshold
 
-        #define MIN_ACCELERATOR_PEDAL_2 500    // Low accelerator implausibility threshold
-        #define START_ACCELERATOR_PEDAL_2 680  // Position to start acceleration 560 + pressure 570
-        #define END_ACCELERATOR_PEDAL_2 1050    // Position to max out acceleration 948
-        #define MAX_ACCELERATOR_PEDAL_2 1250   // High accelerator implausibility threshold
+//        #define MIN_ACCELERATOR_PEDAL_2 500    // Low accelerator implausibility threshold
+//        #define MIN_ACCELERATOR_PEDAL_2 1350    // Low accelerator implausibility threshold
+        #define MIN_ACCELERATOR_PEDAL_2 1200
+//        #define START_ACCELERATOR_PEDAL_2 680  // Position to start acceleration 560 + pressure 570
+//        #define END_ACCELERATOR_PEDAL_2 1050    // Position to max out acceleration 948
+//        #define START_ACCELERATOR_PEDAL_2 1700  // Position to start acceleration 560 + pressure 570
+        #define START_ACCELERATOR_PEDAL_2 1550
+        #define END_ACCELERATOR_PEDAL_2 2300    // Position to max out acceleration 948
+//        #define MAX_ACCELERATOR_PEDAL_2 1250   // High accelerator implausibility threshold
+        #define MAX_ACCELERATOR_PEDAL_2 2600   // High accelerator implausibility threshold
 
         #define MIN_BRAKE_PEDAL_1 1876    // Low brale implausibility threshold
         #define START_BRAKE_PEDAL_1 2100  // Position to start brake // 2078 + pressure

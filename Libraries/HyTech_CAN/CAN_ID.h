@@ -55,8 +55,9 @@
 #define ID_CHARGER_CONTROL                                          0x1806E5F4
 #define ID_CHARGER_DATA                                             0x18FF50E5
 
-#define ID_EM_STATUS                                                0x100
-#define ID_EM_MEASUREMENT                                           0x400
+#define ID_ACU_SHUNT_MEASUREMENT                                    0x401
+#define ID_EM_STATUS                                                0x400
+#define ID_EM_MEASUREMENT                                           0x100
 
 #define ID_IMU_ACCELEROMETER                                        0x90
 #define ID_IMU_GYROSCOPE                                            0x91

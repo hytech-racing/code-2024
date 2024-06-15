@@ -18,8 +18,12 @@ public:
 
     // Big endian byte ordering
     inline void load_from_emeter(uint8_t buf[]) {
-        voltage = (buf[0] << 24) | (buf[1] << 16) | (buf[2] << 8) | (buf[3]);
-        current = (buf[4] << 24) | (buf[5] << 16) | (buf[6] << 8) | (buf[7]);
+        //voltage = (buf[0] << 24) | (buf[1] << 16) | (buf[2] << 8) | (buf[3]);
+        voltage = ((buf[4] & 0x01) << 24) | (buf[5] << 16) | (buf[6] << 8) | (buf[7]);  // First byte does not necessarily need & since those bits in fact appeared to be 0
+        //current = (buf[4] << 24) | (buf[5] << 16) | (buf[6] << 8) | (buf[7]);
+        // current = ((buf[0] & 0x01) << 24) | (buf[1] << 16) | (buf[2] << 8) | (buf[3]);  // Same as voltage
+        current = (buf[0] << 24) | (buf[1] << 16) | (buf[2] << 8) | (buf[3]); // possible fix?
+        // why is there gaps between values in signal?
     }
 
     // Big endian byte ordering
@@ -47,8 +51,8 @@ public:
 #endif
 
 private:
-    uint32_t voltage; //@Parse @Scale(65536) @Unit(V)
-    uint32_t current; //@Parse @Scale(65536) @Unit(A)
+    int32_t voltage; //@Parse @Scale(65536) @Unit(V)  // Changed into signed int per DBC file
+    int32_t current; //@Parse @Scale(65536) @Unit(A)
 };
 
 #pragma pack(pop) 
