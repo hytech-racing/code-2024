@@ -19,7 +19,7 @@
 #include "rear_sab_dfs.h"
 
 /* Interfaces */
-// #include "HyTechCANInterface.h"
+#include "HyTechCANInterface.h"
 #include "MCP_ADC.h"
 // #include "TelemetryInterface.h"
 
@@ -140,7 +140,7 @@ void send_CAN_vn_ecef_pos_xy();
 void send_CAN_vn_ecef_pos_z();
 void send_CAN_vn_gnss_comp_sig_health();
 // void process_ring_buffer(CANBufferType &rx_buffer, unsigned long curr_millis);
-// void send_all_CAN_msg(CANBufferType &tx_buffer, FlexCAN_T4_Base *can_interface);
+// void send_all_CAN_msg(CANBufferType &tx_buffer, FlexCAN_T4_Base *CAN_interface);
 void init_all_adcs();
 void init_all_iir_filters();
 void tick_all_interfaces(const SysTick_s &curr_tick);
@@ -236,7 +236,7 @@ void loop() {
     // Not currently needed
 
     // Send outbound CAN messages
-    // send_all_CAN_msg(CAN2_txBuffer, &TELEM_CAN);
+    send_all_CAN_msg(CAN2_txBuffer, &TELEM_CAN);
 
     // Debug prints to see if we're tripping balls
     TriggerBits_s t = curr_tick.triggers;
@@ -313,14 +313,14 @@ void init_all_CAN_devices() {
 /**
  * Send CAN function
 */
-// void send_all_CAN_msg(CANBufferType &tx_buffer, FlexCAN_T4_Base *can_interface) {
+// void send_all_CAN_msg(CANBufferType &tx_buffer, FlexCAN_T4_Base *CAN_interface) {
 //     while (tx_buffer.available())
 //     {
 //         CAN_message_t msg;
 //         uint8_t buf[sizeof(CAN_message_t)];
 //         tx_buffer.pop_front(buf, sizeof(CAN_message_t));
 //         memmove(&msg, buf, sizeof(msg));
-//         can_interface->write(msg);
+//         CAN_interface->write(msg);
 //     }    
 // }
 

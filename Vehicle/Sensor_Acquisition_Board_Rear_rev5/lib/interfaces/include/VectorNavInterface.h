@@ -6,6 +6,7 @@
 #include <stdint.h>
 
 #include "VNConsts.h"
+#include "MessageQueueDefine.h"
 
 class VectorNavInterface
 {
@@ -13,7 +14,8 @@ private:
     // Data
     HardwareSerial *serial_;
     int serialSpeed_;
-
+    // CAN buffer
+    CANBufferType msgQueue_;
 
 
 public:
