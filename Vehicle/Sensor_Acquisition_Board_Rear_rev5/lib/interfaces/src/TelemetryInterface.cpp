@@ -28,18 +28,20 @@ void TelemetryInterface::update_cornerboard_CAN_msg(const AnalogConversion_s &lc
                                                     const AnalogConversion_s &pots_rl,
                                                     const AnalogConversion_s &pots_rr)
 {
-    sab_cb_.set_pot3(pots_rl.raw);
-    sab_cb_.set_pot4(pots_rr.raw);
-    sab_cb_.set_RL_load_cell(lc_rl.raw);
-    sab_cb_.set_RR_load_cell(lc_rr.raw);
-    enqueue_CAN_msg<SAB_CB>(sab_cb_, ID_SAB_CB);
+    SAB_CB sab_cb;
+    sab_cb.set_pot3(pots_rl.raw);
+    sab_cb.set_pot4(pots_rr.raw);
+    sab_cb.set_RL_load_cell(lc_rl.raw);
+    sab_cb.set_RR_load_cell(lc_rr.raw);
+    enqueue_CAN_msg<SAB_CB>(sab_cb, ID_SAB_CB);
 }
 
 // TCU Pi shutdown signal from side panel
 void TelemetryInterface::update_tcu_status_CAN_msg(const bool shutdown_status)
 {
-    tcu_status_.set_shutdown_status(static_cast<uint16_t>(shutdown_status));
-    enqueue_CAN_msg<TCU_status>(tcu_status_, ID_TCU_STATUS);
+    TCU_status tcu_status;
+    tcu_status.set_shutdown_status(static_cast<uint16_t>(shutdown_status));
+    enqueue_CAN_msg<TCU_status>(tcu_status, ID_TCU_STATUS);
 }
 
 /* Enqueue CAN message */
@@ -71,7 +73,7 @@ void TelemetryInterface::tick(const AnalogConversionPacket_s<4> &adc1,
                               const AnalogConversionPacket_s<4> &adc2,
                               const AnalogConversionPacket_s<8> &adc3,
                               const bool tcu_shutdown_status,
-                              const Filter_IIR *iir)
+                              const TemperatureReport_s &thermTemp)
 {
     // 10Hz
     update_thermistors_CAN_msg((iir + channels_.therm3_channel)->filtered_result(adc3.conversions[channels_.therm3_channel].raw),

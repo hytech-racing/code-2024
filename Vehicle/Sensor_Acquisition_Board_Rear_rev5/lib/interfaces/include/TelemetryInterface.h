@@ -6,7 +6,7 @@
 #include "HyTech_CAN.h"
 #include "MessageQueueDefine.h"
 #include "AnalogSensorsInterface.h"
-#include "Filter_IIR.h"
+#include "ThermistorInerface.h"
 
 /**
  * ADC channels
@@ -36,13 +36,7 @@ public:
 
     /* Update CAN messages */
     void update_thermistors_CAN_msg(
-        const uint16_t therm3,
-        const uint16_t therm4,
-        const uint16_t therm5,
-        const uint16_t therm6,
-        const uint16_t therm7,
-        const uint16_t therm8,
-        const uint16_t therm9
+        const TemperatureReport_s &thermTemp
     );
     void update_cornerboard_CAN_msg(
         const AnalogConversion_s &lc_rl,
@@ -65,7 +59,7 @@ public:
         const AnalogConversionPacket_s<4> &adc2,
         const AnalogConversionPacket_s<8> &adc3,
         const bool tcu_shutdown_status,
-        const Filter_IIR *iir
+        const TemperatureReport_s &thermTemp
     );
 
 private:
@@ -78,8 +72,6 @@ private:
     /* Outbound CAN message */
     SAB_thermistors_1 sab_thermistors_1_;
     SAB_thermistors_2 sab_thermistors_2_;
-    SAB_CB sab_cb_;
-    TCU_status tcu_status_;
 };
 
 
