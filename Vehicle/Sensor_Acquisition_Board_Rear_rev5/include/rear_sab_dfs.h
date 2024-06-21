@@ -46,7 +46,7 @@
 #define RR_LOAD_CELL 2
 
 /* Thermistor parameters */
-#define TOTAL_THERMISTOR_COUNT 8
+#define TOTAL_THERMISTOR_COUNT 7
 #define THERM_ALPHA 0.8
 
 /* Loadcell parameters */

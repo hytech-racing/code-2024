@@ -5,6 +5,7 @@
 
 #include "Filter_IIR.h"
 #include "Thermistor.h"
+#include "AnalogSensorsInterface.h"
 
 template <int N>
 struct TemperatureReport_s
@@ -28,14 +29,21 @@ public:
     ThermistorInterface(const thermistor_params &params):
         sabThermistors_(params),
         sabThermFilters_() {};
-    ThermistorInterface(const float[] iirAlphas): sabThermistors_()
+    ThermistorInterface(const float iirAlpha): sabThermistors_()
+    {
+        for (int i = 0; i < N; i++)
+        {
+            sabThermFilters_.setAlphas(i, iirAlpha);
+        }        
+    }
+    ThermistorInterface(const float* iirAlphas): sabThermistors_()
     {
         for (int i = 0; i < N; i++)
         {
             sabThermFilters_.setAlphas(i, iirAlphas[i]);
         }        
     }    
-    ThermistorInterface(const thermistor_params &params, const float[] iirAlphas): sabThermistors_(params)
+    ThermistorInterface(const thermistor_params &params, const float* iirAlphas): sabThermistors_(params)
     {
         for (int i = 0; i < N; i++)
         {

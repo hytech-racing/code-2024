@@ -34,8 +34,24 @@ void send_all_CAN_msg(CANBufferType &buffer, FlexCAN_T4_Base *CAN_interface) {
 /**
  * Receive CAN function
  * 
- * Not needed atm
+ * Prototype. Not needed atm
  */
-// void process_CAN_buffer();
+void process_ring_buffer(CANBufferType &rx_buffer, unsigned long curr_millis) {
+  while (rx_buffer.available()) {
+    CAN_message_t recvd_msg;
+    uint8_t buf[sizeof(CAN_message_t)];
+    rx_buffer.pop_front(buf, sizeof(CAN_message_t));
+    memmove(&recvd_msg, buf, sizeof(recvd_msg));
+    switch (recvd_msg.id)
+    {
+    case ID_MCU_STATUS:
+      /* code */
+      break;
+    
+    default:
+      break;
+    }
+  }
+}
 
 #endif  /* __HYTECHCAN_INTERFACE__ */

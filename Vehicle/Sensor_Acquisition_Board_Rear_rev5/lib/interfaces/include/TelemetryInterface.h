@@ -4,9 +4,10 @@
 #include <stdint.h>
 #include "FlexCAN_T4.h"
 #include "HyTech_CAN.h"
+#include "hytech.h"
 #include "MessageQueueDefine.h"
 #include "AnalogSensorsInterface.h"
-#include "ThermistorInerface.h"
+#include "ThermistorInterface.h"
 
 /**
  * ADC channels
@@ -36,7 +37,7 @@ public:
 
     /* Update CAN messages */
     void update_thermistors_CAN_msg(
-        const TemperatureReport_s &thermTemp
+        const TemperatureReport_s<7> &thermTemp
     );
     void update_cornerboard_CAN_msg(
         const AnalogConversion_s &lc_rl,
@@ -59,7 +60,7 @@ public:
         const AnalogConversionPacket_s<4> &adc2,
         const AnalogConversionPacket_s<8> &adc3,
         const bool tcu_shutdown_status,
-        const TemperatureReport_s &thermTemp
+        const TemperatureReport_s<7> &thermTemp
     );
 
 private:
@@ -70,8 +71,6 @@ private:
     TelemetryInterfaceReadChannels channels_;
 
     /* Outbound CAN message */
-    SAB_thermistors_1 sab_thermistors_1_;
-    SAB_thermistors_2 sab_thermistors_2_;
 };
 
 

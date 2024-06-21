@@ -21,7 +21,8 @@
 /* Interfaces */
 #include "HyTechCANInterface.h"
 #include "MCP_ADC.h"
-// #include "TelemetryInterface.h"
+#include "TelemetryInterface.h"
+#include "ThermistorInterface.h"
 
 /* Systems */
 #include "SysClock.h"
@@ -29,7 +30,6 @@
 /**
  * Utilities
 */
-// #include "MessageQueueDefine.h"
 #include "DebouncedButton.h"
 #include "Filter_IIR.h"
 
@@ -46,15 +46,6 @@
 /* One CAN line on rear SAB rev5 */
 FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> TELEM_CAN;  // Telemetry
 
-/* Outbound CAN message */
-SAB_thermistors_1 sab_thermistors_1;
-SAB_thermistors_2 sab_thermistors_2;
-SAB_CB sab_cb;
-TCU_status tcu_status;
-
-/* Inbound CAN message */
-MCU_status mcu_status;
-
 /* Sensors */
 // ADCs
 MCP_ADC<4> ADC1 = MCP_ADC<4>(ADC1_CS, ADC_ISOSPI_SPEED);  // RL corner board
@@ -67,9 +58,9 @@ DebouncedButton btn_pi_shutdown;
 /**
  * Interfaces
 */
-// TelemetryInterface telem_interface(&CAN2_txBuffer, {THERM_3, THERM_4, THERM_5, THERM_6, THERM_7, THERM_8, THERM_9,
-//                                                     SUS_POT_3, SUS_POT_4, RL_LOAD_CELL, RR_LOAD_CELL});
-
+TelemetryInterface telem_interface(&CAN2_txBuffer,
+                                   {THERM_3, THERM_4, THERM_5, THERM_6, THERM_7, THERM_8, THERM_9, SUS_POT_3, SUS_POT_4, RL_LOAD_CELL, RR_LOAD_CELL});
+ThermistorInterface<TOTAL_THERMISTOR_COUNT> therm_interface(THERM_ALPHA);
 /**
  * Systems
 */
@@ -93,11 +84,6 @@ Metro timer_send_CAN_vn_yaw_pitch_roll = Metro(7);    // 7ms after polling
 Metro timer_send_CAN_vn_ecef_pos_xy = Metro(0);       // imm. after polling
 Metro timer_send_CAN_vn_ecef_pos_z = Metro(4);        // 4ms after polling
 Metro timer_send_CAN_vn_vel_body = Metro(8);          // 8ms after polling
-
-/* Utilities */
-// IIR filter for DSP
-// Thermistors
-Filter_IIR<uint16_t> thermistor_iir[TOTAL_THERMISTOR_COUNT];
 
 /* Global variables */
 // Vector Nav
@@ -139,10 +125,7 @@ void send_CAN_vn_yaw_pitch_roll();
 void send_CAN_vn_ecef_pos_xy();
 void send_CAN_vn_ecef_pos_z();
 void send_CAN_vn_gnss_comp_sig_health();
-// void process_ring_buffer(CANBufferType &rx_buffer, unsigned long curr_millis);
-// void send_all_CAN_msg(CANBufferType &tx_buffer, FlexCAN_T4_Base *CAN_interface);
 void init_all_adcs();
-void init_all_iir_filters();
 void tick_all_interfaces(const SysTick_s &curr_tick);
 void tick_all_systems(const SysTick_s &curr_tick);
 // Vector Nav functions
@@ -185,10 +168,6 @@ void setup() {
     init_all_adcs();
     Serial.println("SPI initialized");
 
-    // Set IIR filter alpha for thermistors
-    init_all_iir_filters();
-    Serial.println("IIR filter initialized");
-
     // Initialize debounced button
     btn_pi_shutdown.begin(PI_SHUTDOWN, 100);
     Serial.println("Debounce button initialized for Pi shutdown");
@@ -227,7 +206,7 @@ void loop() {
 
     // Process received CAN messages
     // Not currently needed
-    TELEM_CAN.events();
+    process_ring_buffer(CAN2_rxBuffer, curr_tick.millis);
 
     // Tick interfaces
     tick_all_interfaces(curr_tick);
@@ -304,47 +283,12 @@ void init_all_CAN_devices() {
   // Telemetry CAN line
   TELEM_CAN.begin();
   TELEM_CAN.setBaudRate(TELEM_CAN_BAUDRATE);
-  TELEM_CAN.enableMBInterrupts();
-  TELEM_CAN.onReceive(parse_telem_CAN_msg);
-
-  // delay(500);
+  TELEM_CAN.setMaxMB(16);
+  TELEM_CAN.enableFIFO();
+  TELEM_CAN.enableFIFOInterrupt();
+  TELEM_CAN.onReceive(on_can2_receive);
+  TELEM_CAN.mailboxStatus();
 }
-
-/**
- * Send CAN function
-*/
-// void send_all_CAN_msg(CANBufferType &tx_buffer, FlexCAN_T4_Base *CAN_interface) {
-//     while (tx_buffer.available())
-//     {
-//         CAN_message_t msg;
-//         uint8_t buf[sizeof(CAN_message_t)];
-//         tx_buffer.pop_front(buf, sizeof(CAN_message_t));
-//         memmove(&msg, buf, sizeof(msg));
-//         CAN_interface->write(msg);
-//     }    
-// }
-
-/**
- * Process Rx buffer
- * Prototype. Not needed atm.
-*/
-// void process_ring_buffer(CANBufferType &rx_buffer, unsigned long curr_millis) {
-//   while (rx_buffer.available()) {
-//     CAN_message_t recvd_msg;
-//     uint8_t buf[sizeof(CAN_message_t)];
-//     rx_buffer.pop_front(buf, sizeof(CAN_message_t));
-//     memmove(&recvd_msg, buf, sizeof(recvd_msg));
-//     switch (recvd_msg.id)
-//     {
-//     case 0:
-//       /* code */
-//       break;
-    
-//     default:
-//       break;
-//     }
-//   }
-// }
 
 /**
  * Initialize all SPI devices
@@ -358,25 +302,6 @@ void init_all_adcs() {
   ADC2.init();
   ADC3.init();
 
-}
-
-/**
- * Initialize all IIR filters
-*/
-void init_all_iir_filters() {
-  for (int i = 0; i < TOTAL_THERMISTOR_COUNT; i++) {
-    thermistor_iir[i].set_alpha(THERM_ALPHA);
-  }
-}
-
-/* Prototype */
-void parse_telem_CAN_msg(const CAN_message_t &RX_msg) {
-  CAN_message_t rx_msg = RX_msg;
-  switch (rx_msg.id) {
-    case ID_MCU_STATUS:              
-      mcu_status.load(rx_msg.buf);
-      break;
-  }
 }
 
 float parseFloat(uint8_t buffer[], int startIndex) {
@@ -421,59 +346,6 @@ uint16_t parseUint16(uint8_t buffer[], int startIndex) {
 
   return data;
 
-}
-
-void update_all_CAN_msg() {
-
-  sab_thermistors_1.set_thermistor3(thermistor_iir[THERM_4].get_prev_reading());    // inverter beheaded
-  sab_thermistors_1.set_thermistor4(thermistor_iir[THERM_6].get_prev_reading());    // inverter flying leed
-  sab_thermistors_1.set_thermistor5(thermistor_iir[THERM_7].get_prev_reading());    // accumulator across penthouse (right)
-  sab_thermistors_1.set_thermistor6(thermistor_iir[THERM_8].get_prev_reading());    // accumulator (left), also gone unfortunately
-
-  sab_thermistors_2.set_thermistor7(thermistor_iir[THERM_9].get_prev_reading());    // RL motor
-  sab_thermistors_2.set_thermistor8(thermistor_iir[THERM_3].get_prev_reading());    // RR motor
-  sab_thermistors_2.set_thermistor9(thermistor_iir[THERM_5].get_prev_reading());    // right pump
-
-  sab_cb.set_pot3(ADC1.get().conversions[SUS_POT_3].raw);
-  sab_cb.set_pot4(ADC2.get().conversions[SUS_POT_4].raw);
-  sab_cb.set_RL_load_cell(ADC1.get().conversions[RL_LOAD_CELL].raw);
-  sab_cb.set_RR_load_cell(ADC2.get().conversions[RR_LOAD_CELL].raw);
-
-  tcu_status.set_shutdown_status(static_cast<uint16_t>(btn_pi_shutdown.isPressed()));
-
-}
-
-void send_sab_CAN_msg() {
-  CAN_message_t msg;
-
-  // Thermistors
-  sab_thermistors_1.write(msg.buf);
-  msg.id = ID_SAB_THERMISTORS_1;
-  msg.len = sizeof(sab_thermistors_1);
-  TELEM_CAN.write(msg);
-
-  sab_thermistors_2.write(msg.buf);
-  msg.id = ID_SAB_THERMISTORS_2;
-  msg.len = sizeof(sab_thermistors_2);
-  TELEM_CAN.write(msg);
-
-  // Corner boards
-  sab_cb.write(msg.buf);
-  msg.id = ID_SAB_CB;
-  msg.len = sizeof(sab_cb);
-  TELEM_CAN.write(msg);
-
-  // TCU status
-  tcu_status.write(msg.buf);
-  msg.id = ID_TCU_STATUS;
-  msg.len = sizeof(tcu_status);
-  TELEM_CAN.write(msg);
-
-  // Vector Nav
-  /**
-   * So it actually cannot be here
-   * Otherwise CAN die a little
-  */
 }
 
 /**
@@ -619,21 +491,19 @@ void tick_all_interfaces(const SysTick_s &curr_tick) {
   TriggerBits_s t = curr_tick.triggers;
 
   if (t.trigger100) { // 100Hz
+    // ADC
     ADC1.tick();
     ADC2.tick();
     ADC3.tick();
-
-    // Filter thermistor readings
-    for (int i = 0; i < TOTAL_THERMISTOR_COUNT; i++) {
-      thermistor_iir[i].filtered_result(ADC3.get().conversions[i].raw);
-    }
+    // Thermistor interface
+    therm_interface.tick(ADC3.get());
   }
 
   if (t.trigger50) {  // 50Hz
-    // telem_interface.tick(ADC1.get(), ADC2.get(), ADC3.get(), btn_pi_shutdown.isPressed(), thermistor_iir);
+    telem_interface.tick(ADC1.get(), ADC2.get(), ADC3.get(), btn_pi_shutdown.isPressed(), therm_interface.get());
 
-    update_all_CAN_msg();
-    send_sab_CAN_msg();
+    // update_all_CAN_msg();
+    // send_sab_CAN_msg();
     send_CAN_vectornav();
   }
 
