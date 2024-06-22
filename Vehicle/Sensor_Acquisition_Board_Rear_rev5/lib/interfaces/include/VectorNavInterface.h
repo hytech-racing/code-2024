@@ -18,6 +18,11 @@ private:
     int serialSpeed_;
     uint8_t receiveBuffer[DEFAULT_SERIAL_BUFFER_SIZE];
     char receiveBufferAscii[DEFAULT_SERIAL_BUFFER_SIZE];
+    // Logistic variables
+    uint8_t requestCounter;
+    uint8_t binaryOutputNumber;
+    bool binaryReadingStart;
+    bool asciiReadingStart;
 // CAN buffer
     CANBufferType msgQueue_;
 
