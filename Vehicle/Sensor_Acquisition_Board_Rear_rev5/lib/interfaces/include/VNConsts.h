@@ -20,6 +20,22 @@ const int VN_SERIAL_BAUDRATE8 = 460800;
 const int VN_SERIAL_BAUDRATE9 = 921600;
 
 // Binary group
+const int BINARY_OUTPUT_GROUP_COUNT_1 = 1;
+const int BINARY_OUTPUT_GROUP_COUNT_2 = 2;
+const int BINARY_OUTPUT_GROUP_COUNT_3 = 2;
+const int BINARY_OUTPUT_PAYLOAD_1 = 44;   // bytes
+const int BINARY_OUTPUT_PAYLOAD_2 = 50;   // bytes
+const int BINARY_OUTPUT_PAYLOAD_3 = 40;   // bytes
+const int OFFSET_PADDING_1 = 4;
+const int OFFSET_PADDING_2_ORGINAL = 6;
+const int OFFSET_PADDING_2 = 18;
+const int OFFSET_PADDING_3 = 6;
 
+// Utility macros
+#define ATOU32 static_cast<uint32_t>(std::atoi(result))
+#define ATOFF static_cast<float>(std::atof(result))
+#define NEXT result = getNextData(receiveBufferAscii, parseIndex); \
+	if (result == NULL) \
+		return;
 
 #endif

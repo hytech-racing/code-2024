@@ -23,6 +23,7 @@
 #include "MCP_ADC.h"
 #include "TelemetryInterface.h"
 #include "ThermistorInterface.h"
+#include "VectorNavInterface.h"
 
 /* Systems */
 #include "SysClock.h"
@@ -61,6 +62,7 @@ DebouncedButton btn_pi_shutdown;
 TelemetryInterface telem_interface(&CAN2_txBuffer,
                                    {THERM_3, THERM_4, THERM_5, THERM_6, THERM_7, THERM_8, THERM_9, SUS_POT_3, SUS_POT_4, RL_LOAD_CELL, RR_LOAD_CELL});
 ThermistorInterface<TOTAL_THERMISTOR_COUNT> therm_interface(THERM_ALPHA);
+VectorNavInterface vn_300(&Serial2, VN_RS232_SPEED, true, INIT_HEADING);
 /**
  * Systems
 */
@@ -186,7 +188,7 @@ void setup() {
     binaryOutputNumber = 0;
     // Initialize data request counter
     requestCounter = 0;
-    // Initialize binary packet lengh
+    // Initialize binary packet length
     currentPacketLength = 0;
     // Configure sensor
     setInitialHeading(INIT_HEADING);

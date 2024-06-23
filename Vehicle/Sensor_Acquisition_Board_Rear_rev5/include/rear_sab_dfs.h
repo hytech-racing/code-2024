@@ -25,7 +25,7 @@
 #define ADC_SPI_SPEED 2000000
 #define ADC_ISOSPI_SPEED 1000000
 #define RS485_SERIAL_SPEED 115200
-#define IMU_RS232_SPEED 115200
+#define VN_RS232_SPEED 115200
 #define TELEM_CAN_BAUDRATE 500000
 #define DEBUG_PRINT_BAUDRATE 115200
 
@@ -72,27 +72,27 @@
 
 #define INIT_HEADING 320    // Rome endurance
 
-#define BINARY_OUTPUT_GROUP_COUNT_1 1
-#define BINARY_OUTPUT_GROUP_COUNT_2 2
-#define BINARY_OUTPUT_GROUP_COUNT_3 2
-#define BINARY_OUTPUT_PAYLOAD_1 44   // bytes
-#define BINARY_OUTPUT_PAYLOAD_2 50   // bytes
-#define BINARY_OUTPUT_PAYLOAD_3 40   // bytes
-#define OFFSET_PADDING_1 4
-#define OFFSET_PADDING_2_ORGINAL 6
-#define OFFSET_PADDING_2 18
-#define OFFSET_PADDING_3 6
+// #define BINARY_OUTPUT_GROUP_COUNT_1 1
+// #define BINARY_OUTPUT_GROUP_COUNT_2 2
+// #define BINARY_OUTPUT_GROUP_COUNT_3 2
+// #define BINARY_OUTPUT_PAYLOAD_1 44   // bytes
+// #define BINARY_OUTPUT_PAYLOAD_2 50   // bytes
+// #define BINARY_OUTPUT_PAYLOAD_3 40   // bytes
+// #define OFFSET_PADDING_1 4
+// #define OFFSET_PADDING_2_ORGINAL 6
+// #define OFFSET_PADDING_2 18
+// #define OFFSET_PADDING_3 6
 
 #define SANITY_CHECK 0
 #define DEBUG 0
 #define DEBUG_GNSS_HEALTH 0
 #define START_UP_DELAY 5000
 
-#define ATOU32 static_cast<uint32_t>(std::atoi(result))
-#define ATOFF static_cast<float>(std::atof(result))
-#define NEXT result = getNextData(receiveBufferAscii, parseIndex); \
-	if (result == NULL) \
-		return;
+// #define ATOU32 static_cast<uint32_t>(std::atoi(result))
+// #define ATOFF static_cast<float>(std::atof(result))
+// #define NEXT result = getNextData(receiveBufferAscii, parseIndex); \
+// 	if (result == NULL) \
+// 		return;
 
 
 

@@ -8,6 +8,72 @@
 #include "types.h"
 #include "VNConsts.h"
 #include "MessageQueueDefine.h"
+#include "hytech.h"
+#include "SysClock.h"
+
+const int DEFAULT_SERIAL_BAUDRATE = 115200;
+const int DEFAULT_INIT_HEADING = 0;     // Relative to TRUE NORTH TRUE NORTH TRUE NORTH
+const int START_UP_DELAY = 5000;
+const int VN_READ_INTERVAL = 10;        // milliseconds
+const int VN_READ_ASCII_INTERVAL = 8;
+const int VN_READ_BINARY_INTERVAL = 8;
+
+// Sensor data
+struct VNGNSSSigHealth_s
+{
+    float numSatsPVT_1;
+    float numSatsRTK_1;
+    float highestCN0_1;
+    float numSatsPVT_2;
+    float numSatsRTK_2;
+    float highestCN0_2;
+    float numComSatsPVT;
+    float numComSatsRTK;
+};
+
+struct VNSensorDataReport_s
+{
+    // GPS time
+    uint64_t timeGPS;
+    // Angular rates
+    float angularRateBodyX;
+    float angularRateBodyY;
+    float angularRateBodyZ;
+    // GNSS LLA
+    double latitude;
+    double longitude;
+    double altitude;
+    // Attitudes
+    float yaw;
+    float pitch;
+    float roll;
+    // Acceleration
+    float accelBodyX;
+    float accelBodyY;
+    float accelBodyZ;
+    // INS status
+    uint16_t InsStatus;
+    uint16_t insMode;
+    // Uncompensated acceleration
+    float uncompAccelBodyX;
+    float uncompAccelBodyY;
+    float uncompAccelBodyZ;
+    // Velocity delta
+    float deltaVelX;
+    float deltaVelY;
+    float deltaVelZ;
+    // GNSS Ecef
+    double posEcefX;
+    double posEcefY;
+    double posEcefZ;
+    // Body velocity
+    float velBodyX;
+    float velBodyY;
+    float velBodyZ;
+    float velU;     // uncertainty of velocity measurement. Not very indicative, VN hella confident when wrong, reporting neg vel during accel.
+    // GNSS health
+    VNGNSSSigHealth_s gnssHealth;
+};
 
 class VectorNavInterface
 {
@@ -16,28 +82,67 @@ private:
     // Serial
     HardwareSerial *serial_;
     int serialSpeed_;
-    uint8_t receiveBuffer[DEFAULT_SERIAL_BUFFER_SIZE];
-    char receiveBufferAscii[DEFAULT_SERIAL_BUFFER_SIZE];
+    uint8_t receiveBuffer_[DEFAULT_SERIAL_BUFFER_SIZE];
+    char receiveBufferAscii_[DEFAULT_SERIAL_BUFFER_SIZE];    
+    // Initial heading
+    bool setInitHeading_;
+    uint32_t initHeading_;
     // Logistic variables
-    uint8_t requestCounter;
-    uint8_t binaryOutputNumber;
-    bool binaryReadingStart;
-    bool asciiReadingStart;
+    uint8_t requestCounter_;
+    uint8_t binaryOutputNumber_;
+    bool binaryReadingStart_;
+    bool asciiReadingStart_;
+    int currentPacketLength_;
+    int currentAsciiLength_;
+    // Timer variables
+    unsigned long last_vn_request_time_;
+    unsigned long last_vn_read_ascii_time_;
+    unsigned long last_vn_read_binary_time_;
 // CAN buffer
     CANBufferType msgQueue_;
+// Sensor readings
+    VNSensorDataReport_s data_;
 
 // Private utility functions
     /// @brief template function for enqueuing CAN message
     template <typename U>
     void enqueue_new_CAN_msg(U *structure, uint32_t (*pack_function)(U *, uint8_t *, uint8_t *, uint8_t *));
 
+    /// @brief parse uint16_t data from VN. small endianness
+    /// @param buffer byte holder array for VN data
+    /// @param startIndex array index where the uint16_t data starts
+    /// @return parsed uint16_t data
+    uint16_t parseUint16(uint8_t buffer[], int startIndex);
+
+    /// @brief parse uint32_t data from VN. small endianness
+    /// @return parsed uint32_t data
+    uint32_t parseUint32(uint8_t buffer[], int startIndex);
+
+    /// @brief parse uint32_t data from VN. small endianness
+    /// @return parsed uint64_t data
+    uint64_t parseUint64(uint8_t buffer[], int startIndex);
+
+    /// @brief parse float data from VN. small endianness
+    /// @return parsed float data
+    float parseFloat(uint8_t buffer[], int startIndex);
+
+    /// @brief parse double data from VN. small endianness
+    /// @return parsed double data
+    double parseDouble(uint8_t buffer[], int startIndex);
+
 public:
 // Constructors
-    VectorNavInterface(HardwareSerial *serial, int serialSpeed):
+    VectorNavInterface(HardwareSerial *serial, int serialSpeed, bool setInitHeading, uint32_t initHeading):
         serial_(serial),
-        serialSpeed_(serialSpeed) {};
+        serialSpeed_(serialSpeed),
+        setInitHeading_(setInitHeading),
+        initHeading_(initHeading) {};
+    VectorNavInterface(HardwareSerial *serial, int serialSpeed, bool setInitHeading):
+        VectorNavInterface(serial, serialSpeed, setInitHeading, DEFAULT_INIT_HEADING) {};
+    VectorNavInterface(HardwareSerial *serial, int serialSpeed):
+        VectorNavInterface(serial, serialSpeed, false, DEFAULT_INIT_HEADING) {};
     VectorNavInterface(HardwareSerial *serial):
-        VectorNavInterface(serial, VN_SERIAL_BAUDRATE5) {};
+        VectorNavInterface(serial, DEFAULT_SERIAL_BAUDRATE, false, DEFAULT_INIT_HEADING) {};
 
 // Data request functions
     /// @brief set serial baudrate
@@ -55,23 +160,23 @@ public:
     /// @param binaryOutputNumber binary register number (1-3) minus 1
     /// @param fields requested fields
     /// @param rateDivisor denominator from IMU rate (400Hz)
-    void configBinaryOutput(uint8_t binaryOutputNumber, 
-                            uint8_t fields, 
+    void configBinaryOutput(uint8_t binaryOutputNumber,
+                            uint8_t fields,
                             uint16_t rateDivisor);
 
     /// @brief request GNSS signal strength
-    void requestGNSSSignalStrength();
+    void requestGNSSSignalStrength(unsigned long currMillis);
 
     /// @brief poll user configured binary packets
     /// @param binaryOutputNumber binary register number (1-3) minus 1
-    void pollUserConfiguredBinaryOutput(uint8_t *binaryOutputNumber);
+    void pollUserConfiguredBinaryOutput(uint8_t *binaryOutputNumber, unsigned long currMillis);
 
 // Data reveive functions
     /// @brief receive ASCII
-    void readGNSSSignalStrength();
+    void readGNSSSignalStrength(unsigned long currMillis);
 
     /// @brief receive binary
-    void readPollingBinaryOutput();
+    void readPollingBinaryOutput(unsigned long currMillis);
 
 // Data parsers
     /// @brief parse user defined binary packet 1
@@ -84,6 +189,26 @@ public:
 
     /// @brief parse user defined binary packet 3
     void parseBinaryOutput_3(uint8_t receiveBuffer[], int receivedPacketLength);
+
+    /// @brief parse GNSS signal strength ASCII packet
+    /// @param receiveBufferAscii buffer array holding recieved ASCII output from VN
+    /// @param numSatsPVT_1 number of satellites PVT for GNSS 1
+    /// @param numSatsRTK_1 number of satellites RTK for GNSS 1
+    /// @param highestCN0_1 highest signal to noise ratio for GNSS 1
+    /// @param numSatsPVT_2 number of satellites PVT for GNSS 2
+    /// @param numSatsRTK_2 number of satellites RTK for GNSS 2
+    /// @param highestCN0_2 highest signal to noise ratio for GNSS 2
+    /// @param numComSatsPVT number of common satellites PVT for both GNSS's
+    /// @param numComSatsRTK number of common satellites RTK for both GNSS's
+    void parseGNSSSignalStrength(char *receiveBufferAscii,
+                                 float *numSatsPVT_1,
+                                 float *numSatsRTK_1,
+                                 float *highestCN0_1,
+                                 float *numSatsPVT_2,
+                                 float *numSatsRTK_2,
+                                 float *highestCN0_2,
+                                 float *numComSatsPVT,
+                                 float *numComSatsRTK);
 
 // Data forward functions
     /// @brief update and enqueue VN GPS time
@@ -119,8 +244,17 @@ public:
     /// @brief update and enqueue VN GNSS signal health status
     void update_CAN_vn_gnss_comp_sig_health();
 
+// Initialization
+    void init(SysTick_s currTick);
+
 // Tick
-    void tick();
+    void tick(SysTick_s currTick);
+
+// Getter
+    const VNSensorDataReport_s& get()
+    {
+        return data_;
+    }
 
 };
 
