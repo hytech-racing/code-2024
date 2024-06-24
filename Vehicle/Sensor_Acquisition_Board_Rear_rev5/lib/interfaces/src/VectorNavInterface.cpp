@@ -902,7 +902,7 @@ char* VectorNavInterface::vnstrtok(char* str, size_t& startIndex)
 
 /// @brief clear binary receive buffer
 /// @param receiveBuffer the data buffer to be cleared
-void clearReceiveBuffer(uint8_t receiveBuffer[])
+void VectorNavInterface::clearReceiveBuffer(uint8_t receiveBuffer[])
 {
     for (int i = 0; i < DEFAULT_SERIAL_BUFFER_SIZE; i++)
     {
