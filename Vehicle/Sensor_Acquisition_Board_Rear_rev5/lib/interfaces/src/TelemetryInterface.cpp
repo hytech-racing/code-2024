@@ -5,16 +5,16 @@
 void TelemetryInterface::update_thermistors_CAN_msg(const TemperatureReport_s<7> &thermTemp)
 {
     SAB_THERMISTORS_1_t sab_thermistors_1;
-    sab_thermistors_1.thermistor_inv1_ro = HYTECH_thermistor_inv1_ro_toS(thermTemp.temperatures_[channels_.therm3_channel]);
-    sab_thermistors_1.thermistor_inv2_ro = HYTECH_thermistor_inv2_ro_toS(thermTemp.temperatures_[channels_.therm4_channel]);
-    sab_thermistors_1.thermistor_acc1_ro = HYTECH_thermistor_acc1_ro_toS(thermTemp.temperatures_[channels_.therm5_channel]);
-    sab_thermistors_1.thermistor_acc2_ro = HYTECH_thermistor_acc2_ro_toS(thermTemp.temperatures_[channels_.therm6_channel]);
+    sab_thermistors_1.thermistor_inv1_ro = HYTECH_thermistor_inv1_ro_toS(thermTemp.temperatures[channels_.therm_channel_1]);
+    sab_thermistors_1.thermistor_inv2_ro = HYTECH_thermistor_inv2_ro_toS(thermTemp.temperatures[channels_.therm_channel_2]);
+    sab_thermistors_1.thermistor_acc1_ro = HYTECH_thermistor_acc1_ro_toS(thermTemp.temperatures[channels_.therm_channel_3]);
+    sab_thermistors_1.thermistor_acc2_ro = HYTECH_thermistor_acc2_ro_toS(thermTemp.temperatures[channels_.therm_channel_4]);
     enqueue_new_CAN_msg<SAB_THERMISTORS_1_t>(&sab_thermistors_1, &Pack_SAB_THERMISTORS_1_hytech);
 
     SAB_THERMISTORS_2_t sab_thermistors_2;
-    sab_thermistors_2.thermistor_motor_rl_ro = HYTECH_thermistor_motor_rl_ro_toS(thermTemp.temperatures_[channels_.therm7_channel]);
-    sab_thermistors_2.thermistor_motor_rr_ro = HYTECH_thermistor_motor_rr_ro_toS(thermTemp.temperatures_[channels_.therm8_channel]);
-    sab_thermistors_2.thermistor_pump_ro = HYTECH_thermistor_pump_ro_toS(thermTemp.temperatures_[channels_.therm9_channel]);
+    sab_thermistors_2.thermistor_motor_rl_ro = HYTECH_thermistor_motor_rl_ro_toS(thermTemp.temperatures[channels_.therm_channel_5]);
+    sab_thermistors_2.thermistor_motor_rr_ro = HYTECH_thermistor_motor_rr_ro_toS(thermTemp.temperatures[channels_.therm_channel_6]);
+    sab_thermistors_2.thermistor_pump_ro = HYTECH_thermistor_pump_ro_toS(thermTemp.temperatures[channels_.therm_channel_7]);
     enqueue_new_CAN_msg<SAB_THERMISTORS_2_t>(&sab_thermistors_2, &Pack_SAB_THERMISTORS_2_hytech);
 }
 

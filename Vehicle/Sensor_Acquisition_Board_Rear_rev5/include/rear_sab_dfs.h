@@ -48,51 +48,25 @@
 /* Thermistor parameters */
 #define TOTAL_THERMISTOR_COUNT 7
 #define THERM_ALPHA 0.8
+// Telemetry read channels
+#define THERM_READ_1 1   // RR motor     // the rest is on ECU. don't try
+#define THERM_READ_2 3   // inverter beheaded
+#define THERM_READ_3 5   // pump (right)
+#define THERM_READ_4 4   // inverter flying leed
+#define THERM_READ_5 6   // accumulator across penthouse (right)
+#define THERM_READ_6 0   // accumulator (left), also gone unfortunately
+#define THERM_READ_7 2   // RL motor
 
 /* Loadcell parameters */
 #define TOTAL_LOADCELL_COUNT 2
 #define LOADCELL_ALPHA 0.8
 
-/* Vector Nav defines */
-// #define DEFAULT_WRITE_BUFFER_SIZE 17
-// #define DEFAULT_WRITE_BUFFER_MIDIUM 21
-// #define DEFAULT_WRITE_BUFFER_LONG 256
-// #define DEFAULT_READ_BUFFER_SIZE 256
-// #define DEFAULT_SERIAL_BUFFER_SIZE 64
-
-// #define SERIAL_BAUDRATE1 9600
-// #define SERIAL_BAUDRATE2 19200
-// #define SERIAL_BAUDRATE3 38400
-// #define SERIAL_BAUDRATE4 57600
-// #define SERIAL_BAUDRATE5 115200
-// #define SERIAL_BAUDRATE6 128000
-// #define SERIAL_BAUDRATE7 230400
-// #define SERIAL_BAUDRATE8 460800
-// #define SERIAL_BAUDRATE9 921600
-
+/* VN parameters */
 #define INIT_HEADING 320    // Rome endurance
-
-// #define BINARY_OUTPUT_GROUP_COUNT_1 1
-// #define BINARY_OUTPUT_GROUP_COUNT_2 2
-// #define BINARY_OUTPUT_GROUP_COUNT_3 2
-// #define BINARY_OUTPUT_PAYLOAD_1 44   // bytes
-// #define BINARY_OUTPUT_PAYLOAD_2 50   // bytes
-// #define BINARY_OUTPUT_PAYLOAD_3 40   // bytes
-// #define OFFSET_PADDING_1 4
-// #define OFFSET_PADDING_2_ORGINAL 6
-// #define OFFSET_PADDING_2 18
-// #define OFFSET_PADDING_3 6
-
 #define SANITY_CHECK 0
 #define DEBUG 0
 #define DEBUG_GNSS_HEALTH 0
-#define START_UP_DELAY 5000
 
-// #define ATOU32 static_cast<uint32_t>(std::atoi(result))
-// #define ATOFF static_cast<float>(std::atof(result))
-// #define NEXT result = getNextData(receiveBufferAscii, parseIndex); \
-// 	if (result == NULL) \
-// 		return;
 
 
 

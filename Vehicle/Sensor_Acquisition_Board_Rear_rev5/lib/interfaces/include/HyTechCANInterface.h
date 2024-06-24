@@ -3,6 +3,7 @@
 
 #include "FlexCAN_T4.h"
 #include "HyTech_CAN.h"
+#include "hytech.h"
 
 #include "MessageQueueDefine.h"
 
@@ -20,7 +21,7 @@ void on_can2_receive(const CAN_message_t &msg);
 /**
  * Send CAN function
 */
-void send_all_CAN_msg(CANBufferType &buffer, FlexCAN_T4_Base *CAN_interface) {
+inline void send_all_CAN_msg(CANBufferType &buffer, FlexCAN_T4_Base *CAN_interface) {
     while (buffer.available())
     {
         CAN_message_t msg;
@@ -36,7 +37,7 @@ void send_all_CAN_msg(CANBufferType &buffer, FlexCAN_T4_Base *CAN_interface) {
  * 
  * Prototype. Not needed atm
  */
-void process_ring_buffer(CANBufferType &rx_buffer, unsigned long curr_millis) {
+inline void process_ring_buffer(CANBufferType &rx_buffer, unsigned long curr_millis) {
   while (rx_buffer.available()) {
     CAN_message_t recvd_msg;
     uint8_t buf[sizeof(CAN_message_t)];

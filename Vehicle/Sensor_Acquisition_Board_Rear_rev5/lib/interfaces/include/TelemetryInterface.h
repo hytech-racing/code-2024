@@ -14,13 +14,15 @@
  */
 struct TelemetryInterfaceReadChannels
 {
-    int therm3_channel;
-    int therm4_channel;
-    int therm5_channel;
-    int therm6_channel;
-    int therm7_channel;
-    int therm8_channel;
-    int therm9_channel;
+    // Thermistor report channels
+    int therm_channel_1;
+    int therm_channel_2;
+    int therm_channel_3;
+    int therm_channel_4;
+    int therm_channel_5;
+    int therm_channel_6;
+    int therm_channel_7;
+    // ADC channels
     int pots_rl_channel;
     int pots_rr_channel;
     int loadcell_rl_channel;

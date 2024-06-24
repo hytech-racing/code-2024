@@ -95,11 +95,11 @@ private:
     int currentPacketLength_;
     int currentAsciiLength_;
     // Timer variables
-    unsigned long last_vn_request_time_;
-    unsigned long last_vn_read_ascii_time_;
-    unsigned long last_vn_read_binary_time_;
+    unsigned long lastVNRequestTime_;
+    unsigned long lastVNReadAsciiTime_;
+    unsigned long lastVNReadBinaryTime_;
 // CAN buffer
-    CANBufferType msgQueue_;
+    CANBufferType *msgQueue_;
 // Sensor readings
     VNSensorDataReport_s data_;
 
@@ -130,24 +130,50 @@ private:
     /// @return parsed double data
     double parseDouble(uint8_t buffer[], int startIndex);
 
+    /// @brief function to initiate the parsing of ASCII data packets
+    /// @param packetStart char array that holds ASCII response
+    /// @param index index in the array where data begins
+    /// @return sth. not sure what but co-works with the rest in macros
+    char* startAsciiPacketParse(char* packetStart, size_t& index);
+
+    /// @brief function to get next data in ASCII packet response
+    /// @param str char array that holds ASCII response
+    /// @param startIndex index where the next data starts
+    /// @return pointer to next char in array
+    char* getNextData(char* str, size_t& startIndex);
+
+    /// @brief function to return pointer to next data in ASCII packet response
+    /// @param str char array that holds ASCII response
+    /// @param startIndex index where the next data starts
+    /// @return pointer to next data char in array
+    char* vnstrtok(char* str, size_t& startIndex);
+
+    /// @brief clear binary receive buffer
+    /// @param receiveBuffer the data buffer to be cleared
+    void clearReceiveBuffer(uint8_t receiveBuffer[]);
+
 public:
 // Constructors
-    VectorNavInterface(HardwareSerial *serial, int serialSpeed, bool setInitHeading, uint32_t initHeading):
+    VectorNavInterface(CANBufferType *circBuff, HardwareSerial *serial, int serialSpeed, bool setInitHeading, uint32_t initHeading):
+        msgQueue_(circBuff),
         serial_(serial),
         serialSpeed_(serialSpeed),
         setInitHeading_(setInitHeading),
         initHeading_(initHeading) {};
-    VectorNavInterface(HardwareSerial *serial, int serialSpeed, bool setInitHeading):
-        VectorNavInterface(serial, serialSpeed, setInitHeading, DEFAULT_INIT_HEADING) {};
-    VectorNavInterface(HardwareSerial *serial, int serialSpeed):
-        VectorNavInterface(serial, serialSpeed, false, DEFAULT_INIT_HEADING) {};
-    VectorNavInterface(HardwareSerial *serial):
-        VectorNavInterface(serial, DEFAULT_SERIAL_BAUDRATE, false, DEFAULT_INIT_HEADING) {};
+    VectorNavInterface(CANBufferType *circBuff, HardwareSerial *serial, int serialSpeed, bool setInitHeading):
+        VectorNavInterface(circBuff, serial, serialSpeed, setInitHeading, DEFAULT_INIT_HEADING) {};
+    VectorNavInterface(CANBufferType *circBuff, HardwareSerial *serial, int serialSpeed):
+        VectorNavInterface(circBuff, serial, serialSpeed, false, DEFAULT_INIT_HEADING) {};
+    VectorNavInterface(CANBufferType *circBuff, HardwareSerial *serial):
+        VectorNavInterface(circBuff, serial, DEFAULT_SERIAL_BAUDRATE, false, DEFAULT_INIT_HEADING) {};
 
 // Data request functions
     /// @brief set serial baudrate
     /// @param baudrate serial speed in bps
-    void setSerialBaudrate(uint32_t baudrate); 
+    void setSerialBaudrate(uint32_t baudrate);
+
+    /// @brief check the current serial baudrate being used
+    void checkSerialBaudrate();
 
     /// @brief set initial heading for GNSS
     /// @param initHeading orientation relative to TRUE NORTH, TRUE NORTH, PULL OUT YOUR PHONE, TRUE NORTH
@@ -255,6 +281,13 @@ public:
     {
         return data_;
     }
+
+// Print utilities for debug
+    /// @brief print receive buffer for binary packets
+    void printBinaryReceiveBuffer();
+
+    /// @brief print receive buffer for ASCII packets
+    void printAsciiReceiveBuffer();
 
 };
 

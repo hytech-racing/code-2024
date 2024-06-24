@@ -15,17 +15,41 @@ void VectorNavInterface::setSerialBaudrate(uint32_t baudrate)
 
     length += sprintf(toSend + length, "*XX\r\n");
 
-    Serial2.print(toSend);
-    Serial2.flush();
+    serial_->print(toSend);
+    serial_->flush();
 
     delay(10);
     
     int index = 0;
     char receiveBuffer[DEFAULT_READ_BUFFER_SIZE] = {'\0'};
-    while (Serial2.available() > 0 && index < DEFAULT_READ_BUFFER_SIZE - 1) {
-        receiveBuffer[index++] = Serial2.read();
+    while (serial_->available() > 0 && index < DEFAULT_READ_BUFFER_SIZE - 1) {
+        receiveBuffer[index++] = serial_->read();
     }
     Serial.print("Set serial baudrate: ");
+    Serial.println(receiveBuffer);
+
+    Serial.println();
+}
+
+/// @brief check the current serial baudrate being used
+void VectorNavInterface::checkSerialBaudrate()
+{
+    char toSend[DEFAULT_WRITE_BUFFER_SIZE];
+
+    size_t length = sprintf(toSend, "$VNRRG,05");
+    length += sprintf(toSend + length, "*XX\r\n");
+
+    serial_->print(toSend);
+    serial_->flush();
+
+    delay(10);
+    
+    int index = 0;
+    char receiveBuffer[DEFAULT_READ_BUFFER_SIZE] = {'\0'};
+    while (serial_->available() > 0 && index < DEFAULT_READ_BUFFER_SIZE - 1) {
+        receiveBuffer[index++] = serial_->read();
+    }
+    Serial.print("Read serial baudrate: ");
     Serial.println(receiveBuffer);
 
     Serial.println();
@@ -40,15 +64,15 @@ void VectorNavInterface::setInitialHeading(uint32_t initHeading)
     size_t length = sprintf(toSend, "$VNSIH,+%03u", initHeading);
     length += sprintf(toSend + length, "*XX\r\n");
 
-    Serial2.print(toSend);
-    Serial2.flush();
+    serial_->print(toSend);
+    serial_->flush();
 
     delay(10);
 
     int index = 0;
     char receiveBuffer[DEFAULT_READ_BUFFER_SIZE] = {'\0'};
-    while (Serial2.available() > 0 && index < DEFAULT_READ_BUFFER_SIZE - 1) {
-        receiveBuffer[index++] = Serial2.read();
+    while (serial_->available() > 0 && index < DEFAULT_READ_BUFFER_SIZE - 1) {
+        receiveBuffer[index++] = serial_->read();
     }
     Serial.print("Set initial heading: ");
     Serial.println(receiveBuffer);
@@ -65,8 +89,8 @@ void VectorNavInterface::turnOffAsciiOutput()
 
     length += sprintf(toSend + length, "*XX\r\n");
 
-    Serial2.print(toSend);
-    Serial2.flush();
+    serial_->print(toSend);
+    serial_->flush();
 }
 
 /// @brief configure user defined binary packets
@@ -107,7 +131,6 @@ void VectorNavInterface::configBinaryOutput(uint8_t binaryOutputNumber,
     // groups = 0010 1101 = 2D
 
     int length = sprintf(toSend, "$VNWRG,%u,%u,%u,%X", 74 + binaryOutputNumber, vn::protocol::uart::ASYNCMODE_PORT1, rateDivisor, groups); // serial1, 800/16=50Hz, 
-    #endif
 
     if (commonField)
     {
@@ -156,29 +179,30 @@ void VectorNavInterface::configBinaryOutput(uint8_t binaryOutputNumber,
 
     length += sprintf(toSend + length, "*XX\r\n");
 
-    Serial2.print(toSend);
-    Serial2.flush();
+    serial_->print(toSend);
+    serial_->flush();
 }
 
 /// @brief request GNSS signal strength
 void VectorNavInterface::requestGNSSSignalStrength(unsigned long currMillis)
 {
-    if (currMillis - last_vn_request_time_ > VN_READ_INTERVAL)
+    if (currMillis - lastVNRequestTime_ > VN_READ_INTERVAL)
     {
         char toSend[DEFAULT_WRITE_BUFFER_SIZE];
 
         size_t length = sprintf(toSend, "$VNRRG,86");
         length += sprintf(toSend + length, "*XX\r\n");
 
-        Serial2.print(toSend);
-        Serial2.flush();
+        serial_->print(toSend);
+        serial_->flush();
 
-        last_vn_read_ascii_time_ = currMillis;
+        lastVNReadAsciiTime_ = currMillis;
 
         if (!asciiReadingStart_)
             asciiReadingStart_ = true;
  
         requestCounter_ = (requestCounter_ + 1) % 4;
+        lastVNRequestTime_ = currMillis;
     }
 }
 
@@ -186,17 +210,17 @@ void VectorNavInterface::requestGNSSSignalStrength(unsigned long currMillis)
 /// @param binaryOutputNumber binary register number (1-3) minus 1
 void VectorNavInterface::pollUserConfiguredBinaryOutput(uint8_t *binaryOutputNumber, unsigned long currMillis)
 {
-    if (currMillis - last_vn_request_time_ > VN_READ_INTERVAL)
+    if (currMillis - lastVNRequestTime_ > VN_READ_INTERVAL)
     {
         char toSend[DEFAULT_WRITE_BUFFER_SIZE];
 
         size_t length = sprintf(toSend, "$VNBOM,%u*", *binaryOutputNumber + 1);
         length += sprintf(toSend + length, "XX\r\n");
 
-        Serial2.print(toSend);
-        Serial2.flush();
+        serial_->print(toSend);
+        serial_->flush();
 
-        last_vn_read_binary_time_ = currMillis;
+        lastVNReadBinaryTime_ = currMillis;
 
         if (!binaryReadingStart_)
             binaryReadingStart_ = true;
@@ -204,6 +228,7 @@ void VectorNavInterface::pollUserConfiguredBinaryOutput(uint8_t *binaryOutputNum
         *binaryOutputNumber = (*binaryOutputNumber + 1) % 3;  // skill issue fixed by Andy
 
         requestCounter_ = (requestCounter_ + 1) % 4;
+        lastVNRequestTime_ = currMillis;
     }
 }
 
@@ -211,14 +236,14 @@ void VectorNavInterface::pollUserConfiguredBinaryOutput(uint8_t *binaryOutputNum
 /// @brief receive ASCII
 void VectorNavInterface::readGNSSSignalStrength(unsigned long currMillis)
 {
-    if ((currMillis - last_vn_read_ascii_time_ > VN_READ_ASCII_INTERVAL) && asciiReadingStart_)
+    if ((currMillis - lastVNReadAsciiTime_ > VN_READ_ASCII_INTERVAL) && asciiReadingStart_)
     {
         int index = 0;
         char receiveBufferAscii[DEFAULT_READ_BUFFER_SIZE] = {'\0'};
 
-        while (Serial2.available())
+        while (serial_->available())
         {
-            receiveBufferAscii[index++] = Serial2.read();
+            receiveBufferAscii[index++] = serial_->read();
         }
 
 #if DEBUG_GNSS_HEALTH
@@ -254,20 +279,22 @@ void VectorNavInterface::readGNSSSignalStrength(unsigned long currMillis)
 
         // Reset ascii reading start flag
         asciiReadingStart_ = false;
+        // Reset VN read time
+        lastVNReadAsciiTime_ = currMillis;
     }
 }
 
 /// @brief receive binary
 void VectorNavInterface::readPollingBinaryOutput(unsigned long currMillis)
 {
-    if ((currMillis - last_vn_read_binary_time_ > VN_READ_BINARY_INTERVAL) && binaryReadingStart_)
+    if ((currMillis - lastVNReadBinaryTime_ > VN_READ_BINARY_INTERVAL) && binaryReadingStart_)
     {
         int index = 0;
         uint8_t receiveBuffer[DEFAULT_SERIAL_BUFFER_SIZE] = {0};
 
-        while (Serial2.available())
+        while (serial_->available())
         {
-            receiveBuffer[index++] = Serial2.read();
+            receiveBuffer[index++] = serial_->read();
         }
 
         for (int i = 0; i < index; i++)
@@ -300,7 +327,8 @@ void VectorNavInterface::readPollingBinaryOutput(unsigned long currMillis)
 
         // Reset binary reading start flag
         binaryReadingStart_ = false;
-
+        // Reset VN read time
+        lastVNReadBinaryTime_ = currMillis;
     }
 }
 
@@ -344,18 +372,18 @@ void VectorNavInterface::parseBinaryOutput_1(uint8_t receiveBuffer[], int receiv
     Serial.printf("GPS time: %X\n", timeGPS);
 #endif
 
-    data.angularRateBodyX = parseFloat(receiveBuffer, 8 + OFFSET_PADDING_1);
-    data.angularRateBodyY = parseFloat(receiveBuffer, 12 + OFFSET_PADDING_1);
-    data.angularRateBodyZ = parseFloat(receiveBuffer, 16 + OFFSET_PADDING_1);
+    data_.angularRateBodyX = parseFloat(receiveBuffer, 8 + OFFSET_PADDING_1);
+    data_.angularRateBodyY = parseFloat(receiveBuffer, 12 + OFFSET_PADDING_1);
+    data_.angularRateBodyZ = parseFloat(receiveBuffer, 16 + OFFSET_PADDING_1);
 #if DEBUG
     Serial.printf("Angular rate X: %f  ", angularRateBodyX);
     Serial.printf("Angular rate Y: %f  ", angularRateBodyY);
     Serial.printf("Angular Rate Z raw: %f  ", angularRateBodyZ);
 #endif
 
-    data.latitude = parseDouble(receiveBuffer, 20 + OFFSET_PADDING_1);
-    data.longitude = parseDouble(receiveBuffer, 28 + OFFSET_PADDING_1);
-    data.altitude = parseDouble(receiveBuffer, 36 + OFFSET_PADDING_1);
+    data_.latitude = parseDouble(receiveBuffer, 20 + OFFSET_PADDING_1);
+    data_.longitude = parseDouble(receiveBuffer, 28 + OFFSET_PADDING_1);
+    data_.altitude = parseDouble(receiveBuffer, 36 + OFFSET_PADDING_1);
 #if DEBUG
     Serial.printf("Raw Latitude: %f  ", latitude);
     Serial.printf("Raw Longitude: %f  ", longitude);
@@ -409,18 +437,18 @@ void VectorNavInterface::parseBinaryOutput_2(uint8_t receiveBuffer[], int receiv
     Serial.println("Group 2 output:");
 #endif
 
-    data.yaw   = parseFloat(receiveBuffer, OFFSET_PADDING_2_ORGINAL);
-    data.pitch = parseFloat(receiveBuffer, 4 + OFFSET_PADDING_2_ORGINAL);
-    data.roll  = parseFloat(receiveBuffer, 8 + OFFSET_PADDING_2_ORGINAL);   
+    data_.yaw   = parseFloat(receiveBuffer, OFFSET_PADDING_2_ORGINAL);
+    data_.pitch = parseFloat(receiveBuffer, 4 + OFFSET_PADDING_2_ORGINAL);
+    data_.roll  = parseFloat(receiveBuffer, 8 + OFFSET_PADDING_2_ORGINAL);   
 #if DEBUG
     Serial.printf("Yaw: %f  ", yaw);                                 
     Serial.printf("Pitch: %f  ", pitch);
     Serial.printf("Roll: %f\n", roll);        
 #endif          
 
-    data.accelBodyX = parseFloat(receiveBuffer, OFFSET_PADDING_2);
-    data.accelBodyY = parseFloat(receiveBuffer, 4 + OFFSET_PADDING_2);
-    data.accelBodyZ = parseFloat(receiveBuffer, 8 + OFFSET_PADDING_2);
+    data_.accelBodyX = parseFloat(receiveBuffer, OFFSET_PADDING_2);
+    data_.accelBodyY = parseFloat(receiveBuffer, 4 + OFFSET_PADDING_2);
+    data_.accelBodyZ = parseFloat(receiveBuffer, 8 + OFFSET_PADDING_2);
 #if DEBUG
     Serial.printf("Accel body X: %f  ", accelBodyX);
     Serial.printf("Accel body Y: %f  ", accelBodyY);
@@ -440,18 +468,18 @@ void VectorNavInterface::parseBinaryOutput_2(uint8_t receiveBuffer[], int receiv
     Serial.printf("Ins status: %X\n", insMode);
 #endif
 
-    data.uncompAccelBodyX = parseFloat(receiveBuffer, 14 + OFFSET_PADDING_2);
-    data.uncompAccelBodyY = parseFloat(receiveBuffer, 18 + OFFSET_PADDING_2);
-    data.uncompAccelBodyZ = parseFloat(receiveBuffer, 22 + OFFSET_PADDING_2);
+    data_.uncompAccelBodyX = parseFloat(receiveBuffer, 14 + OFFSET_PADDING_2);
+    data_.uncompAccelBodyY = parseFloat(receiveBuffer, 18 + OFFSET_PADDING_2);
+    data_.uncompAccelBodyZ = parseFloat(receiveBuffer, 22 + OFFSET_PADDING_2);
 #if DEBUG
     Serial.printf("UncompAccelBodyZ: %f  ", uncompAccelBodyX);
     Serial.printf("UncompAccelBodyY: %f  ", uncompAccelBodyY);
     Serial.printf("UncompAccelBodyZ: %f\n", uncompAccelBodyZ);
 #endif
 
-    data.deltaVelX = parseFloat(receiveBuffer, 26 + OFFSET_PADDING_2);
-    data.deltaVelY = parseFloat(receiveBuffer, 30 + OFFSET_PADDING_2);
-    data.deltaVelZ = parseFloat(receiveBuffer, 34 + OFFSET_PADDING_2);
+    data_.deltaVelX = parseFloat(receiveBuffer, 26 + OFFSET_PADDING_2);
+    data_.deltaVelY = parseFloat(receiveBuffer, 30 + OFFSET_PADDING_2);
+    data_.deltaVelZ = parseFloat(receiveBuffer, 34 + OFFSET_PADDING_2);
 
     uint16_t crc = parseUint16(receiveBuffer, 38 + OFFSET_PADDING_2);
 
@@ -504,25 +532,25 @@ void VectorNavInterface::parseBinaryOutput_3(uint8_t receiveBuffer[], int receiv
     Serial.println("Group 3 output:");
 #endif
 
-    data.posEcefX = parseDouble(receiveBuffer, OFFSET_PADDING_3);
-    data.posEcefY = parseDouble(receiveBuffer, 8 + OFFSET_PADDING_3);
-    data.posEcefZ = parseDouble(receiveBuffer, 16 + OFFSET_PADDING_3);
+    data_.posEcefX = parseDouble(receiveBuffer, OFFSET_PADDING_3);
+    data_.posEcefY = parseDouble(receiveBuffer, 8 + OFFSET_PADDING_3);
+    data_.posEcefZ = parseDouble(receiveBuffer, 16 + OFFSET_PADDING_3);
 #if DEBUG
     Serial.printf("PosEcf0 raw: %f  ", (float)posEcefX);
     Serial.printf("PosEcf1 raw: %f  ", (float)posEcefY);
     Serial.printf("PosEcf2 raw: %f  \n", (float)posEcefZ);
 #endif
     
-    data.velBodyX = parseFloat(receiveBuffer, 24 + OFFSET_PADDING_3);
-    data.velBodyY = parseFloat(receiveBuffer, 28 + OFFSET_PADDING_3);
-    data.velBodyZ = parseFloat(receiveBuffer, 32 + OFFSET_PADDING_3);
+    data_.velBodyX = parseFloat(receiveBuffer, 24 + OFFSET_PADDING_3);
+    data_.velBodyY = parseFloat(receiveBuffer, 28 + OFFSET_PADDING_3);
+    data_.velBodyZ = parseFloat(receiveBuffer, 32 + OFFSET_PADDING_3);
 #if DEBUG
     Serial.printf("Velocity body X: %f  ", velBodyX);
     Serial.printf("Velocity body Y: %f  ", velBodyY);
     Serial.printf("Velocity body Z: %f\n", velBodyZ);
 #endif
 
-    data.velU = parseFloat(receiveBuffer, 36 + OFFSET_PADDING_3);
+    data_.velU = parseFloat(receiveBuffer, 36 + OFFSET_PADDING_3);
 
     uint16_t crc = (receiveBuffer[41 + OFFSET_PADDING_3] << 8) | receiveBuffer[40 + OFFSET_PADDING_3];
    
@@ -625,7 +653,15 @@ void VectorNavInterface::update_CAN_vn_uncomp_accel()
 }
 
 /// @brief update and enqueue VN body velocity
-void VectorNavInterface::update_CAN_vn_vel_body();
+void VectorNavInterface::update_CAN_vn_vel_body()
+{
+    VN_VEL_t vn_vel_body;
+    vn_vel_body.vn_body_vel_x_ro = HYTECH_vn_body_vel_x_ro_toS(data_.velBodyX);
+    vn_vel_body.vn_body_vel_y_ro = HYTECH_vn_body_vel_y_ro_toS(data_.velBodyY);
+    vn_vel_body.vn_body_vel_z_ro = HYTECH_vn_body_vel_z_ro_toS(data_.velBodyZ);
+    vn_vel_body.vn_vel_uncertainty_ro = HYTECH_vn_vel_uncertainty_ro_toS(data_.velU);
+    enqueue_new_CAN_msg<VN_VEL_t>(&vn_vel_body, &Pack_VN_VEL_hytech);
+}
 
 /// @brief update and enqueue VN angular rates
 void VectorNavInterface::update_CAN_vn_angular_rate()
@@ -701,9 +737,9 @@ void VectorNavInterface::init(SysTick_s currTick)
     // Initialize ascii packet length
     currentAsciiLength_ = 0;
     // Initialize timestamps
-    last_vn_request_time_ = currTick.millis;
-    last_vn_read_ascii_time_ = currTick.millis;
-    last_vn_read_binary_time_ = currTick.millis;
+    lastVNRequestTime_ = currTick.millis;
+    lastVNReadAsciiTime_ = currTick.millis;
+    lastVNReadBinaryTime_ = currTick.millis;
     // Configure sensor
     if (setInitHeading_)
     {
@@ -730,6 +766,26 @@ void VectorNavInterface::tick(SysTick_s currTick)
     readGNSSSignalStrength(currTick.millis);
     readPollingBinaryOutput(currTick.millis);
 }
+
+// Print utilities for debug
+/// @brief print receive buffer for binary packets
+void VectorNavInterface::printBinaryReceiveBuffer()
+{
+    Serial.print("Binary: ");
+    for (int i = 0; i < currentPacketLength_; i++)
+    {
+        Serial.printf("%X ", receiveBuffer_[i]);
+    }
+    Serial.printf("\nCurrent binary packet length: %d", currentPacketLength_);
+}
+
+/// @brief print receive buffer for ASCII packets
+void VectorNavInterface::printAsciiReceiveBuffer()
+{
+    Serial.print("Ascii: ");
+    Serial.println(receiveBufferAscii_);
+}
+
 
 /**
  * Private functions
@@ -801,3 +857,59 @@ double VectorNavInterface::parseDouble(uint8_t buffer[], int startIndex)
     memcpy(&data, &dataBits, sizeof(double));
     return data;
 }
+
+/// @brief function to initiate the parsing of ASCII data packets
+/// @param packetStart char array that holds ASCII response
+/// @param index index in the array where data begins
+/// @return sth. not sure what but co-works with the rest in macros
+char* VectorNavInterface::startAsciiPacketParse(char* packetStart, size_t& index)
+{
+    index = 7;
+	return vnstrtok(packetStart, index);
+}
+
+/// @brief function to get next data in ASCII packet response
+/// @param str char array that holds ASCII response
+/// @param startIndex index where the next data starts
+/// @return pointer to next char in array
+char* VectorNavInterface::getNextData(char* str, size_t& startIndex)
+{
+    return vnstrtok(str, startIndex);
+}
+
+/// @brief function to return pointer to next data in ASCII packet response
+/// @param str char array that holds ASCII response
+/// @param startIndex index where the next data starts
+/// @return pointer to next data char in array
+char* VectorNavInterface::vnstrtok(char* str, size_t& startIndex)
+{
+    size_t origIndex = startIndex;
+
+	if (str[startIndex-1] == '*') // attempting to read too many fields
+		return NULL;
+		
+	while (str[startIndex] != ',' && str[startIndex] != '*')
+	{
+		if((str[startIndex] < ' ') || (str[startIndex] > '~') || (str[startIndex] == '$')) // check for garbage characters
+			return NULL;
+		startIndex++;
+	}
+	
+	str[startIndex++] = '\0';
+
+	return str + origIndex;
+}
+
+/// @brief clear binary receive buffer
+/// @param receiveBuffer the data buffer to be cleared
+void clearReceiveBuffer(uint8_t receiveBuffer[])
+{
+    for (int i = 0; i < DEFAULT_SERIAL_BUFFER_SIZE; i++)
+    {
+        receiveBuffer[i] = 0;
+    }
+}
+
+
+
+

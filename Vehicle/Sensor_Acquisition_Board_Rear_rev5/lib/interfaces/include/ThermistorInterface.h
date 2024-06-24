@@ -10,7 +10,13 @@
 template <int N>
 struct TemperatureReport_s
 {
-    float temperatures_[N]; 
+    float temperatures[N]; 
+};
+
+template <int N>
+struct ThermistorReadChannel_s
+{
+    int channel[N];
 };
 
 template <int N>
@@ -20,38 +26,40 @@ private:
 // Data
     TemperatureReport_s<N> sabTemperatures_;
     Thermistors<N> sabThermistors_;
-    FilterIIRMulti<uint16_t, N> sabThermFilters_;
+    Filter_IIR<uint16_t> sabThermFilters_[N];
+    ThermistorReadChannel_s<N> channels_;
 public:
 // Constructors
-    ThermistorInterface():
+    ThermistorInterface(const ThermistorReadChannel_s<N>& channels):
         sabThermistors_(),
-        sabThermFilters_() {};
-    ThermistorInterface(const thermistor_params &params):
+        sabThermFilters_(),
+        channels_(channels) {};
+    ThermistorInterface(const ThermistorReadChannel_s<N>& channels, const thermistor_params &params):
         sabThermistors_(params),
         sabThermFilters_() {};
-    ThermistorInterface(const float iirAlpha): sabThermistors_()
+    ThermistorInterface(const ThermistorReadChannel_s<N>& channels, const float iirAlpha): sabThermistors_()
     {
         for (int i = 0; i < N; i++)
         {
-            sabThermFilters_.setAlphas(i, iirAlpha);
+            sabThermFilters_[i].set_alpha(iirAlpha);
         }        
     }
-    ThermistorInterface(const float* iirAlphas): sabThermistors_()
+    ThermistorInterface(const ThermistorReadChannel_s<N>& channels, const float* iirAlphas): sabThermistors_()
     {
         for (int i = 0; i < N; i++)
         {
-            sabThermFilters_.setAlphas(i, iirAlphas[i]);
+            sabThermFilters_[i].set_alpha(iirAlphas[i]);
         }        
     }    
-    ThermistorInterface(const thermistor_params &params, const float* iirAlphas): sabThermistors_(params)
+    ThermistorInterface(const ThermistorReadChannel_s<N>& channels, const thermistor_params &params, const float* iirAlphas): sabThermistors_(params)
     {
         for (int i = 0; i < N; i++)
         {
-            sabThermFilters_.setAlphas(i, iirAlphas[i]);
+            sabThermFilters_[i].set_alpha(iirAlphas[i]);
         }  
     }
 
-    void tick(AnalogConversionPacket_s<N> &themRaw);
+    void tick(const AnalogConversionPacket_s<8> &themRaw);
 
     const TemperatureReport_s<N>& get()
     {
