@@ -831,6 +831,7 @@ void readGNSSSignalStrength()
         vn_gnss_comp_health.highest_cn0_1 = highestCN0_1;
         vn_gnss_comp_health.num_sats_pvt_2 = numSatsPVT_2;
         vn_gnss_comp_health.num_sats_rtk_2 = numSatsRTK_2;
+        vn_gnss_comp_health.highest_cn0_2 = highestCN0_2;
         vn_gnss_comp_health.num_com_sats_pvt = numComSatsPVT;
         vn_gnss_comp_health.num_com_sats_rtk = numComSatsRTK;
 
