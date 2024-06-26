@@ -59,7 +59,7 @@ public:
         }  
     }
 
-    void tick(const AnalogConversionPacket_s<8> &themRaw);
+    void tick(const AnalogConversionPacket_s<N> &themRaw);
 
     const TemperatureReport_s<N>& get()
     {

@@ -332,6 +332,84 @@ void VectorNavInterface::readPollingBinaryOutput(unsigned long currMillis)
     }
 }
 
+/// @brief receive asynchronous binary and ASCII output
+/**
+ * Called at loop rate
+ */
+void VectorNavInterface::readAsynchOutputs()
+{
+    while (serial_->available())
+    {
+        char data = serial_->read();    
+
+        if (static_cast<uint8_t>(data) == 0xFA || data == '$')
+        {
+            if (startAsciiAsychReceive_)
+            {
+                parseGNSSSignalStrength(receiveBufferAscii_, 
+                                        &data_.gnssHealth.numSatsPVT_1,
+                                        &data_.gnssHealth.numSatsRTK_1,
+                                        &data_.gnssHealth.highestCN0_1,
+                                        &data_.gnssHealth.numSatsPVT_2,
+                                        &data_.gnssHealth.numSatsRTK_2,
+                                        &data_.gnssHealth.highestCN0_2,
+                                        &data_.gnssHealth.numComSatsPVT,
+                                        &data_.gnssHealth.numComSatsRTK);
+                startAsciiAsychReceive_ = false;
+            }
+
+            if (startBinaryAsynchReceive_)
+            {
+                currentPacketLength_ = indexBinary_;
+                switch (receiveBuffer_[1])
+                {
+                    case 0x01:
+                    parseBinaryOutput_1(receiveBuffer_, currentPacketLength_);
+                    break;
+
+                    case 0x05:
+                    parseBinaryOutput_2(receiveBuffer_, currentPacketLength_);
+                    break;
+
+                    case 0x28:
+                    parseBinaryOutput_3(receiveBuffer_, currentPacketLength_);
+                    break;
+                    
+                    default:
+                    break;
+                }
+                startBinaryAsynchReceive_ = false;
+            }            
+            
+            if (static_cast<uint8_t>(data) == 0xFA)
+            {
+                startBinaryAsynchReceive_ = true;
+                indexBinary_ = 0;
+                receiveBuffer_[indexBinary_++] = static_cast<uint8_t>(data);
+            }
+            
+            if (data == '$')
+            {
+                startAsciiAsychReceive_ = true;
+                indexAscii_ = 0;
+                receiveBufferAscii_[indexAscii_++] = data;
+            }            
+        }
+        else if (startBinaryAsynchReceive_)
+        {
+            receiveBuffer_[indexBinary_++] = static_cast<uint8_t>(data);
+        }
+        else if (startAsciiAsychReceive_)
+        {
+            receiveBufferAscii_[indexAscii_++] = data;
+        }        
+        else
+        {
+            continue;
+        }
+    }    
+}
+
 // Data parsers
 /// @brief parse user defined binary packet 1
 /// @param receiveBuffer receive buffer
@@ -740,6 +818,14 @@ void VectorNavInterface::init(SysTick_s currTick)
     lastVNRequestTime_ = currTick.millis;
     lastVNReadAsciiTime_ = currTick.millis;
     lastVNReadBinaryTime_ = currTick.millis;
+    // Initialize boolean vars.
+    binaryReadingStart_ = false;
+    asciiReadingStart_ = false;
+    startBinaryAsynchReceive_ = false;
+    startAsciiAsychReceive_ = false;
+    // Initialize asynch index's
+    indexBinary_ = 0;
+    indexBinary_ = 0;
     // Configure sensor
     if (setInitHeading_)
     {
@@ -771,19 +857,29 @@ void VectorNavInterface::tick(SysTick_s currTick)
 /// @brief print receive buffer for binary packets
 void VectorNavInterface::printBinaryReceiveBuffer()
 {
-    Serial.print("Binary: ");
-    for (int i = 0; i < currentPacketLength_; i++)
+    // Only print when not actively receiving async
+    // When polling this is always true
+    if (!startBinaryAsynchReceive_)
     {
-        Serial.printf("%X ", receiveBuffer_[i]);
+        Serial.print("Binary: ");
+        for (int i = 0; i < currentPacketLength_; i++)
+        {
+            Serial.printf("%X ", receiveBuffer_[i]);
+        }
+        Serial.printf("\nCurrent binary packet length: %d", currentPacketLength_);
     }
-    Serial.printf("\nCurrent binary packet length: %d", currentPacketLength_);
 }
 
 /// @brief print receive buffer for ASCII packets
 void VectorNavInterface::printAsciiReceiveBuffer()
 {
-    Serial.print("Ascii: ");
-    Serial.println(receiveBufferAscii_);
+    // Only print when not actively receiving async
+    // When polling this is always true
+    if (!startAsciiAsychReceive_)
+    {
+        Serial.print("Ascii: ");
+        Serial.println(receiveBufferAscii_);
+    }
 }
 
 

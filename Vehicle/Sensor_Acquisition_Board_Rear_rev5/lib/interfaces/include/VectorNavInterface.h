@@ -82,8 +82,8 @@ private:
     // Serial
     HardwareSerial *serial_;
     int serialSpeed_;
-    uint8_t receiveBuffer_[DEFAULT_SERIAL_BUFFER_SIZE];
-    char receiveBufferAscii_[DEFAULT_SERIAL_BUFFER_SIZE];    
+    uint8_t receiveBuffer_[DEFAULT_SERIAL_BUFFER_SIZE] = {0};
+    char receiveBufferAscii_[DEFAULT_SERIAL_BUFFER_SIZE] = {'\0'};    
     // Initial heading
     bool setInitHeading_;
     uint32_t initHeading_;
@@ -94,6 +94,11 @@ private:
     bool asciiReadingStart_;
     int currentPacketLength_;
     int currentAsciiLength_;
+    // Asynch read variables
+    bool startBinaryAsynchReceive_;
+    bool startAsciiAsychReceive_;
+    int indexBinary_;
+    int indexAscii_;
     // Timer variables
     unsigned long lastVNRequestTime_;
     unsigned long lastVNReadAsciiTime_;
@@ -203,6 +208,9 @@ public:
 
     /// @brief receive binary
     void readPollingBinaryOutput(unsigned long currMillis);
+
+    /// @brief receive asynchronous binary and ASCII output
+    void readAsynchOutputs();
 
 // Data parsers
     /// @brief parse user defined binary packet 1

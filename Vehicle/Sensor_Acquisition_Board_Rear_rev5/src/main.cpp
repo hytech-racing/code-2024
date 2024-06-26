@@ -195,7 +195,19 @@ void tick_all_interfaces(const SysTick_s &curr_tick)
         ADC2.tick();
         ADC3.tick();
         // Thermistor interface
-        therm_interface.tick(ADC3.get());
+        therm_interface.tick(
+            {
+                {
+                    ADC3.get().conversions[therm_channels.channel[0]],
+                    ADC3.get().conversions[therm_channels.channel[1]],
+                    ADC3.get().conversions[therm_channels.channel[2]],
+                    ADC3.get().conversions[therm_channels.channel[3]],
+                    ADC3.get().conversions[therm_channels.channel[4]],
+                    ADC3.get().conversions[therm_channels.channel[5]],
+                    ADC3.get().conversions[therm_channels.channel[6]]
+                }
+            }
+        );
     }
 
     if (t.trigger50)

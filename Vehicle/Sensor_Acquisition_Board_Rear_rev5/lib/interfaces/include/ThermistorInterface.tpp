@@ -1,7 +1,7 @@
 #include "ThermistorInterface.h"
 
 template <int N>
-void ThermistorInterface<N>::tick(const AnalogConversionPacket_s<8> &thermRaw)
+void ThermistorInterface<N>::tick(const AnalogConversionPacket_s<N> &thermRaw)
 {
     for (int i = 0; i < N; i++)
     {
