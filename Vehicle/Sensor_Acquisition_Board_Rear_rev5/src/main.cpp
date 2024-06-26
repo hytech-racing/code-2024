@@ -145,12 +145,19 @@ void loop() {
     {
         Serial.println("Thermistors:");
         Serial.println(ADC3.get().conversions[THERM_3].raw);
+        Serial.println(therm_interface.get().temperatures[0]);
         Serial.println(ADC3.get().conversions[THERM_4].raw);
+        Serial.println(therm_interface.get().temperatures[1]);
         Serial.println(ADC3.get().conversions[THERM_5].raw);
+        Serial.println(therm_interface.get().temperatures[2]);
         Serial.println(ADC3.get().conversions[THERM_6].raw);
+        Serial.println(therm_interface.get().temperatures[3]);
         Serial.println(ADC3.get().conversions[THERM_7].raw);
+        Serial.println(therm_interface.get().temperatures[4]);
         Serial.println(ADC3.get().conversions[THERM_8].raw);
+        Serial.println(therm_interface.get().temperatures[5]);
         Serial.println(ADC3.get().conversions[THERM_9].raw);
+        Serial.println(therm_interface.get().temperatures[6]);
         Serial.println();
 
         Serial.println("Load cells:");
@@ -248,7 +255,7 @@ void tick_all_interfaces(const SysTick_s &curr_tick)
     // VectorNav
     // vn_300.tick(curr_tick);
     // vn_300.checkSerialBaudrate();
-    checkSerialBaudrate();
+    // checkSerialBaudrate();
 
 }
 
