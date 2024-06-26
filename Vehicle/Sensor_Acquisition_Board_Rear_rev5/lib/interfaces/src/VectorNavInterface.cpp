@@ -445,7 +445,7 @@ void VectorNavInterface::parseBinaryOutput_1(uint8_t receiveBuffer[], int receiv
     Serial.println("Group 1 output:");
 #endif
 
-    uint64_t timeGPS = parseUint64(receiveBuffer, 0 + OFFSET_PADDING_1);
+    data_.timeGPS = parseUint64(receiveBuffer, 0 + OFFSET_PADDING_1);
 #if DEBUG
     Serial.printf("GPS time: %X\n", timeGPS);
 #endif

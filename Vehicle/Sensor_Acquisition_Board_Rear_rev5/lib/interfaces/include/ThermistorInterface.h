@@ -31,27 +31,34 @@ private:
 public:
 // Constructors
     ThermistorInterface(const ThermistorReadChannel_s<N>& channels):
+        channels_(channels),
         sabThermistors_(),
-        sabThermFilters_(),
-        channels_(channels) {};
+        sabThermFilters_() {};
     ThermistorInterface(const ThermistorReadChannel_s<N>& channels, const thermistor_params &params):
+        channels_(channels),
         sabThermistors_(params),
         sabThermFilters_() {};
-    ThermistorInterface(const ThermistorReadChannel_s<N>& channels, const float iirAlpha): sabThermistors_()
+    ThermistorInterface(const ThermistorReadChannel_s<N>& channels, const float iirAlpha):
+        channels_(channels),
+        sabThermistors_()
     {
         for (int i = 0; i < N; i++)
         {
             sabThermFilters_[i].set_alpha(iirAlpha);
         }        
     }
-    ThermistorInterface(const ThermistorReadChannel_s<N>& channels, const float* iirAlphas): sabThermistors_()
+    ThermistorInterface(const ThermistorReadChannel_s<N>& channels, const float* iirAlphas): 
+        channels_(channels),
+        sabThermistors_()
     {
         for (int i = 0; i < N; i++)
         {
             sabThermFilters_[i].set_alpha(iirAlphas[i]);
         }        
     }    
-    ThermistorInterface(const ThermistorReadChannel_s<N>& channels, const thermistor_params &params, const float* iirAlphas): sabThermistors_(params)
+    ThermistorInterface(const ThermistorReadChannel_s<N>& channels, const thermistor_params &params, const float* iirAlphas):
+        channels_(channels),
+        sabThermistors_(params)
     {
         for (int i = 0; i < N; i++)
         {

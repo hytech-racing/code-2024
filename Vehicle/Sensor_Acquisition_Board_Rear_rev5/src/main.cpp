@@ -94,28 +94,7 @@ void setup() {
     Serial.println("Debounce button initialized for Pi shutdown");
 
     // RS232
-    // vn_300.init(curr_tick);
-    Serial2.begin(DEFAULT_SERIAL_BAUDRATE);
-    // Wait for IMU to wake up   - Shayan
-    delay(START_UP_DELAY);
-    // Jack up baudrate. This is the highest we can go, limitation unknown
-    // setSerialBaudrate(VN_SERIAL_BAUDRATE6);
-    // End current serial comm.
-    // Serial2.end();
-    // Resart serial with new baudrate
-    // Serial2.begin(VN_SERIAL_BAUDRATE6);
-    // Initialize binary output reg. number
-    // binaryOutputNumber = 0;
-    // Initialize data request counter
-    // requestCounter = 0;
-    // Initialize binary packet length
-    // currentPacketLength = 0;
-    // Configure sensor
-    // setInitialHeading(INIT_HEADING);
-    // turnOffAsciiOutput();
-    // configBinaryOutput(1, 0x01, 0);    // 0000 0001
-    // configBinaryOutput(2, 0x05, 0);    // 0000 0101
-    // configBinaryOutput(3, 0x28, 0);    // 0010 1000
+    vn_300.init(curr_tick);
     Serial.println("VectorNav initialized ... for real this time!");
     Serial.println();
 
@@ -144,19 +123,33 @@ void loop() {
     if (t.trigger5)
     {
         Serial.println("Thermistors:");
-        Serial.println(ADC3.get().conversions[THERM_3].raw);
+        Serial.print("Raw: ");
+        Serial.println(ADC3.get().conversions[therm_channels.channel[0]].raw);
+        Serial.print("Converted: ");
         Serial.println(therm_interface.get().temperatures[0]);
-        Serial.println(ADC3.get().conversions[THERM_4].raw);
+        Serial.print("Raw: ");
+        Serial.println(ADC3.get().conversions[therm_channels.channel[1]].raw);
+        Serial.print("Converted: ");
         Serial.println(therm_interface.get().temperatures[1]);
-        Serial.println(ADC3.get().conversions[THERM_5].raw);
+        Serial.print("Raw: ");
+        Serial.println(ADC3.get().conversions[therm_channels.channel[2]].raw);
+        Serial.print("Converted: ");
         Serial.println(therm_interface.get().temperatures[2]);
-        Serial.println(ADC3.get().conversions[THERM_6].raw);
+        Serial.print("Raw: ");
+        Serial.println(ADC3.get().conversions[therm_channels.channel[3]].raw);
+        Serial.print("Converted: ");
         Serial.println(therm_interface.get().temperatures[3]);
-        Serial.println(ADC3.get().conversions[THERM_7].raw);
+        Serial.print("Raw: ");
+        Serial.println(ADC3.get().conversions[therm_channels.channel[4]].raw);
+        Serial.print("Converted: ");
         Serial.println(therm_interface.get().temperatures[4]);
-        Serial.println(ADC3.get().conversions[THERM_8].raw);
+        Serial.print("Raw: ");
+        Serial.println(ADC3.get().conversions[therm_channels.channel[5]].raw);
+        Serial.print("Converted: ");
         Serial.println(therm_interface.get().temperatures[5]);
-        Serial.println(ADC3.get().conversions[THERM_9].raw);
+        Serial.print("Raw: ");
+        Serial.println(ADC3.get().conversions[therm_channels.channel[6]].raw);
+        Serial.print("Converted: ");
         Serial.println(therm_interface.get().temperatures[6]);
         Serial.println();
 
@@ -253,7 +246,7 @@ void tick_all_interfaces(const SysTick_s &curr_tick)
 
     // Timing managed internally
     // VectorNav
-    // vn_300.tick(curr_tick);
+    vn_300.tick(curr_tick);
     // vn_300.checkSerialBaudrate();
     // checkSerialBaudrate();
 
