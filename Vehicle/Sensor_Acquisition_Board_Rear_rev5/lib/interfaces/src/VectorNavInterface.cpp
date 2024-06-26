@@ -93,6 +93,30 @@ void VectorNavInterface::turnOffAsciiOutput()
     serial_->flush();
 }
 
+void VectorNavInterface::configAsciiAsyncOutputType(uint32_t asciiReg)
+{
+    char toSend[DEFAULT_WRITE_BUFFER_MIDIUM];
+
+    size_t length = sprintf(toSend, "$VNWRG,06,%u", asciiReg);
+
+    length += sprintf(toSend + length, "*XX\r\n");
+
+    serial_->print(toSend);
+    serial_->flush();
+}
+
+void VectorNavInterface::configAsciiAsyncOutputFreq(uint32_t asciiFreq)
+{
+    char toSend[DEFAULT_WRITE_BUFFER_MIDIUM];
+
+    size_t length = sprintf(toSend, "$VNWRG,07,%u", asciiFreq);
+
+    length += sprintf(toSend + length, "*XX\r\n");
+
+    serial_->print(toSend);
+    serial_->flush();
+}
+
 /// @brief configure user defined binary packets
 /// @param binaryOutputNumber binary register number (1-3) minus 1
 /// @param fields requested fields
@@ -256,26 +280,14 @@ void VectorNavInterface::readGNSSSignalStrength(unsigned long currMillis)
         strcpy(receiveBufferAscii_, receiveBufferAscii);
         
         currentAsciiLength_ = index;
-        
-        // Parse Ascii string response
-        parseGNSSSignalStrength(receiveBufferAscii, 
-                                &data_.gnssHealth.numSatsPVT_1,
-                                &data_.gnssHealth.numSatsRTK_1,
-                                &data_.gnssHealth.highestCN0_1,
-                                &data_.gnssHealth.numSatsPVT_2,
-                                &data_.gnssHealth.numSatsRTK_2,
-                                &data_.gnssHealth.highestCN0_2,
-                                &data_.gnssHealth.numComSatsPVT,
-                                &data_.gnssHealth.numComSatsRTK);
+
+        processGNSSSignalStrength(receiveBufferAscii);
 
 #if DEBUG_GNSS_HEALTH
-        Serial.printf("numSatsPVT_1 = %f, numSatsRTK_1 = %f, highestCN0_1 = %f\n", numSatsPVT_1, numSatsRTK_1, highestCN0_1);
-        Serial.printf("numSatsPVT_2 = %f, numSatsRTK_2 = %f, highestCN0_2 = %f\n", numSatsPVT_2, numSatsRTK_2, highestCN0_2);
-        Serial.printf("numComSatsPVT = %f, numComSatsRTK = %f\n\n", numComSatsPVT, numComSatsRTK);
+        Serial.printf("numSatsPVT_1 = %f, numSatsRTK_1 = %f, highestCN0_1 = %f\n", data_.gnssHealth.numSatsPVT_1, data_.gnssHealth.numSatsRTK_1, data_.gnssHealth.highestCN0_1);
+        Serial.printf("numSatsPVT_2 = %f, numSatsRTK_2 = %f, highestCN0_2 = %f\n", data_.gnssHealth.numSatsPVT_2, data_.gnssHealth.numSatsRTK_2, data_.gnssHealth.highestCN0_2);
+        Serial.printf("numComSatsPVT = %f, numComSatsRTK = %f\n\n", data_.gnssHealth.numComSatsPVT, data_.gnssHealth.numComSatsRTK);
 #endif
-
-        // Shove onto CAN
-        update_CAN_vn_gnss_comp_sig_health();
 
         // Reset ascii reading start flag
         asciiReadingStart_ = false;
@@ -336,66 +348,53 @@ void VectorNavInterface::readPollingBinaryOutput(unsigned long currMillis)
 /**
  * Called at loop rate
  */
-void VectorNavInterface::readAsynchOutputs()
+void VectorNavInterface::readAsyncOutputs()
 {
     while (serial_->available())
     {
         char data = serial_->read();    
 
-        if (static_cast<uint8_t>(data) == 0xFA || data == '$')
+        if (static_cast<uint8_t>(data) == 0xFA)
         {
             if (startAsciiAsychReceive_)
             {
-                parseGNSSSignalStrength(receiveBufferAscii_, 
-                                        &data_.gnssHealth.numSatsPVT_1,
-                                        &data_.gnssHealth.numSatsRTK_1,
-                                        &data_.gnssHealth.highestCN0_1,
-                                        &data_.gnssHealth.numSatsPVT_2,
-                                        &data_.gnssHealth.numSatsRTK_2,
-                                        &data_.gnssHealth.highestCN0_2,
-                                        &data_.gnssHealth.numComSatsPVT,
-                                        &data_.gnssHealth.numComSatsRTK);
+                processGNSSSignalStrength(receiveBufferAscii_);
                 startAsciiAsychReceive_ = false;
             }
 
-            if (startBinaryAsynchReceive_)
+            if (asyncBinaryReadyToProcess())
             {
                 currentPacketLength_ = indexBinary_;
                 switch (receiveBuffer_[1])
                 {
                     case 0x01:
-                    parseBinaryOutput_1(receiveBuffer_, currentPacketLength_);
+                        parseBinaryOutput_1(receiveBuffer_, currentPacketLength_);
                     break;
 
                     case 0x05:
-                    parseBinaryOutput_2(receiveBuffer_, currentPacketLength_);
+                        parseBinaryOutput_2(receiveBuffer_, currentPacketLength_);
                     break;
 
                     case 0x28:
-                    parseBinaryOutput_3(receiveBuffer_, currentPacketLength_);
+                        parseBinaryOutput_3(receiveBuffer_, currentPacketLength_);
                     break;
                     
                     default:
                     break;
                 }
-                startBinaryAsynchReceive_ = false;
+                // printBinaryReceiveBuffer();
+                startBinaryAsyncReceive_ = false;
             }            
             
-            if (static_cast<uint8_t>(data) == 0xFA)
+            if (!startBinaryAsyncReceive_)
             {
-                startBinaryAsynchReceive_ = true;
+                startBinaryAsyncReceive_ = true;
                 indexBinary_ = 0;
-                receiveBuffer_[indexBinary_++] = static_cast<uint8_t>(data);
             }
             
-            if (data == '$')
-            {
-                startAsciiAsychReceive_ = true;
-                indexAscii_ = 0;
-                receiveBufferAscii_[indexAscii_++] = data;
-            }            
+            receiveBuffer_[indexBinary_++] = static_cast<uint8_t>(data);
         }
-        else if (startBinaryAsynchReceive_)
+        else if (startBinaryAsyncReceive_)
         {
             receiveBuffer_[indexBinary_++] = static_cast<uint8_t>(data);
         }
@@ -408,6 +407,24 @@ void VectorNavInterface::readAsynchOutputs()
             continue;
         }
     }    
+}
+
+// Data process intermediate functions
+void VectorNavInterface::processGNSSSignalStrength(char *receiveBufferAscii)
+{
+    // Parse Ascii string response
+    parseGNSSSignalStrength(receiveBufferAscii, 
+                            &data_.gnssHealth.numSatsPVT_1,
+                            &data_.gnssHealth.numSatsRTK_1,
+                            &data_.gnssHealth.highestCN0_1,
+                            &data_.gnssHealth.numSatsPVT_2,
+                            &data_.gnssHealth.numSatsRTK_2,
+                            &data_.gnssHealth.highestCN0_2,
+                            &data_.gnssHealth.numComSatsPVT,
+                            &data_.gnssHealth.numComSatsRTK);
+
+    // Shove onto CAN
+    update_CAN_vn_gnss_comp_sig_health();
 }
 
 // Data parsers
@@ -821,11 +838,13 @@ void VectorNavInterface::init(SysTick_s currTick)
     // Initialize boolean vars.
     binaryReadingStart_ = false;
     asciiReadingStart_ = false;
-    startBinaryAsynchReceive_ = false;
+    startBinaryAsyncReceive_ = false;
     startAsciiAsychReceive_ = false;
-    // Initialize asynch index's
+    // Initialize async index's
     indexBinary_ = 0;
-    indexBinary_ = 0;
+    indexAscii_ = 0;
+    // Calculate set length's
+    calculateBinaryPacketsLength();
     // Configure sensor
     if (setInitHeading_)
     {
@@ -833,24 +852,57 @@ void VectorNavInterface::init(SysTick_s currTick)
     }
     // Turn off asynchronous ascii output
     turnOffAsciiOutput();
+
+    if (useAsync_)
+    {
+        // configAsciiAsyncOutputType();
+        // configAsciiAsyncOutputFreq();
+    }    
+
     // Configure user defined binary groups
-    configBinaryOutput(1, 0x01, 0);    // 0000 0001
-    configBinaryOutput(2, 0x05, 0);    // 0000 0101
-    configBinaryOutput(3, 0x28, 0);    // 0010 1000
+    configBinaryOutput(1, 0x01, binaryRateDivisor_);    // 0000 0001
+    configBinaryOutput(2, 0x05, binaryRateDivisor_);    // 0000 0101
+    configBinaryOutput(3, 0x28, binaryRateDivisor_);    // 0010 1000
 }
 
 // Tick
 void VectorNavInterface::tick(SysTick_s currTick)
 {
-    // Request data  
-    if (requestCounter_ == 3)
-        requestGNSSSignalStrength(currTick.millis);
-    else
-        pollUserConfiguredBinaryOutput(&binaryOutputNumber_, currTick.millis);
+    if (usePolling_)
+    {
+        // Request data  
+        if (requestCounter_ == 3)
+            requestGNSSSignalStrength(currTick.millis);
+        else
+            pollUserConfiguredBinaryOutput(&binaryOutputNumber_, currTick.millis);
 
-    // Read data
-    readGNSSSignalStrength(currTick.millis);
-    readPollingBinaryOutput(currTick.millis);
+        // Read data
+        readGNSSSignalStrength(currTick.millis);
+        readPollingBinaryOutput(currTick.millis);
+    }
+    else if (useAsync_)
+    {
+        if (currTick.triggers.trigger1000)
+        {
+            readAsyncOutputs();
+        }        
+    }
+    else
+    {
+        return;
+    }
+
+    // if (currTick.triggers.trigger1000)
+    // {
+    //     while (serial_->available())
+    //     {
+    //         Serial.print(serial_->read(), HEX);
+    //     }
+    //     Serial.println();
+    // }
+
+    
+    
 }
 
 // Print utilities for debug
@@ -859,15 +911,17 @@ void VectorNavInterface::printBinaryReceiveBuffer()
 {
     // Only print when not actively receiving async
     // When polling this is always true
-    if (!startBinaryAsynchReceive_)
-    {
+    // if (!startBinaryAsyncReceive_)
+    // {
         Serial.print("Binary: ");
         for (int i = 0; i < currentPacketLength_; i++)
         {
             Serial.printf("%X ", receiveBuffer_[i]);
         }
         Serial.printf("\nCurrent binary packet length: %d", currentPacketLength_);
-    }
+    // }
+
+    Serial.println();
 }
 
 /// @brief print receive buffer for ASCII packets
@@ -880,6 +934,8 @@ void VectorNavInterface::printAsciiReceiveBuffer()
         Serial.print("Ascii: ");
         Serial.println(receiveBufferAscii_);
     }
+
+    Serial.println();
 }
 
 
@@ -893,6 +949,9 @@ void VectorNavInterface::enqueue_new_CAN_msg(U *structure, uint32_t (*pack_funct
 {
     CAN_message_t can_msg;
     can_msg.id = pack_function(structure, can_msg.buf, &can_msg.len, (uint8_t*) &can_msg.flags.extended);
+
+    // TELEM_CAN.write(can_msg);
+
     uint8_t buf[sizeof(CAN_message_t)] = {};
     memmove(buf, &can_msg, sizeof(CAN_message_t));
 
@@ -1004,6 +1063,41 @@ void VectorNavInterface::clearReceiveBuffer(uint8_t receiveBuffer[])
     {
         receiveBuffer[i] = 0;
     }
+}
+
+void VectorNavInterface::calculateBinaryPacketsLength()
+{
+    binaryPacketLength_1 = 1 + 1 + 2 * BINARY_OUTPUT_GROUP_COUNT_1 + BINARY_OUTPUT_PAYLOAD_1 + 2;
+    
+    binaryPacketLength_2 = 1 + 1 + 2 * BINARY_OUTPUT_GROUP_COUNT_2 + BINARY_OUTPUT_PAYLOAD_2 + 2;
+    
+    binaryPacketLength_3 = 1 + 1 + 2 * BINARY_OUTPUT_GROUP_COUNT_3 + BINARY_OUTPUT_PAYLOAD_3 + 2;
+}
+
+bool VectorNavInterface::asyncBinaryReadyToProcess()
+{
+    if (!startBinaryAsyncReceive_)
+    {
+        return false;
+    }
+    
+    bool dataReady = false;
+    if (receiveBuffer_[0] == 0xFA)
+    {
+        if (receiveBuffer_[1] == 0x01 && indexBinary_ == binaryPacketLength_1)
+        {
+            dataReady = true;
+        }
+        else if (receiveBuffer_[1] == 0x05 && indexBinary_ == binaryPacketLength_2)
+        {
+            dataReady = true;
+        }
+        else if (receiveBuffer_[1] == 0x28 && indexBinary_ == binaryPacketLength_3)
+        {
+            dataReady = true;
+        }      
+    }
+    return dataReady;
 }
 
 

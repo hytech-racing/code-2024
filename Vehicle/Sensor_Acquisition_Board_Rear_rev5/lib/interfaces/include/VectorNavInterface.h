@@ -11,8 +11,11 @@
 #include "hytech.h"
 #include "SysClock.h"
 
+extern CANTelem TELEM_CAN;
+
 const int DEFAULT_SERIAL_BAUDRATE = 115200;
 const int DEFAULT_INIT_HEADING = 0;     // Relative to TRUE NORTH TRUE NORTH TRUE NORTH
+
 const int START_UP_DELAY = 5000;
 const int VN_READ_INTERVAL = 10;        // milliseconds
 const int VN_READ_ASCII_INTERVAL = 8;
@@ -83,7 +86,7 @@ private:
     HardwareSerial *serial_;
     int serialSpeed_;
     uint8_t receiveBuffer_[DEFAULT_SERIAL_BUFFER_SIZE] = {0};
-    char receiveBufferAscii_[DEFAULT_SERIAL_BUFFER_SIZE] = {'\0'};    
+    char receiveBufferAscii_[DEFAULT_SERIAL_BUFFER_SIZE] = {'\0'};
     // Initial heading
     bool setInitHeading_;
     uint32_t initHeading_;
@@ -94,11 +97,18 @@ private:
     bool asciiReadingStart_;
     int currentPacketLength_;
     int currentAsciiLength_;
-    // Asynch read variables
-    bool startBinaryAsynchReceive_;
+    int binaryPacketLength_1;
+    int binaryPacketLength_2;
+    int binaryPacketLength_3;
+    // Async read variables
+    uint16_t binaryRateDivisor_;
+    bool startBinaryAsyncReceive_;
     bool startAsciiAsychReceive_;
     int indexBinary_;
     int indexAscii_;
+    // Data requesting approach
+    bool usePolling_;
+    bool useAsync_;
     // Timer variables
     unsigned long lastVNRequestTime_;
     unsigned long lastVNReadAsciiTime_;
@@ -157,20 +167,29 @@ private:
     /// @param receiveBuffer the data buffer to be cleared
     void clearReceiveBuffer(uint8_t receiveBuffer[]);
 
+    void calculateBinaryPacketsLength();
+
+    bool asyncBinaryReadyToProcess();
+
 public:
 // Constructors
-    VectorNavInterface(CANBufferType *circBuff, HardwareSerial *serial, int serialSpeed, bool setInitHeading, uint32_t initHeading):
+    VectorNavInterface(CANBufferType *circBuff, HardwareSerial *serial, int serialSpeed, bool setInitHeading, uint32_t initHeading, bool useAsync, uint16_t binaryRateDivisor):
         msgQueue_(circBuff),
         serial_(serial),
         serialSpeed_(serialSpeed),
         setInitHeading_(setInitHeading),
-        initHeading_(initHeading) {};
+        initHeading_(initHeading),
+        useAsync_(useAsync),
+        usePolling_(!useAsync),
+        binaryRateDivisor_(useAsync ? binaryRateDivisor : 0) {};
+    VectorNavInterface(CANBufferType *circBuff, HardwareSerial *serial, int serialSpeed, bool setInitHeading, uint32_t initHeading):
+        VectorNavInterface(circBuff, serial, serialSpeed, setInitHeading, initHeading, false, 0) {};
     VectorNavInterface(CANBufferType *circBuff, HardwareSerial *serial, int serialSpeed, bool setInitHeading):
-        VectorNavInterface(circBuff, serial, serialSpeed, setInitHeading, DEFAULT_INIT_HEADING) {};
+        VectorNavInterface(circBuff, serial, serialSpeed, setInitHeading, DEFAULT_INIT_HEADING, false, 0) {};
     VectorNavInterface(CANBufferType *circBuff, HardwareSerial *serial, int serialSpeed):
-        VectorNavInterface(circBuff, serial, serialSpeed, false, DEFAULT_INIT_HEADING) {};
+        VectorNavInterface(circBuff, serial, serialSpeed, false, DEFAULT_INIT_HEADING, false, 0) {};
     VectorNavInterface(CANBufferType *circBuff, HardwareSerial *serial):
-        VectorNavInterface(circBuff, serial, DEFAULT_SERIAL_BAUDRATE, false, DEFAULT_INIT_HEADING) {};
+        VectorNavInterface(circBuff, serial, DEFAULT_SERIAL_BAUDRATE, false, DEFAULT_INIT_HEADING, false, 0) {};
 
 // Data request functions
     /// @brief set serial baudrate
@@ -186,6 +205,10 @@ public:
 
     /// @brief turn off asynchronous ASCII output from VN
     void turnOffAsciiOutput();
+    
+    void configAsciiAsyncOutputType(uint32_t asciiReg);
+
+    void configAsciiAsyncOutputFreq(uint32_t asciiFreq);
 
     /// @brief configure user defined binary packets
     /// @param binaryOutputNumber binary register number (1-3) minus 1
@@ -210,7 +233,10 @@ public:
     void readPollingBinaryOutput(unsigned long currMillis);
 
     /// @brief receive asynchronous binary and ASCII output
-    void readAsynchOutputs();
+    void readAsyncOutputs();
+
+// Data process intermediate functions
+    void processGNSSSignalStrength(char *receiveBufferAscii);
 
 // Data parsers
     /// @brief parse user defined binary packet 1

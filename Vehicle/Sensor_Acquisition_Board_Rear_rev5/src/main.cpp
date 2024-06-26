@@ -58,7 +58,7 @@ TelemetryInterface telem_interface(&CAN2_txBuffer,
 ThermistorReadChannel_s<TOTAL_THERMISTOR_COUNT> therm_channels = {{THERM_3, THERM_4, THERM_5, THERM_6, THERM_7, THERM_8, THERM_9}};
 ThermistorInterface<TOTAL_THERMISTOR_COUNT> therm_interface(therm_channels, THERM_ALPHA);
 // VectorNav
-VectorNavInterface vn_300(&CAN2_txBuffer, &Serial2, VN_RS232_SPEED, true, INIT_HEADING);
+VectorNavInterface vn_300(&CAN2_txBuffer, &Serial2, VN_RS232_SPEED, true, INIT_HEADING, true, 8);  // 50Hz for now
 
 /**
  * Systems
@@ -70,8 +70,6 @@ void init_all_CAN_devices();
 void init_all_adcs();
 void tick_all_interfaces(const SysTick_s &curr_tick);
 void tick_all_systems(const SysTick_s &curr_tick);
-
-void checkSerialBaudrate();
 
 void setup() {
 
@@ -164,10 +162,10 @@ void loop() {
         Serial.println();
 
         Serial.println("Vector Nav:");
-        vn_300.printBinaryReceiveBuffer();
-        Serial.println();
-        vn_300.printAsciiReceiveBuffer();
-        Serial.println();
+        // vn_300.printBinaryReceiveBuffer();
+        // Serial.println();
+        // vn_300.printAsciiReceiveBuffer();
+        // Serial.println();
 
         Serial.println();
     }
@@ -247,8 +245,6 @@ void tick_all_interfaces(const SysTick_s &curr_tick)
     // Timing managed internally
     // VectorNav
     vn_300.tick(curr_tick);
-    // vn_300.checkSerialBaudrate();
-    // checkSerialBaudrate();
 
 }
 
@@ -258,29 +254,6 @@ void tick_all_interfaces(const SysTick_s &curr_tick)
 void tick_all_systems(const SysTick_s &curr_tick)
 {
   
-}
-
-void checkSerialBaudrate()
-{
-    char toSend[DEFAULT_WRITE_BUFFER_SIZE];
-
-    size_t length = sprintf(toSend, "$VNRRG,05");
-    length += sprintf(toSend + length, "*XX\r\n");
-
-    Serial2.print(toSend);
-    Serial2.flush();
-
-    delay(10);
-    
-    int index = 0;
-    char receiveBuffer[DEFAULT_READ_BUFFER_SIZE] = {'\0'};
-    while (Serial2.available() > 0 && index < DEFAULT_READ_BUFFER_SIZE - 1) {
-        receiveBuffer[index++] = Serial2.read();
-    }
-    Serial.print("Read serial baudrate: ");
-    Serial.println(receiveBuffer);
-
-    Serial.println();
 }
 
 
