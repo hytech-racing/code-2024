@@ -787,7 +787,7 @@ void VectorNavInterface::update_CAN_vn_gnss_comp_sig_health()
     vn_gnss_comp_health.highest_cn0_1_ro = HYTECH_highest_cn0_1_ro_toS(data_.gnssHealth.highestCN0_1);
     vn_gnss_comp_health.num_sats_pvt_2 = data_.gnssHealth.numSatsPVT_2;
     vn_gnss_comp_health.num_sats_rtk_2 = data_.gnssHealth.numSatsRTK_2;
-    vn_gnss_comp_health.highest_cn0_2_ro = HYTECH_highest_cn0_1_ro_toS(data_.gnssHealth.highestCN0_2);
+    vn_gnss_comp_health.highest_cn0_2_ro = HYTECH_highest_cn0_2_ro_toS(data_.gnssHealth.highestCN0_2);
     vn_gnss_comp_health.num_com_sats_pvt = data_.gnssHealth.numComSatsPVT;
     vn_gnss_comp_health.num_com_sats_rtk = data_.gnssHealth.numComSatsRTK;
     enqueue_new_CAN_msg<VN_GNSS_COMP_SIG_HEALTH_t>(&vn_gnss_comp_health, &Pack_VN_GNSS_COMP_SIG_HEALTH_hytech);

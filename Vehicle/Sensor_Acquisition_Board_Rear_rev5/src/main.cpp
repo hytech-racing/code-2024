@@ -71,6 +71,8 @@ void init_all_adcs();
 void tick_all_interfaces(const SysTick_s &curr_tick);
 void tick_all_systems(const SysTick_s &curr_tick);
 
+void checkSerialBaudrate();
+
 void setup() {
 
     // Tick system clock
@@ -92,7 +94,28 @@ void setup() {
     Serial.println("Debounce button initialized for Pi shutdown");
 
     // RS232
-    vn_300.init(curr_tick);
+    // vn_300.init(curr_tick);
+    Serial2.begin(DEFAULT_SERIAL_BAUDRATE);
+    // Wait for IMU to wake up   - Shayan
+    delay(START_UP_DELAY);
+    // Jack up baudrate. This is the highest we can go, limitation unknown
+    // setSerialBaudrate(VN_SERIAL_BAUDRATE6);
+    // End current serial comm.
+    // Serial2.end();
+    // Resart serial with new baudrate
+    // Serial2.begin(VN_SERIAL_BAUDRATE6);
+    // Initialize binary output reg. number
+    // binaryOutputNumber = 0;
+    // Initialize data request counter
+    // requestCounter = 0;
+    // Initialize binary packet length
+    // currentPacketLength = 0;
+    // Configure sensor
+    // setInitialHeading(INIT_HEADING);
+    // turnOffAsciiOutput();
+    // configBinaryOutput(1, 0x01, 0);    // 0000 0001
+    // configBinaryOutput(2, 0x05, 0);    // 0000 0101
+    // configBinaryOutput(3, 0x28, 0);    // 0010 1000
     Serial.println("VectorNav initialized ... for real this time!");
     Serial.println();
 
@@ -223,7 +246,9 @@ void tick_all_interfaces(const SysTick_s &curr_tick)
 
     // Timing managed internally
     // VectorNav
-    vn_300.tick(curr_tick);
+    // vn_300.tick(curr_tick);
+    // vn_300.checkSerialBaudrate();
+    checkSerialBaudrate();
 
 }
 
@@ -233,6 +258,29 @@ void tick_all_interfaces(const SysTick_s &curr_tick)
 void tick_all_systems(const SysTick_s &curr_tick)
 {
   
+}
+
+void checkSerialBaudrate()
+{
+    char toSend[DEFAULT_WRITE_BUFFER_SIZE];
+
+    size_t length = sprintf(toSend, "$VNRRG,05");
+    length += sprintf(toSend + length, "*XX\r\n");
+
+    Serial2.print(toSend);
+    Serial2.flush();
+
+    delay(10);
+    
+    int index = 0;
+    char receiveBuffer[DEFAULT_READ_BUFFER_SIZE] = {'\0'};
+    while (Serial2.available() > 0 && index < DEFAULT_READ_BUFFER_SIZE - 1) {
+        receiveBuffer[index++] = Serial2.read();
+    }
+    Serial.print("Read serial baudrate: ");
+    Serial.println(receiveBuffer);
+
+    Serial.println();
 }
 
 
