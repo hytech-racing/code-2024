@@ -1,6 +1,14 @@
-/*
+/**
  * Teensy 4.0 code for Rear Sensor Acquisition Board (Rear SAB) rev5
- *
+ * 
+ * * Corner boards (SPI/isoSPI)
+ * * * Load cells
+ * * * Suspension potentiometers
+ * * Thermistors (SPI)
+ * * Pi shutdown
+ * * * El spare button on side panel always fake
+ * * VectorNav VN300 INS sensor (UART/RS232)
+ * 
  * Cecilia's Version
  */
 
