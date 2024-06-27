@@ -35,10 +35,12 @@ const int OFFSET_PADDING_2 = 18;
 const int OFFSET_PADDING_3 = 6;
 
 // Debug macros
+/// @brief EDIT ME to achieve differen debug functions
 #define SANITY_CHECK 0
 #define DEBUG_VN 0
 #define DEBUG_GNSS_HEALTH 0
 #define DEBUG_ASYNC 0
+#define CHECK_ASCII_RESPONSE 0
 
 // Utility macros
 #define ATOU32 static_cast<uint32_t>(std::atoi(result))

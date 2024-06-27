@@ -7,6 +7,9 @@
 // Data request functions
 /// @brief set serial baudrate
 /// @param baudrate serial speed in bps
+/**
+ * Checks feedback w/ delay
+ */
 void VN300::setSerialBaudrate(uint32_t baudrate)
 {
     char toSend[DEFAULT_WRITE_BUFFER_MIDIUM];
@@ -18,6 +21,7 @@ void VN300::setSerialBaudrate(uint32_t baudrate)
     serial_->print(toSend);
     serial_->flush();
 
+#if CHECK_ASCII_REPONSE
     delay(10);
     
     int index = 0;
@@ -29,9 +33,13 @@ void VN300::setSerialBaudrate(uint32_t baudrate)
     Serial.println(receiveBuffer);
 
     Serial.println();
+#endif
 }
 
 /// @brief check the current serial baudrate being used
+/**
+ * Checks feedback w/ delay
+ */
 void VN300::checkSerialBaudrate()
 {
     char toSend[DEFAULT_WRITE_BUFFER_SIZE];
@@ -42,6 +50,7 @@ void VN300::checkSerialBaudrate()
     serial_->print(toSend);
     serial_->flush();
 
+#if CHECK_ASCII_RESPONSE
     delay(10);
     
     int index = 0;
@@ -53,10 +62,14 @@ void VN300::checkSerialBaudrate()
     Serial.println(receiveBuffer);
 
     Serial.println();
+#endif
 }
 
 /// @brief set initial heading for GNSS
 /// @param initHeading orientation relative to TRUE NORTH, TRUE NORTH, PULL OUT YOUR PHONE, TRUE NORTH
+/**
+ * Checks feedback with delay
+ */
 void VN300::setInitialHeading(uint32_t initHeading)
 {
     char toSend[DEFAULT_WRITE_BUFFER_SIZE];
@@ -67,6 +80,7 @@ void VN300::setInitialHeading(uint32_t initHeading)
     serial_->print(toSend);
     serial_->flush();
 
+#if CHECK_ASCII_RESPONSE
     delay(10);
 
     int index = 0;
@@ -78,9 +92,13 @@ void VN300::setInitialHeading(uint32_t initHeading)
     Serial.println(receiveBuffer);
 
     Serial.println();
+#endif
 }
 
 /// @brief turn off asynchronous ASCII output from VN
+/**
+ * Does not check feedback
+ */
 void VN300::turnOffAsciiOutput()
 {
     char toSend[DEFAULT_WRITE_BUFFER_MIDIUM];
@@ -91,6 +109,20 @@ void VN300::turnOffAsciiOutput()
 
     serial_->print(toSend);
     serial_->flush();
+
+#if CHECK_ASCII_RESPONSE
+    delay(10);
+
+    int index = 0;
+    char receiveBuffer[DEFAULT_READ_BUFFER_SIZE] = {'\0'};
+    while (serial_->available() > 0 && index < DEFAULT_READ_BUFFER_SIZE - 1) {
+        receiveBuffer[index++] = serial_->read();
+    }
+    Serial.print("Turn off ASCII output: ");
+    Serial.println(receiveBuffer);
+
+    Serial.println();
+#endif
 }
 
 /// @brief configure asynchrinous ASCII outptu type
@@ -111,6 +143,20 @@ void VN300::configAsciiAsyncOutputType(uint32_t asciiReg)
 
     serial_->print(toSend);
     serial_->flush();
+
+#if CHECK_ASCII_RESPONSE
+    delay(10);
+
+    int index = 0;
+    char receiveBuffer[DEFAULT_READ_BUFFER_SIZE] = {'\0'};
+    while (serial_->available() > 0 && index < DEFAULT_READ_BUFFER_SIZE - 1) {
+        receiveBuffer[index++] = serial_->read();
+    }
+    Serial.print("Configure ASCII output type: ");
+    Serial.println(receiveBuffer);
+
+    Serial.println();
+#endif
 }
 
 /// @brief configure the frequency at whcih asynchronous ASCII output is sent by VN
@@ -125,6 +171,20 @@ void VN300::configAsciiAsyncOutputFreq(uint32_t asciiFreq)
 
     serial_->print(toSend);
     serial_->flush();
+
+#if CHECK_ASCII_RESPONSE
+    delay(10);
+
+    int index = 0;
+    char receiveBuffer[DEFAULT_READ_BUFFER_SIZE] = {'\0'};
+    while (serial_->available() > 0 && index < DEFAULT_READ_BUFFER_SIZE - 1) {
+        receiveBuffer[index++] = serial_->read();
+    }
+    Serial.print("Configure ASCII output frequency: ");
+    Serial.println(receiveBuffer);
+
+    Serial.println();
+#endif
 }
 
 /// @brief configure user defined binary packets
@@ -374,6 +434,8 @@ void VN300::readAsyncOutputs()
     {
         char data = serial_->read();
 
+        // Received potential keyword
+        // Binary sync byte
         if (static_cast<uint8_t>(data) == 0xFA)
         {
             if (startAsciiAsychReceive_)    // currently we do not request ASCII async output, so this would always be fasle. if we ever do want to it should be a evaluation similar to the one for binary below
@@ -382,6 +444,7 @@ void VN300::readAsyncOutputs()
                 startAsciiAsychReceive_ = false;
             }
 
+            // Check if binary packet ready to parse
             if (asyncBinaryReadyToProcess())
             {
                 currentPacketLength_ = indexBinary_;
@@ -393,19 +456,24 @@ void VN300::readAsyncOutputs()
 #if DEBUG_ASYNC
                 printBinaryReceiveBuffer();
 #endif
+                // Set to false once one packet finished parsing
                 startBinaryAsyncReceive_ = false;
             }            
             
             if (!startBinaryAsyncReceive_)
             {
                 startBinaryAsyncReceive_ = true;
+                // If a packet finished parsing, start recording of a new packet
                 indexBinary_ = 0;
             }
             
+            // Append received byte
             receiveBufferBinaryAsync_[indexBinary_++] = static_cast<uint8_t>(data);
         }
+        // Received byte is not keyword and binary packet actively recording
         else if (startBinaryAsyncReceive_)
         {
+            // Append received byte
             receiveBufferBinaryAsync_[indexBinary_++] = static_cast<uint8_t>(data);
         }
         else if (startAsciiAsychReceive_)
