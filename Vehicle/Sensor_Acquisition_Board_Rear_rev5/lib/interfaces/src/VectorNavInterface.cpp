@@ -93,6 +93,14 @@ void VectorNavInterface::turnOffAsciiOutput()
     serial_->flush();
 }
 
+/// @brief configure asynchrinous ASCII outptu type
+/// @param asciiReg value to specify which register to output
+/**
+ * Only certain registers can be set to asynchronously output
+ * The GNSS health status one unfortunately cannot
+ * Therefore when we opt for faster async data retrievement
+ * We cannot be requesting GNSS signal strength at the same time
+ */
 void VectorNavInterface::configAsciiAsyncOutputType(uint32_t asciiReg)
 {
     char toSend[DEFAULT_WRITE_BUFFER_MIDIUM];
@@ -105,6 +113,8 @@ void VectorNavInterface::configAsciiAsyncOutputType(uint32_t asciiReg)
     serial_->flush();
 }
 
+/// @brief configure the frequency at whcih asynchronous ASCII output is sent by VN
+/// @param asciiFreq output frequency to be set
 void VectorNavInterface::configAsciiAsyncOutputFreq(uint32_t asciiFreq)
 {
     char toSend[DEFAULT_WRITE_BUFFER_MIDIUM];
@@ -122,8 +132,8 @@ void VectorNavInterface::configAsciiAsyncOutputFreq(uint32_t asciiFreq)
 /// @param fields requested fields
 /// @param rateDivisor denominator from IMU rate (400Hz)
 void VectorNavInterface::configBinaryOutput(uint8_t binaryOutputNumber, 
-                        uint8_t fields, 
-                        uint16_t rateDivisor)
+                                            uint8_t fields, 
+                                            uint16_t rateDivisor)
 {
     char toSend[DEFAULT_WRITE_BUFFER_LONG];
 
@@ -158,19 +168,31 @@ void VectorNavInterface::configBinaryOutput(uint8_t binaryOutputNumber,
 
     if (commonField)
     {
-        if (binaryOutputNumber == 1)
+        if (useAsync_)
         {
-            length += sprintf(toSend + length, ",%X", vn::protocol::uart::COMMONGROUP_TIMEGPS |     // 0000 0000 0110 0010 = 00 62
-                                                    vn::protocol::uart::COMMONGROUP_ANGULARRATE | 
-                                                    vn::protocol::uart::COMMONGROUP_POSITION);
+            length += sprintf(toSend + length, ",%X", vn::protocol::uart::COMMONGROUP_TIMEGPS |             // 0001 0001 0110 1010 = 11 6A
+                                                      vn::protocol::uart::COMMONGROUP_ANGULARRATE |
+                                                      vn::protocol::uart::COMMONGROUP_POSITION |
+                                                      vn::protocol::uart::COMMONGROUP_YAWPITCHROLL |
+                                                      vn::protocol::uart::COMMONGROUP_ACCEL |
+                                                      vn::protocol::uart::COMMONGROUP_INSSTATUS);
         }
-        else if (binaryOutputNumber == 2)
-        {
-            length += sprintf(toSend + length, ",%X", vn::protocol::uart::COMMONGROUP_YAWPITCHROLL |
-                                                    vn::protocol::uart::COMMONGROUP_ACCEL |       // 0001 0001 0000 1000 = 11 08
-                                                    vn::protocol::uart::COMMONGROUP_INSSTATUS);
+        else
+        {        
+            if (binaryOutputNumber == 1)
+            {
+                length += sprintf(toSend + length, ",%X", vn::protocol::uart::COMMONGROUP_TIMEGPS |         // 0000 0000 0110 0010 = 00 62
+                                                          vn::protocol::uart::COMMONGROUP_ANGULARRATE | 
+                                                          vn::protocol::uart::COMMONGROUP_POSITION);
+            }
+            else if (binaryOutputNumber == 2)
+            {
+                length += sprintf(toSend + length, ",%X", vn::protocol::uart::COMMONGROUP_YAWPITCHROLL |    // 0001 0001 0000 1000 = 11 08
+                                                          vn::protocol::uart::COMMONGROUP_ACCEL |       
+                                                          vn::protocol::uart::COMMONGROUP_INSSTATUS);
+            }
         }
-    }
+    }   
     if (timeField)
     {
         // Not requesting atm
@@ -179,7 +201,7 @@ void VectorNavInterface::configBinaryOutput(uint8_t binaryOutputNumber,
     if (imuField)
     {
         length += sprintf(toSend + length, ",%X", vn::protocol::uart::IMUGROUP_UNCOMPACCEL |    // 0000 0000 1000 0100 = 00 84
-                                                vn::protocol::uart::IMUGROUP_DELTAVEL);
+                                                  vn::protocol::uart::IMUGROUP_DELTAVEL);
     }
     if (gpsField)
     {
@@ -193,7 +215,7 @@ void VectorNavInterface::configBinaryOutput(uint8_t binaryOutputNumber,
     if (insField)
     {
         length += sprintf(toSend + length, ",%X", vn::protocol::uart::INSGROUP_VELBODY |
-                                                vn::protocol::uart::INSGROUP_VELU);        // 0000 0100 0000 1000 = 00 08
+                                                  vn::protocol::uart::INSGROUP_VELU);        // 0000 0100 0000 1000 = 00 08
     }
     if(gps2Field)
     {
@@ -308,13 +330,11 @@ void VectorNavInterface::readPollingBinaryOutput(unsigned long currMillis)
         {
             receiveBuffer[index++] = serial_->read();
         }
-
-        for (int i = 0; i < index; i++)
-        {
-            receiveBuffer_[i] = receiveBuffer[i];
-        }    
-
+        
         currentPacketLength_ = index;
+
+        copyForExternalDispay<uint8_t>(receiveBuffer, currentPacketLength_);
+
 
         if (receiveBuffer[0] == 0xFA)
         {
@@ -352,37 +372,27 @@ void VectorNavInterface::readAsyncOutputs()
 {
     while (serial_->available())
     {
-        char data = serial_->read();    
+        char data = serial_->read();
 
         if (static_cast<uint8_t>(data) == 0xFA)
         {
-            if (startAsciiAsychReceive_)
+            if (startAsciiAsychReceive_)    // currently we do not request ASCII async output, so this would always be fasle. if we ever do want to it should be a evaluation similar to the one for binary below
             {
-                processGNSSSignalStrength(receiveBufferAscii_);
+                // process received ASCII packet
                 startAsciiAsychReceive_ = false;
             }
 
             if (asyncBinaryReadyToProcess())
             {
                 currentPacketLength_ = indexBinary_;
-                switch (receiveBuffer_[1])
-                {
-                    case 0x01:
-                        parseBinaryOutput_1(receiveBuffer_, currentPacketLength_);
-                    break;
 
-                    case 0x05:
-                        parseBinaryOutput_2(receiveBuffer_, currentPacketLength_);
-                    break;
+                copyForExternalDispay<uint8_t>(receiveBufferBinaryAsync_, currentPacketLength_);
 
-                    case 0x28:
-                        parseBinaryOutput_3(receiveBuffer_, currentPacketLength_);
-                    break;
-                    
-                    default:
-                    break;
-                }
-                // printBinaryReceiveBuffer();
+                parseBinaryOutput(receiveBufferBinaryAsync_, currentPacketLength_);
+
+#if DEBUG_ASYNC
+                printBinaryReceiveBuffer();
+#endif
                 startBinaryAsyncReceive_ = false;
             }            
             
@@ -392,11 +402,11 @@ void VectorNavInterface::readAsyncOutputs()
                 indexBinary_ = 0;
             }
             
-            receiveBuffer_[indexBinary_++] = static_cast<uint8_t>(data);
+            receiveBufferBinaryAsync_[indexBinary_++] = static_cast<uint8_t>(data);
         }
         else if (startBinaryAsyncReceive_)
         {
-            receiveBuffer_[indexBinary_++] = static_cast<uint8_t>(data);
+            receiveBufferBinaryAsync_[indexBinary_++] = static_cast<uint8_t>(data);
         }
         else if (startAsciiAsychReceive_)
         {
@@ -406,7 +416,8 @@ void VectorNavInterface::readAsyncOutputs()
         {
             continue;
         }
-    }    
+    }
+
 }
 
 // Data process intermediate functions
@@ -427,15 +438,91 @@ void VectorNavInterface::processGNSSSignalStrength(char *receiveBufferAscii)
     update_CAN_vn_gnss_comp_sig_health();
 }
 
+/// @brief parse user define binary packet 1 when we request everything in group 1
+/**
+ * Used when asynchronously retrieving data
+ */
+void VectorNavInterface::parseBinaryOutput(uint8_t receiveBuffer[], int receivedPacketLength)
+{
+    if (receivedPacketLength != binaryPacketLength_)
+    {
+        return;
+    }
+
+    uint8_t syncByte = receiveBuffer[0];
+
+    uint8_t groupByte = receiveBuffer[1];
+
+    uint16_t groupField1 = parseUint16(receiveBuffer, 2);
+    uint16_t groupField2 = parseUint16(receiveBuffer, 4);
+    uint16_t groupField3 = parseUint16(receiveBuffer, 6);
+    uint16_t groupField4 = parseUint16(receiveBuffer, 8);
+
+    data_.timeGPS = parseUint64(receiveBuffer, 0 + OFFSET_PADDING);
+
+    data_.yaw   = parseFloat(receiveBuffer, 8 + OFFSET_PADDING);
+    data_.pitch = parseFloat(receiveBuffer, 12 + OFFSET_PADDING);
+    data_.roll  = parseFloat(receiveBuffer, 16 + OFFSET_PADDING);
+
+    data_.angularRateBodyX = parseFloat(receiveBuffer, 20 + OFFSET_PADDING);
+    data_.angularRateBodyY = parseFloat(receiveBuffer, 24 + OFFSET_PADDING);
+    data_.angularRateBodyZ = parseFloat(receiveBuffer, 28 + OFFSET_PADDING);
+
+    data_.latitude = parseDouble(receiveBuffer, 32 + OFFSET_PADDING);
+    data_.longitude = parseDouble(receiveBuffer, 40 + OFFSET_PADDING);
+    data_.altitude = parseDouble(receiveBuffer, 48 + OFFSET_PADDING);    
+
+    data_.accelBodyX = parseFloat(receiveBuffer, 56 + OFFSET_PADDING);
+    data_.accelBodyY = parseFloat(receiveBuffer, 60 + OFFSET_PADDING);
+    data_.accelBodyZ = parseFloat(receiveBuffer, 64 + OFFSET_PADDING);
+
+    data_.InsStatus = parseUint16(receiveBuffer, 68 + OFFSET_PADDING);
+    // (Refer to VN300 manual p164)
+    // 00 not tracking
+    // 01 aligning
+    // 10 tracking
+    // 11 loss of GNSS for >45 seconds
+    data_.insMode = data_.InsStatus & 0x0003; // Only take the last two bits
+
+    data_.uncompAccelBodyX = parseFloat(receiveBuffer, 70 + OFFSET_PADDING);
+    data_.uncompAccelBodyY = parseFloat(receiveBuffer, 74 + OFFSET_PADDING);
+    data_.uncompAccelBodyZ = parseFloat(receiveBuffer, 78 + OFFSET_PADDING);
+
+    data_.deltaVelX = parseFloat(receiveBuffer, 82 + OFFSET_PADDING);
+    data_.deltaVelY = parseFloat(receiveBuffer, 86 + OFFSET_PADDING);
+    data_.deltaVelZ = parseFloat(receiveBuffer, 90 + OFFSET_PADDING);
+
+    data_.posEcefX = parseDouble(receiveBuffer, 94 + OFFSET_PADDING);
+    data_.posEcefY = parseDouble(receiveBuffer, 102 + OFFSET_PADDING);
+    data_.posEcefZ = parseDouble(receiveBuffer, 110 + OFFSET_PADDING);
+    
+    data_.velBodyX = parseFloat(receiveBuffer, 118 + OFFSET_PADDING);
+    data_.velBodyY = parseFloat(receiveBuffer, 122 + OFFSET_PADDING);
+    data_.velBodyZ = parseFloat(receiveBuffer, 126 + OFFSET_PADDING);
+    data_.velU = parseFloat(receiveBuffer, 130 + OFFSET_PADDING_3);
+
+    uint16_t crc = parseUint16(receiveBuffer, 134);
+
+    // Shove onto CAN
+    update_CAN_vn_gps_time();
+    update_CAN_vn_yaw_pitch_roll();
+    update_CAN_vn_angular_rate();
+    update_CAN_vn_position();    
+    update_CAN_vn_accel();
+    update_CAN_vn_ins_status();
+    update_CAN_vn_uncomp_accel();    
+    update_CAN_vn_ecef_pos_xy();
+    update_CAN_vn_ecef_pos_z();
+    update_CAN_vn_vel_body();
+}
+
 // Data parsers
 /// @brief parse user defined binary packet 1
 /// @param receiveBuffer receive buffer
 /// @param receivedPacketLength length of current received packet
 void VectorNavInterface::parseBinaryOutput_1(uint8_t receiveBuffer[], int receivedPacketLength)
 {
-    int binaryPacketLength = 1 + 1 + 2 * BINARY_OUTPUT_GROUP_COUNT_1 + BINARY_OUTPUT_PAYLOAD_1 + 2;  // in bytes: sync, groups, group fields, payload, crc
-
-    if (receivedPacketLength != binaryPacketLength)
+    if (receivedPacketLength != binaryPacketLength_1)
     {
         return;
     }  
@@ -458,30 +545,30 @@ void VectorNavInterface::parseBinaryOutput_1(uint8_t receiveBuffer[], int receiv
         return;
 #endif
 
-#if DEBUG
+#if DEBUG_VN
     Serial.println("Group 1 output:");
 #endif
 
     data_.timeGPS = parseUint64(receiveBuffer, 0 + OFFSET_PADDING_1);
-#if DEBUG
-    Serial.printf("GPS time: %X\n", timeGPS);
+#if DEBUG_VN
+    Serial.printf("GPS time: %X\n", data_.timeGPS);
 #endif
 
     data_.angularRateBodyX = parseFloat(receiveBuffer, 8 + OFFSET_PADDING_1);
     data_.angularRateBodyY = parseFloat(receiveBuffer, 12 + OFFSET_PADDING_1);
     data_.angularRateBodyZ = parseFloat(receiveBuffer, 16 + OFFSET_PADDING_1);
-#if DEBUG
-    Serial.printf("Angular rate X: %f  ", angularRateBodyX);
-    Serial.printf("Angular rate Y: %f  ", angularRateBodyY);
-    Serial.printf("Angular Rate Z raw: %f  ", angularRateBodyZ);
+#if DEBUG_VN
+    Serial.printf("Angular rate X: %f  ", data_.angularRateBodyX);
+    Serial.printf("Angular rate Y: %f  ", data_.angularRateBodyY);
+    Serial.printf("Angular Rate Z raw: %f  ", data_.angularRateBodyZ);
 #endif
 
     data_.latitude = parseDouble(receiveBuffer, 20 + OFFSET_PADDING_1);
     data_.longitude = parseDouble(receiveBuffer, 28 + OFFSET_PADDING_1);
     data_.altitude = parseDouble(receiveBuffer, 36 + OFFSET_PADDING_1);
-#if DEBUG
-    Serial.printf("Raw Latitude: %f  ", latitude);
-    Serial.printf("Raw Longitude: %f  ", longitude);
+#if DEBUG_VN
+    Serial.printf("Raw Latitude: %f  ", data_.latitude);
+    Serial.printf("Raw Longitude: %f  ", data_.longitude);
 #endif
 
     uint16_t crc = (receiveBuffer[45 + OFFSET_PADDING_1] << 8) | receiveBuffer[44 + OFFSET_PADDING_1];
@@ -490,16 +577,12 @@ void VectorNavInterface::parseBinaryOutput_1(uint8_t receiveBuffer[], int receiv
     update_CAN_vn_gps_time();
     update_CAN_vn_position();
     update_CAN_vn_angular_rate();
-    
-    // clearReceiveBuffer();
 }
 
 /// @brief parse user defined binary packet 2     
 void VectorNavInterface::parseBinaryOutput_2(uint8_t receiveBuffer[], int receivedPacketLength)
 {
-    int binaryPacketLength = 1 + 1 + 2 * BINARY_OUTPUT_GROUP_COUNT_2 + BINARY_OUTPUT_PAYLOAD_2 + 2;  // in bytes: sync, groups, group fields, payload, crc
-
-    if (receivedPacketLength != binaryPacketLength)
+    if (receivedPacketLength != binaryPacketLength_2)
     {
         return;
     }
@@ -528,48 +611,47 @@ void VectorNavInterface::parseBinaryOutput_2(uint8_t receiveBuffer[], int receiv
         return;
 #endif
 
-#if DEBUG
+#if DEBUG_VN
     Serial.println("Group 2 output:");
 #endif
 
     data_.yaw   = parseFloat(receiveBuffer, OFFSET_PADDING_2_ORGINAL);
     data_.pitch = parseFloat(receiveBuffer, 4 + OFFSET_PADDING_2_ORGINAL);
     data_.roll  = parseFloat(receiveBuffer, 8 + OFFSET_PADDING_2_ORGINAL);   
-#if DEBUG
-    Serial.printf("Yaw: %f  ", yaw);                                 
-    Serial.printf("Pitch: %f  ", pitch);
-    Serial.printf("Roll: %f\n", roll);        
+#if DEBUG_VN
+    Serial.printf("Yaw: %f  ", data_.yaw);                                 
+    Serial.printf("Pitch: %f  ", data_.pitch);
+    Serial.printf("Roll: %f\n", data_.roll);        
 #endif          
 
     data_.accelBodyX = parseFloat(receiveBuffer, OFFSET_PADDING_2);
     data_.accelBodyY = parseFloat(receiveBuffer, 4 + OFFSET_PADDING_2);
     data_.accelBodyZ = parseFloat(receiveBuffer, 8 + OFFSET_PADDING_2);
-#if DEBUG
-    Serial.printf("Accel body X: %f  ", accelBodyX);
-    Serial.printf("Accel body Y: %f  ", accelBodyY);
-    Serial.printf("Accel body Z: %f\n", accelBodyZ);
+#if DEBUG_VN
+    Serial.printf("Accel body X: %f  ", data_.accelBodyX);
+    Serial.printf("Accel body Y: %f  ", data_.accelBodyY);
+    Serial.printf("Accel body Z: %f\n", data_.accelBodyZ);
 #endif
 
     data_.InsStatus = parseUint16(receiveBuffer, 12 + OFFSET_PADDING_2);
-
     // (Refer to VN300 manual p164)
     // 00 not tracking
     // 01 aligning
     // 10 tracking
     // 11 loss of GNSS for >45 seconds
     data_.insMode = data_.InsStatus & 0x0003; // Only take the last two bits  
-#if DEBUG
-    Serial.printf("Ins status: %X\n", InsStatus);
-    Serial.printf("Ins status: %X\n", insMode);
+#if DEBUG_VN
+    Serial.printf("Ins status: %X\n", data_.InsStatus);
+    Serial.printf("Ins status: %X\n", data_.insMode);
 #endif
 
     data_.uncompAccelBodyX = parseFloat(receiveBuffer, 14 + OFFSET_PADDING_2);
     data_.uncompAccelBodyY = parseFloat(receiveBuffer, 18 + OFFSET_PADDING_2);
     data_.uncompAccelBodyZ = parseFloat(receiveBuffer, 22 + OFFSET_PADDING_2);
-#if DEBUG
-    Serial.printf("UncompAccelBodyZ: %f  ", uncompAccelBodyX);
-    Serial.printf("UncompAccelBodyY: %f  ", uncompAccelBodyY);
-    Serial.printf("UncompAccelBodyZ: %f\n", uncompAccelBodyZ);
+#if DEBUG_VN
+    Serial.printf("UncompAccelBodyZ: %f  ", data_.uncompAccelBodyX);
+    Serial.printf("UncompAccelBodyY: %f  ", data_.uncompAccelBodyY);
+    Serial.printf("UncompAccelBodyZ: %f\n", data_.uncompAccelBodyZ);
 #endif
 
     data_.deltaVelX = parseFloat(receiveBuffer, 26 + OFFSET_PADDING_2);
@@ -585,16 +667,12 @@ void VectorNavInterface::parseBinaryOutput_2(uint8_t receiveBuffer[], int receiv
     update_CAN_vn_yaw_pitch_roll();
 
     // Missing CAN message for deltaVel right now
-
-    // clearReceiveBuffer();
 }
 
 /// @brief parse user defined binary packet 3
 void VectorNavInterface::parseBinaryOutput_3(uint8_t receiveBuffer[], int receivedPacketLength)
 {
-    int binaryPacketLength = 1 + 1 + 2 * BINARY_OUTPUT_GROUP_COUNT_3 + BINARY_OUTPUT_PAYLOAD_3 + 2;  // in bytes: sync, groups, group fields, payload, crc
-
-    if (receivedPacketLength != binaryPacketLength)
+    if (receivedPacketLength != binaryPacketLength_3)
     {
         return;
     }
@@ -623,29 +701,28 @@ void VectorNavInterface::parseBinaryOutput_3(uint8_t receiveBuffer[], int receiv
         return;
 #endif
 
-#if DEBUG
+#if DEBUG_VN
     Serial.println("Group 3 output:");
 #endif
 
     data_.posEcefX = parseDouble(receiveBuffer, OFFSET_PADDING_3);
     data_.posEcefY = parseDouble(receiveBuffer, 8 + OFFSET_PADDING_3);
     data_.posEcefZ = parseDouble(receiveBuffer, 16 + OFFSET_PADDING_3);
-#if DEBUG
-    Serial.printf("PosEcf0 raw: %f  ", (float)posEcefX);
-    Serial.printf("PosEcf1 raw: %f  ", (float)posEcefY);
-    Serial.printf("PosEcf2 raw: %f  \n", (float)posEcefZ);
+#if DEBUG_VN
+    Serial.printf("PosEcf0 raw: %f  ", static_cast<float>(data_.posEcefX));
+    Serial.printf("PosEcf1 raw: %f  ", static_cast<float>(data_.posEcefY));
+    Serial.printf("PosEcf2 raw: %f  \n", static_cast<float>(data_.posEcefZ));
 #endif
     
     data_.velBodyX = parseFloat(receiveBuffer, 24 + OFFSET_PADDING_3);
     data_.velBodyY = parseFloat(receiveBuffer, 28 + OFFSET_PADDING_3);
     data_.velBodyZ = parseFloat(receiveBuffer, 32 + OFFSET_PADDING_3);
-#if DEBUG
-    Serial.printf("Velocity body X: %f  ", velBodyX);
-    Serial.printf("Velocity body Y: %f  ", velBodyY);
-    Serial.printf("Velocity body Z: %f\n", velBodyZ);
-#endif
-
     data_.velU = parseFloat(receiveBuffer, 36 + OFFSET_PADDING_3);
+#if DEBUG_VN
+    Serial.printf("Velocity body X: %f  ", data_.velBodyX);
+    Serial.printf("Velocity body Y: %f  ", data_.velBodyY);
+    Serial.printf("Velocity body Z: %f\n", data_.velBodyZ);
+#endif    
 
     uint16_t crc = (receiveBuffer[41 + OFFSET_PADDING_3] << 8) | receiveBuffer[40 + OFFSET_PADDING_3];
    
@@ -655,8 +732,6 @@ void VectorNavInterface::parseBinaryOutput_3(uint8_t receiveBuffer[], int receiv
     update_CAN_vn_vel_body();
 
     // Missing CAN message for PosEcef right now
-
-    // clearReceiveBuffer();
 }
 
 /// @brief parse GNSS signal strength ASCII packet
@@ -831,6 +906,8 @@ void VectorNavInterface::init(SysTick_s currTick)
     currentPacketLength_ = 0;
     // Initialize ascii packet length
     currentAsciiLength_ = 0;
+    // Initialize display length
+    displayLength_ = 0;
     // Initialize timestamps
     lastVNRequestTime_ = currTick.millis;
     lastVNReadAsciiTime_ = currTick.millis;
@@ -855,14 +932,20 @@ void VectorNavInterface::init(SysTick_s currTick)
 
     if (useAsync_)
     {
+        // Configure ASCII
         // configAsciiAsyncOutputType();
         // configAsciiAsyncOutputFreq();
-    }    
 
-    // Configure user defined binary groups
-    configBinaryOutput(1, 0x01, binaryRateDivisor_);    // 0000 0001
-    configBinaryOutput(2, 0x05, binaryRateDivisor_);    // 0000 0101
-    configBinaryOutput(3, 0x28, binaryRateDivisor_);    // 0010 1000
+        // Configure user defined binary groups
+        configBinaryOutput(1, 0x2D, ((binaryRateDivisor_ < 8) ? binaryRateDivisor_ : 8));    // 0010 1101. we max out at 50Hz, possibly constrained by hardware
+    }    
+    else
+    {
+        // Configure user defined binary groups
+        configBinaryOutput(1, 0x01, 0);                     // 0000 0001
+        configBinaryOutput(2, 0x05, 0);                     // 0000 0101
+        configBinaryOutput(3, 0x28, 0);                     // 0010 1000
+    }
 }
 
 // Tick
@@ -882,7 +965,7 @@ void VectorNavInterface::tick(SysTick_s currTick)
     }
     else if (useAsync_)
     {
-        if (currTick.triggers.trigger1000)
+        if (currTick.triggers.trigger1000)  // should be at least 3x the rate at which async data is sent
         {
             readAsyncOutputs();
         }        
@@ -890,36 +973,19 @@ void VectorNavInterface::tick(SysTick_s currTick)
     else
     {
         return;
-    }
-
-    // if (currTick.triggers.trigger1000)
-    // {
-    //     while (serial_->available())
-    //     {
-    //         Serial.print(serial_->read(), HEX);
-    //     }
-    //     Serial.println();
-    // }
-
-    
-    
+    }   
 }
 
 // Print utilities for debug
 /// @brief print receive buffer for binary packets
 void VectorNavInterface::printBinaryReceiveBuffer()
 {
-    // Only print when not actively receiving async
-    // When polling this is always true
-    // if (!startBinaryAsyncReceive_)
-    // {
-        Serial.print("Binary: ");
-        for (int i = 0; i < currentPacketLength_; i++)
-        {
-            Serial.printf("%X ", receiveBuffer_[i]);
-        }
-        Serial.printf("\nCurrent binary packet length: %d", currentPacketLength_);
-    // }
+    Serial.print("Binary: ");
+    for (int i = 0; i < displayLength_; i++)
+    {
+        Serial.printf("%X ", receiveBuffer_[i]);
+    }
+    Serial.printf("\nCurrent binary packet length: %d", displayLength_);
 
     Serial.println();
 }
@@ -929,7 +995,7 @@ void VectorNavInterface::printAsciiReceiveBuffer()
 {
     // Only print when not actively receiving async
     // When polling this is always true
-    if (!startAsciiAsychReceive_)
+    if (!startAsciiAsychReceive_)   // currently always true bc not requesting ASCII async output
     {
         Serial.print("Ascii: ");
         Serial.println(receiveBufferAscii_);
@@ -948,10 +1014,8 @@ template <typename U>
 void VectorNavInterface::enqueue_new_CAN_msg(U *structure, uint32_t (*pack_function)(U *, uint8_t *, uint8_t *, uint8_t *))
 {
     CAN_message_t can_msg;
+
     can_msg.id = pack_function(structure, can_msg.buf, &can_msg.len, (uint8_t*) &can_msg.flags.extended);
-
-    // TELEM_CAN.write(can_msg);
-
     uint8_t buf[sizeof(CAN_message_t)] = {};
     memmove(buf, &can_msg, sizeof(CAN_message_t));
 
@@ -974,7 +1038,7 @@ uint16_t VectorNavInterface::parseUint16(uint8_t buffer[], int startIndex)
 uint32_t VectorNavInterface::parseUint32(uint8_t buffer[], int startIndex)
 {
     uint32_t data = (((uint32_t) buffer[3 + startIndex] << (8 * 3)) | ((uint32_t) buffer[2 + startIndex] << (8 * 2)) |
-                   ((uint32_t) buffer[1 + startIndex] << (8 * 1)) | ((uint32_t) buffer[0 + startIndex] << (8 * 0)));
+                    ((uint32_t) buffer[1 + startIndex] << (8 * 1)) | ((uint32_t) buffer[0 + startIndex] << (8 * 0)));
   
     return data;
 }
@@ -984,9 +1048,9 @@ uint32_t VectorNavInterface::parseUint32(uint8_t buffer[], int startIndex)
 uint64_t VectorNavInterface::parseUint64(uint8_t buffer[], int startIndex)
 {
     uint64_t data = (((uint64_t) buffer[7 + startIndex] << (8 * 7)) | ((uint64_t) buffer[6 + startIndex] << (8 * 6)) |
-                   ((uint64_t) buffer[5 + startIndex] << (8 * 5)) | ((uint64_t) buffer[4 + startIndex] << (8 * 4)) |
-                   ((uint64_t) buffer[3 + startIndex] << (8 * 3)) | ((uint64_t) buffer[2 + startIndex] << (8 * 2)) |
-                   ((uint64_t) buffer[1 + startIndex] << (8 * 1)) | ((uint64_t) buffer[0 + startIndex] << (8 * 0)));
+                    ((uint64_t) buffer[5 + startIndex] << (8 * 5)) | ((uint64_t) buffer[4 + startIndex] << (8 * 4)) |
+                    ((uint64_t) buffer[3 + startIndex] << (8 * 3)) | ((uint64_t) buffer[2 + startIndex] << (8 * 2)) |
+                    ((uint64_t) buffer[1 + startIndex] << (8 * 1)) | ((uint64_t) buffer[0 + startIndex] << (8 * 0)));
   
     return data;
 }
@@ -1055,25 +1119,41 @@ char* VectorNavInterface::vnstrtok(char* str, size_t& startIndex)
 	return str + origIndex;
 }
 
-/// @brief clear binary receive buffer
+/// @brief clear receive buffer
 /// @param receiveBuffer the data buffer to be cleared
-void VectorNavInterface::clearReceiveBuffer(uint8_t receiveBuffer[])
+template <typename T>
+void VectorNavInterface::clearReceiveBuffer(T receiveBuffer[], int length)
 {
-    for (int i = 0; i < DEFAULT_SERIAL_BUFFER_SIZE; i++)
+    for (int i = 0; i < length; i++)
     {
         receiveBuffer[i] = 0;
     }
 }
 
+/// @brief calculate the length of each binary packet
 void VectorNavInterface::calculateBinaryPacketsLength()
 {
-    binaryPacketLength_1 = 1 + 1 + 2 * BINARY_OUTPUT_GROUP_COUNT_1 + BINARY_OUTPUT_PAYLOAD_1 + 2;
-    
-    binaryPacketLength_2 = 1 + 1 + 2 * BINARY_OUTPUT_GROUP_COUNT_2 + BINARY_OUTPUT_PAYLOAD_2 + 2;
-    
-    binaryPacketLength_3 = 1 + 1 + 2 * BINARY_OUTPUT_GROUP_COUNT_3 + BINARY_OUTPUT_PAYLOAD_3 + 2;
+    if (useAsync_)
+    {
+        binaryPacketLength_ = 1 + 1 + 2 * BINARY_OUTPUT_GROUP_COUNT_TOTAL + BINARY_OUTPUT_PAYLOAD + 2;
+
+        binaryPacketLength_1 = 0;
+        binaryPacketLength_2 = 0;
+        binaryPacketLength_3 = 0;
+    }
+    else
+    {
+        binaryPacketLength_ = 0;
+
+        binaryPacketLength_1 = 1 + 1 + 2 * BINARY_OUTPUT_GROUP_COUNT_1 + BINARY_OUTPUT_PAYLOAD_1 + 2;    
+        binaryPacketLength_2 = 1 + 1 + 2 * BINARY_OUTPUT_GROUP_COUNT_2 + BINARY_OUTPUT_PAYLOAD_2 + 2;    
+        binaryPacketLength_3 = 1 + 1 + 2 * BINARY_OUTPUT_GROUP_COUNT_3 + BINARY_OUTPUT_PAYLOAD_3 + 2;
+    }    
 }
 
+/// @brief evaluate whether the asynchronous binary output received 
+///        so far is ready to be parsed
+/// @return true if data is ready
 bool VectorNavInterface::asyncBinaryReadyToProcess()
 {
     if (!startBinaryAsyncReceive_)
@@ -1082,22 +1162,29 @@ bool VectorNavInterface::asyncBinaryReadyToProcess()
     }
     
     bool dataReady = false;
-    if (receiveBuffer_[0] == 0xFA)
+    if (receiveBufferBinaryAsync_[0] == 0xFA)
     {
-        if (receiveBuffer_[1] == 0x01 && indexBinary_ == binaryPacketLength_1)
+        if (receiveBufferBinaryAsync_[1] == 0x2D && indexBinary_ == binaryPacketLength_)
         {
             dataReady = true;
         }
-        else if (receiveBuffer_[1] == 0x05 && indexBinary_ == binaryPacketLength_2)
-        {
-            dataReady = true;
-        }
-        else if (receiveBuffer_[1] == 0x28 && indexBinary_ == binaryPacketLength_3)
-        {
-            dataReady = true;
-        }      
     }
+
     return dataReady;
+}
+
+/// @brief copy completely received data packet for external display
+/// @param buffer holder array for received binary data packet
+/// @param length length of the received packet
+template <typename T>
+void VectorNavInterface::copyForExternalDispay(T buffer[], int length)
+{
+    for (int i = 0; i < length; i++)
+    {
+        receiveBuffer_[i] = buffer[i];
+    }
+
+    displayLength_ = length;
 }
 
 

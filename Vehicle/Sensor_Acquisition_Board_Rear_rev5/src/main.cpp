@@ -58,7 +58,7 @@ TelemetryInterface telem_interface(&CAN2_txBuffer,
 ThermistorReadChannel_s<TOTAL_THERMISTOR_COUNT> therm_channels = {{THERM_3, THERM_4, THERM_5, THERM_6, THERM_7, THERM_8, THERM_9}};
 ThermistorInterface<TOTAL_THERMISTOR_COUNT> therm_interface(therm_channels, THERM_ALPHA);
 // VectorNav
-VectorNavInterface vn_300(&CAN2_txBuffer, &Serial2, VN_RS232_SPEED, true, INIT_HEADING, true, 8);  // 50Hz for now
+VectorNavInterface vn_300(&CAN2_txBuffer, &Serial2, VN_RS232_SPEED, true, INIT_HEADING, true);  // 50Hz by default
 
 /**
  * Systems
@@ -162,10 +162,8 @@ void loop() {
         Serial.println();
 
         Serial.println("Vector Nav:");
-        // vn_300.printBinaryReceiveBuffer();
-        // Serial.println();
-        // vn_300.printAsciiReceiveBuffer();
-        // Serial.println();
+        vn_300.printBinaryReceiveBuffer();
+        vn_300.printAsciiReceiveBuffer();
 
         Serial.println();
     }

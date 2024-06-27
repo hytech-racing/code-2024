@@ -63,9 +63,6 @@
 
 /* VN parameters */
 #define INIT_HEADING 320    // Rome endurance
-#define SANITY_CHECK 0
-#define DEBUG 0
-#define DEBUG_GNSS_HEALTH 0
 
 
 

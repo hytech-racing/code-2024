@@ -11,10 +11,9 @@
 #include "hytech.h"
 #include "SysClock.h"
 
-extern CANTelem TELEM_CAN;
-
 const int DEFAULT_SERIAL_BAUDRATE = 115200;
 const int DEFAULT_INIT_HEADING = 0;     // Relative to TRUE NORTH TRUE NORTH TRUE NORTH
+const int DEFAULT_BINARY_RATE_DIVISOR = 8;
 
 const int START_UP_DELAY = 5000;
 const int VN_READ_INTERVAL = 10;        // milliseconds
@@ -85,8 +84,11 @@ private:
     // Serial
     HardwareSerial *serial_;
     int serialSpeed_;
-    uint8_t receiveBuffer_[DEFAULT_SERIAL_BUFFER_SIZE] = {0};
+    uint8_t receiveBuffer_[DEFAULT_READ_BUFFER_SIZE] = {0};
+    uint8_t receiveBufferBinaryAsync_[DEFAULT_READ_BUFFER_SIZE] = {0};
     char receiveBufferAscii_[DEFAULT_SERIAL_BUFFER_SIZE] = {'\0'};
+    // External display
+    int displayLength_;
     // Initial heading
     bool setInitHeading_;
     uint32_t initHeading_;
@@ -95,9 +97,11 @@ private:
     uint8_t binaryOutputNumber_;
     bool binaryReadingStart_;
     bool asciiReadingStart_;
+    // Length's    
     int currentPacketLength_;
     int currentAsciiLength_;
-    int binaryPacketLength_1;
+    int binaryPacketLength_;
+    int binaryPacketLength_1;   // if I do length[3] the first one would not calculate correctly which is cursed someone should find out why
     int binaryPacketLength_2;
     int binaryPacketLength_3;
     // Async read variables
@@ -165,11 +169,22 @@ private:
 
     /// @brief clear binary receive buffer
     /// @param receiveBuffer the data buffer to be cleared
-    void clearReceiveBuffer(uint8_t receiveBuffer[]);
+    template <typename T>
+    void clearReceiveBuffer(T receiveBuffer[], int length);
 
+    /// @brief calculate the length of each binary packet
     void calculateBinaryPacketsLength();
 
+    /// @brief evaluate whether the asynchronous binary output received 
+    ///        so far is ready to be parsed
+    /// @return true if data is ready
     bool asyncBinaryReadyToProcess();
+    
+    /// @brief copy completely received binary data packet for external display
+    /// @param buffer holder array for received binary data packet
+    /// @param length length of the received packet
+    template <typename T>
+    void copyForExternalDispay(T buffer[], int length);
 
 public:
 // Constructors
@@ -182,12 +197,19 @@ public:
         useAsync_(useAsync),
         usePolling_(!useAsync),
         binaryRateDivisor_(useAsync ? binaryRateDivisor : 0) {};
+    
+    VectorNavInterface(CANBufferType *circBuff, HardwareSerial *serial, int serialSpeed, bool setInitHeading, uint32_t initHeading, bool useAsync):
+        VectorNavInterface(circBuff, serial, serialSpeed, setInitHeading, initHeading, useAsync, DEFAULT_BINARY_RATE_DIVISOR) {};
+
     VectorNavInterface(CANBufferType *circBuff, HardwareSerial *serial, int serialSpeed, bool setInitHeading, uint32_t initHeading):
         VectorNavInterface(circBuff, serial, serialSpeed, setInitHeading, initHeading, false, 0) {};
+
     VectorNavInterface(CANBufferType *circBuff, HardwareSerial *serial, int serialSpeed, bool setInitHeading):
         VectorNavInterface(circBuff, serial, serialSpeed, setInitHeading, DEFAULT_INIT_HEADING, false, 0) {};
+
     VectorNavInterface(CANBufferType *circBuff, HardwareSerial *serial, int serialSpeed):
         VectorNavInterface(circBuff, serial, serialSpeed, false, DEFAULT_INIT_HEADING, false, 0) {};
+
     VectorNavInterface(CANBufferType *circBuff, HardwareSerial *serial):
         VectorNavInterface(circBuff, serial, DEFAULT_SERIAL_BAUDRATE, false, DEFAULT_INIT_HEADING, false, 0) {};
 
@@ -206,8 +228,12 @@ public:
     /// @brief turn off asynchronous ASCII output from VN
     void turnOffAsciiOutput();
     
+    /// @brief configure asynchrinous ASCII outptu type
+    /// @param asciiReg value to specify which register to output
     void configAsciiAsyncOutputType(uint32_t asciiReg);
 
+    /// @brief configure the frequency at whcih asynchronous ASCII output is sent by VN
+    /// @param asciiFreq output frequency to be set
     void configAsciiAsyncOutputFreq(uint32_t asciiFreq);
 
     /// @brief configure user defined binary packets
@@ -236,9 +262,13 @@ public:
     void readAsyncOutputs();
 
 // Data process intermediate functions
+    /// @brief process received GNSS ASCII packet
     void processGNSSSignalStrength(char *receiveBufferAscii);
 
 // Data parsers
+    /// @brief parse user define binary packet 1 when we request everything in group 1
+    void parseBinaryOutput(uint8_t receiveBuffer[], int receivedPacketLength);
+
     /// @brief parse user defined binary packet 1
     /// @param receiveBuffer receive buffer
     /// @param receivedPacketLength length of current received packet
