@@ -395,7 +395,6 @@ void VN300::readPollingBinaryOutput(unsigned long currMillis)
 
         copyForExternalDispay<uint8_t>(receiveBuffer, currentPacketLength_);
 
-
         if (receiveBuffer[0] == 0xFA)
         {
             switch (receiveBuffer[1])
