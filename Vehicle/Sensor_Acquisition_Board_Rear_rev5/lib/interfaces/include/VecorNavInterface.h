@@ -1,83 +1,18 @@
-#ifndef __VN_300__
-#define __VN_300__
-
-#include <Arduino.h>
+#ifndef __VECTORNAV_INTERFACE__
+#define __VECTORNAV_INTERFACE__
 
 #include <stdint.h>
 
-#include "types.h"
-#include "VNConsts.h"
 #include "MessageQueueDefine.h"
 #include "hytech.h"
 #include "SysClock.h"
+#include "VN_300.h"
 
-const int DEFAULT_SERIAL_BAUDRATE = 115200;
-const int DEFAULT_INIT_HEADING = 0;     // Relative to TRUE NORTH TRUE NORTH TRUE NORTH
-const int DEFAULT_BINARY_RATE_DIVISOR = 8;
-
-const int START_UP_DELAY = 5000;
 const int VN_READ_INTERVAL = 10;        // milliseconds
 const int VN_READ_ASCII_INTERVAL = 8;
 const int VN_READ_BINARY_INTERVAL = 8;
 
-// Sensor data
-struct VNGNSSSigHealth_s
-{
-    float numSatsPVT_1;
-    float numSatsRTK_1;
-    float highestCN0_1;
-    float numSatsPVT_2;
-    float numSatsRTK_2;
-    float highestCN0_2;
-    float numComSatsPVT;
-    float numComSatsRTK;
-};
-
-struct VNSensorDataReport_s
-{
-    // GPS time
-    uint64_t timeGPS;
-    // Angular rates
-    float angularRateBodyX;
-    float angularRateBodyY;
-    float angularRateBodyZ;
-    // GNSS LLA
-    double latitude;
-    double longitude;
-    double altitude;
-    // Attitudes
-    float yaw;
-    float pitch;
-    float roll;
-    // Acceleration
-    float accelBodyX;
-    float accelBodyY;
-    float accelBodyZ;
-    // INS status
-    uint16_t InsStatus;
-    uint16_t insMode;
-    // Uncompensated acceleration
-    float uncompAccelBodyX;
-    float uncompAccelBodyY;
-    float uncompAccelBodyZ;
-    // Velocity delta
-    float deltaVelX;
-    float deltaVelY;
-    float deltaVelZ;
-    // GNSS Ecef
-    double posEcefX;
-    double posEcefY;
-    double posEcefZ;
-    // Body velocity
-    float velBodyX;
-    float velBodyY;
-    float velBodyZ;
-    float velU;     // uncertainty of velocity measurement. Not very indicative, VN hella confident when wrong, reporting neg vel during accel.
-    // GNSS health
-    VNGNSSSigHealth_s gnssHealth;
-};
-
-class VN300
+class VectorNavInterface
 {
 private:
 // Data
@@ -117,6 +52,8 @@ private:
     unsigned long lastVNRequestTime_;
     unsigned long lastVNReadAsciiTime_;
     unsigned long lastVNReadBinaryTime_;
+// VN sensor
+    VN_300 vn_;
 // CAN buffer
     CANBufferType *msgQueue_;
 // Sensor readings
@@ -188,7 +125,7 @@ private:
 
 public:
 // Constructors
-    VN300(CANBufferType *circBuff, HardwareSerial *serial, int serialSpeed, bool setInitHeading, uint32_t initHeading, bool useAsync, uint16_t binaryRateDivisor):
+    VectorNavInterface(CANBufferType *circBuff, HardwareSerial *serial, int serialSpeed, bool setInitHeading, uint32_t initHeading, bool useAsync, uint16_t binaryRateDivisor):
         msgQueue_(circBuff),
         serial_(serial),
         serialSpeed_(serialSpeed),
@@ -198,20 +135,20 @@ public:
         usePolling_(!useAsync),
         binaryRateDivisor_(useAsync ? binaryRateDivisor : 0) {};
     
-    VN300(CANBufferType *circBuff, HardwareSerial *serial, int serialSpeed, bool setInitHeading, uint32_t initHeading, bool useAsync):
-        VN300(circBuff, serial, serialSpeed, setInitHeading, initHeading, useAsync, DEFAULT_BINARY_RATE_DIVISOR) {};
+    VectorNavInterface(CANBufferType *circBuff, HardwareSerial *serial, int serialSpeed, bool setInitHeading, uint32_t initHeading, bool useAsync):
+        VectorNavInterface(circBuff, serial, serialSpeed, setInitHeading, initHeading, useAsync, DEFAULT_BINARY_RATE_DIVISOR) {};
 
-    VN300(CANBufferType *circBuff, HardwareSerial *serial, int serialSpeed, bool setInitHeading, uint32_t initHeading):
-        VN300(circBuff, serial, serialSpeed, setInitHeading, initHeading, false, 0) {};
+    VectorNavInterface(CANBufferType *circBuff, HardwareSerial *serial, int serialSpeed, bool setInitHeading, uint32_t initHeading):
+        VectorNavInterface(circBuff, serial, serialSpeed, setInitHeading, initHeading, false, 0) {};
 
-    VN300(CANBufferType *circBuff, HardwareSerial *serial, int serialSpeed, bool setInitHeading):
-        VN300(circBuff, serial, serialSpeed, setInitHeading, DEFAULT_INIT_HEADING, false, 0) {};
+    VectorNavInterface(CANBufferType *circBuff, HardwareSerial *serial, int serialSpeed, bool setInitHeading):
+        VectorNavInterface(circBuff, serial, serialSpeed, setInitHeading, DEFAULT_INIT_HEADING, false, 0) {};
 
-    VN300(CANBufferType *circBuff, HardwareSerial *serial, int serialSpeed):
-        VN300(circBuff, serial, serialSpeed, false, DEFAULT_INIT_HEADING, false, 0) {};
+    VectorNavInterface(CANBufferType *circBuff, HardwareSerial *serial, int serialSpeed):
+        VectorNavInterface(circBuff, serial, serialSpeed, false, DEFAULT_INIT_HEADING, false, 0) {};
 
-    VN300(CANBufferType *circBuff, HardwareSerial *serial):
-        VN300(circBuff, serial, DEFAULT_SERIAL_BAUDRATE, false, DEFAULT_INIT_HEADING, false, 0) {};
+    VectorNavInterface(CANBufferType *circBuff, HardwareSerial *serial):
+        VectorNavInterface(circBuff, serial, DEFAULT_SERIAL_BAUDRATE, false, DEFAULT_INIT_HEADING, false, 0) {};
 
 // Data request functions
     /// @brief set serial baudrate
@@ -355,4 +292,4 @@ public:
 
 };
 
-#endif  /* __VN_300__ */
+#endif  /* __VECTORNAV_INTERFACE__ */

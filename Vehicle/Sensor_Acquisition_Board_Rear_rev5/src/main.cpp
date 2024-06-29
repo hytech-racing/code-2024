@@ -31,7 +31,7 @@
 #include "MCP_ADC.h"
 #include "TelemetryInterface.h"
 #include "ThermistorInterface.h"
-#include "VN300.h"
+#include "VN_300.h"
 
 /* Systems */
 #include "SysClock.h"
@@ -67,9 +67,9 @@ ThermistorReadChannel_s<TOTAL_THERMISTOR_COUNT> therm_channels = {{THERM_3, THER
 ThermistorInterface<TOTAL_THERMISTOR_COUNT> therm_interface(therm_channels, THERM_ALPHA);
 // VectorNav
 // Async
-// VN300 vn_300(&CAN2_txBuffer, &Serial2, VN_RS232_SPEED, true, INIT_HEADING, true);  // 50Hz by default
+// VN_300 vn_300(&CAN2_txBuffer, &Serial2, VN_RS232_SPEED, true, INIT_HEADING, true);  // 50Hz by default
 // Polling
-VN300 vn_300(&CAN2_txBuffer, &Serial2, VN_RS232_SPEED, true, INIT_HEADING);  // 50Hz by default
+VN_300 vn_300(&CAN2_txBuffer, &Serial2, VN_RS232_SPEED, true, INIT_HEADING);  // 50Hz by default
 
 /**
  * Systems

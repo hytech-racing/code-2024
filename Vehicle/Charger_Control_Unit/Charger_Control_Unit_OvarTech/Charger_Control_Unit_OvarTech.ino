@@ -31,7 +31,7 @@
 #define WATCHDOG_OUT 7
 #define TEENSY_OK 6
 #define STATUS 5
-#define AC_CURRENT 13
+#define AC_CURRENT 8
 
 #define LED A8
 

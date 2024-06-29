@@ -1,4 +1,4 @@
-#include "VN300.h"
+#include "VN_300.h"
 
 /**
  * Public functions
@@ -10,7 +10,7 @@
 /**
  * Checks feedback w/ delay
  */
-void VN300::setSerialBaudrate(uint32_t baudrate)
+void VN_300::setSerialBaudrate(uint32_t baudrate)
 {
     char toSend[DEFAULT_WRITE_BUFFER_MIDIUM];
 
@@ -40,7 +40,7 @@ void VN300::setSerialBaudrate(uint32_t baudrate)
 /**
  * Checks feedback w/ delay
  */
-void VN300::checkSerialBaudrate()
+void VN_300::checkSerialBaudrate()
 {
     char toSend[DEFAULT_WRITE_BUFFER_SIZE];
 
@@ -70,7 +70,7 @@ void VN300::checkSerialBaudrate()
 /**
  * Checks feedback with delay
  */
-void VN300::setInitialHeading(uint32_t initHeading)
+void VN_300::setInitialHeading(uint32_t initHeading)
 {
     char toSend[DEFAULT_WRITE_BUFFER_SIZE];
 
@@ -99,7 +99,7 @@ void VN300::setInitialHeading(uint32_t initHeading)
 /**
  * Does not check feedback
  */
-void VN300::turnOffAsciiOutput()
+void VN_300::turnOffAsciiOutput()
 {
     char toSend[DEFAULT_WRITE_BUFFER_MIDIUM];
 
@@ -133,7 +133,7 @@ void VN300::turnOffAsciiOutput()
  * Therefore when we opt for faster async data retrievement
  * We cannot be requesting GNSS signal strength at the same time
  */
-void VN300::configAsciiAsyncOutputType(uint32_t asciiReg)
+void VN_300::configAsciiAsyncOutputType(uint32_t asciiReg)
 {
     char toSend[DEFAULT_WRITE_BUFFER_MIDIUM];
 
@@ -161,7 +161,7 @@ void VN300::configAsciiAsyncOutputType(uint32_t asciiReg)
 
 /// @brief configure the frequency at whcih asynchronous ASCII output is sent by VN
 /// @param asciiFreq output frequency to be set
-void VN300::configAsciiAsyncOutputFreq(uint32_t asciiFreq)
+void VN_300::configAsciiAsyncOutputFreq(uint32_t asciiFreq)
 {
     char toSend[DEFAULT_WRITE_BUFFER_MIDIUM];
 
@@ -191,7 +191,7 @@ void VN300::configAsciiAsyncOutputFreq(uint32_t asciiFreq)
 /// @param binaryOutputNumber binary register number (1-3) minus 1
 /// @param fields requested fields
 /// @param rateDivisor denominator from IMU rate (400Hz)
-void VN300::configBinaryOutput(uint8_t binaryOutputNumber, 
+void VN_300::configBinaryOutput(uint8_t binaryOutputNumber, 
                                             uint8_t fields, 
                                             uint16_t rateDivisor)
 {
@@ -290,57 +290,33 @@ void VN300::configBinaryOutput(uint8_t binaryOutputNumber,
 }
 
 /// @brief request GNSS signal strength
-void VN300::requestGNSSSignalStrength(unsigned long currMillis)
+void VN_300::requestGNSSSignalStrength()
 {
-    if (currMillis - lastVNRequestTime_ > VN_READ_INTERVAL)
-    {
-        char toSend[DEFAULT_WRITE_BUFFER_SIZE];
+    char toSend[DEFAULT_WRITE_BUFFER_SIZE];
 
-        size_t length = sprintf(toSend, "$VNRRG,86");
-        length += sprintf(toSend + length, "*XX\r\n");
+    size_t length = sprintf(toSend, "$VNRRG,86");
+    length += sprintf(toSend + length, "*XX\r\n");
 
-        serial_->print(toSend);
-        serial_->flush();
-
-        lastVNReadAsciiTime_ = currMillis;
-
-        if (!asciiReadingStart_)
-            asciiReadingStart_ = true;
- 
-        requestCounter_ = (requestCounter_ + 1) % 4;
-        lastVNRequestTime_ = currMillis;
-    }
+    serial_->print(toSend);
+    serial_->flush();
 }
 
 /// @brief poll user configured binary packets
 /// @param binaryOutputNumber binary register number (1-3) minus 1
-void VN300::pollUserConfiguredBinaryOutput(uint8_t *binaryOutputNumber, unsigned long currMillis)
+void VN_300::pollUserConfiguredBinaryOutput(uint8_t binaryOutputNumber)
 {
-    if (currMillis - lastVNRequestTime_ > VN_READ_INTERVAL)
-    {
-        char toSend[DEFAULT_WRITE_BUFFER_SIZE];
+    char toSend[DEFAULT_WRITE_BUFFER_SIZE];
 
-        size_t length = sprintf(toSend, "$VNBOM,%u*", *binaryOutputNumber + 1);
-        length += sprintf(toSend + length, "XX\r\n");
+    size_t length = sprintf(toSend, "$VNBOM,%u*", binaryOutputNumber + 1);
+    length += sprintf(toSend + length, "XX\r\n");
 
-        serial_->print(toSend);
-        serial_->flush();
-
-        lastVNReadBinaryTime_ = currMillis;
-
-        if (!binaryReadingStart_)
-            binaryReadingStart_ = true;
-
-        *binaryOutputNumber = (*binaryOutputNumber + 1) % 3;  // skill issue fixed by Andy
-
-        requestCounter_ = (requestCounter_ + 1) % 4;
-        lastVNRequestTime_ = currMillis;
-    }
+    serial_->print(toSend);
+    serial_->flush();
 }
 
 // Data reveive functions
 /// @brief receive ASCII
-void VN300::readGNSSSignalStrength(unsigned long currMillis)
+void VN_300::readGNSSSignalStrength(unsigned long currMillis)
 {
     if ((currMillis - lastVNReadAsciiTime_ > VN_READ_ASCII_INTERVAL) && asciiReadingStart_)
     {
@@ -379,7 +355,7 @@ void VN300::readGNSSSignalStrength(unsigned long currMillis)
 }
 
 /// @brief receive binary
-void VN300::readPollingBinaryOutput(unsigned long currMillis)
+void VN_300::readPollingBinaryOutput(unsigned long currMillis)
 {
     if ((currMillis - lastVNReadBinaryTime_ > VN_READ_BINARY_INTERVAL) && binaryReadingStart_)
     {
@@ -427,7 +403,7 @@ void VN300::readPollingBinaryOutput(unsigned long currMillis)
 /**
  * Called at loop rate
  */
-void VN300::readAsyncOutputs()
+void VN_300::readAsyncOutputs()
 {
     while (serial_->available())
     {
@@ -488,7 +464,7 @@ void VN300::readAsyncOutputs()
 }
 
 // Data process intermediate functions
-void VN300::processGNSSSignalStrength(char *receiveBufferAscii)
+void VN_300::processGNSSSignalStrength(char *receiveBufferAscii)
 {
     // Parse Ascii string response
     parseGNSSSignalStrength(receiveBufferAscii, 
@@ -509,7 +485,7 @@ void VN300::processGNSSSignalStrength(char *receiveBufferAscii)
 /**
  * Used when asynchronously retrieving data
  */
-void VN300::parseBinaryOutput(uint8_t receiveBuffer[], int receivedPacketLength)
+void VN_300::parseBinaryOutput(uint8_t receiveBuffer[], int receivedPacketLength)
 {
     if (receivedPacketLength != binaryPacketLength_)
     {
@@ -544,7 +520,7 @@ void VN300::parseBinaryOutput(uint8_t receiveBuffer[], int receivedPacketLength)
     data_.accelBodyZ = parseFloat(receiveBuffer, 64 + OFFSET_PADDING);
 
     data_.InsStatus = parseUint16(receiveBuffer, 68 + OFFSET_PADDING);
-    // (Refer to VN300 manual p164)
+    // (Refer to VN_300 manual p164)
     // 00 not tracking
     // 01 aligning
     // 10 tracking
@@ -587,7 +563,7 @@ void VN300::parseBinaryOutput(uint8_t receiveBuffer[], int receivedPacketLength)
 /// @brief parse user defined binary packet 1
 /// @param receiveBuffer receive buffer
 /// @param receivedPacketLength length of current received packet
-void VN300::parseBinaryOutput_1(uint8_t receiveBuffer[], int receivedPacketLength)
+void VN_300::parseBinaryOutput_1(uint8_t receiveBuffer[], int receivedPacketLength)
 {
     if (receivedPacketLength != binaryPacketLength_1)
     {
@@ -647,7 +623,7 @@ void VN300::parseBinaryOutput_1(uint8_t receiveBuffer[], int receivedPacketLengt
 }
 
 /// @brief parse user defined binary packet 2     
-void VN300::parseBinaryOutput_2(uint8_t receiveBuffer[], int receivedPacketLength)
+void VN_300::parseBinaryOutput_2(uint8_t receiveBuffer[], int receivedPacketLength)
 {
     if (receivedPacketLength != binaryPacketLength_2)
     {
@@ -701,7 +677,7 @@ void VN300::parseBinaryOutput_2(uint8_t receiveBuffer[], int receivedPacketLengt
 #endif
 
     data_.InsStatus = parseUint16(receiveBuffer, 12 + OFFSET_PADDING_2);
-    // (Refer to VN300 manual p164)
+    // (Refer to VN_300 manual p164)
     // 00 not tracking
     // 01 aligning
     // 10 tracking
@@ -737,7 +713,7 @@ void VN300::parseBinaryOutput_2(uint8_t receiveBuffer[], int receivedPacketLengt
 }
 
 /// @brief parse user defined binary packet 3
-void VN300::parseBinaryOutput_3(uint8_t receiveBuffer[], int receivedPacketLength)
+void VN_300::parseBinaryOutput_3(uint8_t receiveBuffer[], int receivedPacketLength)
 {
     if (receivedPacketLength != binaryPacketLength_3)
     {
@@ -811,7 +787,7 @@ void VN300::parseBinaryOutput_3(uint8_t receiveBuffer[], int receivedPacketLengt
 /// @param highestCN0_2 highest signal to noise ratio for GNSS 2
 /// @param numComSatsPVT number of common satellites PVT for both GNSS's
 /// @param numComSatsRTK number of common satellites RTK for both GNSS's
-void VN300::parseGNSSSignalStrength(char *receiveBufferAscii,
+void VN_300::parseGNSSSignalStrength(char *receiveBufferAscii,
                                                  float *numSatsPVT_1,
                                                  float *numSatsRTK_1,
                                                  float *highestCN0_1,
@@ -845,7 +821,7 @@ void VN300::parseGNSSSignalStrength(char *receiveBufferAscii,
 
 // Data forward functions
 /// @brief update and enqueue VN GPS time
-void VN300::update_CAN_vn_gps_time()
+void VN_300::update_CAN_vn_gps_time()
 {
     VN_GPS_TIME_t vn_time_gps;
     vn_time_gps.vn_gps_time = data_.timeGPS;
@@ -853,7 +829,7 @@ void VN300::update_CAN_vn_gps_time()
 }
 
 /// @brief update and enqueue VN longitude and latitude
-void VN300::update_CAN_vn_position()
+void VN_300::update_CAN_vn_position()
 {
     VN_LAT_LON_t vn_position;
     vn_position.vn_gps_lat_ro = HYTECH_vn_gps_lat_ro_toS(static_cast<float>(data_.latitude));
@@ -862,7 +838,7 @@ void VN300::update_CAN_vn_position()
 }
 
 /// @brief update and enqueue VN acceleration
-void VN300::update_CAN_vn_accel()
+void VN_300::update_CAN_vn_accel()
 {
     VN_LINEAR_ACCEL_t vn_accel;
     vn_accel.vn_lin_ins_accel_x_ro = HYTECH_vn_lin_ins_accel_x_ro_toS(data_.accelBodyX);
@@ -872,7 +848,7 @@ void VN300::update_CAN_vn_accel()
 }
 
 /// @brief update and enqueue VN INS status
-void VN300::update_CAN_vn_ins_status()
+void VN_300::update_CAN_vn_ins_status()
 {
     VN_STATUS_t vn_ins_status;
     vn_ins_status.vn_gps_status = data_.insMode;
@@ -880,7 +856,7 @@ void VN300::update_CAN_vn_ins_status()
 }
 
 /// @brief update and enqueue VN uncompensated acceleration
-void VN300::update_CAN_vn_uncomp_accel()
+void VN_300::update_CAN_vn_uncomp_accel()
 {
     VN_LINEAR_ACCEL_UNCOMP_t vn_uncomp_accel;
     vn_uncomp_accel.vn_lin_uncomp_accel_x_ro = HYTECH_vn_lin_uncomp_accel_x_ro_toS(data_.uncompAccelBodyX);
@@ -890,7 +866,7 @@ void VN300::update_CAN_vn_uncomp_accel()
 }
 
 /// @brief update and enqueue VN body velocity
-void VN300::update_CAN_vn_vel_body()
+void VN_300::update_CAN_vn_vel_body()
 {
     VN_VEL_t vn_vel_body;
     vn_vel_body.vn_body_vel_x_ro = HYTECH_vn_body_vel_x_ro_toS(data_.velBodyX);
@@ -901,7 +877,7 @@ void VN300::update_CAN_vn_vel_body()
 }
 
 /// @brief update and enqueue VN angular rates
-void VN300::update_CAN_vn_angular_rate()
+void VN_300::update_CAN_vn_angular_rate()
 {
     VN_ANGULAR_RATE_t vn_angular_rate;
     vn_angular_rate.angular_rate_x_ro = HYTECH_angular_rate_x_ro_toS(data_.angularRateBodyX);
@@ -911,7 +887,7 @@ void VN300::update_CAN_vn_angular_rate()
 }
 
 /// @brief update and enqueue VN yaw pitch roll
-void VN300::update_CAN_vn_yaw_pitch_roll()
+void VN_300::update_CAN_vn_yaw_pitch_roll()
 {
     VN_YPR_t vn_YPR;
     vn_YPR.vn_yaw_ro = HYTECH_vn_yaw_ro_toS(data_.yaw);
@@ -921,7 +897,7 @@ void VN300::update_CAN_vn_yaw_pitch_roll()
 }
 
 /// @brief update and enqueue VN Ecef x and y coordinates
-void VN300::update_CAN_vn_ecef_pos_xy()
+void VN_300::update_CAN_vn_ecef_pos_xy()
 {
     VN_ECEF_POS_XY_t vn_ecef_pos_xy;
     vn_ecef_pos_xy.vn_ecef_pos_x_ro = HYTECH_vn_ecef_pos_x_ro_toS(data_.posEcefX);
@@ -930,7 +906,7 @@ void VN300::update_CAN_vn_ecef_pos_xy()
 }
 
 /// @brief update and enqueue VN Ecef z coordinate
-void VN300::update_CAN_vn_ecef_pos_z()
+void VN_300::update_CAN_vn_ecef_pos_z()
 {
     VN_ECEF_POS_Z_t vn_ecef_pos_z;
     vn_ecef_pos_z.vn_ecef_pos_z_ro = HYTECH_vn_ecef_pos_z_ro_toS(data_.posEcefZ);
@@ -938,7 +914,7 @@ void VN300::update_CAN_vn_ecef_pos_z()
 }
 
 /// @brief update and enqueue VN GNSS signal health status
-void VN300::update_CAN_vn_gnss_comp_sig_health()
+void VN_300::update_CAN_vn_gnss_comp_sig_health()
 {
     VN_GNSS_COMP_SIG_HEALTH_t vn_gnss_comp_health;
     vn_gnss_comp_health.num_sats_pvt_1 = data_.gnssHealth.numSatsPVT_1;
@@ -953,7 +929,7 @@ void VN300::update_CAN_vn_gnss_comp_sig_health()
 }
 
 // Iniialization
-void VN300::init(SysTick_s currTick)
+void VN_300::init(SysTick_s currTick)
 {
     // Begin Serial communication
     serial_->begin(DEFAULT_SERIAL_BAUDRATE);
@@ -1016,7 +992,7 @@ void VN300::init(SysTick_s currTick)
 }
 
 // Tick
-void VN300::tick(SysTick_s currTick)
+void VN_300::tick(SysTick_s currTick)
 {
     if (usePolling_)
     {
@@ -1045,7 +1021,7 @@ void VN300::tick(SysTick_s currTick)
 
 // Print utilities for debug
 /// @brief print receive buffer for binary packets
-void VN300::printBinaryReceiveBuffer()
+void VN_300::printBinaryReceiveBuffer()
 {
     Serial.print("Binary: ");
     for (int i = 0; i < displayLength_; i++)
@@ -1058,7 +1034,7 @@ void VN300::printBinaryReceiveBuffer()
 }
 
 /// @brief print receive buffer for ASCII packets
-void VN300::printAsciiReceiveBuffer()
+void VN_300::printAsciiReceiveBuffer()
 {
     // Only print when not actively receiving async
     // When polling this is always true
@@ -1078,7 +1054,7 @@ void VN300::printAsciiReceiveBuffer()
 
 /// @brief template function for enqueuing CAN message
 template <typename U>
-void VN300::enqueue_new_CAN_msg(U *structure, uint32_t (*pack_function)(U *, uint8_t *, uint8_t *, uint8_t *))
+void VN_300::enqueue_new_CAN_msg(U *structure, uint32_t (*pack_function)(U *, uint8_t *, uint8_t *, uint8_t *))
 {
     CAN_message_t can_msg;
 
@@ -1093,7 +1069,7 @@ void VN300::enqueue_new_CAN_msg(U *structure, uint32_t (*pack_function)(U *, uin
 /// @param buffer byte holder array for VN data
 /// @param startIndex array index where the uint16_t data starts
 /// @return parsed uint16_t data
-uint16_t VN300::parseUint16(uint8_t buffer[], int startIndex)
+uint16_t VN_300::parseUint16(uint8_t buffer[], int startIndex)
 {
     uint16_t data = ((uint16_t) buffer[1 + startIndex] << (8 * 1)) | ((uint16_t) buffer[startIndex]);
 
@@ -1102,7 +1078,7 @@ uint16_t VN300::parseUint16(uint8_t buffer[], int startIndex)
 
 /// @brief parse uint32_t data from VN. small endianness
 /// @return parsed uint32_t data
-uint32_t VN300::parseUint32(uint8_t buffer[], int startIndex)
+uint32_t VN_300::parseUint32(uint8_t buffer[], int startIndex)
 {
     uint32_t data = (((uint32_t) buffer[3 + startIndex] << (8 * 3)) | ((uint32_t) buffer[2 + startIndex] << (8 * 2)) |
                     ((uint32_t) buffer[1 + startIndex] << (8 * 1)) | ((uint32_t) buffer[0 + startIndex] << (8 * 0)));
@@ -1112,7 +1088,7 @@ uint32_t VN300::parseUint32(uint8_t buffer[], int startIndex)
 
 /// @brief parse uint32_t data from VN. small endianness
 /// @return parsed uint64_t data
-uint64_t VN300::parseUint64(uint8_t buffer[], int startIndex)
+uint64_t VN_300::parseUint64(uint8_t buffer[], int startIndex)
 {
     uint64_t data = (((uint64_t) buffer[7 + startIndex] << (8 * 7)) | ((uint64_t) buffer[6 + startIndex] << (8 * 6)) |
                     ((uint64_t) buffer[5 + startIndex] << (8 * 5)) | ((uint64_t) buffer[4 + startIndex] << (8 * 4)) |
@@ -1124,7 +1100,7 @@ uint64_t VN300::parseUint64(uint8_t buffer[], int startIndex)
 
 /// @brief parse float data from VN. small endianness
 /// @return parsed float data
-float VN300::parseFloat(uint8_t buffer[], int startIndex)
+float VN_300::parseFloat(uint8_t buffer[], int startIndex)
 {
     uint32_t dataBits = parseUint32(buffer, startIndex);
   
@@ -1135,7 +1111,7 @@ float VN300::parseFloat(uint8_t buffer[], int startIndex)
 
 /// @brief parse double data from VN. small endianness
 /// @return parsed double data
-double VN300::parseDouble(uint8_t buffer[], int startIndex)
+double VN_300::parseDouble(uint8_t buffer[], int startIndex)
 {
     uint64_t dataBits = parseUint64(buffer, startIndex);
 
@@ -1148,7 +1124,7 @@ double VN300::parseDouble(uint8_t buffer[], int startIndex)
 /// @param packetStart char array that holds ASCII response
 /// @param index index in the array where data begins
 /// @return sth. not sure what but co-works with the rest in macros
-char* VN300::startAsciiPacketParse(char* packetStart, size_t& index)
+char* VN_300::startAsciiPacketParse(char* packetStart, size_t& index)
 {
     index = 7;
 	return vnstrtok(packetStart, index);
@@ -1158,7 +1134,7 @@ char* VN300::startAsciiPacketParse(char* packetStart, size_t& index)
 /// @param str char array that holds ASCII response
 /// @param startIndex index where the next data starts
 /// @return pointer to next char in array
-char* VN300::getNextData(char* str, size_t& startIndex)
+char* VN_300::getNextData(char* str, size_t& startIndex)
 {
     return vnstrtok(str, startIndex);
 }
@@ -1167,7 +1143,7 @@ char* VN300::getNextData(char* str, size_t& startIndex)
 /// @param str char array that holds ASCII response
 /// @param startIndex index where the next data starts
 /// @return pointer to next data char in array
-char* VN300::vnstrtok(char* str, size_t& startIndex)
+char* VN_300::vnstrtok(char* str, size_t& startIndex)
 {
     size_t origIndex = startIndex;
 
@@ -1189,7 +1165,7 @@ char* VN300::vnstrtok(char* str, size_t& startIndex)
 /// @brief clear receive buffer
 /// @param receiveBuffer the data buffer to be cleared
 template <typename T>
-void VN300::clearReceiveBuffer(T receiveBuffer[], int length)
+void VN_300::clearReceiveBuffer(T receiveBuffer[], int length)
 {
     for (int i = 0; i < length; i++)
     {
@@ -1198,7 +1174,7 @@ void VN300::clearReceiveBuffer(T receiveBuffer[], int length)
 }
 
 /// @brief calculate the length of each binary packet
-void VN300::calculateBinaryPacketsLength()
+void VN_300::calculateBinaryPacketsLength()
 {
     if (useAsync_)
     {
@@ -1221,7 +1197,7 @@ void VN300::calculateBinaryPacketsLength()
 /// @brief evaluate whether the asynchronous binary output received 
 ///        so far is ready to be parsed
 /// @return true if data is ready
-bool VN300::asyncBinaryReadyToProcess()
+bool VN_300::asyncBinaryReadyToProcess()
 {
     if (!startBinaryAsyncReceive_)
     {
@@ -1244,7 +1220,7 @@ bool VN300::asyncBinaryReadyToProcess()
 /// @param buffer holder array for received binary data packet
 /// @param length length of the received packet
 template <typename T>
-void VN300::copyForExternalDispay(T buffer[], int length)
+void VN_300::copyForExternalDispay(T buffer[], int length)
 {
     for (int i = 0; i < length; i++)
     {
