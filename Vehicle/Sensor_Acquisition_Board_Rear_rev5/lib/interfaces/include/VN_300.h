@@ -71,6 +71,16 @@ struct VNSensorDataReport_s
     VNGNSSSigHealth_s gnssHealth;
 };
 
+struct vnParams_s
+{
+    HardwareSerial *serial;
+    int serialSpeed;
+    bool setInitHeading;
+    uint32_t initHeading;
+    bool useAsync;
+    uint16_t binaryRateDivisor;
+};
+
 class VN_300
 {
 private:
@@ -86,11 +96,6 @@ private:
     // Initial heading
     bool setInitHeading_;
     uint32_t initHeading_;
-    // Logistic variables
-    uint8_t requestCounter_;
-    uint8_t binaryOutputNumber_;
-    bool binaryReadingStart_;
-    bool asciiReadingStart_;
     // Length's    
     int currentPacketLength_;
     int currentAsciiLength_;
@@ -107,20 +112,10 @@ private:
     // Data requesting approach
     bool usePolling_;
     bool useAsync_;
-    // Timer variables
-    unsigned long lastVNRequestTime_;
-    unsigned long lastVNReadAsciiTime_;
-    unsigned long lastVNReadBinaryTime_;
-// CAN buffer
-    CANBufferType *msgQueue_;
 // Sensor readings
     VNSensorDataReport_s data_;
 
 // Private utility functions
-    /// @brief template function for enqueuing CAN message
-    template <typename U>
-    void enqueue_new_CAN_msg(U *structure, uint32_t (*pack_function)(U *, uint8_t *, uint8_t *, uint8_t *));
-
     /// @brief parse uint16_t data from VN. small endianness
     /// @param buffer byte holder array for VN data
     /// @param startIndex array index where the uint16_t data starts
@@ -182,8 +177,7 @@ private:
 
 public:
 // Constructors
-    VN_300(CANBufferType *circBuff, HardwareSerial *serial, int serialSpeed, bool setInitHeading, uint32_t initHeading, bool useAsync, uint16_t binaryRateDivisor):
-        msgQueue_(circBuff),
+    VN_300(HardwareSerial *serial, int serialSpeed, bool setInitHeading, uint32_t initHeading, bool useAsync, uint16_t binaryRateDivisor):
         serial_(serial),
         serialSpeed_(serialSpeed),
         setInitHeading_(setInitHeading),
@@ -192,20 +186,29 @@ public:
         usePolling_(!useAsync),
         binaryRateDivisor_(useAsync ? binaryRateDivisor : 0) {};
     
-    VN_300(CANBufferType *circBuff, HardwareSerial *serial, int serialSpeed, bool setInitHeading, uint32_t initHeading, bool useAsync):
-        VN_300(circBuff, serial, serialSpeed, setInitHeading, initHeading, useAsync, DEFAULT_BINARY_RATE_DIVISOR) {};
+    VN_300(HardwareSerial *serial, int serialSpeed, bool setInitHeading, uint32_t initHeading, bool useAsync):
+        VN_300(serial, serialSpeed, setInitHeading, initHeading, useAsync, DEFAULT_BINARY_RATE_DIVISOR) {};
 
-    VN_300(CANBufferType *circBuff, HardwareSerial *serial, int serialSpeed, bool setInitHeading, uint32_t initHeading):
-        VN_300(circBuff, serial, serialSpeed, setInitHeading, initHeading, false, 0) {};
+    VN_300(HardwareSerial *serial, int serialSpeed, bool setInitHeading, uint32_t initHeading):
+        VN_300(serial, serialSpeed, setInitHeading, initHeading, false, 0) {};
 
-    VN_300(CANBufferType *circBuff, HardwareSerial *serial, int serialSpeed, bool setInitHeading):
-        VN_300(circBuff, serial, serialSpeed, setInitHeading, DEFAULT_INIT_HEADING, false, 0) {};
+    VN_300(HardwareSerial *serial, int serialSpeed, bool setInitHeading):
+        VN_300(serial, serialSpeed, setInitHeading, DEFAULT_INIT_HEADING, false, 0) {};
 
-    VN_300(CANBufferType *circBuff, HardwareSerial *serial, int serialSpeed):
-        VN_300(circBuff, serial, serialSpeed, false, DEFAULT_INIT_HEADING, false, 0) {};
+    VN_300(HardwareSerial *serial, int serialSpeed):
+        VN_300(serial, serialSpeed, false, DEFAULT_INIT_HEADING, false, 0) {};
 
-    VN_300(CANBufferType *circBuff, HardwareSerial *serial):
-        VN_300(circBuff, serial, DEFAULT_SERIAL_BAUDRATE, false, DEFAULT_INIT_HEADING, false, 0) {};
+    VN_300(HardwareSerial *serial):
+        VN_300(serial, DEFAULT_SERIAL_BAUDRATE, false, DEFAULT_INIT_HEADING, false, 0) {};
+
+    VN_300(const vnParams_s &params):
+        serial_(params.serial),
+        serialSpeed_(params.serialSpeed),
+        setInitHeading_(params.setInitHeading),
+        initHeading_(params.initHeading),
+        useAsync_(params.useAsync),
+        usePolling_(!(params.useAsync)),
+        binaryRateDivisor_(params.useAsync ? params.binaryRateDivisor : 0) {};
 
 // Data request functions
     /// @brief set serial baudrate
@@ -239,25 +242,23 @@ public:
                             uint16_t rateDivisor);
 
     /// @brief request GNSS signal strength
-    void requestGNSSSignalStrength(unsigned long currMillis);
+    void requestGNSSSignalStrength();
 
     /// @brief poll user configured binary packets
     /// @param binaryOutputNumber binary register number (1-3) minus 1
-    void pollUserConfiguredBinaryOutput(uint8_t *binaryOutputNumber, unsigned long currMillis);
+    void pollUserConfiguredBinaryOutput(uint8_t binaryOutputNumber);
 
 // Data reveive functions
     /// @brief receive ASCII
-    void readGNSSSignalStrength(unsigned long currMillis);
+    void readGNSSSignalStrength();
 
     /// @brief receive binary
-    void readPollingBinaryOutput(unsigned long currMillis);
+    /// @return binary group received (1-3)
+    uint8_t readPollingBinaryOutput();
 
     /// @brief receive asynchronous binary and ASCII output
-    void readAsyncOutputs();
-
-// Data process intermediate functions
-    /// @brief process received GNSS ASCII packet
-    void processGNSSSignalStrength(char *receiveBufferAscii);
+    /// @return true if complete async binary packet has been received
+    bool readAsyncOutputs();
 
 // Data parsers
     /// @brief parse user define binary packet 1 when we request everything in group 1
@@ -294,50 +295,23 @@ public:
                                  float *numComSatsPVT,
                                  float *numComSatsRTK);
 
-// Data forward functions
-    /// @brief update and enqueue VN GPS time
-    void update_CAN_vn_gps_time();
-
-    /// @brief update and enqueue VN longitude and latitude
-    void update_CAN_vn_position();
-
-    /// @brief update and enqueue VN acceleration
-    void update_CAN_vn_accel();
-
-    /// @brief update and enqueue VN INS status
-    void update_CAN_vn_ins_status();
-
-    /// @brief update and enqueue VN uncompensated acceleration
-    void update_CAN_vn_uncomp_accel();
-
-    /// @brief update and enqueue VN body velocity
-    void update_CAN_vn_vel_body();
-
-    /// @brief update and enqueue VN angular rates
-    void update_CAN_vn_angular_rate();
-
-    /// @brief update and enqueue VN yaw pitch roll
-    void update_CAN_vn_yaw_pitch_roll();
-
-    /// @brief update and enqueue VN Ecef x and y coordinates
-    void update_CAN_vn_ecef_pos_xy();
-
-    /// @brief update and enqueue VN Ecef z coordinate
-    void update_CAN_vn_ecef_pos_z();
-    
-    /// @brief update and enqueue VN GNSS signal health status
-    void update_CAN_vn_gnss_comp_sig_health();
-
 // Initialization
-    void init(SysTick_s currTick);
+    void init();
 
-// Tick
-    void tick(SysTick_s currTick);
-
-// Getter
+// Getters
     const VNSensorDataReport_s& get()
     {
         return data_;
+    }
+
+    bool useAsync()
+    {
+        return useAsync_;
+    }
+
+    bool usePolling()
+    {
+        return usePolling_;
     }
 
 // Print utilities for debug

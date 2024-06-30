@@ -31,7 +31,7 @@
 #include "MCP_ADC.h"
 #include "TelemetryInterface.h"
 #include "ThermistorInterface.h"
-#include "VN_300.h"
+#include "VectorNavInterface.h"
 
 /* Systems */
 #include "SysClock.h"
@@ -67,9 +67,10 @@ ThermistorReadChannel_s<TOTAL_THERMISTOR_COUNT> therm_channels = {{THERM_3, THER
 ThermistorInterface<TOTAL_THERMISTOR_COUNT> therm_interface(therm_channels, THERM_ALPHA);
 // VectorNav
 // Async
-// VN_300 vn_300(&CAN2_txBuffer, &Serial2, VN_RS232_SPEED, true, INIT_HEADING, true);  // 50Hz by default
+// vnParams_s vn_params = {&Serial2, VN_RS232_SPEED, true, INIT_HEADING, true, 8};
 // Polling
-VN_300 vn_300(&CAN2_txBuffer, &Serial2, VN_RS232_SPEED, true, INIT_HEADING);  // 50Hz by default
+vnParams_s vn_params = {&Serial2, VN_RS232_SPEED, true, INIT_HEADING, false, 0};
+VectorNavInterface vn_interface(&CAN2_txBuffer, vn_params);
 
 /**
  * Systems
@@ -103,7 +104,7 @@ void setup() {
     Serial.println("Debounce button initialized for Pi shutdown");
 
     // RS232
-    vn_300.init(curr_tick);
+    vn_interface.init(curr_tick);
     Serial.println("VectorNav initialized ... for real this time!");
     Serial.println();
 
@@ -173,8 +174,8 @@ void loop() {
         Serial.println();
 
         Serial.println("Vector Nav:");
-        vn_300.printBinaryReceiveBuffer();
-        vn_300.printAsciiReceiveBuffer();
+        vn_interface.printBinaryReceiveBuffer();
+        vn_interface.printAsciiReceiveBuffer();
 
         Serial.println();
     }
@@ -253,7 +254,7 @@ void tick_all_interfaces(const SysTick_s &curr_tick)
 
     // Timing managed internally
     // VectorNav
-    vn_300.tick(curr_tick);
+    vn_interface.tick(curr_tick);
 
 }
 
