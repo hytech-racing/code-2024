@@ -1,5 +1,7 @@
 ![HyTech Logo](https://hytechracing.gatech.edu/images/hytech_logo.png)
 
+# DEPRECATED REPOSITORY. All new changes should be made [Here](https://github.com/hytech-racing/firmware)
+
 # 2024 Code
 
 Repository for all of the code for the 2023-2024 car.
