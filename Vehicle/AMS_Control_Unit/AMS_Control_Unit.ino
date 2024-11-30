@@ -124,6 +124,10 @@ void setup() {
   ENERGY_METER_CAN.enableMBInterrupts();
   ENERGY_METER_CAN.onReceive(parse_energy_meter_can_message);
 
+
+
+
+
   for (int i = 0; i < 64; i++) { // Fill all filter slots with Charger Control Unit message filter
     TELEM_CAN.setMBFilter(static_cast<FLEXCAN_MAILBOX>(i), ID_CCU_STATUS); // Set CAN mailbox filtering to only watch for charger controller status CAN messages
   }
@@ -141,6 +145,14 @@ void loop() {
   // put your main code here, to run repeatedly:
   TELEM_CAN.events();
   ENERGY_METER_CAN.events();
+  if(ENERGY_METER_CAN.read(msg)){
+    Serial.print(" DATA : ")
+  }
+  for ( uint8_t i=0; i<8; i++){
+    Serial.print(mgs.buf[i]); Serial.print(" ");
+  }
+
+  
   parse_CAN_CCU_status();
   if (charging_timer.check() && bms_status.get_state() == BMS_STATE_CHARGING) {
     bms_status.set_state(BMS_STATE_DISCHARGING);
